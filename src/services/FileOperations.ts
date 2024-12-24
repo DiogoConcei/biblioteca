@@ -101,16 +101,14 @@ export default class FileOperations extends FileSystem {
     const match = fileName.match(regex);
 
     if (match) {
-      // Captura o volume, capítulo e capítulo específico de acordo com o padrão
+
       const volume = match[1] ? parseInt(match[1]) : null;
       const chapter = match[2] ? parseInt(match[2]) : null;
       const capítulo = match[3] ? parseInt(match[3]) : null;
       const chapterLabel = match[4] ? parseInt(match[4]) : null;
 
-      // Priorizar "Ch." ou "Chapter" se ambos forem encontrados
       const chapterNumber = chapter || chapterLabel || capítulo;
 
-      // Retornar valores para ordenação
       return { volume, chapterNumber };
     }
     return { volume: null, chapterNumber: null };
@@ -192,5 +190,15 @@ export default class FileOperations extends FileSystem {
       throw error;
     }
   }
+
+  // found jsonfile 
+
+  // found cover
+
+  // check cover
+
+  // check jsonfile
+
+  // found chapters pages
 }
 

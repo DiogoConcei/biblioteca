@@ -61,7 +61,7 @@ export default class ImageOperations extends FileSystem {
           break;
         }
       } catch (error) {
-        console.error(`Erro ao processar a imagem especial ${imagePath}:`, error);
+        console.error(`[ERROR] Erro ao processar a imagem especial ${imagePath}:`, error);
       }
     }
 
@@ -73,14 +73,15 @@ export default class ImageOperations extends FileSystem {
 
     for (const imagePath of imagePaths) {
       try {
+        (`[INFO] Processando a imagem: ${imagePath}`);
         const image = await Jimp.read(imagePath);
 
-        if (image.bitmap.width < 1000 && image.bitmap.height <= 1300) {
+        if ((image.bitmap.width <= 1200) && (image.bitmap.height >= 650 || image.bitmap.height <= 1600)) {
           validImagePaths.push(imagePath);
           break;
         }
       } catch (error) {
-        console.error(`Erro ao processar a imagem ${imagePath}:`, error);
+        console.error(`[ERROR] Erro ao processar a imagem ${imagePath}:`, error);
       }
     }
 
@@ -90,52 +91,85 @@ export default class ImageOperations extends FileSystem {
   }
 
 
-
-  private async createCover(imagePath: string, serieName: string): Promise<void> {
+  private async createCover(imagePath: string): Promise<string> {
     try {
 
-      const destinyDir = path.join(
-        this.showcaseImages,
-        `${serieName}_${path.basename(imagePath)}`
-      );
+      const dirPath = path.dirname(imagePath);
+      const directories = dirPath.split(path.sep);
 
-      if (!(await fs.promises.stat(imagePath).catch(() => false))) {
+      const serieName = directories[directories.length - 2];
+
+      const extractchapterName = path.basename(path.dirname(imagePath), path.extname(imagePath));
+      const cleanChapterName = path.basename(extractchapterName, path.extname(extractchapterName));
+
+      const uniqueFileName = `${serieName}_${cleanChapterName}_${path.basename(imagePath)}`;
+
+      const destinyDir = path.join(this.showcaseImages, uniqueFileName);
+
+      const fileExists = await fs.promises.stat(imagePath).catch(() => false);
+      if (!fileExists) {
+        console.error(`[ERROR] Arquivo não encontrado: ${imagePath}`);
         throw new Error(`Arquivo ${imagePath} não encontrado.`);
       }
 
       await fs.promises.copyFile(imagePath, destinyDir);
+
+      return serieName;
+
     } catch (e) {
-      console.error(`Erro ao criar a capa para ${serieName}: ${e.message}`);
+      console.error(`[ERROR] Erro ao criar a capa para a série: ${e.message}`);
       throw e;
     }
   }
 
   public async coverToSerie(series: Comic[]): Promise<void> {
-    const covers = await this.foundFiles(this.showcaseImages);
+    try {
 
-    series.forEach((serie, index) => {
-      serie.cover_image = covers[index];
-    });
+      const covers = await this.foundFiles(this.showcaseImages);
 
-    for (const serie of series) {
-      const filePath = path.join(this.jsonFilesPath, `${serie.name}.json`);
-      try {
-        await jsonfile.writeFile(filePath, serie, { spaces: 2 });
-      } catch (error) {
-        console.error(`Erro ao salvar arquivo ${filePath}: ${error.message}`);
+      for (const serie of series) {
+        let found = false;
+
+
+        for (const coverPath of covers) {
+          const coverName = path.basename(coverPath, path.extname(coverPath));
+          const result = coverName.match(/^[^_]+/);
+
+
+          if (result && serie.name === result[0]) {
+            serie.cover_image = coverPath;
+            found = true;
+            break;
+          }
+        }
+
+        if (!found) {
+        }
+
+        try {
+          const filePath = path.join(this.jsonFilesPath, `${serie.name}.json`);
+          await jsonfile.writeFile(filePath, serie, { spaces: 2 });
+        } catch (error) {
+          throw error;
+        }
       }
+
+
+    } catch (error) {
+      throw error;
     }
   }
 
   public async extractInitialCovers(filesName: string[]): Promise<void> {
     try {
-      const seriesData: Comic[] = [];
-      console.log(`Nome das series dentro do módulo de imagens -> ${filesName}`)
+      let seriesData: Comic[] = [];
+      let chapterImages = [];
+      let initialCovers: string[] = [];
+      let seriesName: string[] = []
 
-      for (const fileName of filesName) {
-        const serieData = await this.dataManager.selectFileData(fileName);
-        seriesData.push(serieData);
-      }
+      seriesData = await Promise.all(
+        filesName.map(fileName => this.dataManager.selectFileData(fileName))
+      );
 
       const firstChapterPaths = seriesData.map(
         (serie) => serie.chapters[0].chapter_path
@@ -148,25 +182,18 @@ export default class ImageOperations extends FileSystem {
         extractChapters.push(extractedChapter);
       }
 
-      const chapterImages = [];
-      for (const chapterPath of extractChapters) {
-        const images = await this.foundFiles(chapterPath);
-        chapterImages.push(images);
-      }
+      chapterImages = await Promise.all(extractChapters.map((chapters) => this.foundFiles(chapters)))
 
-      const initialCovers: string[] = [];
-      for (const images of chapterImages) {
-        const validImages = await this.analiseImage(images);
-        initialCovers.push(...validImages);
-      }
+      initialCovers = (await Promise.all(
+        chapterImages.map(images =>
+          this.analiseImage(images))
+      )).flat();
 
       for (const cover of initialCovers) {
-        const serieName = path.basename(path.dirname(cover));
-        await this.createCover(cover, serieName);
+        seriesName.push(await this.createCover(cover))
       }
 
       await this.coverToSerie(seriesData)
-
     } catch (e) {
       console.error(`Erro encontrado: ${e.message}`);
       throw e;
@@ -174,4 +201,13 @@ export default class ImageOperations extends FileSystem {
   }
 }
 
-
+(async () => {
+  try {
+    const Manager = new ImageOperations()
+    const result = await Manager.extractInitialCovers(
+      ['Jujutsu Kaisen']
+    )
+  } catch (error) {
+    console.error('Erro na execução da função:', error);
+  }
+})();

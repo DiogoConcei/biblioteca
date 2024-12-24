@@ -47,14 +47,11 @@ export default function Home() {
       const newPaths = await Promise.all(
         await window.electron.handleDrop(filePaths)
       );
-      console.log(newPaths);
       await window.electron.createSerie(newPaths);
     } catch (error) {
       console.error("Erro ao carregar arquivos", error);
     }
   };
-
-  console.log(series);
 
   return (
     <section className="series" onDragOver={handleDrag} onDrop={handleDrop}>

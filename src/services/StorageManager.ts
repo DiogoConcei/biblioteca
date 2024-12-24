@@ -7,6 +7,7 @@ import { ComicConfig, Comic, ComicChapter } from "../types/serie.interfaces";
 
 export default class StorageManager extends FileSystem {
   private readonly fileManager: FileOperations;
+  private comicId: number;
 
   constructor() {
     super();
@@ -35,7 +36,6 @@ export default class StorageManager extends FileSystem {
   }
 
   public async selectFileData(serieName: string): Promise<Comic> {
-    console.log(`Nome das séries dentro do módulo de pesquisa -> ${serieName}`);
 
     try {
       const seriesData = await this.fileManager.foundFiles(this.jsonFilesPath);
@@ -52,13 +52,24 @@ export default class StorageManager extends FileSystem {
     }
   }
 
+  public async setId(currentId: number): Promise<number> {
+    try {
+      let data: ComicConfig = JSON.parse(await fs.readFile(this.comicConfig, "utf-8"));
+      data.global_id = currentId
+      await fs.writeFile(this.comicConfig, JSON.stringify(data), "utf-8")
+      return currentId;
+    } catch (e) {
+      console.error(`Erro ao obter o ID atual: ${e}`);
+      throw e;
+    }
+  }
+
   public async createMainData(series: string[]): Promise<Comic[]> {
     const currentDate = new Date().toLocaleDateString();
-    const global_id = await this.getCurrentId();
 
     return await Promise.all(
       series.map(async (serie, index) => {
-        const id = global_id + index + 1;
+        const id = ++this.comicId;
         const name = path.basename(serie);
         const sanitizedName = this.fileManager.sanitizeFilename(name);
 
@@ -66,6 +77,7 @@ export default class StorageManager extends FileSystem {
         const orderChapters = await this.fileManager.checkOrder(
           await this.createChapterData(chaptersPath, currentDate)
         );
+        const comments: string[] = []
 
         return {
           id,
@@ -88,7 +100,7 @@ export default class StorageManager extends FileSystem {
             original_owner: "",
             rating: 0,
           },
-          comments: [],
+          comments: comments,
         };
       })
     );
@@ -112,6 +124,7 @@ export default class StorageManager extends FileSystem {
 
   public async createData(series: string[]): Promise<void> {
     try {
+      this.comicId = await this.getCurrentId();
       const seriesData = await this.createMainData(series);
       await Promise.all(seriesData.map((serieData) => this.writeSerieData(serieData)));
     } catch (e) {
@@ -123,6 +136,7 @@ export default class StorageManager extends FileSystem {
   private async writeSerieData(serieData: Comic): Promise<void> {
     const tempPath = path.join(this.jsonFilesPath, `${serieData.name}.json`);
     try {
+      this.setId(this.comicId)
       await fs.writeFile(tempPath, JSON.stringify(serieData, null, 2), "utf-8");
     } catch (e) {
       console.error(`Erro ao tentar gravar o arquivo ${serieData.name}.json: ${e.message}`);
@@ -130,3 +144,4 @@ export default class StorageManager extends FileSystem {
     }
   }
 }
+

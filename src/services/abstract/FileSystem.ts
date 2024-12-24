@@ -49,7 +49,6 @@ export abstract class FileSystem {
       const filePaths = contents.filter((content) => content.isFile() && filter.test(content.name))
         .map((file) => path.join(dirPath, file.name));
 
-      console.log(`Nome das series dentro do módulo do sistema -> ${filePaths}`)
 
       return filePaths;
     } catch (e) {

@@ -37,7 +37,7 @@ const createWindow = async (): Promise<void> => {
 };
 
 ipcMain.on('captureFile', (event, arg) => {
-  console.log('Dropped File(s):', arg);
+  ('Dropped File(s):', arg);
   event.returnValue = `Received ${arg.length} paths.`;
 })
 
