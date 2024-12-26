@@ -1,0 +1,9 @@
+.serieInfo img {
+  width: auto;
+  height: 50vh;
+}
+
+.serieHeader {
+  display: flex;
+  flex-flow: flex row;
+}

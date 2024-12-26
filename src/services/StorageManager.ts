@@ -108,7 +108,7 @@ export default class StorageManager extends FileSystem {
 
   private async createChapterData(chaptersPath: string[], currentDate: string): Promise<ComicChapter[]> {
     return chaptersPath.map((chapter, index) => {
-      const name = path.basename(chapter);
+      const name = path.basename(chapter, path.extname(chapter));
       const sanitized_name = this.fileManager.sanitizeFilename(name);
 
       return {

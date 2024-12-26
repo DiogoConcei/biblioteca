@@ -40,7 +40,7 @@ button {
   background: #282c34;
   height: 50px;
   -webkit-app-region: drag;
-  border-bottom: 1px solid #f4f4ed63;
+  -bottom: 1px solid #f4f4ed63;
 }
 
 .NavBar {

@@ -1,72 +1,62 @@
-import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { ComicChapter, Comic } from "../../../types/serie.interfaces";
-import "./SeriePage.css";
+import { Comic } from "../../../types/serie.interfaces";
+import ChaptersInfo from "../../../components/chaptersInfo/chaptersInfo";
+import { HiDownload } from "react-icons/hi";
+import { MdFormatListBulletedAdd } from "react-icons/md";
+import { IoMdStar, IoIosStarOutline } from "react-icons/io";
+import { IoBookmarkOutline, IoBookmark } from "react-icons/io5";
+import { FaBookOpen } from "react-icons/fa";
+
+import "../SeriePage/SeriePage.css";
 
 export default function SeriePage() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 40;
-
   const location = useLocation();
+
   const { serie } = location.state as { serie: Comic };
-
-  const totalPages = Math.ceil(serie.chapters.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentItems = serie.chapters.slice(startIndex, endIndex);
-
-  const paginationNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
     <section className="serieInfo">
-      <div key={serie.id} className="MainInfo">
+      <div className="serieHeader">
         <figure>
           <img
             src={`data:image/png;base64,${serie.cover_image}`}
             alt={`Capa do quadrinho ${serie.name}`}
           />
-          <figcaption className="infoText">
-            <h1>{serie.name}</h1>
-            <p>Total de capítulos: {serie.total_chapters}</p>
-            <p>{serie.reading_data.last_chapter_id} - last chapter read</p>
-            <p>{serie.created_at} - create date</p>
-          </figcaption>
         </figure>
-      </div>
-      <div className="ChaptersInfo">
-        <h3>Capítulos</h3>
-        <ul className="chaptersLink">
-          {currentItems.map((chapter) => (
-            <li key={chapter.id} className="chapterName">
-              {chapter.name}
-            </li>
-          ))}
-        </ul>
-        <div className="ControlBtns">
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}>
-            Prev
-          </button>
-
-          {paginationNumbers.map((pageNumber) => (
-            <button
-              key={pageNumber}
-              onClick={() => setCurrentPage(pageNumber)}
-              className={pageNumber === currentPage ? "active" : ""}>
-              {pageNumber}
-            </button>
-          ))}
-
-          <button
-            onClick={() =>
-              setCurrentPage((next) => Math.min(next + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}>
-            Next
-          </button>
+        <div className="serieDetails">
+          <p>{serie.name}</p>
+          <p>
+            <HiDownload />
+          </p>
+          <p>
+            {serie.metadata.is_favorite ? (
+              <IoBookmark />
+            ) : (
+              <IoBookmarkOutline />
+            )}
+          </p>
+          <p>
+            <MdFormatListBulletedAdd />
+          </p>
+          <p>
+            <FaBookOpen />
+          </p>
+          <p>
+            {serie.metadata.is_favorite ? <IoMdStar /> : <IoIosStarOutline />}
+          </p>
         </div>
       </div>
+
+      {/* <h1>{serie.name}</h1> */}
+      {/* <p>Total de capítulos: {serie.total_chapters}</p> */}
+      {/* <p>{serie.reading_data.last_chapter_id} - last chapter read</p> */}
+      {/* <p>{serie.created_at} - create date</p> */}
+      {/* </figcaption> */}
+      {/* </figure> */}
+      {/* </div> */}
+      {/* <div className="chaptersControl">
+        <ChaptersInfo serie={serie} />
+      </div> */}
     </section>
   );
 }

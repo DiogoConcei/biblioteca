@@ -1,0 +1,75 @@
+.series {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 1rem;
+}
+
+.seriesContent {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 1rem;
+  gap: 2rem;
+  height: 100%;
+  width: 100%;
+}
+
+.serieLink {
+  display: flex;
+  flex-flow: column wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.serieLink img {
+  width: auto;
+  margin: 0.5rem;
+  height: 20vh;
+}
+
+.serie-info {
+  display: flex;
+  align-items: start;
+  justify-content: start;
+  flex-flow: column wrap;
+  width: 8vw;
+  gap: 0.7rem;
+}
+
+.serie-name {
+  width: 11vw;
+  font-size: 1rem;
+  color: #8963ba;
+}
+
+.progress-bar {
+  width: 8vw;
+  height: 5px;
+  border-radius: 20px;
+  background-color: #eeeeee7d;
+}
+
+.progress {
+  background: rgba(255, 255, 255, 0.1);
+  justify-content: flex-start;
+  border-radius: 100px;
+  align-items: center;
+  position: relative;
+  padding: 0 5px;
+  display: flex;
+  height: 40px;
+  width: 500px;
+}
+
+.progress-bar-completed {
+  height: 20px;
+  background-color: red;
+  border-radius: 20px;
+  height: 5px;
+  transition: width 0.5s ease-in-out;
+}

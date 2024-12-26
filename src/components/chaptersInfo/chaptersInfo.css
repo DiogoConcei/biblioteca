@@ -1,0 +1,30 @@
+.divControl {
+  display: flex;
+  align-items: center;
+  flex-flow: column wrap;
+  width: 30vw;
+  border: 1px solid green;
+  gap: 10px;
+  padding: 0.7rem;
+}
+
+.chaptersTitle {
+  font-size: 1.6rem;
+  color: #8963ba;
+}
+
+.chapter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-flow: row;
+  gap: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.348);
+  padding: 0.5rem;
+  background-color: #f4f4edc5;
+  font-size: 1.3rem;
+}
+
+.unread {
+  font-size: 2rem;
+}

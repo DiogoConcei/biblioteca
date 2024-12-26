@@ -56,7 +56,7 @@ export default class ImageOperations extends FileSystem {
       try {
         const image = await Jimp.read(imagePath);
 
-        if (image.bitmap.width >= 1300) {
+        if ((image.bitmap.width >= 400) || (image.bitmap.height >= 600)) {
           specialImagePaths.push(imagePath);
           break;
         }
@@ -73,10 +73,9 @@ export default class ImageOperations extends FileSystem {
 
     for (const imagePath of imagePaths) {
       try {
-        (`[INFO] Processando a imagem: ${imagePath}`);
         const image = await Jimp.read(imagePath);
 
-        if ((image.bitmap.width <= 1200) && (image.bitmap.height >= 650 || image.bitmap.height <= 1600)) {
+        if ((image.bitmap.width <= 1200) && (image.bitmap.height >= 1300)) {
           validImagePaths.push(imagePath);
           break;
         }
@@ -85,7 +84,7 @@ export default class ImageOperations extends FileSystem {
       }
     }
 
-    const specialImages = await this.analiseImageSpecial(validImagePaths);
+    const specialImages = await this.analiseImageSpecial(imagePaths);
 
     return [...validImagePaths, ...specialImages];
   }
