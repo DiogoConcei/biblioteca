@@ -9,11 +9,6 @@ export default class FileOperations extends FileSystem {
     super();
   }
 
-  // private createBaseFolders() {
-  //   this.createFolder(this.seriesPath);
-  //   this.createFolder(this.showcaseImages);
-  //   this.createFolder(this.jsonFilesPath);
-  // }
 
   public async encodeImageToBase64(filePath: string): Promise<string> {
     try {

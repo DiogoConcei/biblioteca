@@ -8,3 +8,7 @@ export interface SearchBarProps {
     searchInput: string;
     onSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
+
+export interface ComicCardsProps {
+    searchInput: string;
+}

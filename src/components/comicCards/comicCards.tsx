@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 import { Comic } from "../../types/serie.interfaces";
 import SearchBar from "../SearchBar/SearchBar";
+import { ComicCardsProps } from "../../types/components.interfaces";
 import "./ComicCards.css";
 import { useEffect, useState } from "react";
 
-export default function ComicCards() {
+export default function ComicCards({ searchInput }: ComicCardsProps) {
   const [series, setSerie] = useState<Comic[]>([]);
-  const [searchInput, setSearchInput] = useState<string>("");
 
   useEffect(() => {
     const getData = async () => {
@@ -31,24 +31,20 @@ export default function ComicCards() {
     };
   }, []);
 
-  const searchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.preventDefault();
-    setSearchInput(event.target.value);
-  };
-
   const filteredSeries = series.filter((serie) => {
-    const serieName = serie.name.toLowerCase().trim();
-    const searchTerm = searchInput.toLowerCase().trim();
+    const serieName = serie.name.toLowerCase();
+    const searchTerm = searchInput.toLowerCase();
 
-    console.log("serieName:", serieName); // Verifique o nome da série
-    console.log("searchTerm:", searchTerm); // Verifique o valor da pesquisa
+    const normalizedSerieName = serieName.replace(/\s+/g, "");
+    const normalizedSearchTerm = searchTerm.replace(/\s+/g, "");
 
-    return searchTerm === "" || serieName.includes(searchTerm);
+    return (
+      searchTerm === "" || normalizedSerieName.includes(normalizedSearchTerm)
+    );
   });
 
   return (
     <div className="content">
-      <SearchBar searchInput={searchInput} onSearchChange={searchChange} />
       <div className="seriesContent">
         {filteredSeries.map((serie) => (
           <Link

@@ -1,7 +1,16 @@
 import "./Home.css";
 import ComicCards from "../../components/ComicCards/ComicCards";
+import SearchBar from "../../components/SearchBar/SearchBar";
+import { useState } from "react";
 
 export default function Home() {
+  const [searchInput, setSearchInput] = useState<string>("");
+
+  const searchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    setSearchInput(event.target.value);
+  };
+
   const handleDrag = (event: React.DragEvent<HTMLDivElement>) => {
     event.stopPropagation();
     event.preventDefault();
@@ -27,8 +36,9 @@ export default function Home() {
   };
 
   return (
-    <section className="files" onDragOver={handleDrag} onDrop={handleDrop}>
-      <ComicCards />
+    <section className="home" onDragOver={handleDrag} onDrop={handleDrop}>
+      <SearchBar searchInput={searchInput} onSearchChange={searchChange} />
+      <ComicCards searchInput={searchInput} />
     </section>
   );
 }
