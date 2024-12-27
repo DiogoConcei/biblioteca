@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 
 export default function ComicCards() {
   const [series, setSerie] = useState<Comic[]>([]);
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const getData = async () => {
@@ -29,11 +28,6 @@ export default function ComicCards() {
       window.electron.off("serie-created", onSerieCreated);
     };
   }, []);
-
-  // Simulate progress
-  const simulateProgress = () => {
-    setProgress(progress + 10);
-  };
 
   return (
     <div className="seriesContent">

@@ -25,7 +25,7 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  public async selectData(): Promise<Comic[]> {
+  public async seriesData(): Promise<Comic[]> {
     try {
       const seriesData = await this.foundFiles(this.jsonFilesPath);
       return await Promise.all(seriesData.map((serieData) => jsonfile.readFile(serieData)));
@@ -35,7 +35,7 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  public async selectFileData(serieName: string): Promise<Comic> {
+  public async selectSerieData(serieName: string): Promise<Comic> {
 
     try {
       const seriesData = await this.fileManager.foundFiles(this.jsonFilesPath);
@@ -52,6 +52,16 @@ export default class StorageManager extends FileSystem {
     }
   }
 
+  public async getData(filePath: string): Promise<string> {
+    const data: string = await jsonfile.readFile(filePath)
+    return data
+  }
+
+  public async getComicConfig(): Promise<ComicConfig> {
+    const data: ComicConfig = await jsonfile.readFile(this.comicConfig)
+    return data
+  }
+
   public async setId(currentId: number): Promise<number> {
     try {
       let data: ComicConfig = JSON.parse(await fs.readFile(this.comicConfig, "utf-8"));
@@ -61,6 +71,33 @@ export default class StorageManager extends FileSystem {
     } catch (e) {
       console.error(`Erro ao obter o ID atual: ${e}`);
       throw e;
+    }
+  }
+
+  public async updateserieData(data: string, serieName: string): Promise<void> {
+    try {
+      const allData = await this.foundFiles(this.jsonFilesPath);
+      const correctFile = allData.find(
+        (serie) => path.basename(serie, path.extname(serie)) === serieName
+      );
+
+      if (!correctFile) {
+        throw new Error(`Arquivo da série "${serieName}" não encontrado.`);
+      }
+
+      await jsonfile.writeFile(correctFile, JSON.parse(data), { spaces: 2 });
+    } catch (error) {
+      console.error(`Erro ao atualizar arquivo da série "${serieName}":`, error);
+      throw error;
+    }
+  }
+
+  public async updateComicConfig(data: string): Promise<void> {
+    try {
+      await jsonfile.writeFile(this.comicConfig, JSON.parse(data), { spaces: 2 });
+    } catch (error) {
+      console.error("Erro ao atualizar configurações:", error);
+      throw error;
     }
   }
 
@@ -144,4 +181,3 @@ export default class StorageManager extends FileSystem {
     }
   }
 }
-

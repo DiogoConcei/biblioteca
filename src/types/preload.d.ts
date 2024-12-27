@@ -13,8 +13,9 @@ declare global {
                 getPathForFile: (file: File) => string;
             },
             createSerie: (filePaths: string[]) => Promise<void>,
-            on: (channel: string, listener: (...args: any[]) => void) => void;
-            off: (channel: string, listener: (...args: any[]) => void) => void;
+            on: (channel: string, listener: (...args: any[]) => void) => void,
+            off: (channel: string, listener: (...args: any[]) => void) => void,
+            favoriteSerie: (serieName: string, is_favorite: boolean) => Promise<void>,
         };
     }
 }

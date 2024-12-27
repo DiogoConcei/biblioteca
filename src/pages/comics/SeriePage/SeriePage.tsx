@@ -14,6 +14,14 @@ export default function SeriePage() {
 
   const { serie } = location.state as { serie: Comic };
 
+  const favorite = async (
+    event: React.MouseEvent<HTMLButtonElement>,
+    serieName: string,
+    is_favorite: boolean
+  ) => {
+    await window.electron.favoriteSerie(serieName, is_favorite);
+  };
+
   return (
     <section className="serieInfo">
       <div className="serieHeader">
@@ -24,26 +32,35 @@ export default function SeriePage() {
           />
         </figure>
         <div className="serieDetails">
-          <p>{serie.name}</p>
-          <p>
-            <HiDownload />
-          </p>
-          <p>
-            {serie.metadata.is_favorite ? (
-              <IoBookmark />
-            ) : (
-              <IoBookmarkOutline />
-            )}
-          </p>
-          <p>
-            <MdFormatListBulletedAdd />
-          </p>
-          <p>
-            <FaBookOpen />
-          </p>
-          <p>
-            {serie.metadata.is_favorite ? <IoMdStar /> : <IoIosStarOutline />}
-          </p>
+          <span>
+            <p>{serie.name}</p>
+          </span>
+          <div className="serieActions">
+            <p>
+              <HiDownload />
+            </p>
+            <button
+              className="favorite"
+              onClick={(event) =>
+                favorite(event, serie.name, serie.metadata.is_favorite)
+              }>
+              {serie.metadata.is_favorite ? (
+                <IoBookmark />
+              ) : (
+                <IoBookmarkOutline />
+              )}
+              Favoritar
+            </button>
+            <p>
+              <MdFormatListBulletedAdd />
+            </p>
+            <p>
+              <FaBookOpen />
+            </p>
+            <p>
+              {serie.metadata.is_favorite ? <IoMdStar /> : <IoIosStarOutline />}
+            </p>
+          </div>
         </div>
       </div>
 

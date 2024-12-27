@@ -1,3 +1,10 @@
+/* Paleta de Cores */
+/* 282C34 ->   Gunmetal */
+/* aa5042 -> red wood */
+/* 8963BA -> Amethyst */
+/* 00a6fb -> Piction Blue */
+/* c1dbe3 -> Columbia blue */
+
 .serieInfo img {
   width: auto;
   height: 50vh;
@@ -6,4 +13,29 @@
 .serieHeader {
   display: flex;
   flex-flow: flex row;
+}
+
+.serieActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px;
+  gap: 1rem;
+}
+
+.favorite {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #aa5042;
+  border-radius: 0.2rem;
+  font-size: 1.3rem;
+  padding: 10px;
+}
+
+.favorite:hover {
+  transition: 1s;
+  color: #8963ba;
+  background-color: #f4f4ed1f;
 }

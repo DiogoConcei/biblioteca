@@ -25,7 +25,7 @@ export abstract class FileSystem {
     this.comicConfig = path.join(this.jsonFilesPath, "config", "series", "comicsConfig.json")
   }
 
-  async createFolder(path: string): Promise<void> {
+  public async createFolder(path: string): Promise<void> {
     try {
       await fs.mkdir(path, { recursive: true });
     } catch (e) {
@@ -33,7 +33,7 @@ export abstract class FileSystem {
     }
   }
 
-  async deleteFolder(path: string): Promise<void> {
+  public async deleteFolder(path: string): Promise<void> {
     try {
       await fs.rm(path, { force: true });
     } catch (e) {
@@ -56,5 +56,4 @@ export abstract class FileSystem {
       throw e;
     }
   }
-
 }

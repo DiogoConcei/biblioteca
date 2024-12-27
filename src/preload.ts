@@ -14,6 +14,8 @@ const seriesManager = {
     ipcRenderer.invoke("create-serie", filePaths),
   handleDrop: (files: string[]): Promise<string[]> =>
     ipcRenderer.invoke("file:handleDrop", files),
+  favoriteSerie: (serieName: string, is_favorite: boolean): Promise<void> =>
+    ipcRenderer.invoke("favorite-serie", serieName, is_favorite)
 };
 
 const eventEmitt = {

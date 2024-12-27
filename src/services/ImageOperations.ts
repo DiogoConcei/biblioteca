@@ -167,7 +167,7 @@ export default class ImageOperations extends FileSystem {
       let seriesName: string[] = []
 
       seriesData = await Promise.all(
-        filesName.map(fileName => this.dataManager.selectFileData(fileName))
+        filesName.map(fileName => this.dataManager.selectSerieData(fileName))
       );
 
       const firstChapterPaths = seriesData.map(
