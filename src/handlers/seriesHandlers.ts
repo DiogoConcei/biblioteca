@@ -3,7 +3,6 @@ import FileOperations from "../services/FileOperations"
 import StorageManager from "../services/StorageManager";
 import ImageOperations from "../services/ImageOperations";
 import path from 'path'
-import { stringify } from "querystring";
 
 
 export default function seriesHandlers(ipcMain: IpcMain) {

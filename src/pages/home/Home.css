@@ -1,6 +1,14 @@
 /* Paleta de Cores */
-/* 00A7E1 -> Piction Blue */
+/* cd5c5c -> indian red */
 /* 8963BA -> Amethyst */
 /* 282C34 -> Gunmetal */
-/* E562E5 -> Indian red */
-/* F4F4ED -> Baby powder */
+/* fcf7f8 -> Snow */
+/* 31afd4 -> Pacific cyan */
+
+.files {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}

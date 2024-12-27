@@ -1,10 +1,14 @@
-.series {
+/* Paleta de Cores */
+/* cd5c5c -> indian red */
+/* 8963BA -> Amethyst */
+/* 282C34 -> Gunmetal */
+/* fcf7f8 -> Snow */
+/* 31afd4 -> Pacific cyan */
+
+.content {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  padding: 1rem;
+  flex-flow: column;
+  width: 100vw;
 }
 
 .seriesContent {
@@ -42,7 +46,7 @@
 }
 
 .serie-name {
-  width: 11vw;
+  width: 8vw;
   font-size: 1rem;
   color: #8963ba;
 }
@@ -66,10 +70,11 @@
   width: 500px;
 }
 
-.progress-bar-completed {
-  height: 20px;
-  background-color: red;
-  border-radius: 20px;
-  height: 5px;
-  transition: width 0.5s ease-in-out;
+.readsInfo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 8vw;
+  text-decoration: none;
+  color: #8963ba;
 }

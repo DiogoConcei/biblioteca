@@ -1,5 +1,5 @@
 import "./Home.css";
-import ComicCards from "../../components/comicCards/comicCards";
+import ComicCards from "../../components/ComicCards/ComicCards";
 
 export default function Home() {
   const handleDrag = (event: React.DragEvent<HTMLDivElement>) => {
@@ -27,7 +27,7 @@ export default function Home() {
   };
 
   return (
-    <section className="series" onDragOver={handleDrag} onDrop={handleDrop}>
+    <section className="files" onDragOver={handleDrag} onDrop={handleDrop}>
       <ComicCards />
     </section>
   );

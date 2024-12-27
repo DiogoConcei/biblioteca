@@ -1,0 +1,76 @@
+import { MdClose } from "react-icons/md";
+import { FaRegSquareFull } from "react-icons/fa6";
+import { GoHome } from "react-icons/go";
+import { FiMinus } from "react-icons/fi";
+import { Link } from "react-router-dom";
+import "./Nav.css";
+
+export default function Nav() {
+  const minimize = () => {
+    if (window?.electron?.minimize) {
+      window.electron.minimize();
+    } else {
+      console.warn("Minimize function not available");
+    }
+  };
+
+  const fullScreen = () => {
+    if (window?.electron?.fullScreen) {
+      window.electron.fullScreen();
+    } else {
+      console.warn("FullScreen function not available");
+    }
+  };
+
+  const close = () => {
+    if (window?.electron?.close) {
+      window.electron.close();
+    } else {
+      console.warn("Close function not available");
+    }
+  };
+
+  return (
+    <nav className="TitleBar">
+      <ul className="NavBar">
+        <li key="home">
+          <Link to="/" className="link">
+            <button className="ActionsBtn" aria-label="Home">
+              <GoHome className="icon" />
+            </button>
+          </Link>
+        </li>
+        <li key="arquivos">
+          <Link className="link tab" to="/arquivos">
+            Arquivos
+          </Link>
+        </li>
+        <li key="colecoes">
+          <Link className="link tab" to="/colecoes">
+            Coleções
+          </Link>
+        </li>
+      </ul>
+
+      <div>
+        <div className="windowBtns">
+          <button
+            onClick={minimize}
+            aria-label="Minimizar"
+            className="ActionsBtn">
+            <FiMinus className="icon" />
+          </button>
+          <button
+            onClick={fullScreen}
+            aria-label="Maximizar"
+            className="ActionsBtn">
+            <FaRegSquareFull className="icon" />
+          </button>
+          <button onClick={close} aria-label="Fechar" className="ActionsBtn">
+            <MdClose className="icon" />
+          </button>
+        </div>
+      </div>
+    </nav>
+  );
+}

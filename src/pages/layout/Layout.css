@@ -14,95 +14,11 @@
   scrollbar-width: none;
 }
 
-.testing {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-flow: column;
-  height: 100vh;
-}
-
-button {
-  border: none;
-  background: none;
-  outline: none;
-  cursor: pointer;
-}
-
-.TitleBar {
-  display: flex;
-  justify-content: space-between;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
-  background: #282c34;
-  height: 50px;
-  -webkit-app-region: drag;
-  -bottom: 1px solid #f4f4ed63;
-}
-
-.NavBar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  -webkit-app-region: no-drag;
-  cursor: pointer;
-}
-
-.ActionsBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.7rem;
-  -webkit-app-region: no-drag;
-  height: 3rem;
-  width: 3rem;
-}
-
-.link {
-  font-size: 1.5rem;
-  text-decoration: none;
-}
-
-.tab {
-  padding: 0rem 0.7rem 0.7rem 0.7rem;
-  border-radius: 0.5rem 0.5rem 0px 0px;
-  text-align: center;
-  cursor: pointer;
-  color: #8963ba;
-  transition: background-color 0.3s, color 0.3s;
-}
-
-.tab:hover {
-  background-color: #f4f4ed1f;
-}
-
-.ActionsBtn:hover {
-  transition: 1s;
-  background-color: #f4f4ed1f;
-}
-
-.icon {
-  color: #b07ff1;
-  width: 2rem;
-  height: 2rem;
-}
-
-.windowBtns {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Adicionando espaço para conteúdo */
 .Content {
-  margin-top: 50px; /* Espaço suficiente para não sobrepor a TitleBar */
+  margin-top: 50px;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 50px); /* Mantém o conteúdo ajustado */
+  height: calc(100vh - 50px);
   overflow: auto;
   background: #282c34;
 }
