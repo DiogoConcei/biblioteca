@@ -9,7 +9,8 @@ const windowControl = {
 
 const seriesManager = {
   getSeries: async (): Promise<Comic[]> =>
-    ipcRenderer.invoke("get-series"),
+    ipcRenderer.invoke("get-all-series"),
+  getSerie: async (serieName: string): Promise<Comic> => ipcRenderer.invoke("get-serie", serieName),
   createSerie: (filePaths: string[]): Promise<void> =>
     ipcRenderer.invoke("create-serie", filePaths),
   handleDrop: (files: string[]): Promise<string[]> =>

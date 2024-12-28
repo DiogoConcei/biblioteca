@@ -5,6 +5,7 @@ declare global {
     interface Window {
         electron: {
             getSeries: () => Comic[],
+            getSerie: (serieName: string) => Comic,
             minimize: () => void,
             fullScreen: () => void,
             close: () => void,

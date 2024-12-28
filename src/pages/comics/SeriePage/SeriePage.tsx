@@ -1,29 +1,35 @@
-import { useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Comic } from "../../../types/serie.interfaces";
-import ChaptersInfo from "../../../components/chaptersInfo/chaptersInfo";
-import { HiDownload } from "react-icons/hi";
-import { MdFormatListBulletedAdd } from "react-icons/md";
-import { IoMdStar, IoIosStarOutline } from "react-icons/io";
-import { IoBookmarkOutline, IoBookmark } from "react-icons/io5";
-import { FaBookOpen } from "react-icons/fa";
-
-import "../SeriePage/SeriePage.css";
+import { useState, useEffect } from "react";
+import ComicActions from "../../../components/ComicActions/ComicActions";
+import "./SeriePage.css";
 
 export default function SeriePage() {
-  const location = useLocation();
+  const [serie, setSerie] = useState<Comic | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { book_name } = useParams();
 
-  const { serie } = location.state as { serie: Comic };
+  useEffect(() => {
+    const getData = async () => {
+      try {
+        setIsLoading(true);
+        const data = await window.electron.getSerie(book_name);
+        setSerie(data);
+      } catch (error) {
+        console.error("Erro ao carregar série:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const favorite = async (
-    event: React.MouseEvent<HTMLButtonElement>,
-    serieName: string,
-    is_favorite: boolean
-  ) => {
-    await window.electron.favoriteSerie(serieName, is_favorite);
-  };
+    getData();
+  }, [book_name]);
+  if (!serie) {
+    return <p>Carrengado dados...</p>;
+  }
 
   return (
-    <section className="serieInfo">
+    <section>
       <div className="serieHeader">
         <figure>
           <img
@@ -32,48 +38,38 @@ export default function SeriePage() {
           />
         </figure>
         <div className="serieDetails">
-          <span>
-            <p>{serie.name}</p>
-          </span>
-          <div className="serieActions">
+          <h2>{serie.name}</h2>
+          <div>
             <p>
-              <HiDownload />
-            </p>
-            <button
-              className="favorite"
-              onClick={(event) =>
-                favorite(event, serie.name, serie.metadata.is_favorite)
-              }>
-              {serie.metadata.is_favorite ? (
-                <IoBookmark />
-              ) : (
-                <IoBookmarkOutline />
-              )}
-              Favoritar
-            </button>
-            <p>
-              <MdFormatListBulletedAdd />
+              <span>Status: </span> {serie.metadata.status}
             </p>
             <p>
-              <FaBookOpen />
+              <span>Capitulos lidos: </span>
+              {serie.chapters_read}
             </p>
             <p>
-              {serie.metadata.is_favorite ? <IoMdStar /> : <IoIosStarOutline />}
+              <span>Quantidade de capitulos:</span> {serie.total_chapters}
+            </p>
+            <p>
+              <span>Criado em: </span>
+              {serie.created_at}
+            </p>
+            <p>
+              <span>Ultimo capitulo lido:</span>{" "}
+              {serie.reading_data.last_chapter_id}
+            </p>
+            <p className="testing">
+              <span className="description">Sinopse:</span> In an alchemical
+              ritual gone wrong, Edward Elric lost his arm and his leg, and his
+              brother Alphonse became nothing but a soul in a suit of armor.
+              Equipped with mechanical "auto-mail" limbs, Edward becomes a state
+              alchemist, seeking the one thing that can restore his brother and
+              himself… the legendary Philosopher's Stone
             </p>
           </div>
+          <ComicActions serie={serie} setSerie={setSerie} />
         </div>
       </div>
-
-      {/* <h1>{serie.name}</h1> */}
-      {/* <p>Total de capítulos: {serie.total_chapters}</p> */}
-      {/* <p>{serie.reading_data.last_chapter_id} - last chapter read</p> */}
-      {/* <p>{serie.created_at} - create date</p> */}
-      {/* </figcaption> */}
-      {/* </figure> */}
-      {/* </div> */}
-      {/* <div className="chaptersControl">
-        <ChaptersInfo serie={serie} />
-      </div> */}
     </section>
   );
 }

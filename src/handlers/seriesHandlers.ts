@@ -36,7 +36,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     })
 
 
-    ipcMain.handle("get-series", async () => {
+    ipcMain.handle("get-all-series", async () => {
 
         try {
             const getData = await dataManager.seriesData();
@@ -84,4 +84,19 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         }
     });
 
+    ipcMain.handle("get-serie", async (_, serieName: string) => {
+        try {
+            const data = await dataManager.selectSerieData(serieName)
+
+            const processedData = {
+                ...data,
+                cover_image: await fileManager.encodeImageToBase64(data.cover_image),
+            };
+
+            return processedData
+        } catch (error) {
+            console.error("Erro ao buscar dados da series:", error);
+            throw error;
+        }
+    })
 }

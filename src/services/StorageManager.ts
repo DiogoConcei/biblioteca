@@ -131,7 +131,7 @@ export default class StorageManager extends FileSystem {
           },
           chapters: orderChapters,
           metadata: {
-            status: "ongoing",
+            status: "em andamento",
             is_favorite: false,
             recommended_by: "",
             original_owner: "",

@@ -12,3 +12,8 @@ export interface SearchBarProps {
 export interface ComicCardsProps {
     searchInput: string;
 }
+
+export interface ComicActionsProps {
+    serie: Comic;
+    setSerie: React.Dispatch<React.SetStateAction<Comic | null>>
+}

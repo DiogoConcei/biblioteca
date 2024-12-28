@@ -35,7 +35,7 @@ export interface Comic {
   };
   chapters: ComicChapter[];
   metadata: {
-    status: "ongoing" | "completed" | "paused";
+    status: "em andamento" | "completada" | "pausada";
     is_favorite: boolean;
     recommended_by?: string;
     original_owner?: string;

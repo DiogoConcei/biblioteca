@@ -5,6 +5,13 @@
 /* fcf7f8 -> Snow */
 /* 31afd4 -> Pacific cyan */
 
+* {
+  padding: 0px;
+  margin: 0px;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+
 .home {
   display: flex;
   flex-direction: column;

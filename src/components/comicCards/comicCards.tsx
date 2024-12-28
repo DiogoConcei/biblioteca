@@ -6,13 +6,13 @@ import "./ComicCards.css";
 import { useEffect, useState } from "react";
 
 export default function ComicCards({ searchInput }: ComicCardsProps) {
-  const [series, setSerie] = useState<Comic[]>([]);
+  const [series, setSeries] = useState<Comic[]>([]);
 
   useEffect(() => {
     const getData = async () => {
       try {
         const data = await window.electron.getSeries();
-        setSerie(data);
+        setSeries(data);
       } catch (error) {
         console.error("Erro ao carregar imagens", error);
       }
@@ -50,7 +50,6 @@ export default function ComicCards({ searchInput }: ComicCardsProps) {
           <Link
             to={`/${serie.name}/${serie.id}`}
             key={serie.id}
-            state={{ serie }}
             className="serieLink">
             <figure>
               <img

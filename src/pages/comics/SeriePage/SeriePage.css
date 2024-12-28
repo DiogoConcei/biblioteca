@@ -1,41 +1,49 @@
 /* Paleta de Cores */
-/* 282C34 ->   Gunmetal */
-/* aa5042 -> red wood */
+/* cd5c5c -> indian red */
 /* 8963BA -> Amethyst */
-/* 00a6fb -> Piction Blue */
-/* c1dbe3 -> Columbia blue */
-
-.serieInfo img {
-  width: auto;
-  height: 50vh;
-}
+/* 282C34 -> Gunmetal */
+/* fcf7f8 -> Snow */
+/* 31afd4 -> Pacific cyan */
 
 .serieHeader {
   display: flex;
-  flex-flow: flex row;
-}
-
-.serieActions {
-  display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  margin: 20px;
-  gap: 1rem;
+  padding: 20px;
+  gap: 20px;
+  flex-flow: row wrap;
 }
 
-.favorite {
+.serieHeader figure img {
+  height: 50vh;
+  border-radius: 10px;
+}
+
+.serieDetails {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  background: #aa5042;
-  border-radius: 0.2rem;
-  font-size: 1.3rem;
-  padding: 10px;
+  flex-flow: column nowrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 20px;
+  width: 33vw;
+  height: 50vh;
 }
 
-.favorite:hover {
-  transition: 1s;
+.serieDetails h2 {
   color: #8963ba;
-  background-color: #f4f4ed1f;
+  font-size: 1.8rem;
+}
+
+.serieDetails div p {
+  font-size: 1.5rem;
+  color: black;
+}
+
+.serieDetails div span {
+  font-size: 1.3rem;
+  color: #cd5c5c;
+}
+
+.testing {
+  width: 600px;
 }
