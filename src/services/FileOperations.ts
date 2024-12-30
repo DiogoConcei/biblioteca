@@ -27,25 +27,33 @@ export default class FileOperations extends FileSystem {
       .replace(/\.{2,}/g, ".");
   }
 
+  public extractSerieInfo(fileName: string): { volume: number; chapter: number } {
 
-  public extractSerieInfo(fileName: string) {
-    const regex =
-      /(?:Vol\.\s*(\d+))?.*?(?:Ch\.\s*(\d+))?.*?(?:Capítulo\s*(\d+))?.*?(?:Chapter\s*(\d+))?.*?(\d+)/i;
-    const match = fileName.match(regex);
+    const regex = /Vol\.\s*(\d+)|Ch\.\s*(\d+(\.\d+)?)|Chapter\s*(\d+(\.\d+)?)|Capítulo\s*(\d+(\.\d+)?)/gi;
+    const matches = [...fileName.matchAll(regex)];
 
-    if (match) {
-      const volume = match[1] ? parseInt(match[1]) : null;
-      const chapter =
-        match[2] || match[3] || match[4] || match[5]
-          ? parseInt(match[2] || match[3] || match[4] || match[5])
-          : null;
 
-      return { volume, chapter };
-    }
-    return { volume: null, chapter: null };
+    let volume = 0;
+    let chapter = 0;
+
+    matches.forEach((match) => {
+      if (match[1]) {
+        volume = parseInt(match[1], 10);
+      }
+
+      if (match[2] || match[4] || match[6]) {
+        const chapterValue = match[2] || match[4] || match[6];
+        const chapterNumber = parseFloat(chapterValue);
+        chapter = chapterNumber;
+      }
+    });
+
+    return { volume, chapter };
   }
 
+
   public async orderByChapters(filesPath: string[]): Promise<string[]> {
+
     const fileDetails = await Promise.all(
       filesPath.map(async (file) => {
         const fileName = path.basename(file);
@@ -53,7 +61,8 @@ export default class FileOperations extends FileSystem {
 
         return {
           filePath: file,
-          volume: volume ?? 0, chapter: chapter ?? 0,
+          volume: volume ? Number(volume) : 0,
+          chapter: chapter ? Number(chapter) : 0,
         };
       })
     );
@@ -62,106 +71,12 @@ export default class FileOperations extends FileSystem {
       if (a.volume !== b.volume) {
         return a.volume - b.volume;
       }
+
       return a.chapter - b.chapter;
     });
 
-    return fileDetails.map((fileDetail) => fileDetail.filePath);
-  }
-
-  public async orderByName(filesPath: string[]): Promise<string[]> {
-    return filesPath.sort((a, b) =>
-      path.basename(a).localeCompare(path.basename(b))
-    );
-  }
-
-  public async orderByDefault(filesPath: string[]): Promise<string[]> {
-    const fileDetails = await Promise.all(
-      filesPath.map(async (file) => {
-        const stat = await fs.stat(file);
-        return {
-          filePath: file,
-          mtime: stat.mtime.getTime(),
-        };
-      })
-    );
-
-    fileDetails.sort((a, b) => a.mtime - b.mtime);
-
-    return fileDetails.map((fileDetail) => fileDetail.filePath);
-  }
-
-  public async orderBySize(filesPath: string[]): Promise<string[]> {
-    const fileDetails = await Promise.all(
-      filesPath.map(async (file) => {
-        const stat = await fs.stat(file);
-        return {
-          filePath: file,
-          size: stat.size,
-        };
-      })
-    );
-
-    fileDetails.sort((a, b) => a.size - b.size);
-
-    return fileDetails.map((fileDetail) => fileDetail.filePath);
-  }
-
-  public checkOrder(chapters: ComicChapter[]): ComicChapter[] {
-    const extractChapterNumber = (name: string): number | null => {
-      const regex = /(?:Ch\.|Capítulo|Chapter|Vol\.)\s*(\d+)/i;
-      const match = name.match(regex);
-      return match ? parseInt(match[1], 10) : null;
-    };
-
-    const reorderedChapters = [...chapters].sort((a, b) => {
-      const chapterA = extractChapterNumber(a.sanitized_name) ?? 0;
-      const chapterB = extractChapterNumber(b.sanitized_name) ?? 0;
-      return chapterA - chapterB;
-    });
-
-    reorderedChapters.forEach((chapter, index) => {
-      chapter.id = index + 1;
-    });
-
-    return reorderedChapters;
-  }
-
-
-  public async ensureCorrectOrder(
-    chapters: ComicChapter[]
-  ): Promise<ComicChapter[]> {
-    // Extrai o número do capítulo de um nome
-    const extractChapterNumber = (name: string): number | null => {
-      const regex = /(?:Ch\.|Capítulo|Chapter|Vol\.)\s*(\d+)/i;
-      const match = name.match(regex);
-      return match ? parseInt(match[1], 10) : null;
-    };
-
-    // Verifica se os capítulos estão ordenados corretamente
-    const isOrdered = chapters.every((chapter, index, arr) => {
-      if (index === 0) return true; // O primeiro capítulo não precisa ser comparado
-      const prevChapterNumber = extractChapterNumber(arr[index - 1].sanitized_name) ?? 0;
-      const currentChapterNumber = extractChapterNumber(chapter.sanitized_name) ?? 0;
-      return prevChapterNumber < currentChapterNumber;
-    });
-
-    if (isOrdered) {
-      return chapters; // Retorna os capítulos, se já estiverem ordenados
-    }
-
-    // Caso não estejam ordenados, corrige a ordem
-    const reorderedChapters = [...chapters].sort((a, b) => {
-      const chapterNumberA = extractChapterNumber(a.sanitized_name) ?? 0;
-      const chapterNumberB = extractChapterNumber(b.sanitized_name) ?? 0;
-      return chapterNumberA - chapterNumberB;
-    });
-
-    // Atualiza os IDs dos capítulos após a reordenação
-    reorderedChapters.forEach((chapter, index) => {
-      chapter.id = index + 1; // Garante IDs sequenciais
-    });
-
-    return reorderedChapters;
+    const orderedPaths = fileDetails.map((fileDetail) => fileDetail.filePath);
+    return orderedPaths;
   }
 
   public async localUpload(file: string): Promise<string> {

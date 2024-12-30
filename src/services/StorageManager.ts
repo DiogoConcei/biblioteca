@@ -102,58 +102,60 @@ export default class StorageManager extends FileSystem {
   }
 
   public async createMainData(series: string[]): Promise<Comic[]> {
-    const currentDate = new Date().toLocaleDateString();
+    try {
+      const currentDate = new Date().toLocaleDateString();
 
-    return await Promise.all(
-      series.map(async (serie, index) => {
-        const id = ++this.comicId;
-        const name = path.basename(serie);
-        const sanitizedName = this.fileManager.sanitizeFilename(name);
+      return await Promise.all(
+        series.map(async (serie) => {
+          const id = ++this.comicId;
+          const name = path.basename(serie);
+          const sanitizedName = this.fileManager.sanitizeFilename(name);
 
-        const chaptersPath = await this.foundFiles(serie);
-        const chaptersData = await this.createChapterData(chaptersPath, currentDate);
+          let chaptersPath = await this.foundFiles(serie);
+          chaptersPath = await this.fileManager.orderByChapters(chaptersPath)
+          const chaptersData = await this.createChapterData(chaptersPath, currentDate);
+          chaptersData[0].is_dowload = true
 
-        const orderedChapters = await this.fileManager.ensureCorrectOrder(chaptersData);
+          const comments: string[] = [];
 
-        orderedChapters.forEach((orderedChapter, index) => {
-          chaptersData[index] = { ...orderedChapter };
-        });
-
-        const comments: string[] = []
-
-        return {
-          id,
-          name,
-          sanitized_name: sanitizedName,
-          serie_path: serie,
-          cover_image: "",
-          total_chapters: orderedChapters.length,
-          created_at: currentDate,
-          chapters_read: 0,
-          reading_data: {
-            last_chapter_id: 0,
-            last_page: 0,
-            last_read_at: "",
-          },
-          chapters: orderedChapters,
-          metadata: {
-            status: "em andamento",
-            is_favorite: false,
-            recommended_by: "",
-            original_owner: "",
-            last_download: 0,
-            rating: 0,
-          },
-          comments: comments,
-        };
-      })
-    );
+          return {
+            id,
+            name,
+            sanitized_name: sanitizedName,
+            serie_path: serie,
+            cover_image: "",
+            total_chapters: chaptersData.length,
+            created_at: currentDate,
+            chapters_read: 0,
+            reading_data: {
+              last_chapter_id: 0,
+              last_page: 0,
+              last_read_at: "",
+            },
+            chapters: chaptersData,
+            metadata: {
+              status: "em andamento",
+              is_favorite: false,
+              recommended_by: "",
+              original_owner: "",
+              last_download: chaptersData[0].id,
+              rating: 0,
+            },
+            comments: comments,
+          };
+        })
+      );
+    } catch (error) {
+      console.error(`erro ao criar dados principais: ${error}`);
+      throw error;
+    }
   }
 
   public async createChapterData(chaptersPath: string[], currentDate: string): Promise<ComicChapter[]> {
     return chaptersPath.map((chapter, index) => {
       const name = path.basename(chapter, path.extname(chapter));
       const sanitized_name = this.fileManager.sanitizeFilename(name);
+
 
       return {
         id: index + 1,
@@ -181,12 +183,13 @@ export default class StorageManager extends FileSystem {
   private async writeSerieData(serieData: Comic): Promise<void> {
     const tempPath = path.join(this.jsonFilesPath, `${serieData.name}.json`);
     try {
-      this.setId(this.comicId)
+      this.setId(this.comicId);
       await fs.writeFile(tempPath, JSON.stringify(serieData, null, 2), "utf-8");
     } catch (e) {
       console.error(`Erro ao tentar gravar o arquivo ${serieData.name}.json: ${e.message}`);
       throw e;
     }
   }
+
 }
 

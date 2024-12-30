@@ -118,46 +118,54 @@ export default class ImageOperations extends FileSystem {
     }
   }
 
-  private async analiseImageSpecial(imagePaths: string[]): Promise<string[]> {
-    const specialImagePaths: string[] = [];
-
+  private async analiseImageSpecial(imagePaths: string[]): Promise<string | null> {
+    // Buscar apenas um arquivo que atenda à condição da imagem especial
     for (const imagePath of imagePaths) {
       try {
         const image = await Jimp.read(imagePath);
 
         if ((image.bitmap.width >= 400) || (image.bitmap.height >= 600)) {
-          specialImagePaths.push(imagePath);
-          break;
+          return imagePath; // Retorna o primeiro arquivo que atenda a condição
         }
       } catch (error) {
         console.error(`[ERROR] Erro ao processar a imagem especial ${imagePath}:`, error);
       }
     }
-
-    return specialImagePaths;
+    return null; // Retorna null se nenhum arquivo atender à condição
   }
 
   private async analiseImage(imagePaths: string[]): Promise<string[]> {
+    console.log(imagePaths);
     const validImagePaths: string[] = [];
 
+    // Tentando encontrar uma imagem válida (com as condições especificadas)
     for (const imagePath of imagePaths) {
       try {
         const image = await Jimp.read(imagePath);
 
         if ((image.bitmap.width <= 1200) && (image.bitmap.height >= 1300)) {
           validImagePaths.push(imagePath);
-          break;
+          break; // Interrompe o laço após encontrar o primeiro arquivo válido
         }
       } catch (error) {
         console.error(`[ERROR] Erro ao processar a imagem ${imagePath}:`, error);
       }
     }
 
-    const specialImages = await this.analiseImageSpecial(imagePaths);
+    // Se alguma imagem válida for encontrada, não chama a analiseImageSpecial
+    if (validImagePaths.length > 0) {
+      return validImagePaths;
+    }
 
-    return [...validImagePaths, ...specialImages];
+    // Se nenhuma imagem válida for encontrada, chama a analiseImageSpecial
+    const specialImage = await this.analiseImageSpecial(imagePaths);
+
+    if (specialImage && !validImagePaths.includes(specialImage)) {
+      validImagePaths.push(specialImage); // Adiciona a imagem especial apenas se ainda não foi adicionada
+    }
+
+    return validImagePaths;
   }
-
 
   private async createCover(imagePath: string): Promise<string> {
     try {
