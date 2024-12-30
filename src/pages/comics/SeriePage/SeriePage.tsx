@@ -58,14 +58,6 @@ export default function SeriePage() {
               <span>Ultimo capitulo lido:</span>{" "}
               {serie.reading_data.last_chapter_id}
             </p>
-            <p className="testing">
-              <span className="description">Sinopse:</span> In an alchemical
-              ritual gone wrong, Edward Elric lost his arm and his leg, and his
-              brother Alphonse became nothing but a soul in a suit of armor.
-              Equipped with mechanical "auto-mail" limbs, Edward becomes a state
-              alchemist, seeking the one thing that can restore his brother and
-              himself… the legendary Philosopher's Stone
-            </p>
           </div>
           <ComicActions serie={serie} setSerie={setSerie} />
         </div>

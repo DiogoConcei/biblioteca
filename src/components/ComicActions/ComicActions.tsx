@@ -1,9 +1,9 @@
-import { HiDownload } from "react-icons/hi";
 import { MdFormatListBulletedAdd } from "react-icons/md";
 import { IoMdStar, IoIosStarOutline } from "react-icons/io";
 import { IoBookmarkOutline, IoBookmark } from "react-icons/io5";
 import { FaBookOpen } from "react-icons/fa";
 import { ComicActionsProps } from "../../types/components.interfaces";
+import DownloadButton from "../DonwloadButton/DownloadButton";
 import "./ComicActions.css";
 
 export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
@@ -38,10 +38,7 @@ export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
 
   return (
     <div className="serieActions">
-      <button className="download">
-        <HiDownload />
-        Download
-      </button>
+      <DownloadButton />
       <button
         className="favorite"
         onClick={(event) =>

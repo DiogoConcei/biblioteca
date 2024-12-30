@@ -2,7 +2,7 @@ import { useState } from "react";
 import { IoCheckmarkCircleOutline } from "react-icons/io5";
 import { IoCheckmarkCircle } from "react-icons/io5";
 import { ChaptersInfoProps } from "../../types/components.interfaces";
-import "../chaptersInfo/chaptersInfo.css";
+import "./ChaptersInfo.css";
 
 export default function ChaptersInfo({ serie }: ChaptersInfoProps) {
   const [currentPage, setCurrentPage] = useState<number>(1);
