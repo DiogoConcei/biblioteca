@@ -111,9 +111,14 @@ export default class StorageManager extends FileSystem {
         const sanitizedName = this.fileManager.sanitizeFilename(name);
 
         const chaptersPath = await this.foundFiles(serie);
-        const orderChapters = await this.fileManager.checkOrder(
-          await this.createChapterData(chaptersPath, currentDate)
-        );
+        const chaptersData = await this.createChapterData(chaptersPath, currentDate);
+
+        const orderedChapters = await this.fileManager.ensureCorrectOrder(chaptersData);
+
+        orderedChapters.forEach((orderedChapter, index) => {
+          chaptersData[index] = { ...orderedChapter };
+        });
+
         const comments: string[] = []
 
         return {
@@ -122,7 +127,7 @@ export default class StorageManager extends FileSystem {
           sanitized_name: sanitizedName,
           serie_path: serie,
           cover_image: "",
-          total_chapters: orderChapters.length,
+          total_chapters: orderedChapters.length,
           created_at: currentDate,
           chapters_read: 0,
           reading_data: {
@@ -130,7 +135,7 @@ export default class StorageManager extends FileSystem {
             last_page: 0,
             last_read_at: "",
           },
-          chapters: orderChapters,
+          chapters: orderedChapters,
           metadata: {
             status: "em andamento",
             is_favorite: false,
@@ -145,7 +150,7 @@ export default class StorageManager extends FileSystem {
     );
   }
 
-  private async createChapterData(chaptersPath: string[], currentDate: string): Promise<ComicChapter[]> {
+  public async createChapterData(chaptersPath: string[], currentDate: string): Promise<ComicChapter[]> {
     return chaptersPath.map((chapter, index) => {
       const name = path.basename(chapter, path.extname(chapter));
       const sanitized_name = this.fileManager.sanitizeFilename(name);
@@ -184,3 +189,4 @@ export default class StorageManager extends FileSystem {
     }
   }
 }
+

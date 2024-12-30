@@ -3,7 +3,6 @@ import { ComicChapter } from "../types/serie.interfaces";
 import path from "path";
 import fs from "fs/promises";
 import fse from 'fs-extra'
-import { error } from "console";
 
 export default class FileOperations extends FileSystem {
   constructor() {
@@ -28,99 +27,33 @@ export default class FileOperations extends FileSystem {
       .replace(/\.{2,}/g, ".");
   }
 
-  public async orderByDefault(filesPath: string[]): Promise<string[]> {
-    const fileDetails = await Promise.all(
-      filesPath.map(async (file) => {
-        const filePath = file;
-        const name = path.basename(file);
-        const stat = await fs.stat(file);
-        const mtime = stat.mtime.getTime();
-
-        return {
-          name: name,
-          filePath: filePath,
-          mtime: mtime,
-        };
-      })
-    );
-
-    fileDetails.sort((a, b) => {
-      if (a.mtime === b.mtime) {
-        return a.name.localeCompare(b.name);
-      }
-      return a.mtime - b.mtime;
-    });
-
-    return fileDetails.map((fileDetail) => fileDetail.filePath);
-  }
-
-  public async orderByName(filesPath: string[]): Promise<string[]> {
-    const fileDetails = await Promise.all(
-      filesPath.map(async (file) => {
-        const filePath = file;
-        const name = path.basename(file);
-
-        return {
-          name: name,
-          filePath: filePath,
-        };
-      })
-    );
-
-    fileDetails.sort((a, b) => a.name.localeCompare(b.name));
-
-    return fileDetails.map((fileDetail) => fileDetail.filePath);
-  }
-
-  public async orderBySize(filesPath: string[]): Promise<string[]> {
-    const fileDetails = await Promise.all(
-      filesPath.map(async (file) => {
-        const filePath = file;
-        const stat = await fs.stat(file);
-        const size = stat.size;
-
-        return {
-          filePath: filePath,
-          size: size,
-        };
-      })
-    );
-
-    fileDetails.sort((a, b) => a.size - b.size);
-    return fileDetails.map((fileDetail) => fileDetail.filePath);
-  }
 
   public extractSerieInfo(fileName: string) {
     const regex =
-      /(?:Vol\.\s*(\d+))?.*?(?:Ch\.\s*(\d+))?.*?(?:Capítulo\s*(\d+))?.*?(?:Chapter\s*(\d+))?.*/i;
+      /(?:Vol\.\s*(\d+))?.*?(?:Ch\.\s*(\d+))?.*?(?:Capítulo\s*(\d+))?.*?(?:Chapter\s*(\d+))?.*?(\d+)/i;
     const match = fileName.match(regex);
 
     if (match) {
-
       const volume = match[1] ? parseInt(match[1]) : null;
-      const chapter = match[2] ? parseInt(match[2]) : null;
-      const capítulo = match[3] ? parseInt(match[3]) : null;
-      const chapterLabel = match[4] ? parseInt(match[4]) : null;
+      const chapter =
+        match[2] || match[3] || match[4] || match[5]
+          ? parseInt(match[2] || match[3] || match[4] || match[5])
+          : null;
 
-      const chapterNumber = chapter || chapterLabel || capítulo;
-
-      return { volume, chapterNumber };
+      return { volume, chapter };
     }
-    return { volume: null, chapterNumber: null };
+    return { volume: null, chapter: null };
   }
 
   public async orderByChapters(filesPath: string[]): Promise<string[]> {
     const fileDetails = await Promise.all(
       filesPath.map(async (file) => {
-        const filePath = file;
         const fileName = path.basename(file);
-
-        const { volume, chapterNumber } = this.extractSerieInfo(fileName);
+        const { volume, chapter } = this.extractSerieInfo(fileName);
 
         return {
-          filePath,
-          volume,
-          chapterNumber,
+          filePath: file,
+          volume: volume ?? 0, chapter: chapter ?? 0,
         };
       })
     );
@@ -129,40 +62,103 @@ export default class FileOperations extends FileSystem {
       if (a.volume !== b.volume) {
         return a.volume - b.volume;
       }
-      return a.chapterNumber - b.chapterNumber;
+      return a.chapter - b.chapter;
     });
+
+    return fileDetails.map((fileDetail) => fileDetail.filePath);
+  }
+
+  public async orderByName(filesPath: string[]): Promise<string[]> {
+    return filesPath.sort((a, b) =>
+      path.basename(a).localeCompare(path.basename(b))
+    );
+  }
+
+  public async orderByDefault(filesPath: string[]): Promise<string[]> {
+    const fileDetails = await Promise.all(
+      filesPath.map(async (file) => {
+        const stat = await fs.stat(file);
+        return {
+          filePath: file,
+          mtime: stat.mtime.getTime(),
+        };
+      })
+    );
+
+    fileDetails.sort((a, b) => a.mtime - b.mtime);
+
+    return fileDetails.map((fileDetail) => fileDetail.filePath);
+  }
+
+  public async orderBySize(filesPath: string[]): Promise<string[]> {
+    const fileDetails = await Promise.all(
+      filesPath.map(async (file) => {
+        const stat = await fs.stat(file);
+        return {
+          filePath: file,
+          size: stat.size,
+        };
+      })
+    );
+
+    fileDetails.sort((a, b) => a.size - b.size);
 
     return fileDetails.map((fileDetail) => fileDetail.filePath);
   }
 
   public checkOrder(chapters: ComicChapter[]): ComicChapter[] {
     const extractChapterNumber = (name: string): number | null => {
-      const regex = /(?:Ch\.|Cap_tulo|Chapter)_(\d+)/i;
+      const regex = /(?:Ch\.|Capítulo|Chapter|Vol\.)\s*(\d+)/i;
       const match = name.match(regex);
       return match ? parseInt(match[1], 10) : null;
     };
 
-    const isOrdered = chapters.every((chapter) => {
-      const chapterNumber = extractChapterNumber(
-        chapter.sanitized_name
-      );
-      return chapterNumber !== null && chapter.id === chapterNumber;
-    });
-
-    if (isOrdered) {
-      return chapters;
-    }
-
     const reorderedChapters = [...chapters].sort((a, b) => {
-      const chapterNumberA =
-        extractChapterNumber(a.sanitized_name) ?? 0;
-      const chapterNumberB =
-        extractChapterNumber(b.sanitized_name) ?? 0;
-      return chapterNumberA - chapterNumberB;
+      const chapterA = extractChapterNumber(a.sanitized_name) ?? 0;
+      const chapterB = extractChapterNumber(b.sanitized_name) ?? 0;
+      return chapterA - chapterB;
     });
 
     reorderedChapters.forEach((chapter, index) => {
       chapter.id = index + 1;
+    });
+
+    return reorderedChapters;
+  }
+
+
+  public async ensureCorrectOrder(
+    chapters: ComicChapter[]
+  ): Promise<ComicChapter[]> {
+    // Extrai o número do capítulo de um nome
+    const extractChapterNumber = (name: string): number | null => {
+      const regex = /(?:Ch\.|Capítulo|Chapter|Vol\.)\s*(\d+)/i;
+      const match = name.match(regex);
+      return match ? parseInt(match[1], 10) : null;
+    };
+
+    // Verifica se os capítulos estão ordenados corretamente
+    const isOrdered = chapters.every((chapter, index, arr) => {
+      if (index === 0) return true; // O primeiro capítulo não precisa ser comparado
+      const prevChapterNumber = extractChapterNumber(arr[index - 1].sanitized_name) ?? 0;
+      const currentChapterNumber = extractChapterNumber(chapter.sanitized_name) ?? 0;
+      return prevChapterNumber < currentChapterNumber;
+    });
+
+    if (isOrdered) {
+      return chapters; // Retorna os capítulos, se já estiverem ordenados
+    }
+
+    // Caso não estejam ordenados, corrige a ordem
+    const reorderedChapters = [...chapters].sort((a, b) => {
+      const chapterNumberA = extractChapterNumber(a.sanitized_name) ?? 0;
+      const chapterNumberB = extractChapterNumber(b.sanitized_name) ?? 0;
+      return chapterNumberA - chapterNumberB;
+    });
+
+    // Atualiza os IDs dos capítulos após a reordenação
+    reorderedChapters.forEach((chapter, index) => {
+      chapter.id = index + 1; // Garante IDs sequenciais
     });
 
     return reorderedChapters;
@@ -190,6 +186,11 @@ export default class FileOperations extends FileSystem {
     try {
       const seriesPath = await this.foundFiles(this.jsonFilesPath)
       const filePath = seriesPath.find((serie) => path.basename(serie, path.extname(serie)) === serieName)
+
+      if (!filePath) {
+        console.error(`arquivo inexistente`)
+      }
+
       return filePath
     } catch (error) {
       console.error(`erro ao recuperar arquivo de dados: ${error}`)
@@ -197,10 +198,6 @@ export default class FileOperations extends FileSystem {
   }
 
   // found cover
-
-  // check cover
-
-  // check jsonfile
 
   // found chapters pages
 }

@@ -87,9 +87,6 @@ export default class ImageOperations extends FileSystem {
       const seriePath = await this.fileManager.findJsonFile(serieName)
       let serieData = await this.dataManager.selectSerieData(serieName)
 
-      serieData.chapters[0].is_dowload = true
-      serieData.metadata.last_download = serieData.chapters[0].id
-
       const chaptersSeriePath = path.join(
         this.imagesFilesPath,
         serieName,
@@ -109,6 +106,9 @@ export default class ImageOperations extends FileSystem {
             reject(error);
           });
       });
+
+      serieData.chapters[0].is_dowload = true
+      serieData.metadata.last_download = serieData.chapters[0].id
 
       await jsonfile.writeFile(seriePath, serieData, { spaces: 2 })
       return chaptersSeriePath;
