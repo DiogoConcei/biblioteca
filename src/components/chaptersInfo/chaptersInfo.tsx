@@ -31,7 +31,7 @@ export default function ChaptersInfo({ serie }: ChaptersInfoProps) {
         {currentItems.map((chapter) => (
           <li key={chapter.id} className="chapter">
             {chapter.name}
-            {chapter.is_read ? (
+            {chapter.is_dowload ? (
               <IoCheckmarkCircle className="read" />
             ) : (
               <IoCheckmarkCircleOutline className="unread" />

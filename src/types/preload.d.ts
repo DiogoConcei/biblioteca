@@ -6,6 +6,7 @@ declare global {
         electron: {
             getSeries: () => Comic[],
             getSerie: (serieName: string) => Comic,
+            downloadSerie: (seriePath: string, quantity: number) => Promise<void>,
             minimize: () => void,
             fullScreen: () => void,
             close: () => void,

@@ -3,12 +3,12 @@ import { ComicChapter } from "../types/serie.interfaces";
 import path from "path";
 import fs from "fs/promises";
 import fse from 'fs-extra'
+import { error } from "console";
 
 export default class FileOperations extends FileSystem {
   constructor() {
     super();
   }
-
 
   public async encodeImageToBase64(filePath: string): Promise<string> {
     try {
@@ -186,7 +186,15 @@ export default class FileOperations extends FileSystem {
     }
   }
 
-  // found jsonfile 
+  public async findJsonFile(serieName: string): Promise<string> {
+    try {
+      const seriesPath = await this.foundFiles(this.jsonFilesPath)
+      const filePath = seriesPath.find((serie) => path.basename(serie, path.extname(serie)) === serieName)
+      return filePath
+    } catch (error) {
+      console.error(`erro ao recuperar arquivo de dados: ${error}`)
+    }
+  }
 
   // found cover
 

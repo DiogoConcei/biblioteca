@@ -49,7 +49,6 @@ export abstract class FileSystem {
       const filePaths = contents.filter((content) => content.isFile() && filter.test(content.name))
         .map((file) => path.join(dirPath, file.name));
 
-
       return filePaths;
     } catch (e) {
       console.error(`erro encontrado: ${e}`);

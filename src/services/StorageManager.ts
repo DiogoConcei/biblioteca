@@ -120,6 +120,7 @@ export default class StorageManager extends FileSystem {
           id,
           name,
           sanitized_name: sanitizedName,
+          serie_path: serie,
           cover_image: "",
           total_chapters: orderChapters.length,
           created_at: currentDate,
@@ -135,6 +136,7 @@ export default class StorageManager extends FileSystem {
             is_favorite: false,
             recommended_by: "",
             original_owner: "",
+            last_download: 0,
             rating: 0,
           },
           comments: comments,
@@ -154,6 +156,7 @@ export default class StorageManager extends FileSystem {
         sanitized_name,
         chapter_path: path.resolve(chapter),
         create_date: currentDate,
+        is_dowload: false,
         is_read: false,
       };
     });

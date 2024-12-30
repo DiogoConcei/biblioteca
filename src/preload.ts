@@ -16,7 +16,8 @@ const seriesManager = {
   handleDrop: (files: string[]): Promise<string[]> =>
     ipcRenderer.invoke("file:handleDrop", files),
   favoriteSerie: (serieName: string, is_favorite: boolean): Promise<void> =>
-    ipcRenderer.invoke("favorite-serie", serieName, is_favorite)
+    ipcRenderer.invoke("favorite-serie", serieName, is_favorite),
+  downloadSerie: (seriePath: string, quantity: number): Promise<void> => ipcRenderer.invoke("donwload-chapter", seriePath, quantity)
 };
 
 const eventEmitt = {

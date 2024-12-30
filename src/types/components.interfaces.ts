@@ -17,3 +17,7 @@ export interface ComicActionsProps {
     serie: Comic;
     setSerie: React.Dispatch<React.SetStateAction<Comic | null>>
 }
+
+export interface downloadButtonProps {
+    seriePath: string
+}

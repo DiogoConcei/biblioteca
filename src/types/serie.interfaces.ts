@@ -24,6 +24,7 @@ export interface Comic {
   id: number;
   name: string;
   sanitized_name: string;
+  serie_path: string;
   cover_image: string;
   total_chapters: number;
   created_at: string;
@@ -39,6 +40,7 @@ export interface Comic {
     is_favorite: boolean;
     recommended_by?: string;
     original_owner?: string;
+    last_download: number;
     rating?: number;
   };
   comments: string[];
@@ -52,4 +54,5 @@ export interface ComicChapter {
   chapter_path: string;
   create_date: string;
   is_read: boolean;
+  is_dowload: boolean;
 }

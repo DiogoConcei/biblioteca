@@ -56,6 +56,15 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         }
     })
 
+    ipcMain.handle("donwload-chapter", async (_event, seriePath: string, quantity: number) => {
+        try {
+            await ImageManager.extractChapters(seriePath, quantity)
+        } catch (error) {
+            console.error(`erro em realizar o download: ${error}`)
+            throw error
+        }
+    })
+
     ipcMain.handle("favorite-serie", async (_event, serieName: string, is_favorite: boolean) => {
         try {
             const serie = await dataManager.selectSerieData(serieName);
@@ -84,7 +93,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         }
     });
 
-    ipcMain.handle("get-serie", async (_, serieName: string) => {
+    ipcMain.handle("get-serie", async (_event, serieName: string) => {
         try {
             const data = await dataManager.selectSerieData(serieName)
 

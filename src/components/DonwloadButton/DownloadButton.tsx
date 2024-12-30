@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { downloadButtonProps } from "../../types/components.interfaces";
 import { HiDownload } from "react-icons/hi";
 import "./DownloadButton.css";
 
-export default function DownloadButton() {
+export default function DownloadButton({ seriePath }: downloadButtonProps) {
   const [selectedQuantity, setSelectedQuantity] = useState<number>(0);
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
@@ -12,8 +13,9 @@ export default function DownloadButton() {
     setIsOpen((prevState) => !prevState);
   };
 
-  const onSelect = (quantity: number) => {
+  const onSelect = async (quantity: number) => {
     setSelectedQuantity(quantity);
+    await window.electron.downloadSerie(seriePath, quantity);
     setIsOpen(false);
   };
 
