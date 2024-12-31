@@ -23,9 +23,23 @@ export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
     }));
 
     try {
-      await window.electron.favoriteSerie(serieName, newFavoriteStatus);
+      const response = await window.electron.serieActions.favoriteSerie(
+        serieName,
+        newFavoriteStatus
+      );
+
+      if (response.success) {
+        setSerie((prevSerie) => ({
+          ...prevSerie!,
+          metadata: {
+            ...prevSerie!.metadata,
+            is_favorite: newFavoriteStatus,
+          },
+        }));
+      }
     } catch (error) {
       console.error("Erro ao favoritar série:", error);
+
       setSerie((prevSerie) => ({
         ...prevSerie!,
         metadata: {

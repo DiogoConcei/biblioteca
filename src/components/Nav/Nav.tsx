@@ -7,24 +7,24 @@ import "./Nav.css";
 
 export default function Nav() {
   const minimize = () => {
-    if (window?.electron?.minimize) {
-      window.electron.minimize();
+    if (window?.electron?.windowAction?.minimize) {
+      window.electron.windowAction.minimize();
     } else {
       console.warn("Minimize function not available");
     }
   };
 
   const fullScreen = () => {
-    if (window?.electron?.fullScreen) {
-      window.electron.fullScreen();
+    if (window?.electron?.windowAction?.fullScreen) {
+      window.electron.windowAction.fullScreen();
     } else {
       console.warn("FullScreen function not available");
     }
   };
 
   const close = () => {
-    if (window?.electron?.close) {
-      window.electron.close();
+    if (window?.electron?.windowAction?.close) {
+      window.electron.windowAction.close();
     } else {
       console.warn("Close function not available");
     }

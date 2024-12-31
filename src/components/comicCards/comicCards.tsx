@@ -11,7 +11,7 @@ export default function ComicCards({ searchInput }: ComicCardsProps) {
   useEffect(() => {
     const getData = async () => {
       try {
-        const data = await window.electron.getSeries();
+        const data = await window.electron.series.getSeries();
         setSeries(data);
       } catch (error) {
         console.error("Erro ao carregar imagens", error);
@@ -24,10 +24,10 @@ export default function ComicCards({ searchInput }: ComicCardsProps) {
       getData();
     };
 
-    window.electron.on("serie-created", onSerieCreated);
+    window.electron.eventEmitter.on("serie-created", onSerieCreated);
 
     return () => {
-      window.electron.off("serie-created", onSerieCreated);
+      window.electron.eventEmitter.off("serie-created", onSerieCreated);
     };
   }, []);
 

@@ -27,9 +27,9 @@ export default function Home() {
 
     try {
       const newPaths = await Promise.all(
-        await window.electron.handleDrop(filePaths)
+        await window.electron.upload.handleDrop(filePaths)
       );
-      await window.electron.createSerie(newPaths);
+      await window.electron.series.createSerie(newPaths);
     } catch (error) {
       console.error("Erro ao carregar arquivos", error);
     }

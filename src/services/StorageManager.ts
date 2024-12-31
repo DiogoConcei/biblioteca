@@ -36,7 +36,6 @@ export default class StorageManager extends FileSystem {
   }
 
   public async selectSerieData(serieName: string): Promise<Comic> {
-
     try {
       const seriesData = await this.fileManager.foundFiles(this.jsonFilesPath);
       const serieData = seriesData.find((serie) =>

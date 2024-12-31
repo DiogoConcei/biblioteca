@@ -13,7 +13,7 @@ export default function SeriePage() {
     const getData = async () => {
       try {
         setIsLoading(true);
-        const data = await window.electron.getSerie(book_name);
+        const data = await window.electron.series.getSerie(book_name);
         setSerie(data);
       } catch (error) {
         console.error("Erro ao carregar série:", error);
@@ -61,6 +61,7 @@ export default function SeriePage() {
           </div>
           <ComicActions serie={serie} setSerie={setSerie} />
         </div>
+        <div className="seriesInfo"></div>
       </div>
     </section>
   );

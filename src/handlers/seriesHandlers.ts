@@ -75,23 +75,24 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
             const comicConfig = await dataManager.getComicConfig();
 
-            if (is_favorite) {
-                serie.metadata.is_favorite = false;
-                comicConfig.favorites = comicConfig.favorites.filter((series) => series.name !== serieName);
-            } else {
-                serie.metadata.is_favorite = true;
-                comicConfig.favorites.push(serie);
-            }
+            serie.metadata.is_favorite = !is_favorite;
 
+            if (serie.metadata.is_favorite) {
+                comicConfig.favorites.push(serie);
+            } else {
+                comicConfig.favorites = comicConfig.favorites.filter((series) => series.name !== serieName);
+            }
 
             await dataManager.updateserieData(JSON.stringify(serie), serieName);
             await dataManager.updateComicConfig(JSON.stringify(comicConfig));
 
+            return { success: true };
         } catch (error) {
             console.error(`Erro ao favoritar série "${serieName}":`, error);
             throw new Error("Não foi possível atualizar o status de favorito da série.");
         }
     });
+
 
     ipcMain.handle("get-serie", async (_event, serieName: string) => {
         try {

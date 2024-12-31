@@ -15,7 +15,7 @@ export default function DownloadButton({ seriePath }: downloadButtonProps) {
 
   const onSelect = async (quantity: number) => {
     setSelectedQuantity(quantity);
-    await window.electron.downloadSerie(seriePath, quantity);
+    await window.electron.download.downloadSerie(seriePath, quantity);
     setIsOpen(false);
   };
 
