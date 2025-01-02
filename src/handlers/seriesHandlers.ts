@@ -56,7 +56,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         }
     })
 
-    ipcMain.handle("donwload-chapter", async (_event, seriePath: string, quantity: number) => {
+    ipcMain.handle("download-chapter", async (_event, seriePath: string, quantity: number) => {
         try {
             await ImageManager.extractChapters(seriePath, quantity)
         } catch (error) {

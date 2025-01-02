@@ -31,19 +31,46 @@
 
 .serieDetails h2 {
   color: #8963ba;
-  font-size: 1.8rem;
+  font-size: 2rem;
 }
 
 .serieDetails div p {
   font-size: 1.5rem;
-  color: black;
+  color: #fcf7f8;
 }
 
-.serieDetails div span {
-  font-size: 1.3rem;
+.seriesInfo {
+  display: flex;
+  flex-flow: column;
+  text-align: start;
+  margin: 10px;
+}
+
+.topFav,
+.topLastRead {
+  font-size: 1.5rem;
+  font-weight: bold;
   color: #cd5c5c;
+  padding: 10px;
+  border: 1px solid #fcf7f8;
 }
 
-.testing {
-  width: 600px;
+.topLastRead {
+  border-top: none;
+}
+
+.favSeries,
+.recentSeries {
+  display: flex;
+  flex-flow: column;
+  border: 1px solid #fcf7f8;
+  border-top: none;
+}
+
+.favSeries li,
+.recentSeries li {
+  font-size: 1.3rem;
+  font-weight: lighter;
+  padding: 10px;
+  color: #fcf7f8;
 }

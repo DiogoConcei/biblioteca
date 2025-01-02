@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { Comic } from "../../../types/serie.interfaces";
 import { useState, useEffect } from "react";
+import ChaptersInfo from "../../../components/ChaptersInfo/ChaptersInfo";
 import ComicActions from "../../../components/ComicActions/ComicActions";
 import "./SeriePage.css";
 
@@ -61,7 +62,31 @@ export default function SeriePage() {
           </div>
           <ComicActions serie={serie} setSerie={setSerie} />
         </div>
-        <div className="seriesInfo"></div>
+        <div className="seriesInfo">
+          <p className="topFav">Series Favoritas</p>
+          <div className="contentFav">
+            <ul className="favSeries">
+              <li>teste 1</li>
+              <li>teste 2</li>
+              <li>teste 3</li>
+              <li>teste 4</li>
+              <li>teste 5</li>
+            </ul>
+          </div>
+          <div className="contentRecent">
+            <p className="topLastRead">Ultimas séries lidas</p>
+            <ul className="recentSeries">
+              <li>teste 1</li>
+              <li>teste 2</li>
+              <li>teste 3</li>
+              <li>teste 4</li>
+              <li>teste 5</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div>
+        <ChaptersInfo serie={serie} />
       </div>
     </section>
   );

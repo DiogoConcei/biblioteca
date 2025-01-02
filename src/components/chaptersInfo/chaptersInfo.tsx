@@ -7,7 +7,7 @@ import "./ChaptersInfo.css";
 export default function ChaptersInfo({ serie }: ChaptersInfoProps) {
   const [currentPage, setCurrentPage] = useState<number>(1);
 
-  const itemsPerPage = 19;
+  const itemsPerPage = 20;
   const totalPages = Math.ceil(serie.chapters.length / itemsPerPage);
 
   const startIndex = (currentPage - 1) * itemsPerPage;
