@@ -53,7 +53,7 @@ export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
   return (
     <div className="serieActions">
       <DownloadButton seriePath={serie.serie_path} />
-      {/* <button
+      <button
         className="favorite"
         onClick={(event) =>
           favorite(event, serie.name, serie.metadata.is_favorite)
@@ -68,7 +68,7 @@ export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
       <button className="reading">
         <FaBookOpen />
         Continuar
-      </button>  */}
+      </button>
       <Rating serie={serie} />
     </div>
   );
