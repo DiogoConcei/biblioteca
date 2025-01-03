@@ -1,8 +1,8 @@
-.divControl {
+.Control {
   display: flex;
-  align-items: center;
-  flex-flow: column wrap;
-  width: 30vw;
+  align-items: start;
+  justify-content: center;
+  flex-direction: column;
   gap: 10px;
   padding: 0.7rem;
 }
@@ -10,20 +10,71 @@
 .chaptersTitle {
   font-size: 1.6rem;
   color: #8963ba;
+  text-align: center;
+}
+
+.chaptersList {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-direction: column;
+  padding: 10px;
+  gap: 10px;
 }
 
 .chapter {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-flow: row;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.348);
-  padding: 0.5rem;
-  background-color: #f4f4edc5;
-  font-size: 1.3rem;
+  background: #aa5042;
+  cursor: pointer;
+  width: 30vw;
+  padding: 10px;
 }
 
-.unread {
-  font-size: 2rem;
+.chapter:hover {
+  transition: 1s;
+  background-color: #f4f4ed1f;
+}
+
+.chapterName {
+  color: #fcf7f8;
+  font-size: 1rem;
+}
+
+.filesInfo {
+  display: flex;
+  flex-flow: column;
+  gap: 15px;
+}
+
+.chapterExtraInfo {
+  display: flex;
+  flex-flow: column;
+  gap: 10px;
+}
+
+.createDate {
+  font-size: 0.8rem;
+  color: #fcf7f8;
+}
+
+.dataInfo {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.read,
+.unread,
+.downloaded,
+.notdownloaded {
+  font-size: 1.5rem;
+}
+
+.OwnerDownload {
+  font-size: 1rem;
+  color: black;
 }

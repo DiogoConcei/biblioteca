@@ -1,6 +1,6 @@
 /* Paleta de Cores */
-/* cd5c5c -> indian red */
-/* 8963BA -> Amethyst */
+/* cd5c5c -> indian red | aa5042 -> alternativa mais forte */
+/* 8963BA -> Amethyst   | a878e5  -> alternativa mais clara*/
 /* 282C34 -> Gunmetal */
 /* fcf7f8 -> Snow */
 /* 31afd4 -> Pacific cyan */
@@ -14,12 +14,25 @@
   flex-flow: row wrap;
 }
 
-.serieHeader figure img {
+.archivesInfo {
+  display: flex;
+  flex-flow: column;
+  gap: 10px;
+  padding: 10px;
+}
+
+.recomend,
+.owner {
+  font-size: 1rem;
+  color: #fcf7f8;
+}
+
+.serieCover {
   height: 40vh;
   border-radius: 10px;
 }
 
-.serieDetails {
+.mainContent {
   display: flex;
   flex-flow: column nowrap;
   align-items: flex-start;
@@ -29,12 +42,12 @@
   height: 50vh;
 }
 
-.serieDetails h2 {
+.mainContent h2 {
   color: #8963ba;
   font-size: 2rem;
 }
 
-.serieDetails div p {
+.mainContent div p {
   font-size: 1.5rem;
   color: #fcf7f8;
 }
@@ -43,11 +56,11 @@
   display: flex;
   flex-flow: column;
   text-align: start;
-  margin: 10px;
+  margin: 30px;
 }
 
-.topFav,
-.topLastRead {
+.favorites h3,
+.recent h3 {
   font-size: 1.5rem;
   font-weight: bold;
   color: #cd5c5c;
@@ -55,20 +68,20 @@
   border: 1px solid #fcf7f8;
 }
 
-.topLastRead {
+.recent h3 {
   border-top: none;
 }
 
-.favSeries,
-.recentSeries {
+.fav-series,
+.recent-series {
   display: flex;
   flex-flow: column;
   border: 1px solid #fcf7f8;
   border-top: none;
 }
 
-.favSeries li,
-.recentSeries li {
+.fav-series li,
+.recent-series li {
   font-size: 1.3rem;
   font-weight: lighter;
   padding: 10px;

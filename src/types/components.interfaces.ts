@@ -1,8 +1,17 @@
 import { Comic } from './serie.interfaces'
 
-export interface ChaptersInfoProps {
+export interface OnlySerieProp {
     serie: Comic;
 }
+
+
+export interface PaginationProps {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+}
+
+
 
 export interface SearchBarProps {
     searchInput: string;

@@ -1,9 +1,9 @@
 import { MdFormatListBulletedAdd } from "react-icons/md";
-import { IoMdStar, IoIosStarOutline } from "react-icons/io";
 import { IoBookmarkOutline, IoBookmark } from "react-icons/io5";
 import { FaBookOpen } from "react-icons/fa";
 import { ComicActionsProps } from "../../types/components.interfaces";
 import DownloadButton from "../DonwloadButton/DownloadButton";
+import Rating from "../Rating/Rating";
 import "./ComicActions.css";
 
 export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
@@ -53,7 +53,7 @@ export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
   return (
     <div className="serieActions">
       <DownloadButton seriePath={serie.serie_path} />
-      <button
+      {/* <button
         className="favorite"
         onClick={(event) =>
           favorite(event, serie.name, serie.metadata.is_favorite)
@@ -68,10 +68,8 @@ export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
       <button className="reading">
         <FaBookOpen />
         Continuar
-      </button>
-      <button className="rating">
-        {serie.metadata.is_favorite ? <IoMdStar /> : <IoIosStarOutline />}
-      </button>
+      </button>  */}
+      <Rating serie={serie} />
     </div>
   );
 }

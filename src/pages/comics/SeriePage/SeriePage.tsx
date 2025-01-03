@@ -30,64 +30,58 @@ export default function SeriePage() {
   }
 
   return (
-    <section>
-      <div className="serieHeader">
+    <section className="serieHeader">
+      <div className="archivesInfo">
         <figure>
           <img
+            className="serieCover"
             src={`data:image/png;base64,${serie.cover_image}`}
             alt={`Capa do quadrinho ${serie.name}`}
           />
         </figure>
-        <div className="serieDetails">
-          <h2>{serie.name}</h2>
-          <div>
-            <p>
-              <span>Status: </span> {serie.metadata.status}
-            </p>
-            <p>
-              <span>Capitulos lidos: </span>
-              {serie.chapters_read}
-            </p>
-            <p>
-              <span>Quantidade de capitulos:</span> {serie.total_chapters}
-            </p>
-            <p>
-              <span>Criado em: </span>
-              {serie.created_at}
-            </p>
-            <p>
-              <span>Ultimo capitulo lido:</span>{" "}
-              {serie.reading_data.last_chapter_id}
-            </p>
-          </div>
+        <h2 className="owner">Upload por: {serie.metadata.original_owner}</h2>
+        <h2 className="recomend">
+          recomendada por: {serie.metadata.recommended_by}
+        </h2>
+      </div>
+      <section className="mainContent">
+        <h2>{serie.name}</h2>
+        <div className="serieMetadata">
+          <p>Status: {serie.metadata.status}</p>
+          <p>Capítulos lidos: {serie.chapters_read}</p>
+          <p>Quantidade de capítulos: {serie.total_chapters}</p>
+          <p>Criado em: {serie.created_at}</p>
+          <p>Último capítulo lido: {serie.reading_data.last_chapter_id}</p>
+        </div>
+        <div className="serieActions">
           <ComicActions serie={serie} setSerie={setSerie} />
         </div>
-        <div className="seriesInfo">
-          <p className="topFav">Series Favoritas</p>
-          <div className="contentFav">
-            <ul className="favSeries">
-              <li>teste 1</li>
-              <li>teste 2</li>
-              <li>teste 3</li>
-              <li>teste 4</li>
-              <li>teste 5</li>
-            </ul>
-          </div>
-          <div className="contentRecent">
-            <p className="topLastRead">Ultimas séries lidas</p>
-            <ul className="recentSeries">
-              <li>teste 1</li>
-              <li>teste 2</li>
-              <li>teste 3</li>
-              <li>teste 4</li>
-              <li>teste 5</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      <div>
-        <ChaptersInfo serie={serie} />
-      </div>
+        <section className="serieChapters">
+          <ChaptersInfo serie={serie} />
+        </section>
+      </section>
+      <aside className="seriesInfo">
+        <section className="favorites">
+          <h3>Séries Favoritas</h3>
+          <ul className="fav-series">
+            <li>teste 1</li>
+            <li>teste 2</li>
+            <li>teste 3</li>
+            <li>teste 4</li>
+            <li>teste 5</li>
+          </ul>
+        </section>
+        <section className="recent">
+          <h3>Últimas séries lidas</h3>
+          <ul className="recent-series">
+            <li>teste 1</li>
+            <li>teste 2</li>
+            <li>teste 3</li>
+            <li>teste 4</li>
+            <li>teste 5</li>
+          </ul>
+        </section>
+      </aside>
     </section>
   );
 }

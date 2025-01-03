@@ -1,26 +1,22 @@
-.download {
+.rating {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #31afd4;
+  background: #aa5042;
   color: #fcf7f8;
-  padding: 0.8rem 1rem;
-  border-radius: 0.4rem;
+  padding: 0.8rem;
+  border-radius: 0.2rem;
   font-size: 1.3rem;
   border: none;
   cursor: pointer;
   transition: background-color 0.3s, color 0.3s;
 }
 
-.download:hover {
+.rating:hover {
   background-color: rgba(137, 99, 186, 0.8);
 }
 
-.download-icon {
-  margin-right: 0.5rem;
-}
-
-.dropdown-list {
+.rating-list {
   position: absolute;
   list-style: none;
   padding: 0;
@@ -29,21 +25,20 @@
   border-radius: 0.4rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   margin-top: 0.5rem;
-  width: 150px;
+  width: 200px;
   z-index: 10;
-  animation: dropdown 0.3s ease-in-out;
 }
 
-.dropdown-item {
+.rating-item {
   padding: 0.5rem;
   border-bottom: 1px solid #444;
 }
 
-.dropdown-item:last-child {
+.rating-item:last-child {
   border-bottom: none;
 }
 
-.dropdown-option {
+.rating-option {
   background: transparent;
   color: #fcf7f8;
   border: none;
@@ -52,15 +47,23 @@
   font-size: 1rem;
   padding: 0.5rem;
   cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color 0.3s;
 }
 
-.dropdown-option:hover {
-  background-color: rgba(137, 99, 186, 0.2);
+.rating-option:hover {
+  background-color: rgba(137, 99, 186, 0.1);
   color: #a878e5;
 }
 
-.dropdown-option:focus {
+.rating .react-icons {
+  margin-right: 0.5rem;
+}
+
+.rating-option:focus {
   outline: none;
-  background-color: rgba(137, 99, 186, 0.3);
+  background-color: rgba(137, 99, 186, 0.2);
+}
+
+.rating-list {
+  animation: dropdown 0.3s ease-in-out;
 }

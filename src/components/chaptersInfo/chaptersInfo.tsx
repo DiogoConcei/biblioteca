@@ -1,12 +1,14 @@
 import { useState } from "react";
+import { OnlySerieProp } from "../../types/components.interfaces";
 import { IoCheckmarkCircleOutline } from "react-icons/io5";
 import { IoCheckmarkCircle } from "react-icons/io5";
-import { ChaptersInfoProps } from "../../types/components.interfaces";
+import { MdOutlineDownload, MdFileDownload } from "react-icons/md";
+import { FaUser } from "react-icons/fa";
+import Pagination from "../Pagination/Pagination";
 import "./ChaptersInfo.css";
 
-export default function ChaptersInfo({ serie }: ChaptersInfoProps) {
+export default function ChaptersInfo({ serie }: OnlySerieProp) {
   const [currentPage, setCurrentPage] = useState<number>(1);
-
   const itemsPerPage = 20;
   const totalPages = Math.ceil(serie.chapters.length / itemsPerPage);
 
@@ -14,50 +16,54 @@ export default function ChaptersInfo({ serie }: ChaptersInfoProps) {
   const endIndex = startIndex + itemsPerPage;
   const currentItems = serie.chapters.slice(startIndex, endIndex);
 
-  const paginationNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
-
-  const clickPrev = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  };
-
-  const clickNext = () => {
-    setCurrentPage((next) => Math.min(next + 1, totalPages));
+  const handlePageChange = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
   };
 
   return (
-    <div className="divControl">
+    <section className="Control">
       <h2 className="chaptersTitle">Capítulos</h2>
-      <div className="chaptersLink">
+
+      <ul className="chaptersList">
         {currentItems.map((chapter) => (
           <li key={chapter.id} className="chapter">
-            {chapter.name}
-            {chapter.is_dowload ? (
-              <IoCheckmarkCircle className="read" />
-            ) : (
-              <IoCheckmarkCircleOutline className="unread" />
-            )}
+            <div className="filesInfo">
+              <span className="chapterName">{chapter.name}</span>
+              <span>
+                Upload: <FaUser />
+              </span>
+            </div>
+
+            <div className="chapterExtraInfo">
+              <span className="createDate">{chapter.create_date}</span>
+              <div className="dataInfo">
+                {chapter.is_read ? (
+                  <IoCheckmarkCircle className="read" aria-label="Lido" />
+                ) : (
+                  <IoCheckmarkCircleOutline
+                    className="unread"
+                    aria-label="Não lido"
+                  />
+                )}
+
+                {chapter.is_dowload ? (
+                  <MdFileDownload className="downloaded" aria-label="Baixado" />
+                ) : (
+                  <MdOutlineDownload
+                    className="notdownloaded"
+                    aria-label="Não baixado"
+                  />
+                )}
+              </div>
+            </div>
           </li>
         ))}
-      </div>
-
-      <div className="ControlBtns">
-        <button onClick={clickPrev} disabled={currentPage === 1}>
-          Prev
-        </button>
-
-        {paginationNumbers.map((pageNumber) => (
-          <button
-            key={pageNumber}
-            onClick={() => setCurrentPage(pageNumber)}
-            className={pageNumber === currentPage ? "active" : ""}>
-            {pageNumber}
-          </button>
-        ))}
-
-        <button onClick={clickNext} disabled={currentPage === totalPages}>
-          Next
-        </button>
-      </div>
-    </div>
+      </ul>
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
+    </section>
   );
 }

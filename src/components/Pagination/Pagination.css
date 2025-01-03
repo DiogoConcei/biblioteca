@@ -1,0 +1,46 @@
+.ControlBtns {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-around;
+  text-align: center;
+  flex-flow: row wrap;
+  gap: 10px;
+  width: 32vw;
+}
+
+.prevBTN,
+.nextBTN {
+  font-size: 1.3rem;
+  color: #fcf7f8;
+  width: 30px;
+  height: 30px;
+}
+
+.prevBTN:disabled,
+.nextBTN:disabled {
+  color: #ccc;
+  font-size: 1rem;
+}
+
+.active {
+  font-size: 1.2rem;
+  text-align: center;
+  width: 30px;
+  height: 30px;
+  background: #cd5c5c;
+  border-radius: 5px;
+}
+
+.disable {
+  font-size: 1.2rem;
+  text-align: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 5px;
+  transition: 250ms background;
+}
+
+.disable:hover {
+  color: #a878e5;
+  background-color: rgba(244, 244, 237, 0.12);
+}
