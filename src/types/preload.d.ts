@@ -14,7 +14,7 @@ declare global {
             }
             serieActions: {
                 favoriteSerie: (serieName: string) => Promise<{ success: boolean }>,
-                ratingSerie: (serieName: string, userRating: string) => Promise<void>;
+                ratingSerie: (serieName: string, userRating: number) => Promise<void>;
             },
             download: {
                 downloadSerie: (seriePath: string, quantity: number) => Promise<void>,

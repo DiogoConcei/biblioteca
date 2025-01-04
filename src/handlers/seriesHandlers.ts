@@ -65,25 +65,36 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         }
     })
 
-    ipcMain.handle(
-        "favorite-serie",
+    ipcMain.handle("favorite-serie",
         async (_event, serieName: string) => {
 
             try {
                 const serie = await dataManager.selectSerieData(serieName);
+                const favCollection = await dataManager.getFavCollection()
+                let favComics = favCollection.comics
+
+                const favSerieJson = {
+                    id: serie.id,
+                    name: serie.name,
+                    cover_image: serie.cover_image,
+                    comic_path: serie.serie_path,
+                    total_chapters: serie.total_chapters,
+                    status: serie.metadata.status,
+                    recommended_by: serie.metadata.recommended_by || "",
+                    original_owner: serie.metadata.original_owner || "",
+                };
+
 
                 if (!serie) {
                     throw new Error(`Série com o nome "${serieName}" não encontrada.`);
                 }
 
-                const comicConfig = await dataManager.getComicConfig();
-
                 const newFavoriteStatus = !serie.metadata.is_favorite;
 
                 if (newFavoriteStatus) {
-                    comicConfig.favorites.push(serie);
+                    favComics.push(favSerieJson);
                 } else {
-                    comicConfig.favorites = comicConfig.favorites.filter(
+                    favComics = favComics.filter(
                         (series) => series.name !== serieName
                     );
                 }
@@ -91,16 +102,15 @@ export default function seriesHandlers(ipcMain: IpcMain) {
                 serie.metadata.is_favorite = newFavoriteStatus;
 
                 await dataManager.updateserieData(JSON.stringify(serie), serieName);
-
-                await dataManager.updateComicConfig(JSON.stringify(comicConfig));
-
+                await dataManager.updateFavCollection(JSON.stringify(favCollection));
                 return { success: true };
             } catch (error) {
-                console.error(`[ERRO] Erro ao favoritar série "${serieName}":`, error);
                 return { success: false, error: "Não foi possível atualizar o status de favorito." };
             }
         }
     );
+
+
 
     ipcMain.handle("rating-serie", async (_event, serieName: string, userRating: string) => {
         const serie = await dataManager.selectSerieData(serieName)

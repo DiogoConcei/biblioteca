@@ -18,7 +18,7 @@ const series = {
 const serieActions = {
   favoriteSerie: (serieName: string): Promise<{ success: boolean }> =>
     ipcRenderer.invoke("favorite-serie", serieName),
-  ratingSerie: (serieName: string, userRating: string): Promise<void> => ipcRenderer.invoke("rating-serie", serieName, userRating)
+  ratingSerie: (serieName: string, userRating: number): Promise<void> => ipcRenderer.invoke("rating-serie", serieName, userRating)
 
 };
 

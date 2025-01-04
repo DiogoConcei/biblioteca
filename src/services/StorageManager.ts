@@ -3,7 +3,7 @@ import fs from "fs/promises";
 import jsonfile from "jsonfile";
 import FileOperations from "./FileOperations";
 import { FileSystem } from "./abstract/FileSystem";
-import { ComicConfig, Comic, ComicChapter } from "../types/serie.interfaces";
+import { ComicConfig, Comic, ComicChapter, ComicCollection, Collections } from "../types/serie.interfaces";
 
 export default class StorageManager extends FileSystem {
   private readonly fileManager: FileOperations;
@@ -12,6 +12,17 @@ export default class StorageManager extends FileSystem {
   constructor() {
     super();
     this.fileManager = new FileOperations();
+  }
+
+  public async getFavCollection(): Promise<Collections> {
+    try {
+      const dataCollections: ComicCollection = await jsonfile.readFile(this.comicCollections);
+      const favCollection = dataCollections.collections.find((collection) => collection.name === "Favorites");
+      return favCollection
+    } catch (error) {
+      console.error(`erro em recuperar a coleção de series favoritas: ${error}`)
+      return undefined
+    }
   }
 
   public async getCurrentId(): Promise<number> {
@@ -51,11 +62,6 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  public async getData(filePath: string): Promise<string> {
-    const data: string = await jsonfile.readFile(filePath)
-    return data
-  }
-
   public async getComicConfig(): Promise<ComicConfig> {
     const data: ComicConfig = await jsonfile.readFile(this.comicConfig)
     return data
@@ -91,11 +97,11 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  public async updateComicConfig(data: string): Promise<void> {
+  public async updateFavCollection(data: string): Promise<void> {
     try {
-      await jsonfile.writeFile(this.comicConfig, JSON.parse(data), { spaces: 2 });
+      await jsonfile.writeFile(this.comicCollections, JSON.parse(data), { spaces: 2 });
     } catch (error) {
-      console.error("Erro ao atualizar configurações:", error);
+      console.error("Erro ao atualizar coleção de favoritos:", error);
       throw error;
     }
   }
@@ -192,3 +198,11 @@ export default class StorageManager extends FileSystem {
 
 }
 
+// (async () => {
+//   try {
+//     const manager = new StorageManager()
+//     console.log(await manager.getFavCollection())
+//   } catch (error) {
+//     console.error("Erro ao buscar os dados:", error);
+//   }
+// })();

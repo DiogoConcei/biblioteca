@@ -5,7 +5,12 @@ import "./Rating.css";
 
 export default function Rating({ serie }: OnlySerieProp) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [selectedRating, setSelectedRating] = useState<string>("");
+  const [selectedRating, setSelectedRating] = useState<number>(
+    serie.metadata.rating
+  );
+  const [previousRating, setPreviousRating] = useState<number>(
+    serie.metadata.rating
+  );
 
   const starsRating = [
     "1 - Péssimo",
@@ -19,25 +24,31 @@ export default function Rating({ serie }: OnlySerieProp) {
     setIsOpen(!isOpen);
   };
 
-  const onSelect = async (rating: string) => {
-    setSelectedRating(rating);
-    await window.electron.serieActions.ratingSerie(serie.name, rating);
-    setIsOpen(false);
+  const onSelect = async (ratingIndex: number) => {
+    const previousRatingValue = selectedRating;
+    setPreviousRating(previousRatingValue);
+    setSelectedRating(ratingIndex);
+
+    try {
+      await window.electron.serieActions.ratingSerie(serie.name, ratingIndex);
+      setIsOpen(false);
+    } catch (error) {
+      console.error("Erro ao atualizar o rating:", error);
+      setSelectedRating(previousRatingValue);
+    }
   };
 
   return (
     <div>
       <button className="rating" onClick={onToggle}>
-        {serie.metadata.rating ? <IoMdStar /> : <IoIosStarOutline />}
+        {selectedRating > 0 ? <IoMdStar /> : <IoIosStarOutline />}
       </button>
 
       {isOpen && (
         <ul className="rating-list">
           {starsRating.map((quantity, index) => (
             <li key={index} className="rating-item">
-              <button
-                className="rating-option"
-                onClick={() => onSelect(quantity)}>
+              <button className="rating-option" onClick={() => onSelect(index)}>
                 {quantity}
               </button>
             </li>

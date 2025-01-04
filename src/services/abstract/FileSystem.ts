@@ -12,6 +12,7 @@ export abstract class FileSystem {
   protected readonly jsonFilesPath: string;
   protected readonly configFilePath: string;
   protected readonly comicConfig: string;
+  protected readonly comicCollections: string;
 
   protected constructor() {
     this.storage = path.join(this.absoluteBasePath, "storage");
@@ -22,7 +23,8 @@ export abstract class FileSystem {
     this.jsonFilesPath = path.join(this.dataPath, "json files");
     this.showcaseImages = path.join(this.imagesFilesPath, "showCaseImages");
     this.configFilePath = path.join(this.jsonFilesPath, "config", "app")
-    this.comicConfig = path.join(this.jsonFilesPath, "config", "series", "comicsConfig.json")
+    this.comicConfig = path.join(this.jsonFilesPath, "config", "comic", "comicsConfig.json")
+    this.comicCollections = path.join(this.jsonFilesPath, "config", "comic", "comicCollections.json")
   }
 
   public async createFolder(path: string): Promise<void> {
