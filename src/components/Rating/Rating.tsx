@@ -19,15 +19,16 @@ export default function Rating({ serie }: OnlySerieProp) {
     setIsOpen(!isOpen);
   };
 
-  const onSelect = (rating: string) => {
+  const onSelect = async (rating: string) => {
     setSelectedRating(rating);
+    await window.electron.serieActions.ratingSerie(serie.name, rating);
     setIsOpen(false);
   };
 
   return (
     <div>
       <button className="rating" onClick={onToggle}>
-        {selectedRating ? <IoMdStar /> : <IoIosStarOutline />}
+        {serie.metadata.rating ? <IoMdStar /> : <IoIosStarOutline />}
       </button>
 
       {isOpen && (

@@ -65,33 +65,80 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         }
     })
 
-    ipcMain.handle("favorite-serie", async (_event, serieName: string, is_favorite: boolean) => {
-        try {
-            const serie = await dataManager.selectSerieData(serieName);
+    ipcMain.handle(
+        "favorite-serie",
+        async (_event, serieName: string) => {
 
-            if (!serie) {
-                throw new Error(`Série com o nome "${serieName}" não encontrada.`);
+            try {
+                const serie = await dataManager.selectSerieData(serieName);
+
+                if (!serie) {
+                    throw new Error(`Série com o nome "${serieName}" não encontrada.`);
+                }
+
+                const comicConfig = await dataManager.getComicConfig();
+
+                const newFavoriteStatus = !serie.metadata.is_favorite;
+
+                if (newFavoriteStatus) {
+                    comicConfig.favorites.push(serie);
+                } else {
+                    comicConfig.favorites = comicConfig.favorites.filter(
+                        (series) => series.name !== serieName
+                    );
+                }
+
+                serie.metadata.is_favorite = newFavoriteStatus;
+
+                await dataManager.updateserieData(JSON.stringify(serie), serieName);
+
+                await dataManager.updateComicConfig(JSON.stringify(comicConfig));
+
+                return { success: true };
+            } catch (error) {
+                console.error(`[ERRO] Erro ao favoritar série "${serieName}":`, error);
+                return { success: false, error: "Não foi possível atualizar o status de favorito." };
             }
-
-            const comicConfig = await dataManager.getComicConfig();
-
-            serie.metadata.is_favorite = !is_favorite;
-
-            if (serie.metadata.is_favorite) {
-                comicConfig.favorites.push(serie);
-            } else {
-                comicConfig.favorites = comicConfig.favorites.filter((series) => series.name !== serieName);
-            }
-
-            await dataManager.updateserieData(JSON.stringify(serie), serieName);
-            await dataManager.updateComicConfig(JSON.stringify(comicConfig));
-
-            return { success: true };
-        } catch (error) {
-            console.error(`Erro ao favoritar série "${serieName}":`, error);
-            throw new Error("Não foi possível atualizar o status de favorito da série.");
         }
-    });
+    );
+
+    ipcMain.handle("rating-serie", async (_event, serieName: string, userRating: string) => {
+        const serie = await dataManager.selectSerieData(serieName)
+
+        if (!serie) {
+            throw new Error(`Série com o nome "${serieName}" não encontrada.`);
+        }
+
+        const starsRating = [
+            "1 - Péssimo",
+            "2 - Horrível",
+            "3 - Regular",
+            "4 - Bom",
+            "5 - Excelente",
+        ];
+
+        let caseIndex = starsRating.indexOf(userRating)
+
+        switch (caseIndex) {
+            case 0:
+                serie.metadata.rating = 1
+                break
+            case 1:
+                serie.metadata.rating = 2
+                break
+            case 2:
+                serie.metadata.rating = 3
+                break
+            case 3:
+                serie.metadata.rating = 4
+                break
+            case 4:
+                serie.metadata.rating = 5
+                break
+        }
+
+        await dataManager.updateserieData(JSON.stringify(serie), serieName);
+    })
 
 
     ipcMain.handle("get-serie", async (_event, serieName: string) => {

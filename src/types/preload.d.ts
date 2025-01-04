@@ -13,7 +13,8 @@ declare global {
                 createSerie: (filePaths: string[]) => Promise<void>,
             }
             serieActions: {
-                favoriteSerie: (serieName: string, is_favorite: boolean) => Promise<{ success: boolean }>;
+                favoriteSerie: (serieName: string) => Promise<{ success: boolean }>,
+                ratingSerie: (serieName: string, userRating: string) => Promise<void>;
             },
             download: {
                 downloadSerie: (seriePath: string, quantity: number) => Promise<void>,

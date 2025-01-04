@@ -16,8 +16,10 @@ const series = {
 };
 
 const serieActions = {
-  favoriteSerie: (serieName: string, is_favorite: boolean): Promise<{ success: boolean }> =>
-    ipcRenderer.invoke("favorite-serie", serieName, is_favorite),
+  favoriteSerie: (serieName: string): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke("favorite-serie", serieName),
+  ratingSerie: (serieName: string, userRating: string): Promise<void> => ipcRenderer.invoke("rating-serie", serieName, userRating)
+
 };
 
 const download = {
