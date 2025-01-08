@@ -1,5 +1,4 @@
 import { FileSystem } from "./abstract/FileSystem";
-import { ComicChapter } from "../types/serie.interfaces";
 import path from "path";
 import fs from "fs/promises";
 import fse from 'fs-extra'

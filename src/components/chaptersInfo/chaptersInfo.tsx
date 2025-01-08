@@ -27,9 +27,11 @@ export default function ChaptersInfo({ serie }: OnlySerieProp) {
 
       <ul className="chaptersList">
         {currentItems.map((chapter) => (
-          <li key={chapter.id} className="chapter">
-            <Link to="">
-              <div className="filesInfo">
+          <Link
+            to={`/:${serie.name}/:${serie.id}/:${chapter.name}`}
+            key={chapter.id}>
+            <li className="chapter">
+              <div className="  ">
                 <span className="chapterName">{chapter.name}</span>
                 <span>
                   Upload: <FaUser />
@@ -61,8 +63,8 @@ export default function ChaptersInfo({ serie }: OnlySerieProp) {
                   )}
                 </div>
               </div>
-            </Link>
-          </li>
+            </li>
+          </Link>
         ))}
       </ul>
       <Pagination

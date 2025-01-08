@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { Comic, ComicCollectionInfo } from "../../../types/serie.interfaces";
+import { Comic, ComicCollectionInfo } from "../../../types/comic.interfaces";
 import { useState, useEffect } from "react";
 import ChaptersInfo from "../../../components/ChaptersInfo/ChaptersInfo";
 import ComicActions from "../../../components/ComicActions/ComicActions";
@@ -71,7 +71,7 @@ export default function SeriePage() {
           <h3>Séries Favoritas</h3>
           <ul className="fav-series">
             {collectionInfo.map((serie) => (
-              <li>{serie.name}</li>
+              <li key={serie.id}>{serie.name}</li>
             ))}
           </ul>
         </section>

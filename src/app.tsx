@@ -1,10 +1,12 @@
-import React, { Suspense } from "react";
+import React from "react";
 import ReactDOM from "react-dom/client";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import Layout from "./pages/layout/Layout";
 import Home from "./pages/home/Home";
 import Page404 from "./pages/page404/page404";
 import SeriePage from "./pages/comics/SeriePage/SeriePage";
+import { ComicVisualizer } from "./pages/comics/ComicVisualizer/ComicVisualizer";
+
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
@@ -17,8 +19,8 @@ const App = () => {
           <Route index path="" element={<Home />} />
           <Route path="/:book_name/:id" element={<SeriePage />} />
           <Route
-            path="/books/:id/chapters/:chapter_id/pages/:id"
-            element={<SeriePage />}
+            path="/:book_name/:id/:chapter_name"
+            element={<ComicVisualizer />}
           />
           <Route path="*" element={<Page404 />} />
         </Route>

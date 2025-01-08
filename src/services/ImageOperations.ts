@@ -1,4 +1,4 @@
-import { Comic } from "../types/serie.interfaces";
+import { Comic } from "../types/comic.interfaces";
 import { Jimp } from "jimp";
 import { FileSystem } from "./abstract/FileSystem";
 import StorageManager from "./StorageManager";

@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
-import { Comic, ComicCollectionInfo } from "./types/serie.interfaces";
+import { Comic, ComicCollectionInfo } from "./types/comic.interfaces";
 
 const windowAction = {
   minimize: () => ipcRenderer.invoke("minimize-window"),

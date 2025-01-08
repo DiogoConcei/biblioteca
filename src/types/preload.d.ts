@@ -1,5 +1,5 @@
 export { };
-import { Comic, Collections } from './serie.interfaces'
+import { Comic, Collections } from './comic.interfaces'
 
 declare global {
     interface Window {

@@ -43,7 +43,7 @@ export interface Comic {
     last_page: number;
     last_read_at: string;
   };
-  chapters: ComicChapter[];
+  chapters: ComicEdition[];
   metadata: {
     status: "em andamento" | "completada" | "pausada";
     is_favorite: boolean;
@@ -56,7 +56,7 @@ export interface Comic {
 }
 
 
-export interface ComicChapter {
+export interface ComicEdition {
   id: number;
   name: string;
   sanitized_name: string;

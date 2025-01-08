@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { Comic } from "../../types/serie.interfaces";
-import SearchBar from "../SearchBar/SearchBar";
+import { Comic } from "../../types/comic.interfaces";
 import { ComicCardsProps } from "../../types/components.interfaces";
 import "./ComicCards.css";
 import { useEffect, useState } from "react";

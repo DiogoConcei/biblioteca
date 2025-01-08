@@ -1,19 +1,21 @@
 import { IpcMain } from "electron";
 import FileOperations from "../services/FileOperations"
 import StorageManager from "../services/StorageManager";
+import ComicManager from "../services/ComicManager";
 import ImageOperations from "../services/ImageOperations";
 import path from 'path'
 
 
 export default function seriesHandlers(ipcMain: IpcMain) {
-    const fileManager = new FileOperations()
-    const dataManager = new StorageManager()
+    const FileManager = new FileOperations()
+    const ComicOperations = new ComicManager()
+    const StorageOperations = new StorageManager()
     const ImageManager = new ImageOperations()
 
 
     ipcMain.handle("create-serie", async (_event, filePaths: string[]) => {
         try {
-            await dataManager.createData(filePaths);
+            await ComicOperations.createComic(filePaths);
 
             const filesName = await Promise.all(
                 filePaths.map(async (file) => {
@@ -39,10 +41,10 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     ipcMain.handle("get-all-series", async () => {
 
         try {
-            const getData = await dataManager.seriesData();
+            const getData = await StorageOperations.seriesData();
 
             const processData = await Promise.all(getData.map(async (serieData) => {
-                const encodedImage = await fileManager.encodeImageToBase64(serieData.cover_image);
+                const encodedImage = await FileManager.encodeImageToBase64(serieData.cover_image);
                 return {
                     ...serieData,
                     cover_image: encodedImage,
@@ -67,13 +69,13 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
     ipcMain.handle("favorite-serie", async (_event, serieName: string) => {
         try {
-            const serie = await dataManager.selectSerieData(serieName);
+            const serie = await StorageOperations.selectSerieData(serieName);
 
             if (!serie) {
                 throw new Error(`Série com o nome "${serieName}" não encontrada.`);
             }
 
-            const collections = await dataManager.getCollections();
+            const collections = await ComicOperations.getCollections();
             const favCollection = collections.collections.find((collection) => collection.name === "Favorites");
 
             if (!favCollection) {
@@ -105,8 +107,8 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
             serie.metadata.is_favorite = newFavoriteStatus;
 
-            await dataManager.updateserieData(JSON.stringify(serie), serieName);
-            await dataManager.updateFavCollection(JSON.stringify(collections));
+            await StorageOperations.updateserieData(JSON.stringify(serie), serieName);
+            await StorageOperations.updateFavCollection(JSON.stringify(collections));
 
             return { success: true };
         } catch (error) {
@@ -116,7 +118,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     });
 
     ipcMain.handle("rating-serie", async (_event, serieName: string, userRating: string) => {
-        const serie = await dataManager.selectSerieData(serieName)
+        const serie = await StorageOperations.selectSerieData(serieName)
 
         if (!serie) {
             throw new Error(`Série com o nome "${serieName}" não encontrada.`);
@@ -150,17 +152,17 @@ export default function seriesHandlers(ipcMain: IpcMain) {
                 break
         }
 
-        await dataManager.updateserieData(JSON.stringify(serie), serieName);
+        await StorageOperations.updateserieData(JSON.stringify(serie), serieName);
     })
 
 
     ipcMain.handle("get-serie", async (_event, serieName: string) => {
         try {
-            const data = await dataManager.selectSerieData(serieName)
+            const data = await StorageOperations.selectSerieData(serieName)
 
             const processedData = {
                 ...data,
-                cover_image: await fileManager.encodeImageToBase64(data.cover_image),
+                cover_image: await FileManager.encodeImageToBase64(data.cover_image),
             };
 
             return processedData
@@ -172,7 +174,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
     ipcMain.handle("get-favSeries", async () => {
         try {
-            const collections = await dataManager.getCollections();
+            const collections = await ComicOperations.getCollections();
             const findCollection = collections.collections.find((collection) => collection.name === "Favorites");
             const favCollection = findCollection.comics
             return favCollection

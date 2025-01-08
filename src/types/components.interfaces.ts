@@ -1,4 +1,4 @@
-import { Comic } from './serie.interfaces'
+import { Comic } from './comic.interfaces'
 
 export interface OnlySerieProp {
     serie: Comic;

@@ -30,6 +30,7 @@
   background: #aa5042;
   cursor: pointer;
   width: 30vw;
+  text-decoration: none;
   padding: 10px;
 }
 
@@ -43,9 +44,14 @@
   font-size: 1rem;
 }
 
+.filesInfo span:nth-child(2) {
+  color: black;
+}
+
 .filesInfo {
   display: flex;
   flex-flow: column;
+
   gap: 15px;
 }
 
@@ -64,6 +70,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  color: black;
   gap: 10px;
 }
 
