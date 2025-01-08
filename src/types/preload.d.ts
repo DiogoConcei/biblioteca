@@ -1,5 +1,5 @@
 export { };
-import { Comic } from './serie.interfaces'
+import { Comic, Collections } from './serie.interfaces'
 
 declare global {
     interface Window {
@@ -11,6 +11,8 @@ declare global {
                 getSerie: (serieName: string) => Comic,
                 // create
                 createSerie: (filePaths: string[]) => Promise<void>,
+                // get fav
+                getFavSeries: () => Promise<ComicCollectionInfo>
             }
             serieActions: {
                 favoriteSerie: (serieName: string) => Promise<{ success: boolean }>,

@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
-import { Comic } from "./types/serie.interfaces";
+import { Comic, ComicCollectionInfo } from "./types/serie.interfaces";
 
 const windowAction = {
   minimize: () => ipcRenderer.invoke("minimize-window"),
@@ -8,6 +8,7 @@ const windowAction = {
 };
 
 const series = {
+  getFavSeries: async (): Promise<ComicCollectionInfo> => ipcRenderer.invoke("get-favSeries"),
   getSeries: async (): Promise<Comic[]> => ipcRenderer.invoke("get-all-series"),
   getSerie: async (serieName: string): Promise<Comic> =>
     ipcRenderer.invoke("get-serie", serieName),

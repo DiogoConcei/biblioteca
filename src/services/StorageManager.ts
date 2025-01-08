@@ -3,7 +3,7 @@ import fs from "fs/promises";
 import jsonfile from "jsonfile";
 import FileOperations from "./FileOperations";
 import { FileSystem } from "./abstract/FileSystem";
-import { ComicConfig, Comic, ComicChapter, ComicCollection, Collections } from "../types/serie.interfaces";
+import { ComicConfig, Comic, ComicChapter, ComicCollection } from "../types/serie.interfaces";
 
 export default class StorageManager extends FileSystem {
   private readonly fileManager: FileOperations;
@@ -14,11 +14,10 @@ export default class StorageManager extends FileSystem {
     this.fileManager = new FileOperations();
   }
 
-  public async getFavCollection(): Promise<Collections> {
+  public async getCollections(): Promise<ComicCollection> {
     try {
       const dataCollections: ComicCollection = await jsonfile.readFile(this.comicCollections);
-      const favCollection = dataCollections.collections.find((collection) => collection.name === "Favorites");
-      return favCollection
+      return dataCollections
     } catch (error) {
       console.error(`erro em recuperar a coleção de series favoritas: ${error}`)
       return undefined

@@ -134,7 +134,6 @@ export default class ImageOperations extends FileSystem {
   }
 
   private async analiseImage(imagePaths: string[]): Promise<string[]> {
-    console.log(imagePaths);
     const validImagePaths: string[] = [];
 
     for (const imagePath of imagePaths) {

@@ -65,52 +65,55 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         }
     })
 
-    ipcMain.handle("favorite-serie",
-        async (_event, serieName: string) => {
+    ipcMain.handle("favorite-serie", async (_event, serieName: string) => {
+        try {
+            const serie = await dataManager.selectSerieData(serieName);
 
-            try {
-                const serie = await dataManager.selectSerieData(serieName);
-                const favCollection = await dataManager.getFavCollection()
-                let favComics = favCollection.comics
-
-                const favSerieJson = {
-                    id: serie.id,
-                    name: serie.name,
-                    cover_image: serie.cover_image,
-                    comic_path: serie.serie_path,
-                    total_chapters: serie.total_chapters,
-                    status: serie.metadata.status,
-                    recommended_by: serie.metadata.recommended_by || "",
-                    original_owner: serie.metadata.original_owner || "",
-                };
-
-
-                if (!serie) {
-                    throw new Error(`Série com o nome "${serieName}" não encontrada.`);
-                }
-
-                const newFavoriteStatus = !serie.metadata.is_favorite;
-
-                if (newFavoriteStatus) {
-                    favComics.push(favSerieJson);
-                } else {
-                    favComics = favComics.filter(
-                        (series) => series.name !== serieName
-                    );
-                }
-
-                serie.metadata.is_favorite = newFavoriteStatus;
-
-                await dataManager.updateserieData(JSON.stringify(serie), serieName);
-                await dataManager.updateFavCollection(JSON.stringify(favCollection));
-                return { success: true };
-            } catch (error) {
-                return { success: false, error: "Não foi possível atualizar o status de favorito." };
+            if (!serie) {
+                throw new Error(`Série com o nome "${serieName}" não encontrada.`);
             }
+
+            const collections = await dataManager.getCollections();
+            const favCollection = collections.collections.find((collection) => collection.name === "Favorites");
+
+            if (!favCollection) {
+                throw new Error('Coleção de favoritos não encontrada.');
+            }
+
+            const favSerieJson = {
+                id: serie.id,
+                name: serie.name,
+                cover_image: serie.cover_image,
+                comic_path: serie.serie_path,
+                total_chapters: serie.total_chapters,
+                status: serie.metadata.status,
+                recommended_by: serie.metadata.recommended_by || "",
+                original_owner: serie.metadata.original_owner || "",
+                rating: serie.metadata.rating || 0
+            };
+
+            const newFavoriteStatus = !serie.metadata.is_favorite;
+
+            const serieExists = favCollection.comics.some((series) => series.name === serieName);
+
+            if (newFavoriteStatus && !serieExists) {
+                favCollection.comics.push(favSerieJson);
+            } else if (!newFavoriteStatus) {
+                favCollection.comics = favCollection.comics.filter((series) => series.name !== serieName);
+            }
+
+
+            serie.metadata.is_favorite = newFavoriteStatus;
+
+            await dataManager.updateserieData(JSON.stringify(serie), serieName);
+            await dataManager.updateFavCollection(JSON.stringify(collections));
+
+            return { success: true };
+        } catch (error) {
+            console.error(`Erro ao atualizar coleção de favoritos: ${error}`);
+            return { success: false };
         }
-    );
-
-
+    });
 
     ipcMain.handle("rating-serie", async (_event, serieName: string, userRating: string) => {
         const serie = await dataManager.selectSerieData(serieName)
@@ -164,6 +167,18 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         } catch (error) {
             console.error("Erro ao buscar dados da series:", error);
             throw error;
+        }
+    })
+
+    ipcMain.handle("get-favSeries", async () => {
+        try {
+            const collections = await dataManager.getCollections();
+            const findCollection = collections.collections.find((collection) => collection.name === "Favorites");
+            const favCollection = findCollection.comics
+            return favCollection
+        } catch (error) {
+            console.error(`erro em recuperar series favoritas: ${error}`)
+            throw error
         }
     })
 }

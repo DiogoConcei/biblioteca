@@ -4,6 +4,7 @@ import { IoCheckmarkCircleOutline } from "react-icons/io5";
 import { IoCheckmarkCircle } from "react-icons/io5";
 import { MdOutlineDownload, MdFileDownload } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
+import { Link } from "react-router-dom";
 import Pagination from "../Pagination/Pagination";
 import "./ChaptersInfo.css";
 
@@ -27,35 +28,40 @@ export default function ChaptersInfo({ serie }: OnlySerieProp) {
       <ul className="chaptersList">
         {currentItems.map((chapter) => (
           <li key={chapter.id} className="chapter">
-            <div className="filesInfo">
-              <span className="chapterName">{chapter.name}</span>
-              <span>
-                Upload: <FaUser />
-              </span>
-            </div>
-
-            <div className="chapterExtraInfo">
-              <span className="createDate">{chapter.create_date}</span>
-              <div className="dataInfo">
-                {chapter.is_read ? (
-                  <IoCheckmarkCircle className="read" aria-label="Lido" />
-                ) : (
-                  <IoCheckmarkCircleOutline
-                    className="unread"
-                    aria-label="Não lido"
-                  />
-                )}
-
-                {chapter.is_dowload ? (
-                  <MdFileDownload className="downloaded" aria-label="Baixado" />
-                ) : (
-                  <MdOutlineDownload
-                    className="notdownloaded"
-                    aria-label="Não baixado"
-                  />
-                )}
+            <Link to="">
+              <div className="filesInfo">
+                <span className="chapterName">{chapter.name}</span>
+                <span>
+                  Upload: <FaUser />
+                </span>
               </div>
-            </div>
+
+              <div className="chapterExtraInfo">
+                <span className="createDate">{chapter.create_date}</span>
+                <div className="dataInfo">
+                  {chapter.is_read ? (
+                    <IoCheckmarkCircle className="read" aria-label="Lido" />
+                  ) : (
+                    <IoCheckmarkCircleOutline
+                      className="unread"
+                      aria-label="Não lido"
+                    />
+                  )}
+
+                  {chapter.is_dowload ? (
+                    <MdFileDownload
+                      className="downloaded"
+                      aria-label="Baixado"
+                    />
+                  ) : (
+                    <MdOutlineDownload
+                      className="notdownloaded"
+                      aria-label="Não baixado"
+                    />
+                  )}
+                </div>
+              </div>
+            </Link>
           </li>
         ))}
       </ul>

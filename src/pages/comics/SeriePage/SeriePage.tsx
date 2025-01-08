@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { Comic } from "../../../types/serie.interfaces";
+import { Comic, ComicCollectionInfo } from "../../../types/serie.interfaces";
 import { useState, useEffect } from "react";
 import ChaptersInfo from "../../../components/ChaptersInfo/ChaptersInfo";
 import ComicActions from "../../../components/ComicActions/ComicActions";
@@ -7,6 +7,9 @@ import "./SeriePage.css";
 
 export default function SeriePage() {
   const [serie, setSerie] = useState<Comic | null>(null);
+  const [collectionInfo, setCollectionInfo] = useState<
+    ComicCollectionInfo[] | null
+  >(null);
   const [isLoading, setIsLoading] = useState(true);
   const { book_name } = useParams();
 
@@ -15,7 +18,9 @@ export default function SeriePage() {
       try {
         setIsLoading(true);
         const data = await window.electron.series.getSerie(book_name);
+        const favSeries = await window.electron.series.getFavSeries();
         setSerie(data);
+        setCollectionInfo(favSeries);
       } catch (error) {
         console.error("Erro ao carregar série:", error);
       } finally {
@@ -24,8 +29,9 @@ export default function SeriePage() {
     };
 
     getData();
-  }, [book_name]);
-  if (!serie) {
+  }, []);
+
+  if (!serie || !collectionInfo) {
     return <p>Carrengado dados...</p>;
   }
 
@@ -64,11 +70,9 @@ export default function SeriePage() {
         <section className="favorites">
           <h3>Séries Favoritas</h3>
           <ul className="fav-series">
-            <li>teste 1</li>
-            <li>teste 2</li>
-            <li>teste 3</li>
-            <li>teste 4</li>
-            <li>teste 5</li>
+            {collectionInfo.map((serie) => (
+              <li>{serie.name}</li>
+            ))}
           </ul>
         </section>
         <section className="recent">
