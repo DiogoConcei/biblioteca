@@ -84,5 +84,14 @@ export default class StorageManager extends FileSystem {
 
   // Delete
   // ?
-}
 
+  private async foundLastDownload(serieName: string): Promise<number> {
+    try {
+      const serieData = await this.selectSerieData(serieName);
+      return serieData.metadata.last_download;
+    } catch (error) {
+      console.error(`Erro ao recuperar o último download da série "${serieName}": ${error}`);
+      throw error;
+    }
+  }
+}

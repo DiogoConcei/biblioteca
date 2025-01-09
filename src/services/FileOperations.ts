@@ -8,15 +8,6 @@ export default class FileOperations extends FileSystem {
     super();
   }
 
-  public async encodeImageToBase64(filePath: string): Promise<string> {
-    try {
-      const fileData = await fs.readFile(filePath);
-      return fileData.toString('base64');
-    } catch (error) {
-      throw new Error(`Erro ao converter o arquivo para Base64: ${error.message}`);
-    }
-  }
-
   public sanitizeFilename(fileName: string): string {
     return fileName
       .replace(/\s+/g, "_")

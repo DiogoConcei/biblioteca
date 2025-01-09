@@ -33,7 +33,8 @@ export interface Comic {
   id: number;
   name: string;
   sanitized_name: string;
-  serie_path: string;
+  archives_path: string;
+  chapters_path: string;
   cover_image: string;
   total_chapters: number;
   created_at: string;
@@ -55,11 +56,11 @@ export interface Comic {
   comments: string[];
 }
 
-
 export interface ComicEdition {
   id: number;
   name: string;
   sanitized_name: string;
+  archive_path: string;
   chapter_path: string;
   create_date: string;
   is_read: boolean;
