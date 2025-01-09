@@ -18,12 +18,28 @@ export default class ComicManager extends FileSystem {
         super()
     }
 
-    public async getChapter(serieName: string, chapter_id: number): Promise<string[]> {
-        const chaptersData = (await this.storageManager.selectSerieData(serieName)).chapters
-        const chapterPath = chaptersData.find((chapter) => chapter.id == chapter_id).chapter_path
-        const chapterDir = (await fs.readdir(chapterPath, { withFileTypes: true }))
-        console.log(chapterDir)
-        return
+    public async getChapter(serieName: string, chapter_id: number): Promise<string[] | string> {
+        try {
+            const serieData = await this.storageManager.selectSerieData(serieName);
+            const chaptersData = serieData.chapters;
+            const chapter = chaptersData.find((chap) => chap.id === chapter_id);
+            const chapterDirents = await fs.readdir(chapter.chapter_path, { withFileTypes: true });
+
+            const imageFiles = chapterDirents
+                .filter(
+                    (dirent) =>
+                        dirent.isFile() &&
+                        /\.(jpe?g|png|webp|tiff)$/i.test(dirent.name)
+                )
+                .map((dirent) => path.join(chapter.chapter_path, dirent.name));
+
+            const processedImages = await this.imageManager.encodeImageToBase64(imageFiles)
+
+            return processedImages
+        } catch (error) {
+            console.error(`Erro ao obter conteúdo do capítulo: ${error.message}`);
+            throw error;
+        }
     }
 
 
@@ -149,12 +165,7 @@ export default class ComicManager extends FileSystem {
 
 }
 
-// (async () => {
-//     const ComicOperations = new ComicManager()
-//     await ComicOperations.createComic(["C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\Books\\Dragon Ball"])
-// })();
-
-// (async () => {
-//     const ComicOperations = new ComicManager()
-//     console.log(await ComicOperations.getChapter("Jujutsu Kaisen", 1))
-// })();
+(async () => {
+    const ComicOperations = new ComicManager()
+    console.log(await ComicOperations.getChapter("Jujutsu Kaisen", 1))
+})();

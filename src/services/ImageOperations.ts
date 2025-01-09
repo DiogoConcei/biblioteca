@@ -171,12 +171,24 @@ export default class ImageOperations extends FileSystem {
     }
   }
 
-  public async encodeImageToBase64(filePath: string): Promise<string> {
+  public async encodeImageToBase64(filePath: string[] | string): Promise<string | string[]> {
     try {
-      const fileData = await fse.readFile(filePath);
-      return fileData.toString("base64");
+      if (typeof filePath === "string") {
+        const fileData = await fse.readFile(filePath);
+        return fileData.toString("base64");
+      } else if (Array.isArray(filePath)) {
+        const base64Array = await Promise.all(
+          filePath.map(async (filePath) => {
+            const fileData = await fse.readFile(filePath);
+            return fileData.toString("base64");
+          })
+        );
+        return base64Array;
+      } else {
+        throw new Error("Entrada inválida. Deve ser um caminho de arquivo ou uma lista de caminhos.");
+      }
     } catch (error) {
-      console.error(`[ERROR] Erro ao converter imagem para Base64: ${error.message}`);
+      console.error("Erro ao processar imagens:", error);
       throw error;
     }
   }
@@ -212,8 +224,3 @@ export default class ImageOperations extends FileSystem {
   }
 
 }
-
-(async () => {
-  const ComicOperations = new ImageOperations()
-  await ComicOperations.extractInitialCovers(["Dragon Ball"])
-})();
