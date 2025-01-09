@@ -21,8 +21,12 @@ export default function Home() {
     event.preventDefault();
 
     const files = event.dataTransfer.files;
+
     const filePaths = Array.from(files).map((file) => {
-      return window.electron.webUtils.getPathForFile(file);
+      if (!window.electron?.webUtilities?.getPathForFile) {
+        throw new Error("A função getPathForFile não está definida.");
+      }
+      return window.electron.webUtilities.getPathForFile(file);
     });
 
     try {

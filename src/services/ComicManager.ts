@@ -164,8 +164,3 @@ export default class ComicManager extends FileSystem {
     }
 
 }
-
-(async () => {
-    const ComicOperations = new ComicManager()
-    console.log(await ComicOperations.getChapter("Jujutsu Kaisen", 1))
-})();

@@ -44,7 +44,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
             const getData = await StorageOperations.seriesData();
 
             const processData = await Promise.all(getData.map(async (serieData) => {
-                const encodedImage = await FileManager.encodeImageToBase64(serieData.cover_image);
+                const encodedImage = await ImageManager.encodeImageToBase64(serieData.cover_image);
                 return {
                     ...serieData,
                     cover_image: encodedImage,
@@ -60,7 +60,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
     ipcMain.handle("download-chapter", async (_event, seriePath: string, quantity: number) => {
         try {
-            await ImageManager.extractChapters(seriePath, quantity)
+            await ImageManager.createComicImages(seriePath, quantity)
         } catch (error) {
             console.error(`erro em realizar o download: ${error}`)
             throw error
@@ -86,7 +86,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
                 id: serie.id,
                 name: serie.name,
                 cover_image: serie.cover_image,
-                comic_path: serie.serie_path,
+                comic_path: serie.chapters_path,
                 total_chapters: serie.total_chapters,
                 status: serie.metadata.status,
                 recommended_by: serie.metadata.recommended_by || "",
@@ -162,7 +162,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
             const processedData = {
                 ...data,
-                cover_image: await FileManager.encodeImageToBase64(data.cover_image),
+                cover_image: await ImageManager.encodeImageToBase64(data.cover_image),
             };
 
             return processedData

@@ -29,7 +29,7 @@ declare global {
             upload: {
                 handleDrop: (filePaths: string[]) => Promise<string[]>,
             }
-            webUtils: {
+            webUtilities: {
                 getPathForFile: (file: File) => string;
             },
             eventEmitter: {
