@@ -14,6 +14,7 @@ export default function ComicCards({ searchInput }: ComicCardsProps) {
         setSeries(data);
       } catch (error) {
         console.error("Erro ao carregar imagens", error);
+        throw error;
       }
     };
 

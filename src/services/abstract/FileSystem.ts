@@ -32,6 +32,7 @@ export abstract class FileSystem {
       await fs.mkdir(path, { recursive: true });
     } catch (e) {
       console.error(`Erro ao criar diretório: ${path}`, e);
+      throw e;
     }
   }
 
@@ -40,6 +41,7 @@ export abstract class FileSystem {
       await fs.rm(path, { force: true });
     } catch (e) {
       console.error(`Erro ao criar diretório: ${path}`, e);
+      throw e;
     }
   }
 

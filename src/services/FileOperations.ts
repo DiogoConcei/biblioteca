@@ -99,6 +99,7 @@ export default class FileOperations extends FileSystem {
       return filePath
     } catch (error) {
       console.error(`erro ao recuperar arquivo de dados: ${error}`)
+      throw error;
     }
   }
 

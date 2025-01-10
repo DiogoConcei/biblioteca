@@ -12,7 +12,9 @@ declare global {
                 // create
                 createSerie: (filePaths: string[]) => Promise<void>,
                 // get fav
-                getFavSeries: () => Promise<ComicCollectionInfo>
+                getFavSeries: () => Promise<ComicCollectionInfo>,
+                // get chapter
+                getChapter: (serieName: string, chapter_id: number) => Promise<string[]>
             }
             serieActions: {
                 favoriteSerie: (serieName: string) => Promise<{ success: boolean }>,

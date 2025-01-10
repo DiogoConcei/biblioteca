@@ -117,6 +117,7 @@ export default class ImageOperations extends FileSystem {
         }
       } catch (error) {
         console.error(`[ERROR] Erro ao processar a imagem especial ${imagePath}:`, error);
+        throw error;
       }
     }
     return null;
@@ -133,6 +134,7 @@ export default class ImageOperations extends FileSystem {
         }
       } catch (error) {
         console.error(`[ERROR] Erro ao processar a imagem ${imagePath}:`, error);
+        throw error;
       }
     }
 
@@ -220,6 +222,7 @@ export default class ImageOperations extends FileSystem {
       await this.coverToSerie(fileNames);
     } catch (error) {
       console.error(`Erro em extrair a showcaseImage: ${error}`)
+      throw error;
     }
   }
 

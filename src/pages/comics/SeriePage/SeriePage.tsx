@@ -23,6 +23,7 @@ export default function SeriePage() {
         setCollectionInfo(favSeries);
       } catch (error) {
         console.error("Erro ao carregar série:", error);
+        throw error;
       } finally {
         setIsLoading(false);
       }

@@ -1,5 +1,4 @@
 import { IpcMain } from "electron";
-import FileOperations from "../services/FileOperations"
 import StorageManager from "../services/StorageManager";
 import ComicManager from "../services/ComicManager";
 import ImageOperations from "../services/ImageOperations";
@@ -7,7 +6,6 @@ import path from 'path'
 
 
 export default function seriesHandlers(ipcMain: IpcMain) {
-    const FileManager = new FileOperations()
     const ComicOperations = new ComicManager()
     const StorageOperations = new StorageManager()
     const ImageManager = new ImageOperations()
@@ -55,6 +53,44 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         } catch (error) {
             console.error("Erro ao buscar dados das séries:", error);
             throw error;
+        }
+    })
+
+    ipcMain.handle("get-serie", async (_event, serieName: string) => {
+        try {
+            const data = await StorageOperations.selectSerieData(serieName)
+
+            const processedData = {
+                ...data,
+                cover_image: await ImageManager.encodeImageToBase64(data.cover_image),
+            };
+
+            return processedData
+        } catch (error) {
+            console.error("Erro ao buscar dados da series:", error);
+            throw error;
+        }
+    })
+
+    ipcMain.handle("get-favSeries", async () => {
+        try {
+            const collections = await ComicOperations.getCollections();
+            const findCollection = collections.collections.find((collection) => collection.name === "Favorites");
+            const favCollection = findCollection.comics
+            return favCollection
+        } catch (error) {
+            console.error(`erro em recuperar series favoritas: ${error}`)
+            throw error
+        }
+    })
+
+    ipcMain.handle("get-chapter", async (_event, serieName: string, chapter_id: number) => {
+        try {
+            const chapter = await ComicOperations.getChapter(serieName, chapter_id)
+            return chapter
+        } catch (error) {
+            console.error(`Erro ao recuperar o capitulo`)
+            throw error
         }
     })
 
@@ -156,31 +192,6 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     })
 
 
-    ipcMain.handle("get-serie", async (_event, serieName: string) => {
-        try {
-            const data = await StorageOperations.selectSerieData(serieName)
 
-            const processedData = {
-                ...data,
-                cover_image: await ImageManager.encodeImageToBase64(data.cover_image),
-            };
 
-            return processedData
-        } catch (error) {
-            console.error("Erro ao buscar dados da series:", error);
-            throw error;
-        }
-    })
-
-    ipcMain.handle("get-favSeries", async () => {
-        try {
-            const collections = await ComicOperations.getCollections();
-            const findCollection = collections.collections.find((collection) => collection.name === "Favorites");
-            const favCollection = findCollection.comics
-            return favCollection
-        } catch (error) {
-            console.error(`erro em recuperar series favoritas: ${error}`)
-            throw error
-        }
-    })
 }

@@ -30,6 +30,7 @@ export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
       }
     } catch (error) {
       console.error("Erro ao favoritar série:", error);
+      throw error;
     }
   };
 

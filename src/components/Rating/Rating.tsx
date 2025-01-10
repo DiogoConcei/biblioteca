@@ -34,6 +34,7 @@ export default function Rating({ serie }: OnlySerieProp) {
       setIsOpen(false);
     } catch (error) {
       console.error("Erro ao atualizar o rating:", error);
+      throw error;
       setSelectedRating(previousRatingValue);
     }
   };

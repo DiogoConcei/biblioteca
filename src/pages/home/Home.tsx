@@ -36,6 +36,7 @@ export default function Home() {
       await window.electron.series.createSerie(newPaths);
     } catch (error) {
       console.error("Erro ao carregar arquivos", error);
+      throw error;
     }
   };
 
