@@ -1,11 +1,37 @@
 import "./ComicVisualizer.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 
 export function ComicVisualizer() {
   const [pageNumber, setPageNumber] = useState(0);
   const [pages, setPages] = useState<string[]>([]);
   const { book_name, chapter_id } = useParams();
+
+  const nextPage = () => {
+    if (pages && pageNumber < pages.length - 1) {
+      setPageNumber(pageNumber + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (pages && pageNumber > 0) {
+      setPageNumber(pageNumber - 1);
+    }
+  };
+
+  const handleKey = (event: KeyboardEvent) => {
+    if (!pages) return;
+    switch (event.key) {
+      case "ArrowLeft":
+        prevPage();
+        break;
+      case "ArrowRight":
+        nextPage();
+        break;
+      default:
+        break;
+    }
+  };
 
   useEffect(() => {
     const getChapter = async () => {
@@ -16,20 +42,30 @@ export function ComicVisualizer() {
         );
         setPages(data);
       } catch (error) {
-        console.error(`erro em recuperar páginas do capitulo: ${error}`);
-        throw error;
+        console.error(`Erro ao recuperar páginas do capítulo: ${error}`);
       }
     };
 
     getChapter();
-  }, [chapter_id]);
+  }, [book_name, chapter_id]);
 
-  if (!pages || pages.length === 0) {
-    return <div>Loading...</div>;
+  useEffect(() => {
+    if (pages) {
+      window.addEventListener("keydown", handleKey);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+    };
+  }, [pages, handleKey]);
+
+  if (!pages) {
+    return <p>Loading...</p>;
   }
 
   return (
     <section className="visualizer">
+      <div className="actionMenu">menu</div>
       <img
         className="chapterPage"
         src={`data:image/png;base64,${pages[pageNumber]}`}

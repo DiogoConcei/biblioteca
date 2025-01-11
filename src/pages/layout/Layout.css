@@ -9,16 +9,61 @@
   padding: 0px;
   margin: 0px;
   box-sizing: border-box;
-  list-style: none;
   text-decoration: none;
-  scrollbar-width: none;
+  list-style: none;
+  font-size: 16px;
+  outline: none;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+body {
+  overflow: auto;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+button {
+  border: none;
+  background: none;
+  outline: none;
+  cursor: pointer;
 }
 
 .Content {
-  margin-top: 50px;
+  position: relative;
   display: flex;
-  flex-direction: column;
-  height: calc(100vh - 50px);
-  overflow: auto;
+  flex-flow: column nowrap;
+  height: 100vh;
+}
+
+.OutletContainer {
+  flex: 1;
+  margin-top: 48.4px;
+  background: #282c34;
+  position: relative;
+  transition: margin-top 0.3s;
+}
+
+.TitleBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 10;
+}
+
+.TitleBar.hideNav {
+  visibility: hidden;
+  display: none;
+  border: 1px solid green;
+}
+
+.OutletContainer.fullContainer {
+  display: flex;
+  height: 100vh;
+  flex-grow: 1;
+  margin-top: 0px;
   background: #282c34;
 }

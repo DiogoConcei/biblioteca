@@ -4,14 +4,15 @@ export interface OnlySerieProp {
     serie: Comic;
 }
 
+export interface dinamicNavProp {
+    isHidden: boolean;
+}
 
 export interface PaginationProps {
     currentPage: number;
     totalPages: number;
     onPageChange: (page: number) => void;
 }
-
-
 
 export interface SearchBarProps {
     searchInput: string;

@@ -21,15 +21,15 @@
   padding: 10px;
 }
 
+.serieCover {
+  height: 40vh;
+  border-radius: 10px;
+}
+
 .recomend,
 .owner {
   font-size: 1rem;
   color: #fcf7f8;
-}
-
-.serieCover {
-  height: 40vh;
-  border-radius: 10px;
 }
 
 .mainContent {
@@ -38,8 +38,6 @@
   align-items: flex-start;
   justify-content: flex-start;
   gap: 20px;
-  width: 33vw;
-  height: 50vh;
 }
 
 .mainContent h2 {
@@ -68,10 +66,6 @@
   border: 1px solid #fcf7f8;
 }
 
-.recent h3 {
-  border-top: none;
-}
-
 .fav-series,
 .recent-series {
   display: flex;
@@ -86,4 +80,8 @@
   font-weight: lighter;
   padding: 10px;
   color: #fcf7f8;
+}
+
+.recent h3 {
+  border-top: none;
 }

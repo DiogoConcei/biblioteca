@@ -1,11 +1,12 @@
 import { MdClose } from "react-icons/md";
 import { FaRegSquareFull } from "react-icons/fa6";
 import { GoHome } from "react-icons/go";
+import { dinamicNavProp } from "../../types/components.interfaces";
 import { FiMinus } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import "./Nav.css";
 
-export default function Nav() {
+export default function Nav({ isHidden }: dinamicNavProp) {
   const minimize = () => {
     if (window?.electron?.windowAction?.minimize) {
       window.electron.windowAction.minimize();
@@ -31,7 +32,7 @@ export default function Nav() {
   };
 
   return (
-    <nav className="TitleBar">
+    <nav className={`TitleBar ${isHidden ? "hideNav" : ""}`}>
       <ul className="NavBar">
         <li key="home">
           <Link to="/" className="link">
@@ -52,7 +53,7 @@ export default function Nav() {
         </li>
       </ul>
 
-      <div>
+      <div className="teste">
         <div className="windowBtns">
           <button
             onClick={minimize}

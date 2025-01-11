@@ -1,21 +1,14 @@
 .TitleBar {
   display: flex;
   justify-content: space-between;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
+  flex-flow: row nowrap;
   background: #282c34;
-  height: 50px;
-  -webkit-app-region: drag;
-  bottom: 1px solid #f4f4ed63;
 }
 
 .NavBar {
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   gap: 0.5rem;
   -webkit-app-region: no-drag;
   cursor: pointer;
@@ -23,7 +16,6 @@
 
 .link {
   font-size: 1.5rem;
-  text-decoration: none;
 }
 
 .tab {
@@ -42,6 +34,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-flow: row nowrap;
   padding: 0.7rem;
   -webkit-app-region: no-drag;
   height: 3rem;
@@ -63,11 +56,4 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-button {
-  border: none;
-  background: none;
-  outline: none;
-  cursor: pointer;
 }
