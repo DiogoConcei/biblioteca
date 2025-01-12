@@ -29,5 +29,5 @@ export interface ComicActionsProps {
 }
 
 export interface downloadButtonProps {
-    archives_path: string
+    serieName: string
 }

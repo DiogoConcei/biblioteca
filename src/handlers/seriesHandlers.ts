@@ -94,9 +94,9 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         }
     })
 
-    ipcMain.handle("download-chapter", async (_event, seriePath: string, quantity: number) => {
+    ipcMain.handle("download-chapter", async (_event, serieName: string, quantity: number) => {
         try {
-            await ImageManager.createComicImages(seriePath, quantity)
+            await ImageManager.createComicImages(serieName, quantity)
         } catch (error) {
             console.error(`erro em realizar o download: ${error}`)
             throw error
@@ -190,8 +190,5 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
         await StorageOperations.updateserieData(JSON.stringify(serie), serieName);
     })
-
-
-
 
 }

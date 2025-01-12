@@ -25,8 +25,8 @@ const serieActions = {
 };
 
 const download = {
-  downloadSerie: (seriePath: string, quantity: number): Promise<void> =>
-    ipcRenderer.invoke("download-chapter", seriePath, quantity),
+  downloadSerie: (serieName: string, quantity: number): Promise<void> =>
+    ipcRenderer.invoke("download-chapter", serieName, quantity),
 };
 
 const upload = {

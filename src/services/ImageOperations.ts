@@ -19,6 +19,63 @@ export default class ImageOperations extends FileSystem {
     this.fileManager = new FileOperations();
   }
 
+  public async createComicImages(serieName: string, quantity: number): Promise<string> {
+    try {
+      const serieData = await this.dataManager.selectSerieData(serieName);
+
+      const organizedChapters = await this.fileManager.orderByChapters(
+        await this.fileManager.foundFiles(serieData.archives_path)
+      );
+
+      const serieNames = path.basename(serieData.archives_path);
+      const seriePath = await this.fileManager.findJsonFile(serieNames);
+      const lastDownload = await this.foundLastDownload(serieNames);
+      const nextItem = lastDownload;
+      const lastItem = Math.min(lastDownload + quantity, organizedChapters.length);
+
+      const chaptersPath = path.join(this.imagesFilesPath, serieNames);
+      let lastProcessedPath = "";
+
+      for (let i = nextItem; i < lastItem; ++i) {
+        const chapterName = path.basename(organizedChapters[i], path.extname(organizedChapters[i]));
+        const chapterSeriePath = path.join(chaptersPath, chapterName);
+
+        await this.extractionProcess(chapterSeriePath, organizedChapters[i]);
+
+        serieData.chapters[i].is_dowload = true;
+        serieData.chapters[i].chapter_path = chapterSeriePath;
+        serieData.metadata.last_download = i;
+        serieData.chapters_path = chaptersPath;
+
+        lastProcessedPath = chapterSeriePath;
+      }
+
+      await jsonfile.writeFile(seriePath, serieData, { spaces: 2 });
+
+      return lastProcessedPath;
+    } catch (error) {
+      console.error(`Erro ao processar os capítulos em "${serieName}": ${error}`);
+      throw error;
+    }
+  }
+
+  private async extractionProcess(chapterSeriePath: string, chapterFile: string): Promise<void> {
+    fs.mkdirSync(chapterSeriePath, { recursive: true });
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        fs.createReadStream(chapterFile)
+          .pipe(unzipper.Extract({ path: chapterSeriePath }))
+          .on("close", resolve)
+          .on("error", reject);
+      });
+    } catch (error) {
+      console.error(`Erro ao extrair o capítulo: ${error}`);
+      throw error;
+    }
+  }
+
+
   public async coverToSerie(filesNames: string[]): Promise<void> {
     try {
       const series = await Promise.all(
@@ -45,50 +102,6 @@ export default class ImageOperations extends FileSystem {
       }
     } catch (error) {
       console.error(`[ERROR] Erro ao associar capas às séries: ${error.message}`);
-      throw error;
-    }
-  }
-
-  public async createComicImages(chaptersArchivesPath: string, quantity: number): Promise<string> {
-    try {
-      const allChapters = await this.fileManager.foundFiles(chaptersArchivesPath)
-      const organizedChapters = await this.fileManager.orderByChapters(allChapters)
-      const serieName = path.basename(chaptersArchivesPath);
-      const seriePath = await this.fileManager.findJsonFile(serieName);
-      const lastDownload = await this.foundLastDownload(serieName);
-      const nextItem = lastDownload;
-      const lastItem = lastDownload + quantity;
-
-      const chaptersPath = path.join(
-        this.imagesFilesPath,
-        serieName,
-      )
-
-      for (let i = nextItem; i < lastItem; ++i) {
-        const chapterName = path.basename(organizedChapters[i], path.extname(organizedChapters[i]));
-
-        const chaptersSeriePath = path.join(
-          this.imagesFilesPath,
-          serieName,
-          chapterName
-        );
-
-        await this.extractionProcess(chaptersSeriePath, organizedChapters[i])
-
-        const serieData = await this.dataManager.selectSerieData(serieName);
-        const chapterData = serieData.chapters;
-        chapterData[i].is_dowload = true
-        const dirPath = path.dirname(chaptersSeriePath)
-        chapterData[i].chapter_path = path.join(dirPath, path.basename(chaptersSeriePath))
-        serieData.metadata.last_download = chapterData[i].id
-        serieData.chapters_path = chaptersPath
-
-
-        await jsonfile.writeFile(seriePath, serieData, { spaces: 2 })
-        return chaptersSeriePath
-      }
-    } catch (error) {
-      console.error(`Erro ao processar os capítulos em "${chaptersArchivesPath}": ${error}`);
       throw error;
     }
   }
@@ -146,23 +159,6 @@ export default class ImageOperations extends FileSystem {
     return validImages;
   }
 
-  private async extractionProcess(chapterSeriePath: string, organizedChapters: string): Promise<void> {
-    fs.mkdirSync(chapterSeriePath, { recursive: true });
-    try {
-      await new Promise<void>((resolve, reject) => {
-        fs.createReadStream(organizedChapters)
-          .pipe(unzipper.Extract({ path: chapterSeriePath }))
-          .on("close", resolve)
-          .on("error", reject);
-      });
-
-    } catch (error) {
-      console.error(`Erro ao extrair o capítulo `, error);
-      throw error;
-    }
-
-  }
-
   private async foundLastDownload(serieName: string): Promise<number> {
     try {
       const serieData = await this.dataManager.selectSerieData(serieName);
@@ -201,11 +197,12 @@ export default class ImageOperations extends FileSystem {
         fileNames.map(fileName => this.dataManager.selectSerieData(fileName))
       );
 
-      const archivesPath = seriesData.map(serie => serie.archives_path);
+      const archivesPath = seriesData.map(serie => serie.name);
 
       const extractedPaths = await Promise.all(
         archivesPath.map(archivePath => this.createComicImages(archivePath, 1))
       );
+
 
       const chapterImages = await Promise.all(
         extractedPaths.map(chapterPath => this.foundFiles(chapterPath))
@@ -227,3 +224,12 @@ export default class ImageOperations extends FileSystem {
   }
 
 }
+
+// (async () => {
+//   try {
+//     const comicManager = new ImageOperations()
+//     await comicManager.extractInitialCovers(['Dr. Stone'])
+//   } catch (error) {
+//     console.error("Erro ao buscar os dados:", error);
+//   }
+// })();

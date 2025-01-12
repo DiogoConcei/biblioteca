@@ -1,26 +1,56 @@
 import "./ComicVisualizer.css";
-import { useState, useEffect, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 
 export function ComicVisualizer() {
   const [pageNumber, setPageNumber] = useState(0);
   const [pages, setPages] = useState<string[]>([]);
-  const { book_name, chapter_id } = useParams();
+  const { book_name, book_id, chapter_id } = useParams();
+  const navigate = useNavigate();
 
   const nextPage = () => {
-    if (pages && pageNumber < pages.length - 1) {
+    if (pageNumber < pages.length - 1) {
       setPageNumber(pageNumber + 1);
+    } else {
+      nextChapter();
+    }
+  };
+
+  const nextChapter = async () => {
+    try {
+      const nextChapterId = Number(chapter_id) + 1;
+      if (!isNaN(nextChapterId)) {
+        navigate(`/${book_name}/${book_id}/chapter/${nextChapterId}`);
+      } else {
+        console.error("Próximo capítulo não encontrado.");
+      }
+    } catch (error) {
+      console.error(`Erro ao navegar para o próximo capítulo: ${error}`);
+    }
+  };
+
+  const prevChapter = async () => {
+    try {
+      const prevChapterId = Number(chapter_id) - 1;
+      if (prevChapterId >= 0) {
+        navigate(`/${book_name}/${book_id}/chapter/${prevChapterId}`);
+      } else {
+        console.error("Capítulo anterior não encontrado.");
+      }
+    } catch (error) {
+      console.error(`Erro ao navegar para o capítulo anterior: ${error}`);
     }
   };
 
   const prevPage = () => {
-    if (pages && pageNumber > 0) {
+    if (pageNumber > 0) {
       setPageNumber(pageNumber - 1);
+    } else {
+      prevChapter();
     }
   };
 
   const handleKey = (event: KeyboardEvent) => {
-    if (!pages) return;
     switch (event.key) {
       case "ArrowLeft":
         prevPage();
@@ -35,31 +65,49 @@ export function ComicVisualizer() {
 
   useEffect(() => {
     const getChapter = async () => {
+      if (!book_name || !chapter_id) return;
+
       try {
         const data = await window.electron.series.getChapter(
           book_name,
           Number(chapter_id)
         );
-        setPages(data);
+        if (data) {
+          setPages(data);
+          setPageNumber(0);
+        }
       } catch (error) {
         console.error(`Erro ao recuperar páginas do capítulo: ${error}`);
       }
     };
 
     getChapter();
-  }, [book_name, chapter_id]);
+  }, [chapter_id, book_name]);
 
   useEffect(() => {
-    if (pages) {
-      window.addEventListener("keydown", handleKey);
-    }
+    const handleDownload = async () => {
+      if (pages.length > 0) {
+        window.addEventListener("keydown", handleKey);
+      }
+
+      if (
+        pageNumber === Math.round((pages.length - 1) / 2) &&
+        pages.length > 0
+      ) {
+        console.log(pages.length / 2);
+        console.log(`Chegou na metade`);
+        await window.electron.download.downloadSerie(book_name, 1);
+      }
+    };
+
+    handleDownload(); // Chama a função assíncrona dentro do useEffect
 
     return () => {
       window.removeEventListener("keydown", handleKey);
     };
-  }, [pages, handleKey]);
+  }, [pages, pageNumber]);
 
-  if (!pages) {
+  if (!pages || pages.length === 0 || !pages[pageNumber]) {
     return <p>Loading...</p>;
   }
 

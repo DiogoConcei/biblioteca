@@ -36,7 +36,7 @@ export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
 
   return (
     <div className="serieActions">
-      <DownloadButton archives_path={serie.archives_path} />
+      <DownloadButton serieName={serie.name} />
       <button
         className="favorite"
         onClick={(event) =>

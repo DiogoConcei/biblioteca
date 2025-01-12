@@ -3,7 +3,7 @@ import { downloadButtonProps } from "../../types/components.interfaces";
 import { HiDownload } from "react-icons/hi";
 import "./DownloadButton.css";
 
-export default function DownloadButton({ archives_path }: downloadButtonProps) {
+export default function DownloadButton({ serieName }: downloadButtonProps) {
   const [selectedQuantity, setSelectedQuantity] = useState<number>(0);
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
@@ -15,7 +15,7 @@ export default function DownloadButton({ archives_path }: downloadButtonProps) {
 
   const onSelect = async (quantity: number) => {
     setSelectedQuantity(quantity);
-    await window.electron.download.downloadSerie(archives_path, quantity);
+    await window.electron.download.downloadSerie(serieName, quantity);
     setIsOpen(false);
   };
 

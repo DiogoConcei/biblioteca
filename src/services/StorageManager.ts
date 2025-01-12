@@ -95,3 +95,12 @@ export default class StorageManager extends FileSystem {
     }
   }
 }
+
+// (async () => {
+//   try {
+//     const comicManager = new StorageManager()
+//     console.log(await comicManager.selectSerieData('Dr. Stone'))
+//   } catch (error) {
+//     console.error("Erro ao buscar os dados:", error);
+//   }
+// })();

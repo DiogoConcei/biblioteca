@@ -162,5 +162,13 @@ export default class ComicManager extends FileSystem {
             throw e;
         }
     }
-
 }
+
+// (async () => {
+//     try {
+//         const comicManager = new ComicManager()
+//         await comicManager.createComic(['C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\Books\\Dr. Stone'])
+//     } catch (error) {
+//         console.error("Erro ao buscar os dados:", error);
+//     }
+// })();

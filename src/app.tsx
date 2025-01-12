@@ -17,9 +17,9 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index path="" element={<Home />} />
-          <Route path="/:book_name/:id" element={<SeriePage />} />
+          <Route path="/:book_name/:book_id" element={<SeriePage />} />
           <Route
-            path="/:book_name/:id/:chapter_name/:chapter_id"
+            path="/:book_name/:book_id/chapter/:chapter_id"
             element={<ComicVisualizer />}
           />
           <Route path="*" element={<Page404 />} />

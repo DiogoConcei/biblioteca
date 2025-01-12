@@ -2,6 +2,8 @@
   display: flex;
   justify-content: space-between;
   flex-flow: row nowrap;
+  -webkit-app-region: drag;
+  flex-grow: 1;
   background: #282c34;
 }
 
@@ -10,7 +12,7 @@
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
-  -webkit-app-region: no-drag;
+  -webkit-app-region: drag;
   cursor: pointer;
 }
 

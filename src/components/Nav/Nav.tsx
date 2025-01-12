@@ -53,7 +53,7 @@ export default function Nav({ isHidden }: dinamicNavProp) {
         </li>
       </ul>
 
-      <div className="teste">
+      <div className="containerBtns">
         <div className="windowBtns">
           <button
             onClick={minimize}
