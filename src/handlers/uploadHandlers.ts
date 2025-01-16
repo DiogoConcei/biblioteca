@@ -1,8 +1,10 @@
 import { IpcMain } from "electron";
 import FileOperations from "../services/FileOperations"
+import ValidationOperations from "../services/ValidationOperations";
 
 export default function uploadHandlers(ipcMain: IpcMain) {
     const FileManager = new FileOperations()
+    const ValidationManager = new ValidationOperations()
 
     ipcMain.handle("localUpload", async (_event, filePaths: string[]) => {
         if (!filePaths || filePaths.length === 0) {
@@ -14,7 +16,9 @@ export default function uploadHandlers(ipcMain: IpcMain) {
             const newPaths = await Promise.all(
                 filePaths.map(async (file) => {
                     try {
-                        return await FileManager.localUpload(file);
+                        if (ValidationManager.serieExist(file)) {
+                            return await FileManager.localUpload(file);
+                        }
                     } catch (error) {
                         console.error(`Erro ao fazer upload de ${file}: ${error}`);
                         throw error;

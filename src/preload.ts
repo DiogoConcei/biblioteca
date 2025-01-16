@@ -42,6 +42,8 @@ const download = {
 const upload = {
   localUpload: (filePaths: string[]): Promise<string[]> =>
     ipcRenderer.invoke("localUpload", filePaths),
+  lineReading: (serieName: string, chapter_id: number): Promise<void> => ipcRenderer.invoke("download-in-reading", serieName, chapter_id),
+
 };
 
 const webUtilities = {

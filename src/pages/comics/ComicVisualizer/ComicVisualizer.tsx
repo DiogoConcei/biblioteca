@@ -110,7 +110,10 @@ export function ComicVisualizer() {
         pageNumber === Math.round((pages.length - 1) / 2) &&
         pages.length > 0
       ) {
-        await window.electron.download.downloadLocal(book_name, 1);
+        await window.electron.download.lineReading(
+          book_name,
+          Number(chapter_id)
+        );
       }
     };
 

@@ -18,22 +18,19 @@ export default class FileOperations extends FileSystem {
   }
 
   public extractSerieInfo(fileName: string): { volume: number; chapter: number } {
-
     const regex = /Vol\.\s*(\d+)|Ch\.\s*(\d+(\.\d+)?)|Chapter\s*(\d+(\.\d+)?)|Capítulo\s*(\d+(\.\d+)?)/gi;
     const matches = [...fileName.matchAll(regex)];
-
 
     let volume = 0;
     let chapter = 0;
 
     matches.forEach((match) => {
       if (match[1]) {
-        volume = parseInt(match[1], 10);
+        volume = parseInt(match[1], 10); // Extrai o volume
       }
-
       if (match[2] || match[4] || match[6]) {
         const chapterValue = match[2] || match[4] || match[6];
-        const chapterNumber = parseFloat(chapterValue);
+        const chapterNumber = parseFloat(chapterValue); // Extrai o capítulo
         chapter = chapterNumber;
       }
     });
@@ -41,8 +38,8 @@ export default class FileOperations extends FileSystem {
     return { volume, chapter };
   }
 
-  public async orderByChapters(filesPath: string[]): Promise<string[]> {
 
+  public async orderByChapters(filesPath: string[]): Promise<string[]> {
     const fileDetails = await Promise.all(
       filesPath.map(async (file) => {
         const fileName = path.basename(file);
@@ -56,13 +53,7 @@ export default class FileOperations extends FileSystem {
       })
     );
 
-    fileDetails.sort((a, b) => {
-      if (a.volume !== b.volume) {
-        return a.volume - b.volume;
-      }
-
-      return a.chapter - b.chapter;
-    });
+    fileDetails.sort((a, b) => a.chapter - b.chapter);
 
     const orderedPaths = fileDetails.map((fileDetail) => fileDetail.filePath);
     return orderedPaths;
@@ -71,15 +62,8 @@ export default class FileOperations extends FileSystem {
   public async localUpload(file: string): Promise<string> {
     try {
       const destPath = path.join(this.seriesPath, path.basename(file));
-
-      if (await fse.pathExists(destPath)) {
-        const newDestPath = path.join(this.seriesPath, `${path.basename(file)}_new`);
-        await fse.move(file, newDestPath);
-        return newDestPath;
-      } else {
-        await fse.move(file, destPath);
-        return destPath;
-      }
+      await fse.move(file, destPath);
+      return destPath;
     } catch (error) {
       console.error(`Erro ao fazer upload do arquivo: ${error.message}`);
       throw error;
@@ -126,4 +110,13 @@ export default class FileOperations extends FileSystem {
 
 
 }
+
+// (async () => {
+//   try {
+//     const comicManager = new FileOperations()
+//     console.log(await comicManager.orderByChapters(['C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\books\\SPY×FAMILY\\Potrinho Alegre_Vol.1 Ch.1 - Missão 01.cbz', 'C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\books\\SPY×FAMILY\\TQ Scans & Space Celestial & Eleven Scanlator_Ch.93 - Missão_ 93.cbz']))
+//   } catch (error) {
+//     console.error("Erro ao buscar os dados:", error);
+//   }
+// })();
 

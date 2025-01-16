@@ -23,6 +23,7 @@ declare global {
             },
             download: {
                 downloadLocal: (seriePath: string, quantity: number) => Promise<void>,
+                lineReading: (serieName: string, chapter_id: number) => Promise<void>
             },
             eventEmitter: {
                 on: (channel: string, listener: (...args: any[]) => void) => void,

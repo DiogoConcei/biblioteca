@@ -3,6 +3,7 @@ import { OnlySerieProp } from "../../types/components.interfaces";
 import { IoCheckmarkCircleOutline } from "react-icons/io5";
 import { IoCheckmarkCircle } from "react-icons/io5";
 import { MdOutlineDownload, MdFileDownload } from "react-icons/md";
+import { PiSortDescendingThin, PiSortAscendingThin } from "react-icons/pi";
 import { FaUser } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import Pagination from "../Pagination/Pagination";
@@ -10,6 +11,7 @@ import "./ChaptersInfo.css";
 
 export default function ChaptersInfo({ serie }: OnlySerieProp) {
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [isAscendig, setAscending] = useState<boolean>(false);
   const itemsPerPage = 20;
   const totalPages = Math.ceil(serie.chapters.length / itemsPerPage);
 
@@ -23,7 +25,12 @@ export default function ChaptersInfo({ serie }: OnlySerieProp) {
 
   return (
     <section className="Control">
-      <h2 className="chaptersTitle">Capítulos</h2>
+      <div className="chaptersTitle">
+        <h2>Capítulos</h2>
+        <span className="orderChapters">
+          {isAscendig ? <PiSortAscendingThin /> : <PiSortDescendingThin />}
+        </span>
+      </div>
 
       <ul className="chaptersList">
         {currentItems.map((chapter) => (

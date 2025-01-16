@@ -19,7 +19,42 @@ export default class ImageOperations extends FileSystem {
     this.fileManager = new FileOperations();
   }
 
-  public async createComicImages(serieName: string, quantity: number): Promise<string> {
+  public async createComicById(serieName: string, id: number): Promise<string> {
+    try {
+      const serieData = await this.dataManager.selectSerieData(serieName);
+
+      const organizedChapters = await this.fileManager.orderByChapters(
+        await this.fileManager.foundFiles(serieData.archives_path)
+      );
+
+      if (id < 0 || id >= organizedChapters.length) {
+        throw new Error(`ID inválido. Deve estar entre 0 e ${organizedChapters.length - 1}.`);
+      }
+
+      const serieNames = path.basename(serieData.archives_path);
+      const seriePath = await this.fileManager.findJsonFile(serieNames);
+      const chapterName = path.basename(organizedChapters[id], path.extname(organizedChapters[id]));
+      const chaptersPath = path.join(this.imagesFilesPath, serieNames);
+      const chapterSeriePath = path.join(chaptersPath, chapterName);
+
+      await this.extractionProcess(chapterSeriePath, organizedChapters[id]);
+
+      serieData.chapters[id].is_dowload = true;
+      serieData.chapters[id].chapter_path = chapterSeriePath;
+      serieData.metadata.last_download = id;
+      serieData.chapters_path = chaptersPath;
+
+      await jsonfile.writeFile(seriePath, serieData, { spaces: 2 });
+
+      return chapterSeriePath;
+    } catch (error) {
+      console.error(`Erro ao processar o capítulo com ID "${id}" em "${serieName}": ${error}`);
+      throw error;
+    }
+  }
+
+
+  public async createComic(serieName: string, quantity: number): Promise<string> {
     try {
       const serieData = await this.dataManager.selectSerieData(serieName);
 
@@ -200,7 +235,7 @@ export default class ImageOperations extends FileSystem {
       const archivesPath = seriesData.map(serie => serie.name);
 
       const extractedPaths = await Promise.all(
-        archivesPath.map(archivePath => this.createComicImages(archivePath, 1))
+        archivesPath.map(archivePath => this.createComic(archivePath, 1))
       );
 
 
@@ -224,4 +259,5 @@ export default class ImageOperations extends FileSystem {
   }
 
 }
+
 
