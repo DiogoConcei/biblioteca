@@ -225,11 +225,3 @@ export default class ImageOperations extends FileSystem {
 
 }
 
-(async () => {
-  try {
-    const comicManager = new ImageOperations()
-    await comicManager.extractInitialCovers(["Dragon Ball"])
-  } catch (error) {
-    console.error("Erro ao buscar os dados:", error);
-  }
-})();

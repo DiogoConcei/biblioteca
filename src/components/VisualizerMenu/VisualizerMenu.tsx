@@ -20,21 +20,21 @@ export default function VisualizerMenu({
   };
 
   const goHome = async () => {
-    navigate("/");
     await window.electron.chapters.saveLastRead(
       book_name,
       chapter_id,
       pageNumber
     );
+    navigate("/");
   };
 
   const seriePage = async () => {
-    navigate(`/${book_name}/${book_id}`);
     await window.electron.chapters.saveLastRead(
       book_name,
       chapter_id,
       pageNumber
     );
+    navigate(`/${book_name}/${book_id}`);
   };
 
   return (
