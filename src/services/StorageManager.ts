@@ -7,14 +7,12 @@ import { Comic } from "../types/comic.interfaces";
 
 export default class StorageManager extends FileSystem {
   private readonly fileManager: FileOperations;
-  private comicId: number;
 
   constructor() {
     super();
     this.fileManager = new FileOperations();
   }
 
-  // Get all
   public async seriesData(): Promise<Comic[]> {
     try {
       const seriesData = await this.foundFiles(this.jsonFilesPath);
@@ -25,7 +23,6 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  // Get specific
   public async selectSerieData(serieName: string): Promise<Comic> {
     try {
       const seriesData = await this.fileManager.foundFiles(this.jsonFilesPath);
@@ -42,7 +39,6 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  // Update
   public async updateserieData(data: string, serieName: string): Promise<void> {
     try {
       const seriesData = await this.foundFiles(this.jsonFilesPath);
@@ -61,7 +57,6 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  // Update
   public async updateFavCollection(data: string): Promise<void> {
     try {
       await jsonfile.writeFile(this.comicCollections, JSON.parse(data), { spaces: 2 });
@@ -71,7 +66,6 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  // Create
   public async writeSerieData(serieData: Comic): Promise<void> {
     const tempPath = path.join(this.jsonFilesPath, `${serieData.name}.json`);
     try {
@@ -82,8 +76,6 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  // Delete
-  // ?
 
   private async foundLastDownload(serieName: string): Promise<number> {
     try {
@@ -96,11 +88,3 @@ export default class StorageManager extends FileSystem {
   }
 }
 
-// (async () => {
-//   try {
-//     const comicManager = new StorageManager()
-//     console.log(await comicManager.selectSerieData('Dr. Stone'))
-//   } catch (error) {
-//     console.error("Erro ao buscar os dados:", error);
-//   }
-// })();

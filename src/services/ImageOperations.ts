@@ -36,7 +36,7 @@ export default class ImageOperations extends FileSystem {
       const chaptersPath = path.join(this.imagesFilesPath, serieNames);
       let lastProcessedPath = "";
 
-      for (let i = nextItem; i < lastItem; ++i) {
+      for (let i = nextItem; i <= lastItem; ++i) {
         const chapterName = path.basename(organizedChapters[i], path.extname(organizedChapters[i]));
         const chapterSeriePath = path.join(chaptersPath, chapterName);
 
@@ -225,11 +225,11 @@ export default class ImageOperations extends FileSystem {
 
 }
 
-// (async () => {
-//   try {
-//     const comicManager = new ImageOperations()
-//     await comicManager.extractInitialCovers(['Dr. Stone'])
-//   } catch (error) {
-//     console.error("Erro ao buscar os dados:", error);
-//   }
-// })();
+(async () => {
+  try {
+    const comicManager = new ImageOperations()
+    await comicManager.extractInitialCovers(["Dragon Ball"])
+  } catch (error) {
+    console.error("Erro ao buscar os dados:", error);
+  }
+})();

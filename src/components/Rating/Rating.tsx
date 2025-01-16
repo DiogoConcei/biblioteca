@@ -30,7 +30,7 @@ export default function Rating({ serie }: OnlySerieProp) {
     setSelectedRating(ratingIndex);
 
     try {
-      await window.electron.serieActions.ratingSerie(serie.name, ratingIndex);
+      await window.electron.userAction.ratingSerie(serie.name, ratingIndex);
       setIsOpen(false);
     } catch (error) {
       console.error("Erro ao atualizar o rating:", error);

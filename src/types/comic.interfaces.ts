@@ -1,8 +1,12 @@
 export interface ComicConfig {
-  global_id: number;
-  settings: {
-    reading_mode: "single_page" | "double_page" | "vertical_scroll";
-    zoom: "fit_width" | "fit_height" | "original_size";
+  config: {
+    settings: {
+      reading_mode: "single_page" | "double_page" | "vertical_scroll";
+      zoom: "fit_width" | "fit_height" | "original_size";
+    };
+  };
+  metadata: {
+    global_id: number;
   };
 }
 
@@ -41,7 +45,6 @@ export interface Comic {
   chapters_read: number;
   reading_data: {
     last_chapter_id: number;
-    last_page: number;
     last_read_at: string;
   };
   chapters: ComicEdition[];
@@ -65,4 +68,5 @@ export interface ComicEdition {
   create_date: string;
   is_read: boolean;
   is_dowload: boolean;
+  last_page_read: number;
 }

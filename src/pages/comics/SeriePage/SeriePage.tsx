@@ -18,7 +18,7 @@ export default function SeriePage() {
       try {
         setIsLoading(true);
         const data = await window.electron.series.getSerie(book_name);
-        const favSeries = await window.electron.series.getFavSeries();
+        const favSeries = await window.electron.collections.getFavSeries();
         setSerie(data);
         setCollectionInfo(favSeries);
       } catch (error) {

@@ -4,7 +4,7 @@ import FileOperations from "../services/FileOperations"
 export default function uploadHandlers(ipcMain: IpcMain) {
     const FileManager = new FileOperations()
 
-    ipcMain.handle("file:handleDrop", async (_event, filePaths: string[]) => {
+    ipcMain.handle("localUpload", async (_event, filePaths: string[]) => {
         if (!filePaths || filePaths.length === 0) {
             console.error("Nenhum arquivo fornecido para upload.");
             throw new Error("Nenhum arquivo fornecido.");

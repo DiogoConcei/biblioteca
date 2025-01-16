@@ -1,6 +1,10 @@
 import { app, BrowserWindow, ipcMain, Menu } from "electron";
+import chaptersHandlers from "./handlers/chaptersHandlers";
+import collectionHandlers from "./handlers/collectionsHandlers";
+import downloadHandlers from "./handlers/downloadHandler";
 import seriesHandlers from "./handlers/seriesHandlers";
 import uploadHandlers from "./handlers/uploadHandlers";
+import userHandlers from "./handlers/userHandlers";
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
@@ -37,7 +41,6 @@ const createWindow = async (): Promise<void> => {
 };
 
 ipcMain.on('captureFile', (event, arg) => {
-  console.log('Dropped File(s):', arg);
   event.returnValue = `Received ${arg.length} paths.`;
 })
 
@@ -45,6 +48,10 @@ app.on("ready", () => {
   createWindow();
   seriesHandlers(ipcMain)
   uploadHandlers(ipcMain)
+  chaptersHandlers(ipcMain)
+  collectionHandlers(ipcMain)
+  downloadHandlers(ipcMain)
+  userHandlers(ipcMain)
 });
 
 app.on("window-all-closed", () => {

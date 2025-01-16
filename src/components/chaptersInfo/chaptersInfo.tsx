@@ -28,7 +28,7 @@ export default function ChaptersInfo({ serie }: OnlySerieProp) {
       <ul className="chaptersList">
         {currentItems.map((chapter) => (
           <Link
-            to={`/${serie.name}/${serie.id}/chapter/${chapter.id}`}
+            to={`/${serie.name}/${serie.id}/chapter/${chapter.id}/0`}
             key={chapter.id}>
             <li className="chapter">
               <div className="filesInfo">

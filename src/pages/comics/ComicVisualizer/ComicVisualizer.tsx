@@ -1,6 +1,7 @@
 import "./ComicVisualizer.css";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import VisualizerMenu from "../../../components/VisualizerMenu/VisualizerMenu";
 
 export function ComicVisualizer() {
   const [pageNumber, setPageNumber] = useState(0);
@@ -20,7 +21,16 @@ export function ComicVisualizer() {
     try {
       const nextChapterId = Number(chapter_id) + 1;
       if (!isNaN(nextChapterId)) {
-        navigate(`/${book_name}/${book_id}/chapter/${nextChapterId}`);
+        navigate(`/${book_name}/${book_id}/chapter/${nextChapterId}/0`);
+        await window.electron.chapters.saveLastRead(
+          book_name,
+          Number(chapter_id),
+          pageNumber
+        );
+        await window.electron.userAction.markRead(
+          book_name,
+          Number(chapter_id)
+        );
       } else {
         console.error("Próximo capítulo não encontrado.");
       }
@@ -68,13 +78,19 @@ export function ComicVisualizer() {
       if (!book_name || !chapter_id) return;
 
       try {
-        const data = await window.electron.series.getChapter(
+        const data = await window.electron.chapters.getChapter(
           book_name,
           Number(chapter_id)
         );
+
+        const last_page = await window.electron.chapters.getLastPage(
+          book_name,
+          Number(chapter_id)
+        );
+
         if (data) {
           setPages(data);
-          setPageNumber(0);
+          setPageNumber(last_page);
         }
       } catch (error) {
         console.error(`Erro ao recuperar páginas do capítulo: ${error}`);
@@ -82,7 +98,7 @@ export function ComicVisualizer() {
     };
 
     getChapter();
-  }, [chapter_id, book_name]);
+  }, [chapter_id]);
 
   useEffect(() => {
     const handleDownload = async () => {
@@ -94,13 +110,11 @@ export function ComicVisualizer() {
         pageNumber === Math.round((pages.length - 1) / 2) &&
         pages.length > 0
       ) {
-        console.log(pages.length / 2);
-        console.log(`Chegou na metade`);
-        await window.electron.download.downloadSerie(book_name, 1);
+        await window.electron.download.downloadLocal(book_name, 1);
       }
     };
 
-    handleDownload(); // Chama a função assíncrona dentro do useEffect
+    handleDownload();
 
     return () => {
       window.removeEventListener("keydown", handleKey);
@@ -113,7 +127,12 @@ export function ComicVisualizer() {
 
   return (
     <section className="visualizer">
-      <div className="actionMenu">menu</div>
+      <VisualizerMenu
+        book_name={book_name}
+        book_id={Number(book_id)}
+        pageNumber={Number(pageNumber)}
+        chapter_id={Number(chapter_id)}
+      />
       <img
         className="chapterPage"
         src={`data:image/png;base64,${pages[pageNumber]}`}

@@ -15,7 +15,7 @@ export default function DownloadButton({ serieName }: downloadButtonProps) {
 
   const onSelect = async (quantity: number) => {
     setSelectedQuantity(quantity);
-    await window.electron.download.downloadSerie(serieName, quantity);
+    await window.electron.download.downloadLocal(serieName, quantity);
     setIsOpen(false);
   };
 

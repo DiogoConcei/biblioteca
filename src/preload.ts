@@ -7,31 +7,41 @@ const windowAction = {
   close: () => ipcRenderer.invoke("close-window"),
 };
 
+const userAction = {
+  ratingSerie: (serieName: string, userRating: number): Promise<void> => ipcRenderer.invoke("rating-serie", serieName, userRating),
+  favoriteSerie: (serieName: string): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke("favorite-serie", serieName),
+  markRead: async (serieName: string, chapter_id: number): Promise<void> => ipcRenderer.invoke("mark-read", serieName, chapter_id)
+}
+
+const collections = {
+  getFavSeries: async (): Promise<ComicCollectionInfo> => ipcRenderer.invoke("get-favSeries"),
+}
+
+const chapters = {
+  getChapter: async (serieName: string, chapter_id: number): Promise<string[] | string> => ipcRenderer.invoke("get-chapter", serieName, chapter_id),
+  saveLastRead: async (serieName: string, chapter_id: number, page_number: number): Promise<void> => ipcRenderer.invoke("save-last-read", serieName, chapter_id, page_number),
+  acessLastRead: async (serieName: string): Promise<string> => ipcRenderer.invoke("acess-last-read", serieName),
+  getLastPage: async (serieName: string, chapter_id: number): Promise<number> => ipcRenderer.invoke("get-last-page", serieName, chapter_id),
+}
+
 const series = {
   createSerie: (filePaths: string[]): Promise<void> =>
     ipcRenderer.invoke("create-serie", filePaths),
   getSeries: async (): Promise<Comic[]> => ipcRenderer.invoke("get-all-series"),
   getSerie: async (serieName: string): Promise<Comic> =>
     ipcRenderer.invoke("get-serie", serieName),
-  getFavSeries: async (): Promise<ComicCollectionInfo> => ipcRenderer.invoke("get-favSeries"),
-  getChapter: async (serieName: string, chapter_id: number): Promise<string[] | string> => ipcRenderer.invoke("get-chapter", serieName, chapter_id)
 };
 
-const serieActions = {
-  favoriteSerie: (serieName: string): Promise<{ success: boolean }> =>
-    ipcRenderer.invoke("favorite-serie", serieName),
-  ratingSerie: (serieName: string, userRating: number): Promise<void> => ipcRenderer.invoke("rating-serie", serieName, userRating)
-
-};
 
 const download = {
-  downloadSerie: (serieName: string, quantity: number): Promise<void> =>
+  downloadLocal: (serieName: string, quantity: number): Promise<void> =>
     ipcRenderer.invoke("download-chapter", serieName, quantity),
 };
 
 const upload = {
-  handleDrop: (filePaths: string[]): Promise<string[]> =>
-    ipcRenderer.invoke("file:handleDrop", filePaths),
+  localUpload: (filePaths: string[]): Promise<string[]> =>
+    ipcRenderer.invoke("localUpload", filePaths),
 };
 
 const webUtilities = {
@@ -48,11 +58,13 @@ const eventEmitter = {
 };
 
 contextBridge.exposeInMainWorld("electron", {
-  series,
-  serieActions,
-  download,
   windowAction,
+  userAction,
+  collections,
+  chapters,
+  series,
+  download,
   upload,
   webUtilities,
-  eventEmitter,
+  eventEmitter
 });

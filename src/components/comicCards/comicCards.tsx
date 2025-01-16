@@ -1,11 +1,14 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Comic } from "../../types/comic.interfaces";
 import { ComicCardsProps } from "../../types/components.interfaces";
+import { FaPlay } from "react-icons/fa";
 import "./ComicCards.css";
 import { useEffect, useState } from "react";
 
 export default function ComicCards({ searchInput }: ComicCardsProps) {
   const [series, setSeries] = useState<Comic[]>([]);
+  let isActive = true;
+  const navigate = useNavigate();
 
   useEffect(() => {
     const getData = async () => {
@@ -43,19 +46,37 @@ export default function ComicCards({ searchInput }: ComicCardsProps) {
     );
   });
 
+  const lastChapter = async (
+    e: React.MouseEvent<HTMLDivElement | SVGElement>,
+    serieName: string
+  ) => {
+    e.preventDefault();
+    const lastChapterUrl = await window.electron.chapters.acessLastRead(
+      serieName
+    );
+    navigate(lastChapterUrl);
+    console.log(lastChapterUrl);
+  };
+
   return (
     <div className="content">
       <div className="seriesContent">
         {filteredSeries.map((serie) => (
           <Link
-            to={`/${serie.name}/${serie.id}`}
+            to={isActive ? `/${serie.name}/${serie.id}` : "#"}
             key={serie.id}
             className="serieLink">
-            <figure>
+            <figure className="coverCard">
               <img
                 src={`data:image/png;base64,${serie.cover_image}`}
                 alt={`Série: ${serie.name}`}
               />
+              <figcaption>
+                <FaPlay
+                  className="playChapter"
+                  onClick={(e) => lastChapter(e, serie.name)}
+                />
+              </figcaption>
             </figure>
             <div className="serie-info">
               <p className="serie-name">{serie.name}</p>

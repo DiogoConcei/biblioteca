@@ -15,7 +15,7 @@ export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
     const newFavoriteStatus = !is_favorite;
 
     try {
-      const response = await window.electron.serieActions.favoriteSerie(
+      const response = await window.electron.userAction.favoriteSerie(
         serieName
       );
 

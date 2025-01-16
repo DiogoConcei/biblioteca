@@ -31,7 +31,7 @@ export default function Home() {
 
     try {
       const newPaths = await Promise.all(
-        await window.electron.upload.handleDrop(filePaths)
+        await window.electron.upload.localUpload(filePaths)
       );
       await window.electron.series.createSerie(newPaths);
     } catch (error) {

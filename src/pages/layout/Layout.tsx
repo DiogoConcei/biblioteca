@@ -9,11 +9,11 @@ const Layout = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const isVisualizerAcitve = /^\/[^/]+\/[^/]+\/[^/]+\/[^/]+$/.test(
+    const isVisualizerActive = /^\/[^/]+\/[^/]+\/chapter\/[^/]+\/[^/]+$/.test(
       location.pathname
     );
 
-    if (isVisualizerAcitve) setIsHidden(true);
+    setIsHidden(isVisualizerActive);
   }, [location]);
 
   return (

@@ -1,0 +1,36 @@
+.visualizerMenu {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: row;
+  position: absolute;
+  top: 50%;
+  left: 1%;
+  transform: translateY(-50%);
+  z-index: 10;
+  gap: 1rem;
+  background: transparent;
+  order: 2;
+}
+
+.visualizerMenu button {
+  padding: 0.5rem 1rem;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  background-color: rgba(0, 0, 0, 0.5) /* Preto com 50% de transparência */;
+  color: white;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+  z-index: 5;
+  order: 1;
+}
+
+.visualizerMenu button:hover {
+  background-color: #0056b3;
+}
+
+.quicklyActions {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 1rem;
+}

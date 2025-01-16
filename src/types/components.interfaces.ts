@@ -4,6 +4,13 @@ export interface OnlySerieProp {
     serie: Comic;
 }
 
+export interface visualizerProps {
+    book_name: string,
+    book_id: number,
+    pageNumber: number,
+    chapter_id: number
+}
+
 export interface dinamicNavProp {
     isHidden: boolean;
 }

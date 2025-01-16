@@ -30,12 +30,6 @@
   gap: 0.5rem;
 }
 
-.serieLink img {
-  width: auto;
-  margin: 0.5rem;
-  height: 20vh;
-}
-
 .serie-info {
   display: flex;
   align-items: start;
@@ -77,4 +71,31 @@
   width: 8vw;
   text-decoration: none;
   color: #8963ba;
+}
+
+.coverCard {
+  position: relative;
+  display: inline-block;
+}
+
+.coverCard img {
+  width: auto;
+  margin: 0.5rem;
+  height: 20vh;
+  object-fit: cover;
+}
+
+.coverCard figcaption {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  z-index: 10;
+}
+
+.playChapter {
+  font-size: 24px;
+  color: white;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  padding: 5px;
 }

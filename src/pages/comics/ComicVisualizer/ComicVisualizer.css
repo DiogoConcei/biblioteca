@@ -1,11 +1,13 @@
 .visualizer {
   display: flex;
+  position: relative;
   justify-content: center;
-  background: black;
-  flex-grow: 1;
+  background-color: black;
+  width: 100vw;
 }
 
 .chapterPage {
-  height: auto;
   width: auto;
+  height: auto;
+  object-fit: cover;
 }

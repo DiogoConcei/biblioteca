@@ -19,7 +19,7 @@ const App = () => {
           <Route index path="" element={<Home />} />
           <Route path="/:book_name/:book_id" element={<SeriePage />} />
           <Route
-            path="/:book_name/:book_id/chapter/:chapter_id"
+            path="/:book_name/:book_id/chapter/:chapter_id/:page"
             element={<ComicVisualizer />}
           />
           <Route path="*" element={<Page404 />} />

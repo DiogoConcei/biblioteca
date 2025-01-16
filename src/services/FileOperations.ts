@@ -1,6 +1,6 @@
 import { FileSystem } from "./abstract/FileSystem";
+import { ComicConfig } from "../types/comic.interfaces";
 import path from "path";
-import fs from "fs/promises";
 import fse from 'fs-extra'
 
 export default class FileOperations extends FileSystem {
@@ -40,7 +40,6 @@ export default class FileOperations extends FileSystem {
 
     return { volume, chapter };
   }
-
 
   public async orderByChapters(filesPath: string[]): Promise<string[]> {
 
@@ -103,8 +102,28 @@ export default class FileOperations extends FileSystem {
     }
   }
 
-  // found cover
+  public async getMangaId(): Promise<number> {
+    try {
+      let data: ComicConfig = JSON.parse(await fse.readFile(this.comicConfig, "utf-8"));
+      return data.metadata.global_id
+    } catch (e) {
+      console.error(`Erro ao obter o ID atual: ${e}`);
+      throw e;
+    }
+  }
 
-  // found chapters pages
+  public async setMangaId(currentId: number): Promise<number> {
+    try {
+      let data: ComicConfig = JSON.parse(await fse.readFile(this.comicConfig, "utf-8"));
+      data.metadata.global_id = currentId
+      await fse.writeFile(this.comicConfig, JSON.stringify(data), "utf-8")
+      return currentId;
+    } catch (e) {
+      console.error(`Erro ao obter o ID atual: ${e}`);
+      throw e;
+    }
+  }
+
+
 }
 
