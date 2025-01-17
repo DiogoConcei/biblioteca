@@ -96,6 +96,19 @@ export default function userHandlers(ipcMain: IpcMain) {
         }
     });
 
+    ipcMain.handle("mark-read", async (_event, serieName: string, chapter_id: number) => {
+        try {
+            const serieData = await StorageOperations.selectSerieData(serieName);
+            const chapter = serieData.chapters.find((c) => c.id === chapter_id);
+
+            if (chapter) chapter.is_read = true;
+
+            await StorageOperations.updateserieData(JSON.stringify(serieData), serieName);
+        } catch (error) {
+            console.error(`Erro ao marcar capítulo como lido: ${error}`);
+            throw error;
+        }
+    });
 
 
 }

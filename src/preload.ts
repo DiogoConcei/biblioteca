@@ -20,9 +20,10 @@ const collections = {
 
 const chapters = {
   getChapter: async (serieName: string, chapter_id: number): Promise<string[] | string> => ipcRenderer.invoke("get-chapter", serieName, chapter_id),
+  getNextChapter: async (serieName: string, chapter_id: number): Promise<string> => ipcRenderer.invoke("get-next-chapter", serieName, chapter_id),
+  getPrevChapter: async (serieName: string, chapter_id: number): Promise<string> => ipcRenderer.invoke("get-next-chapter", serieName, chapter_id),
   saveLastRead: async (serieName: string, chapter_id: number, page_number: number): Promise<void> => ipcRenderer.invoke("save-last-read", serieName, chapter_id, page_number),
   acessLastRead: async (serieName: string): Promise<string> => ipcRenderer.invoke("acess-last-read", serieName),
-  getLastPage: async (serieName: string, chapter_id: number): Promise<number> => ipcRenderer.invoke("get-last-page", serieName, chapter_id),
 }
 
 const series = {
@@ -37,13 +38,12 @@ const series = {
 const download = {
   downloadLocal: (serieName: string, quantity: number): Promise<void> =>
     ipcRenderer.invoke("download-chapter", serieName, quantity),
+  lineReading: (serieName: string, chapter_id: number): Promise<void> => ipcRenderer.invoke("download-in-reading", serieName, chapter_id),
 };
 
 const upload = {
   localUpload: (filePaths: string[]): Promise<string[]> =>
     ipcRenderer.invoke("localUpload", filePaths),
-  lineReading: (serieName: string, chapter_id: number): Promise<void> => ipcRenderer.invoke("download-in-reading", serieName, chapter_id),
-
 };
 
 const webUtilities = {

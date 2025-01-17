@@ -31,9 +31,10 @@ declare global {
             },
             chapters: {
                 getChapter: (serieName: string, chapter_id: number) => Promise<string[]>,
+                getNextChapter: (serieName: string, chapter_id: number) => Promise<string>,
+                getPrevChapter: (serieName: string, chapter_id: number) => Promise<string>,
                 saveLastRead: (serieName: string, chapter_id: number, page_number) => Promise<void>,
                 acessLastRead: (serieName: string) => Promise<string>,
-                getLastPage: (serieName: string, chapter_id: number) => Promise<number>,
             },
             collections: {
                 getFavSeries: () => Promise<ComicCollectionInfo>,

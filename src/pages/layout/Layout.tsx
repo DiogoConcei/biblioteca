@@ -9,7 +9,7 @@ const Layout = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const isVisualizerActive = /^\/[^/]+\/[^/]+\/chapter\/[^/]+\/[^/]+$/.test(
+    const isVisualizerActive = /^\/[^/]+\/[^/]+\/[^/]+\/[^/]+\/[^/]+$/.test(
       location.pathname
     );
 

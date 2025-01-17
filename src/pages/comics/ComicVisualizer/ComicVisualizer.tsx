@@ -3,94 +3,30 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import VisualizerMenu from "../../../components/VisualizerMenu/VisualizerMenu";
 
-export function ComicVisualizer() {
+export default function ComicVisualizer() {
   const [pageNumber, setPageNumber] = useState(0);
   const [pages, setPages] = useState<string[]>([]);
-  const { book_name, book_id, chapter_id } = useParams();
+  const [loading, setLoading] = useState(true);
+  const { book_name, book_id, chapter_id, page } = useParams();
   const navigate = useNavigate();
-
-  const nextPage = () => {
-    if (pageNumber < pages.length - 1) {
-      setPageNumber(pageNumber + 1);
-    } else {
-      nextChapter();
-    }
-  };
-
-  const nextChapter = async () => {
-    try {
-      const nextChapterId = Number(chapter_id) + 1;
-      if (!isNaN(nextChapterId)) {
-        navigate(`/${book_name}/${book_id}/chapter/${nextChapterId}/0`);
-        await window.electron.chapters.saveLastRead(
-          book_name,
-          Number(chapter_id),
-          pageNumber
-        );
-        await window.electron.userAction.markRead(
-          book_name,
-          Number(chapter_id)
-        );
-      } else {
-        console.error("Próximo capítulo não encontrado.");
-      }
-    } catch (error) {
-      console.error(`Erro ao navegar para o próximo capítulo: ${error}`);
-    }
-  };
-
-  const prevChapter = async () => {
-    try {
-      const prevChapterId = Number(chapter_id) - 1;
-      if (prevChapterId >= 0) {
-        navigate(`/${book_name}/${book_id}/chapter/${prevChapterId}`);
-      } else {
-        console.error("Capítulo anterior não encontrado.");
-      }
-    } catch (error) {
-      console.error(`Erro ao navegar para o capítulo anterior: ${error}`);
-    }
-  };
-
-  const prevPage = () => {
-    if (pageNumber > 0) {
-      setPageNumber(pageNumber - 1);
-    } else {
-      prevChapter();
-    }
-  };
-
-  const handleKey = (event: KeyboardEvent) => {
-    switch (event.key) {
-      case "ArrowLeft":
-        prevPage();
-        break;
-      case "ArrowRight":
-        nextPage();
-        break;
-      default:
-        break;
-    }
-  };
+  const loadingTime = 2000;
 
   useEffect(() => {
     const getChapter = async () => {
-      if (!book_name || !chapter_id) return;
-
       try {
+        setLoading(true);
         const data = await window.electron.chapters.getChapter(
-          book_name,
-          Number(chapter_id)
-        );
-
-        const last_page = await window.electron.chapters.getLastPage(
           book_name,
           Number(chapter_id)
         );
 
         if (data) {
           setPages(data);
-          setPageNumber(last_page);
+          setPageNumber(Number(page));
+
+          setTimeout(() => {
+            setLoading(false);
+          }, loadingTime);
         }
       } catch (error) {
         console.error(`Erro ao recuperar páginas do capítulo: ${error}`);
@@ -124,7 +60,67 @@ export function ComicVisualizer() {
     };
   }, [pages, pageNumber]);
 
-  if (!pages || pages.length === 0 || !pages[pageNumber]) {
+  const nextPage = () => {
+    if (pageNumber < pages.length - 1) {
+      setPageNumber(pageNumber + 1);
+    } else {
+      nextChapter();
+    }
+  };
+
+  const nextChapter = async () => {
+    try {
+      const nextChapterUrl = await window.electron.chapters.getNextChapter(
+        book_name,
+        Number(chapter_id)
+      );
+      console.log(nextChapterUrl);
+      await window.electron.chapters.saveLastRead(
+        book_name,
+        Number(chapter_id),
+        pageNumber
+      );
+      await window.electron.userAction.markRead(book_name, Number(chapter_id));
+      navigate(nextChapterUrl);
+    } catch (error) {
+      console.error(`Erro ao navegar para o próximo capítulo: ${error}`);
+    }
+  };
+
+  const prevPage = () => {
+    if (pageNumber > 0) {
+      setPageNumber(pageNumber - 1);
+    } else {
+      prevChapter();
+    }
+  };
+
+  const prevChapter = async () => {
+    try {
+      const prevChapterUrl = await window.electron.chapters.getPrevChapter(
+        book_name,
+        Number(chapter_id)
+      );
+      navigate(prevChapterUrl);
+    } catch (error) {
+      console.error(`Erro ao navegar para o capítulo anterior: ${error}`);
+    }
+  };
+
+  const handleKey = (event: KeyboardEvent) => {
+    switch (event.key) {
+      case "ArrowLeft":
+        prevPage();
+        break;
+      case "ArrowRight":
+        nextPage();
+        break;
+      default:
+        break;
+    }
+  };
+
+  if (loading || !pages || pages.length === 0 || !pages[pageNumber]) {
     return <p>Loading...</p>;
   }
 

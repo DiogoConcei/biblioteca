@@ -123,3 +123,12 @@ export default class MangaManager extends FileSystem {
         }
     }
 }
+
+// (async () => {
+//     try {
+//         const MangaOperations = new MangaManager();
+//         await MangaOperations.createManga(["C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\Books\\Dr. Stone"])
+//     } catch (error) {
+//         console.error('Erro ao executar a função:', error);
+//     }
+// })();

@@ -3,102 +3,91 @@ import MangaManager from "../services/MangaManager";
 import StorageManager from "../services/StorageManager";
 
 export default function chaptersHandlers(ipcMain: IpcMain) {
-    const MangaOperations = new MangaManager()
-    const StorageOperations = new StorageManager()
+    const MangaOperations = new MangaManager();
+    const StorageOperations = new StorageManager();
 
     ipcMain.handle("get-chapter", async (_event, serieName: string, chapter_id: number) => {
         try {
-            const chapter = await MangaOperations.getChapter(serieName, chapter_id)
-            return chapter
+            return await MangaOperations.getChapter(serieName, chapter_id);
         } catch (error) {
-            console.error(`Erro ao recuperar o capitulo`)
-            throw error
+            console.error(`Erro ao recuperar o capítulo: ${error}`);
+            throw error;
         }
-    })
+    });
 
     ipcMain.handle("save-last-read", async (_event, serieName: string, chapter_id: number, page_number: number) => {
         try {
-            const serieData = await StorageOperations.selectSerieData(serieName)
-            const chaptersData = serieData.chapters
-
-            for (let chapters of chaptersData) {
-
-                if (chapters.id === chapter_id) {
-                    const last_chapter_id = chapter_id
-                    chapters.last_page_read = page_number
-                }
-
-            }
-
-            await StorageOperations.updateserieData(JSON.stringify(serieData), serieName)
+            const serieData = await StorageOperations.selectSerieData(serieName);
+            const chapter = serieData.chapters.find((c) => c.id === chapter_id);
+            if (chapter) chapter.last_page_read = page_number;
+            await StorageOperations.updateserieData(JSON.stringify(serieData), serieName);
         } catch (error) {
-            console.error(`erro em salvar ultimo lido: ${error}`)
-            throw error
+            console.error(`Erro ao salvar última página lida: ${error}`);
+            throw error;
         }
-    })
+    });
 
     ipcMain.handle("acess-last-read", async (_event, serieName: string) => {
         try {
-            const serieData = await StorageOperations.selectSerieData(serieName)
-            const chaptersData = serieData.chapters
-            const book_name = serieData.name
-            const book_id = serieData.id
-            const last_chapter_id = serieData.reading_data.last_chapter_id
-            let last_page
+            const serieData = await StorageOperations.selectSerieData(serieName);
+            const lastChapterId = serieData.reading_data.last_chapter_id;
+            const lastChapter = serieData.chapters.find((c) => c.id === lastChapterId);
 
-            for (let chapters of chaptersData) {
+            if (!lastChapter) throw new Error(`Último capítulo não encontrado para a série ${serieName}`);
 
-                if (chapters.id === last_chapter_id) {
-                    last_page = chapters.last_page_read
-                }
-            }
-
-
-
-            return `/${book_name}/${book_id}/chapter/${last_chapter_id}/${last_page}`
+            return `/${serieData.name}/${serieData.id}/${lastChapter.name}/${lastChapterId}/${lastChapter.last_page_read}`;
         } catch (error) {
-            console.error(`erro em acessar ultimo capitulo lido: ${error}`)
-            throw error
+            console.error(`Erro ao acessar último capítulo lido: ${error}`);
+            throw error;
         }
-    })
+    });
 
-    ipcMain.handle("get-last-page", async (_event, serieName: string, chapter_id: number) => {
+    ipcMain.handle("get-next-chapter", async (_event, serieName: string, chapter_id: number) => {
         try {
-            const serieData = await StorageOperations.selectSerieData(serieName)
-            const chaptersData = serieData.chapters
-            let last_page
+            const serieData = await StorageOperations.selectSerieData(serieName);
+            const totalChapters = serieData.chapters.length;
 
-            for (let chapters of chaptersData) {
-                if (chapters.id === chapter_id) {
-                    last_page = chapters.last_page_read
-                }
+            if (chapter_id + 1 >= totalChapters) {
+                console.warn(`Não há próximo capítulo para a série: ${serieName}, capítulo atual: ${chapter_id}`);
+                return null;
             }
 
-            return last_page
-        } catch (error) {
-            console.error(`erro em resgatar ultima página: ${error}`)
-            throw error
-        }
-    })
+            const nextChapterId = chapter_id + 1;
+            const nextChapter = serieData.chapters.find((c) => c.id === nextChapterId);
 
-    ipcMain.handle("mark-read", async (_event, serieName: string, chapter_id: number) => {
+            if (!nextChapter) {
+                throw new Error(`Capítulo ${nextChapterId} não encontrado na série: ${serieName}`);
+            }
+
+            return `/${serieData.name}/${serieData.id}/${nextChapter.name}/${nextChapter.id}/${nextChapter.last_page_read}`;
+        } catch (error) {
+            console.error(`Erro ao buscar próximo capítulo: ${error}`);
+            throw error;
+        }
+    });
+
+    ipcMain.handle("get-prev-chapter", async (_event, serieName: string, chapter_id: number) => {
         try {
-            const serieData = await StorageOperations.selectSerieData(serieName)
-            const chaptersData = serieData.chapters
+            const serieData = await StorageOperations.selectSerieData(serieName);
 
-            for (let chapter of chaptersData) {
-                if (chapter.id === chapter_id) {
-                    chapter.is_read = true
-                }
+            const prevChapterId = chapter_id - 1;
+
+            if (prevChapterId < 0) {
+                console.warn(`Não há capítulo anterior para a série: ${serieName}, capítulo atual: ${chapter_id}`);
+                return null;
             }
 
-            await StorageOperations.updateserieData(JSON.stringify(serieData), serieName)
+            const prevChapter = serieData.chapters.find((c) => c.id === prevChapterId);
 
+            if (!prevChapter) {
+                throw new Error(`Capítulo ${prevChapterId} não encontrado na série: ${serieName}`);
+            }
+
+            return `/${serieData.name}/${serieData.id}/${prevChapter.name}/${prevChapter.id}/${prevChapter.last_page_read}`;
         } catch (error) {
-
+            console.error(`Erro ao buscar capítulo anterior: ${error}`);
+            throw error;
         }
-    })
+    });
+
 }
-
-
-
