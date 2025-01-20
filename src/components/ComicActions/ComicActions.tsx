@@ -4,9 +4,12 @@ import { FaBookOpen } from "react-icons/fa";
 import { ComicActionsProps } from "../../types/components.interfaces";
 import DownloadButton from "../DonwloadButton/DownloadButton";
 import Rating from "../Rating/Rating";
+import { useNavigate } from "react-router-dom";
 import "./ComicActions.css";
 
 export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
+  const navigate = useNavigate();
+
   const favorite = async (
     event: React.MouseEvent<HTMLButtonElement>,
     serieName: string,
@@ -34,6 +37,16 @@ export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
     }
   };
 
+  const lastRead = async (
+    event: React.MouseEvent<HTMLButtonElement>,
+    serieName: string
+  ) => {
+    const lastChapterUrl = await window.electron.chapters.acessLastRead(
+      serieName
+    );
+    navigate(lastChapterUrl);
+  };
+
   return (
     <div className="serieActions">
       <DownloadButton serieName={serie.name} />
@@ -49,7 +62,9 @@ export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
         <MdFormatListBulletedAdd />
         Coleção
       </button>
-      <button className="reading">
+      <button
+        className="reading"
+        onClick={(event) => lastRead(event, serie.name)}>
         <FaBookOpen />
         Continuar
       </button>

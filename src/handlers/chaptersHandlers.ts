@@ -19,7 +19,10 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         try {
             const serieData = await StorageOperations.selectSerieData(serieName);
             const chapter = serieData.chapters.find((c) => c.id === chapter_id);
-            if (chapter) chapter.last_page_read = page_number;
+            if (chapter) {
+                chapter.last_page_read = page_number;
+                serieData.reading_data.last_chapter_id = chapter_id
+            }
             await StorageOperations.updateserieData(JSON.stringify(serieData), serieName);
         } catch (error) {
             console.error(`Erro ao salvar última página lida: ${error}`);
@@ -83,6 +86,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
                 throw new Error(`Capítulo ${prevChapterId} não encontrado na série: ${serieName}`);
             }
 
+            console.log(prevChapter.id)
             return `/${serieData.name}/${serieData.id}/${prevChapter.name}/${prevChapter.id}/${prevChapter.last_page_read}`;
         } catch (error) {
             console.error(`Erro ao buscar capítulo anterior: ${error}`);

@@ -5,6 +5,7 @@ import downloadHandlers from "./handlers/downloadHandler";
 import seriesHandlers from "./handlers/seriesHandlers";
 import uploadHandlers from "./handlers/uploadHandlers";
 import userHandlers from "./handlers/userHandlers";
+import createContextMenu from "./contextMenu";
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
@@ -46,6 +47,7 @@ ipcMain.on('captureFile', (event, arg) => {
 
 app.on("ready", () => {
   createWindow();
+  createContextMenu(ipcMain);
   seriesHandlers(ipcMain)
   uploadHandlers(ipcMain)
   chaptersHandlers(ipcMain)

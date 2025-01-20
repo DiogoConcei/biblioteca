@@ -260,12 +260,12 @@ export default class ImageOperations extends FileSystem {
 
 }
 
-// (async () => {
-//   try {
-//     const MangaOperations = new ImageOperations();
-//     await MangaOperations.extractInitialCovers(["Dr. Stone"])
-//   } catch (error) {
-//     console.error('Erro ao executar a função:', error);
-//   }
-// })();
+(async () => {
+  try {
+    const MangaOperations = new ImageOperations();
+    await MangaOperations.extractInitialCovers(["Dr. Stone"])
+  } catch (error) {
+    console.error('Erro ao executar a função:', error);
+  }
+})();
 

@@ -9,7 +9,7 @@ export default function ComicVisualizer() {
   const [loading, setLoading] = useState(true);
   const { book_name, book_id, chapter_id, page } = useParams();
   const navigate = useNavigate();
-  const loadingTime = 2000;
+  const loadingTime = 1;
 
   useEffect(() => {
     const getChapter = async () => {
@@ -74,7 +74,6 @@ export default function ComicVisualizer() {
         book_name,
         Number(chapter_id)
       );
-      console.log(nextChapterUrl);
       await window.electron.chapters.saveLastRead(
         book_name,
         Number(chapter_id),
