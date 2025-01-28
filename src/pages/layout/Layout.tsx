@@ -1,20 +1,22 @@
-import { Outlet } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import Nav from "../../components/Nav/Nav";
+import { useGlobal } from "../../GlobalContext";
 import "./Layout.css";
 
 const Layout = () => {
-  const [isHidden, setIsHidden] = useState(false);
+  const { isHidden, setIsHidden } = useGlobal();
   const location = useLocation();
 
   useEffect(() => {
-    const isVisualizerActive = /^\/[^/]+\/[^/]+\/[^/]+\/[^/]+\/[^/]+$/.test(
-      location.pathname
-    );
+    const setFullScreen = async () => {
+      const isVisualizerActive =
+        await window.electron.AppConfig.getScreenConfig(location.pathname);
+      setIsHidden(isVisualizerActive);
+    };
 
-    setIsHidden(isVisualizerActive);
-  }, [location]);
+    setFullScreen();
+  }, [location, setIsHidden]);
 
   return (
     <article className="Content">

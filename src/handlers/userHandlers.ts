@@ -1,11 +1,9 @@
 import { IpcMain } from "electron";
 import StorageManager from "../services/StorageManager";
 import CollectionsOperations from "../services/CollectionsOperations";
-import MangaManager from "../services/MangaManager";
 
 export default function userHandlers(ipcMain: IpcMain) {
     const StorageOperations = new StorageManager()
-    const MangaOperations = new MangaManager()
     const CollectionsManager = new CollectionsOperations()
 
     ipcMain.handle("rating-serie", async (_event, serieName: string, userRating: string) => {
@@ -109,7 +107,5 @@ export default function userHandlers(ipcMain: IpcMain) {
             throw error;
         }
     });
-
-
 }
 

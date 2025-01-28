@@ -6,6 +6,14 @@
   width: 100vw;
 }
 
+.visualizer.on {
+  background-color: black;
+}
+
+.visualizer.off {
+  background: #282c34;
+}
+
 .chapterPage {
   width: auto;
   height: auto;

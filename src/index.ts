@@ -5,6 +5,7 @@ import downloadHandlers from "./handlers/downloadHandler";
 import seriesHandlers from "./handlers/seriesHandlers";
 import uploadHandlers from "./handlers/uploadHandlers";
 import userHandlers from "./handlers/userHandlers";
+import ConfigHandlers from "./handlers/ConfigHandlers";
 import createContextMenu from "./contextMenu";
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
@@ -54,6 +55,7 @@ app.on("ready", () => {
   collectionHandlers(ipcMain)
   downloadHandlers(ipcMain)
   userHandlers(ipcMain)
+  ConfigHandlers(ipcMain)
 });
 
 app.on("window-all-closed", () => {

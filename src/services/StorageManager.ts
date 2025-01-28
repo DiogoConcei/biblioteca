@@ -77,9 +77,23 @@ export default class StorageManager extends FileSystem {
   }
 
 
-  private async foundLastDownload(serieName: string): Promise<number> {
+  public async foundLastDownload(serieName: string): Promise<number> {
     try {
       const serieData = await this.selectSerieData(serieName);
+      const chaptersData = serieData.chapters
+      let metadata_last_download = serieData.metadata.last_download
+      let correct_last_download
+
+      for (let chapters of chaptersData) {
+        if (chapters.is_dowload === false) {
+          correct_last_download = chapters.id
+        }
+      }
+
+      if (metadata_last_download !== correct_last_download) {
+        metadata_last_download = correct_last_download
+      }
+
       return serieData.metadata.last_download;
     } catch (error) {
       console.error(`Erro ao recuperar o último download da série "${serieName}": ${error}`);
@@ -88,3 +102,11 @@ export default class StorageManager extends FileSystem {
   }
 }
 
+// (async () => {
+//   try {
+//     const MangaOperations = new StorageManager();
+//     console.log(await MangaOperations.foundLastDownload("SPY×FAMILY"))
+//   } catch (error) {
+//     console.error('Erro ao executar a função:', error);
+//   }
+// })();

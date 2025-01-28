@@ -25,11 +25,10 @@ export default class ValidationOperations extends FileSystem {
         return true
     }
 
-    public async checkDownload(serieName: string, chapter_id: number): Promise<boolean> {
+    public async checkDownload(serieName: string, nextChapter_id: number): Promise<boolean> {
         try {
             const serieData = await this.storageOperations.selectSerieData(serieName)
             const chaptersData = serieData.chapters
-            let nextChapter_id = chapter_id + 1
 
             if (chaptersData.length - 1 >= nextChapter_id) return false
 

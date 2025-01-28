@@ -23,7 +23,8 @@ declare global {
             },
             download: {
                 downloadLocal: (seriePath: string, quantity: number) => Promise<void>,
-                lineReading: (serieName: string, chapter_id: number) => Promise<void>
+                lineReading: (serieName: string, chapter_id: number) => Promise<void>,
+                downloadIndividual: (serieName: string, chapter_id: number) => Promise<void>
             },
             eventEmitter: {
                 on: (channel: string, listener: (...args: any[]) => void) => void,
@@ -41,9 +42,21 @@ declare global {
             },
             userAction: {
                 favoriteSerie: (serieName: string) => Promise<{ success: boolean }>,
-                ratingSerie: (serieName: string, userRating: number) => Promise<void>;
-                markRead: (serieName: string, chapter_id: number) => Promise<void>
-            }
+                ratingSerie: (serieName: string, userRating: number) => Promise<void>,
+                markRead: (serieName: string, chapter_id: number) => Promise<void>,
+            },
+            AppConfig: {
+                getScreenConfig: (urlLocation: string) => Promise<boolean>,
+                controlScreen: () => Promise<boolean>,
+                getThemeConfig: () => Promise<boolean>,
+                switchTheme: () => Promise<boolean>
+            },
+            contextMenu: {
+                show: () => void;
+                excluir: (itemName: string) => Promise<void>;
+                deletar: (itemName: string) => Promise<void>;
+                renomear: (oldName: string, newName: string) => Promise<void>;
+            };
         };
     }
 }

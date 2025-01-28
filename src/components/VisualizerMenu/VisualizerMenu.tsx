@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { IoMdArrowDropleft, IoMdArrowDropright } from "react-icons/io";
-import { visualizerProps } from "../../types/components.interfaces";
 import { GoHome } from "react-icons/go";
 import { FaArrowLeft } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { MdLightMode } from "react-icons/md";
+import { useGlobal } from "../../GlobalContext";
+import { visualizerProps } from "../../types/components.interfaces";
 import "./VisualizerMenu.css";
 
 export default function VisualizerMenu({
@@ -14,9 +16,27 @@ export default function VisualizerMenu({
 }: visualizerProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { setTheme } = useGlobal();
+
+  useEffect(() => {
+    const getTheme = async () => {
+      try {
+        const theme = await window.electron.AppConfig.getThemeConfig();
+        setTheme(theme);
+      } catch (error) {
+        throw error;
+      }
+    };
+
+    getTheme();
+  }, []);
 
   const toggleMenu = () => {
     setIsMenuOpen((prev) => !prev);
+
+    setTimeout(() => {
+      setIsMenuOpen((prev) => !prev);
+    }, 1000 * 10);
   };
 
   const goHome = async () => {
@@ -37,6 +57,11 @@ export default function VisualizerMenu({
     navigate(`/${book_name}/${book_id}`);
   };
 
+  const toggleTheme = async () => {
+    let newTheme = await window.electron.AppConfig.switchTheme();
+    setTheme(newTheme);
+  };
+
   return (
     <div>
       <div className={`visualizerMenu ${isMenuOpen ? "open" : "closed"}`}>
@@ -45,11 +70,14 @@ export default function VisualizerMenu({
         </button>
         {isMenuOpen && (
           <div className="quicklyActions">
-            <button onClick={() => goHome()}>
+            <button onClick={goHome}>
               <GoHome />
             </button>
-            <button onClick={() => seriePage()}>
+            <button onClick={seriePage}>
               <FaArrowLeft />
+            </button>
+            <button onClick={toggleTheme}>
+              <MdLightMode />
             </button>
           </div>
         )}

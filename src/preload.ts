@@ -7,11 +7,26 @@ const windowAction = {
   close: () => ipcRenderer.invoke("close-window"),
 };
 
+const contextMenu = {
+  show: () => ipcRenderer.send("show-context-menu"),
+  excluir: (itemName: string): Promise<void> => ipcRenderer.invoke("context-menu-excluir", itemName),
+  deletar: (itemName: string): Promise<void> => ipcRenderer.invoke("context-menu-deletar", itemName),
+  renomear: (oldName: string, newName: string): Promise<void> => ipcRenderer.invoke("context-menu-renomear", oldName, newName),
+};
+
+
 const userAction = {
   ratingSerie: (serieName: string, userRating: number): Promise<void> => ipcRenderer.invoke("rating-serie", serieName, userRating),
   favoriteSerie: (serieName: string): Promise<{ success: boolean }> =>
     ipcRenderer.invoke("favorite-serie", serieName),
-  markRead: async (serieName: string, chapter_id: number): Promise<void> => ipcRenderer.invoke("mark-read", serieName, chapter_id)
+  markRead: async (serieName: string, chapter_id: number): Promise<void> => ipcRenderer.invoke("mark-read", serieName, chapter_id),
+}
+
+const AppConfig = {
+  getScreenConfig: (urlLocation: string): Promise<boolean> => ipcRenderer.invoke("get-screen-config", urlLocation),
+  getThemeConfig: (): Promise<string> => ipcRenderer.invoke("get-theme-config"),
+  controlScreen: async (): Promise<boolean> => ipcRenderer.invoke("control-full-screen"),
+  switchTheme: async (): Promise<boolean> => ipcRenderer.invoke("switch-theme-color"),
 }
 
 const collections = {
@@ -34,11 +49,11 @@ const series = {
     ipcRenderer.invoke("get-serie", serieName),
 };
 
-
 const download = {
   downloadLocal: (serieName: string, quantity: number): Promise<void> =>
     ipcRenderer.invoke("download-chapter", serieName, quantity),
   lineReading: (serieName: string, chapter_id: number): Promise<void> => ipcRenderer.invoke("download-in-reading", serieName, chapter_id),
+  downloadIndividual: (serieName: string, chapter_id: number): Promise<void> => ipcRenderer.invoke("download-individual", serieName, chapter_id)
 };
 
 const upload = {
@@ -61,7 +76,9 @@ const eventEmitter = {
 
 contextBridge.exposeInMainWorld("electron", {
   windowAction,
+  contextMenu,
   userAction,
+  AppConfig,
   collections,
   chapters,
   series,

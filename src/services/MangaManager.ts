@@ -5,6 +5,7 @@ import path from "path";
 import FileOperations from "./FileOperations";
 import StorageManager from "./StorageManager";
 import ImageOperations from "./ImageOperations";
+import SystemConfig from "./SystemConfig";
 
 
 export default class MangaManager extends FileSystem {
@@ -12,6 +13,7 @@ export default class MangaManager extends FileSystem {
     private readonly fileManager: FileOperations = new FileOperations()
     private readonly storageManager: StorageManager = new StorageManager()
     private readonly imageManager: ImageOperations = new ImageOperations()
+    private readonly systemManager: SystemConfig = new SystemConfig()
 
     constructor() {
         super()
@@ -43,7 +45,7 @@ export default class MangaManager extends FileSystem {
 
     public async createMangaData(series: string[]): Promise<Comic[]> {
         try {
-            this.globalMangaId = await this.fileManager.getMangaId()
+            this.globalMangaId = await this.systemManager.getMangaId()
             const currentDate = new Date().toLocaleDateString();
 
             return await Promise.all(
@@ -116,7 +118,7 @@ export default class MangaManager extends FileSystem {
         try {
             const seriesData = await this.createMangaData(series);
             await Promise.all(seriesData.map((serieData) => this.storageManager.writeSerieData(serieData)));
-            this.fileManager.setMangaId(this.globalMangaId)
+            this.systemManager.setMangaId(this.globalMangaId)
         } catch (e) {
             console.error(`Erro ao armazenar o conteúdo: ${e}`);
             throw e;

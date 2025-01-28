@@ -41,6 +41,24 @@ export default function ChaptersInfo({ serie }: OnlySerieProp) {
     setAscending(!isAscendig);
   };
 
+  const markAsRead = async (
+    event: React.MouseEvent<HTMLButtonElement>,
+    serieName: string,
+    chapter_id: number
+  ) => {
+    event.preventDefault();
+    await window.electron.userAction.markRead(serieName, chapter_id);
+  };
+
+  const downloadIndividual = async (
+    event: React.MouseEvent<HTMLButtonElement>,
+    serieName: string,
+    chapter_id: number
+  ) => {
+    event.preventDefault();
+    await window.electron.download.downloadIndividual(serieName, chapter_id);
+  };
+
   return (
     <section className="Control">
       <div className="chaptersTitle">
@@ -64,7 +82,7 @@ export default function ChaptersInfo({ serie }: OnlySerieProp) {
           <Link
             to={`/${serie.name}/${serie.id}/${chapter.name}/${chapter.id}/${chapter.last_page_read}`}
             key={chapter.id}>
-            <li className="chapter">
+            <li className={`chapter ${chapter.is_read ? "read" : "unread"}`}>
               <div className="filesInfo">
                 <span className="chapterName">{chapter.name}</span>
                 <span>
@@ -75,26 +93,36 @@ export default function ChaptersInfo({ serie }: OnlySerieProp) {
               <div className="chapterExtraInfo">
                 <span className="createDate">{chapter.create_date}</span>
                 <div className="dataInfo">
-                  {chapter.is_read ? (
-                    <IoCheckmarkCircle className="read" aria-label="Lido" />
-                  ) : (
-                    <IoCheckmarkCircleOutline
-                      className="unread"
-                      aria-label="Não lido"
-                    />
-                  )}
+                  <button
+                    onClick={(event) =>
+                      markAsRead(event, serie.name, chapter.id)
+                    }>
+                    {chapter.is_read ? (
+                      <IoCheckmarkCircle className="read" aria-label="Lido" />
+                    ) : (
+                      <IoCheckmarkCircleOutline
+                        className="unread"
+                        aria-label="Não lido"
+                      />
+                    )}
+                  </button>
 
-                  {chapter.is_dowload ? (
-                    <MdFileDownload
-                      className="downloaded"
-                      aria-label="Baixado"
-                    />
-                  ) : (
-                    <MdOutlineDownload
-                      className="notdownloaded"
-                      aria-label="Não baixado"
-                    />
-                  )}
+                  <button
+                    onClick={(event) =>
+                      downloadIndividual(event, serie.name, chapter.id)
+                    }>
+                    {chapter.is_dowload ? (
+                      <MdFileDownload
+                        className="downloaded"
+                        aria-label="Baixado"
+                      />
+                    ) : (
+                      <MdOutlineDownload
+                        className="notdownloaded"
+                        aria-label="Não baixado"
+                      />
+                    )}
+                  </button>
                 </div>
               </div>
             </li>

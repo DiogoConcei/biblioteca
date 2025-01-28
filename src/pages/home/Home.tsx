@@ -40,8 +40,17 @@ export default function Home() {
     }
   };
 
+  const contextMenu = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    window.electron.contextMenu.show();
+  };
+
   return (
-    <section className="home" onDragOver={handleDrag} onDrop={handleDrop}>
+    <section
+      className="home"
+      onContextMenu={contextMenu}
+      onDragOver={handleDrag}
+      onDrop={handleDrop}>
       <SearchBar searchInput={searchInput} onSearchChange={searchChange} />
       <ComicCards searchInput={searchInput} />
     </section>

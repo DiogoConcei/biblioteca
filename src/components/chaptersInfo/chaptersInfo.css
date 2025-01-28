@@ -111,3 +111,11 @@
   font-size: 1rem;
   color: black;
 }
+
+.chapter.read {
+  background: #4e5565;
+}
+
+.chapter.unread {
+  background: #aa5042;
+}

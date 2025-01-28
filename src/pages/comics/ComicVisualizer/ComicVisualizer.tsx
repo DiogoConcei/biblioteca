@@ -2,12 +2,14 @@ import "./ComicVisualizer.css";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import VisualizerMenu from "../../../components/VisualizerMenu/VisualizerMenu";
+import { useGlobal } from "../../../GlobalContext";
 
 export default function ComicVisualizer() {
   const [pageNumber, setPageNumber] = useState(0);
   const [pages, setPages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const { book_name, book_id, chapter_id, page } = useParams();
+  const { theme, setTheme, setIsHidden } = useGlobal();
   const navigate = useNavigate();
   const loadingTime = 1;
 
@@ -34,7 +36,7 @@ export default function ComicVisualizer() {
     };
 
     getChapter();
-  }, [chapter_id]);
+  }, [chapter_id, setTheme]);
 
   useEffect(() => {
     const handleDownload = async () => {
@@ -124,7 +126,7 @@ export default function ComicVisualizer() {
   }
 
   return (
-    <section className="visualizer">
+    <section className={`visualizer  ${theme ? "on" : "off"}`}>
       <VisualizerMenu
         book_name={book_name}
         book_id={Number(book_id)}

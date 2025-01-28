@@ -38,3 +38,10 @@ export interface ComicActionsProps {
 export interface downloadButtonProps {
     serieName: string
 }
+
+export interface GlobalContext {
+    isHidden: boolean,
+    setIsHidden: (value: boolean) => void;
+    theme: boolean;
+    setTheme: (value: boolean) => void;
+}
