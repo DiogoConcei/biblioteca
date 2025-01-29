@@ -4,6 +4,13 @@ export interface OnlySerieProp {
     serie: Comic;
 }
 
+export interface PageControlProps {
+    currentPage: number,
+    TamPages: number;
+    prevPage: () => void;
+    nextPage: () => void
+}
+
 export interface visualizerProps {
     currentPage: number,
     prevChapter: () => void,

@@ -1,6 +1,6 @@
 .visualizer {
   display: flex;
-  position: absolute;
+  position: relative;
   justify-content: center;
   align-items: center;
   background-color: black;
@@ -32,4 +32,5 @@
 
 .chapterPage {
   touch-action: none;
+  transition: transform 0.15s ease-out;
 }

@@ -1,13 +1,13 @@
 import "./ComicVisualizer.css";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import PageControl from "../../../components/PageControl/PageControl";
 import VisualizerMenu from "../../../components/VisualizerMenu/VisualizerMenu";
 import { useGlobal } from "../../../GlobalContext";
 
 export default function ComicVisualizer() {
-  const [pageNumber, setPageNumber] = useState(0);
+  const [pageNumber, setPageNumber] = useState<number>(0);
   const [pages, setPages] = useState<string[]>([]);
-
   const [loading, setLoading] = useState(true);
 
   const [scale, setScale] = useState(1);
@@ -94,6 +94,7 @@ export default function ComicVisualizer() {
 
     const handleMouseUp = () => {
       isDraggin = false;
+      resetDrag();
     };
 
     if (image) {
@@ -170,6 +171,10 @@ export default function ComicVisualizer() {
     }
   };
 
+  const resetDrag = () => {
+    setPosition({ x: 0, y: 0 }); // Resetando a posição do elemento (caso necessário)
+  };
+
   if (loading || !pages || pages.length === 0 || !pages[pageNumber]) {
     return <p>Loading...</p>;
   }
@@ -192,6 +197,14 @@ export default function ComicVisualizer() {
         src={`data:image/png;base64,${pages[pageNumber]}`}
         alt={`Page ${pageNumber}`}
       />
+      <div className="pageControlWrapper">
+        <PageControl
+          currentPage={pageNumber}
+          TamPages={pages.length - 1}
+          nextPage={nextPage}
+          prevPage={prevPage}
+        />
+      </div>
     </section>
   );
 }
