@@ -1,5 +1,5 @@
 import "./ComicVisualizer.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import VisualizerMenu from "../../../components/VisualizerMenu/VisualizerMenu";
 import { useGlobal } from "../../../GlobalContext";
@@ -7,9 +7,15 @@ import { useGlobal } from "../../../GlobalContext";
 export default function ComicVisualizer() {
   const [pageNumber, setPageNumber] = useState(0);
   const [pages, setPages] = useState<string[]>([]);
+
   const [loading, setLoading] = useState(true);
+
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const pageRef = useRef(null);
+
   const { book_name, book_id, chapter_id, page } = useParams();
-  const { theme, setTheme, setIsHidden } = useGlobal();
+  const { theme, setTheme } = useGlobal();
   const navigate = useNavigate();
   const loadingTime = 1;
 
@@ -61,6 +67,43 @@ export default function ComicVisualizer() {
       window.removeEventListener("keydown", handleKey);
     };
   }, [pages, pageNumber]);
+
+  useEffect(() => {
+    const image = pageRef.current;
+    let isDraggin = false;
+    let prevPosition = { x: 0, y: 0 };
+
+    const handleMouseDown = (e: { clientX: any; clientY: any }) => {
+      isDraggin = true;
+      prevPosition = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleMouseMove = (e: { clientX: number; clientY: number }) => {
+      if (!isDraggin) return;
+
+      const deltaX = e.clientX - prevPosition.x;
+      const deltaY = e.clientY - prevPosition.y;
+      prevPosition = { x: e.clientX, y: e.clientY };
+      setPosition((position) => ({
+        x: position.x + deltaX,
+        y: position.y + deltaY,
+      }));
+
+      const handleMouseUp = () => {
+        isDraggin = false;
+      };
+
+      image?.addEventListener("mousedown", handleMouseDown);
+      image?.addEventListener("mousemove", handleMouseMove);
+      image?.addEventListener("mouseup", handleMouseUp);
+
+      return () => {
+        image?.removeEventListener("mousedown", handleMouseDown);
+        image?.removeEventListener("mousemove", handleMouseMove);
+        image?.removeEventListener("mouseup", handleMouseUp);
+      };
+    };
+  }, [scale, pageRef]);
 
   const nextPage = () => {
     if (pageNumber < pages.length - 1) {
@@ -128,13 +171,18 @@ export default function ComicVisualizer() {
   return (
     <section className={`visualizer  ${theme ? "on" : "off"}`}>
       <VisualizerMenu
-        book_name={book_name}
-        book_id={Number(book_id)}
-        pageNumber={Number(pageNumber)}
-        chapter_id={Number(chapter_id)}
+        nextChapter={nextChapter}
+        setScale={setScale}
+        currentPage={pageNumber}
+        prevChapter={prevChapter}
       />
       <img
         className="chapterPage"
+        style={{
+          transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
+        }}
+        ref={pageRef}
+        draggable={false}
         src={`data:image/png;base64,${pages[pageNumber]}`}
         alt={`Page ${pageNumber}`}
       />

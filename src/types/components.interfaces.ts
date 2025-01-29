@@ -5,10 +5,10 @@ export interface OnlySerieProp {
 }
 
 export interface visualizerProps {
-    book_name: string,
-    book_id: number,
-    pageNumber: number,
-    chapter_id: number
+    currentPage: number,
+    prevChapter: () => void,
+    setScale: React.Dispatch<React.SetStateAction<number>>,
+    nextChapter: () => void;
 }
 
 export interface dinamicNavProp {
