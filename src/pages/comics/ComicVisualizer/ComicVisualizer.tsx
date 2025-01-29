@@ -83,25 +83,31 @@ export default function ComicVisualizer() {
 
       const deltaX = e.clientX - prevPosition.x;
       const deltaY = e.clientY - prevPosition.y;
+
       prevPosition = { x: e.clientX, y: e.clientY };
-      setPosition((position) => ({
-        x: position.x + deltaX,
-        y: position.y + deltaY,
-      }));
 
-      const handleMouseUp = () => {
-        isDraggin = false;
-      };
+      setPosition((position) => {
+        const newPosition = { x: position.x + deltaX, y: position.y + deltaY };
+        return newPosition;
+      });
+    };
 
-      image?.addEventListener("mousedown", handleMouseDown);
-      image?.addEventListener("mousemove", handleMouseMove);
-      image?.addEventListener("mouseup", handleMouseUp);
+    const handleMouseUp = () => {
+      isDraggin = false;
+    };
 
-      return () => {
-        image?.removeEventListener("mousedown", handleMouseDown);
-        image?.removeEventListener("mousemove", handleMouseMove);
-        image?.removeEventListener("mouseup", handleMouseUp);
-      };
+    if (image) {
+      image.addEventListener("mousedown", handleMouseDown);
+      image.addEventListener("mousemove", handleMouseMove);
+      image.addEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      if (image) {
+        image.removeEventListener("mousedown", handleMouseDown);
+        image.removeEventListener("mousemove", handleMouseMove);
+        image.removeEventListener("mouseup", handleMouseUp);
+      }
     };
   }, [scale, pageRef]);
 

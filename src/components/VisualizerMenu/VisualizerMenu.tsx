@@ -39,7 +39,7 @@ export default function VisualizerMenu({
 
     setTimeout(() => {
       setIsMenuOpen((prev) => !prev);
-    }, 1000 * 10);
+    }, 10000 * 10);
   };
 
   const goHome = async () => {
