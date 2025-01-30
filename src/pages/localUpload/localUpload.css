@@ -1,0 +1,70 @@
+.form-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-flow: column nowrap;
+  margin: 20px;
+  padding: 20px;
+  gap: 10px;
+  height: 95.5vh;
+  border: 1px solid red;
+}
+
+.series-title h1 {
+  margin-left: 10px;
+  text-align: center;
+  font-size: 2rem;
+  color: #cd5c5c;
+}
+
+.image-upload {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #8963ba;
+  border-radius: 10px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.cover-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cover-title {
+  font-size: 24px;
+  color: #cd5c5c;
+}
+
+.cover-preview {
+  height: 40vh;
+  object-fit: cover;
+}
+
+.alert {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 300px;
+  height: 440px;
+  color: gray;
+}
+
+.file-input {
+  display: none;
+}
+
+.insert-image {
+  font-size: 32px;
+}
+
+.form-container {
+  display: flex;
+  flex-direction: row nowrap;
+  gap: 20px;
+  flex-grow: 1;
+}

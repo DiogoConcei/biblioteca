@@ -1,5 +1,5 @@
 import "./localUpload.css";
-import { MdOutlineEdit, MdDelete } from "react-icons/md";
+import { MdOutlineEdit, MdDelete, MdOutlineImage } from "react-icons/md";
 import { useState } from "react";
 import { SeriesProcessor, SerieForm } from "../../types/series.interfaces";
 import { useLocation } from "react-router-dom";
@@ -13,10 +13,9 @@ export default function LocalUpload() {
   const [isCreatingCollection, setIsCreatingCollection] =
     useState<boolean>(false);
   const [newCollection, setNewCollection] = useState<string>("");
-  const [imageSrc, setImageSrc] = useState<string>("default-image.jpg");
+  const [imageSrc, setImageSrc] = useState<string>();
   const [tags, setTags] = useState<string[]>([]);
 
-  // Função para lidar com o evento de seleção de imagem
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -28,290 +27,278 @@ export default function LocalUpload() {
     }
   };
 
-  // Função para lidar com a entrada de tags
-  const handleTagInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const tagArray = value.split(",").map((tag) => tag.trim());
-    setTags(tagArray);
-  };
+  // const handleTagInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const value = e.target.value;
+  //   const tagArray = value.split(",").map((tag) => tag.trim());
+  //   setTags(tagArray);
+  // };
 
-  // Função para atualizar o estado de formData
-  const handleFormDataChange = (key: keyof SerieForm, value: any) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      [key]: value,
-    }));
-  };
+  // const handleFormDataChange = (key: keyof SerieForm, value: any) => {
+  //   setFormData((prevData) => ({
+  //     ...prevData,
+  //     [key]: value,
+  //   }));
+  // };
 
-  // Função para adicionar coleções
-  const handleAddCollection = () => {
-    if (newCollection) {
-      setFormData((prevData) => ({
-        ...prevData,
-        collection: [...prevData.collection, newCollection],
-      }));
-      setNewCollection("");
-      setIsCreatingCollection(false);
-    }
-  };
+  // const handleAddCollection = () => {
+  //   if (newCollection) {
+  //     setFormData((prevData) => ({
+  //       ...prevData,
+  //       collection: [...prevData.collection, newCollection],
+  //     }));
+  //     setNewCollection("");
+  //     setIsCreatingCollection(false);
+  //   }
+  // };
 
   // Função para adicionar tags
-  const addTags = () => {
-    setFormData((prevData) => ({
-      ...prevData,
-      tags: [...prevData.tags, ...tags],
-    }));
-    setTags([]);
-  };
+  // const addTags = () => {
+  //   setFormData((prevData) => ({
+  //     ...prevData,
+  //     tags: [...prevData.tags, ...tags],
+  //   }));
+  //   setTags([]);
+  // };
 
-  const handleReadingStatus = (status: string) => {
-    handleFormDataChange("readingStatus", status);
-  };
+  // const handleReadingStatus = (status: string) => {
+  //   handleFormDataChange("readingStatus", status);
+  // };
 
-  const handlePrivacy = (option: string) => {
-    handleFormDataChange("privacy", option);
-  };
-
-  if (!newSeries.length) {
-    return <p>Carregando...</p>;
-  }
+  // const handlePrivacy = (option: string) => {
+  //   handleFormDataChange("privacy", option);
+  // };
 
   return (
-    <section>
-      <div>
-        <img src={imageSrc} alt="Imagem ou Capa" />
-        <MdOutlineEdit />
-        <MdDelete />
-        <h2>Imagem ou Capa: </h2>
-        <input type="file" accept="image/*" onChange={handleImageChange} />
-        <p>{newSeries[0].name}</p>
-        {/* <form action="">
-          {newSeries.length > 0 ? (
-            newSeries.map((serie, index) => (
+    <article>
+      <section className="form-view">
+        <div className="form-container">
+          <div className="cover-container">
+            <p className="cover-title">Capa de exibição</p>
+            <div
+              className="image-upload"
+              onClick={() => document.getElementById("fileInput")?.click()}>
+              {imageSrc ? (
+                <img src={imageSrc} alt="Preview" className="cover-preview" />
+              ) : (
+                <span className="alert">
+                  <MdOutlineImage className="insert-image" />
+                </span>
+              )}
+              <input
+                id="fileInput"
+                type="file"
+                accept="image/*"
+                className="file-input"
+                onChange={handleImageChange}
+              />
+            </div>
+          </div>
+
+          <form action="" className="form-content">
+            <span className="series-title">
+              {newSeries.map((serie, index) => (
+                <h1 key={index}>Personalizando série: {serie.name}</h1>
+              ))}
+            </span>
+
+            {newSeries.map((serie, index) => (
               <div key={index}>
-                <h1>Personalizando {serie.name}</h1>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={(e) => handleFormDataChange("name", e.target.value)}
-                />
-                <input
-                  type="text"
-                  name="genre"
-                  placeholder="Gênero"
-                  value={formData.genre}
-                  onChange={(e) =>
-                    handleFormDataChange("genre", e.target.value)
-                  }
-                />
-                <input
-                  type="text"
-                  name="author"
-                  placeholder="Autor"
-                  value={formData.author}
-                  onChange={(e) =>
-                    handleFormDataChange("author", e.target.value)
-                  }
-                />
-                <input
-                  type="text"
-                  name="language"
-                  placeholder="Idioma original"
-                  value={formData.language}
-                  onChange={(e) =>
-                    handleFormDataChange("language", e.target.value)
-                  }
-                />
+                {/* <h1>Personalizando {serie.name}</h1>
+              <input
+                type="text"
+                name="name"
+                value={serie.name}
+                onChange={(e) => handleFormDataChange("name", e.target.value)}
+              />
+              <input
+                type="text"
+                name="genre"
+                placeholder="Gênero"
+                onChange={(e) => handleFormDataChange("genre", e.target.value)}
+              />
+              <input
+                type="text"
+                name="author"
+                placeholder="Autor"
+                onChange={(e) => handleFormDataChange("author", e.target.value)}
+              />
+              <input
+                type="text"
+                name="language"
+                placeholder="Idioma original"
+                onChange={(e) =>
+                  handleFormDataChange("language", e.target.value)
+                }
+              /> */}
 
-                <h2>Forma de literatura: </h2>
-                <div>
-                  <label>
-                    <input
-                      type="radio"
-                      name="literatureForm"
-                      value="Option 1"
-                      checked={formData.literatureForm === "Option 1"}
-                      onChange={() =>
-                        handleFormDataChange("literatureForm", "Option 1")
-                      }
-                    />
-                    Manga
-                  </label>
+                {/* <h2>Forma de literatura: </h2>
+              <div>
+                <label>
+                  <input
+                    type="radio"
+                    name="literatureForm"
+                    value="Option 1"
+                    onChange={() =>
+                      handleFormDataChange("literatureForm", "Option 1")
+                    }
+                  />
+                  Manga
+                </label>
 
-                  <label>
-                    <input
-                      type="radio"
-                      name="literatureForm"
-                      value="Option 2"
-                      checked={formData.literatureForm === "Option 2"}
-                      onChange={() =>
-                        handleFormDataChange("literatureForm", "Option 2")
-                      }
-                    />
-                    Quadrinhos
-                  </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="literatureForm"
+                    value="Option 2"
+                    onChange={() =>
+                      handleFormDataChange("literatureForm", "Option 2")
+                    }
+                  />
+                  Quadrinhos
+                </label> 
 
-                  <label>
-                    <input
-                      type="radio"
-                      name="literatureForm"
-                      value="Option 3"
-                      checked={formData.literatureForm === "Option 3"}
-                      onChange={() =>
-                        handleFormDataChange("literatureForm", "Option 3")
-                      }
-                    />
-                    Livros
-                  </label>
-                </div>
+                <label>
+                  <input
+                    type="radio"
+                    name="literatureForm"
+                    value="Option 3"
+                    onChange={() =>
+                      handleFormDataChange("literatureForm", "Option 3")
+                    }
+                  />
+                  Livros
+                </label>
+              </div> */}
 
-                <h2>Adicionar a coleção: </h2>
-                <div>
-                  <label>
-                    <input type="checkbox" value="Option 1" />
-                    Favoritas
-                  </label>
+                {/* <h2>Adicionar a coleção: </h2>
+              <div>
+                <label>
+                  <input type="checkbox" value="Option 1" />
+                  Favoritas
+                </label>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setIsCreatingCollection(!isCreatingCollection)
-                    }>
-                    Outra
-                  </button>
-
-                  {isCreatingCollection && (
-                    <div>
-                      <input
-                        type="text"
-                        value={newCollection}
-                        placeholder="Digite o nome da nova coleção"
-                        onChange={(e) => setNewCollection(e.target.value)}
-                      />
-                      <button type="button" onClick={handleAddCollection}>
-                        Adicionar Coleção
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <h2>Privacidade: </h2>
-                <div>
-                  <label>
-                    <input
-                      type="radio"
-                      name="privacy"
-                      value="Publica"
-                      checked={formData.privacy === "Publica"}
-                      onChange={() =>
-                        handleFormDataChange("privacy", "Publica")
-                      }
-                    />
-                    Pública
-                  </label>
-
-                  <label>
-                    <input
-                      type="radio"
-                      name="privacy"
-                      value="Privada"
-                      checked={formData.privacy === "Privada"}
-                      onChange={() =>
-                        handleFormDataChange("privacy", "Privada")
-                      }
-                    />
-                    Privada
-                  </label>
-                </div>
-
-                <h2>Adicionar ao auto backup: </h2>
-                <div>
-                  <label>
-                    <input
-                      type="radio"
-                      name="autoBackup"
-                      value="Sim"
-                      checked={formData.autoBackup === "Sim"}
-                      onChange={() => handleFormDataChange("autoBackup", "Sim")}
-                    />
-                    Sim
-                  </label>
-
-                  <label>
-                    <input
-                      type="radio"
-                      name="autoBackup"
-                      value="Não"
-                      checked={formData.autoBackup === "Não"}
-                      onChange={() => handleFormDataChange("autoBackup", "Não")}
-                    />
-                    Não
-                  </label>
-                </div>
-
-                <h2>Status de leitura: </h2>
-                <div>
-                  <label>
-                    <input
-                      type="radio"
-                      name="status"
-                      value="Em andamento"
-                      checked={formData.readingStatus === "Em andamento"}
-                      onChange={() => handleReadingStatus("Em andamento")}
-                    />
-                    Em andamento
-                  </label>
-                  <label>
-                    <input
-                      type="radio"
-                      name="status"
-                      value="Completo"
-                      checked={formData.readingStatus === "Completo"}
-                      onChange={() => handleReadingStatus("Completo")}
-                    />
-                    Completo
-                  </label>
-                  <label>
-                    <input
-                      type="radio"
-                      name="status"
-                      value="Pendente"
-                      checked={formData.readingStatus === "Pendente"}
-                      onChange={() => handleReadingStatus("Pendente")}
-                    />
-                    Pendente
-                  </label>
-                </div>
-
-                <h2>Tags: </h2>
-                <input
-                  type="text"
-                  placeholder="Digite tags separadas por vírgula"
-                  onChange={(e) => handleTagInput(e)}
-                />
-                <button type="button" onClick={addTags}>
-                  Adicionar Tags
+                <button
+                  type="button"
+                  onClick={() =>
+                    setIsCreatingCollection(!isCreatingCollection)
+                  }>
+                  Outra
                 </button>
 
-                <h3>Tags Inseridas:</h3>
-                <ul>
-                  {tags.map((tag, tagIndex) => (
-                    <li key={tagIndex}>{tag}</li>
-                  ))}
-                </ul>
-
-                <button type="submit">Salvar</button>
+                {isCreatingCollection && (
+                  <div>
+                    <input
+                      type="text"
+                      value={newCollection}
+                      placeholder="Digite o nome da nova coleção"
+                      onChange={(e) => setNewCollection(e.target.value)}
+                    />
+                    <button type="button" onClick={handleAddCollection}>
+                      Adicionar Coleção
+                    </button>
+                  </div>
+                )}
               </div>
-            ))
-          ) : (
-            <div>
-              <p>Nenhuma série encontrada</p>
-              <p>{newSeries[0].name}</p>
-            </div>
-          )}
-        </form> */}
-      </div>
-    </section>
+ */}
+                {/* <h2>Privacidade: </h2>
+              <div>
+                <label>
+                  <input
+                    type="radio"
+                    name="privacy"
+                    value="Publica"
+                    onChange={() => handleFormDataChange("privacy", "Publica")}
+                  />
+                  Pública
+                </label>
+
+                <label>
+                  <input
+                    type="radio"
+                    name="privacy"
+                    value="Privada"
+                    onChange={() => handleFormDataChange("privacy", "Privada")}
+                  />
+                  Privada
+                </label>
+              </div> */}
+
+                {/* <h2>Adicionar ao auto backup: </h2>
+              <div>
+                <label>
+                  <input
+                    type="radio"
+                    name="autoBackup"
+                    value="Sim"
+                    onChange={() => handleFormDataChange("autoBackup", "Sim")}
+                  />
+                  Sim
+                </label>
+
+                <label>
+                  <input
+                    type="radio"
+                    name="autoBackup"
+                    value="Não"
+                    onChange={() => handleFormDataChange("autoBackup", "Não")}
+                  />
+                  Não
+                </label>
+              </div> */}
+
+                {/* <h2>Status de leitura: </h2>
+              <div>
+                <label>
+                  <input
+                    type="radio"
+                    name="status"
+                    value="Em andamento"
+                    onChange={() => handleReadingStatus("Em andamento")}
+                  />
+                  Em andamento
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="status"
+                    value="Completo"
+                    onChange={() => handleReadingStatus("Completo")}
+                  />
+                  Completo
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="status"
+                    value="Pendente"
+                    onChange={() => handleReadingStatus("Pendente")}
+                  />
+                  Pendente
+                </label>
+              </div> */}
+
+                {/* <h2>Tags: </h2>
+              <input
+                type="text"
+                placeholder="Digite tags separadas por vírgula"
+                onChange={(e) => handleTagInput(e)}
+              />
+              <button type="button" onClick={addTags}>
+                Adicionar Tags
+              </button> */}
+
+                {/* <h3>Tags Inseridas:</h3> */}
+                {/* <ul>
+                {tags.map((tag, tagIndex) => (
+                  <li key={tagIndex}>{tag}</li>
+                ))}
+              </ul> */}
+                {/* <button type="submit">Salvar</button> */}
+              </div>
+            ))}
+          </form>
+        </div>
+      </section>
+    </article>
   );
 }
