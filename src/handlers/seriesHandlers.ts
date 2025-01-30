@@ -13,7 +13,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
     ipcMain.handle("create-serie", async (_event, filePaths: string[]) => {
         try {
-            await ComicOperations.createManga(filePaths);
+            // await ComicOperations.createManga(filePaths);
 
             const filesName = await Promise.all(
                 filePaths.map(async (file) => {

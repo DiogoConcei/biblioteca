@@ -1,4 +1,4 @@
-import { ComicCollection } from "../types/comic.interfaces";
+import { ComicCollection } from "../types/collections.interfaces";
 import { FileSystem } from "./abstract/FileSystem";
 import jsonfile from "jsonfile"
 

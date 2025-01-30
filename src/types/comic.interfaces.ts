@@ -1,39 +1,3 @@
-export interface ComicConfig {
-  config: {
-    settings: {
-      reading_mode: "single_page" | "double_page" | "vertical_scroll";
-      zoom: "fit_width" | "fit_height" | "original_size";
-      ligth_mode: boolean,
-      full_screen: boolean
-    };
-  };
-  metadata: {
-    global_id: number;
-  };
-}
-
-export interface ComicCollection {
-  collections: Collections[];
-}
-
-export interface Collections {
-  name: string;
-  description: string;
-  comics: ComicCollectionInfo[];
-  comments: string[];
-}
-
-export interface ComicCollectionInfo {
-  id: number,
-  name: string,
-  cover_image: string,
-  comic_path: string,
-  total_chapters: number,
-  status: "em andamento" | "completada" | "pausada";
-  recommended_by?: string;
-  original_owner?: string;
-  rating?: number;
-}
 
 export interface Comic {
   id: number;
@@ -67,8 +31,24 @@ export interface ComicEdition {
   sanitized_name: string;
   archive_path: string;
   chapter_path: string;
-  create_date: string;
+  created_at: string;
   is_read: boolean;
   is_dowload: boolean;
   last_page_read: number;
 }
+
+
+export interface ComicConfig {
+  config: {
+    settings: {
+      reading_mode: "single_page" | "double_page" | "vertical_scroll";
+      zoom: "fit_width" | "fit_height" | "original_size";
+      ligth_mode: boolean,
+      full_screen: boolean
+    };
+  };
+  metadata: {
+    global_id: number;
+  };
+}
+

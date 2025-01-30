@@ -1,0 +1,11 @@
+{
+  "config": {
+    "settings": {
+      "reading_mode": "single_page",
+      "zoom": "fit_width",
+      "full_screen": true,
+      "ligth_mode": false
+    }
+  },
+  "metadata": { "current_id": 0 }
+}

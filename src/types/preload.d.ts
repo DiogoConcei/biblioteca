@@ -1,5 +1,7 @@
 export { };
-import { Comic, Collections } from './comic.interfaces'
+import { Comic } from './comic.interfaces'
+import { Collections } from './collections.interfaces';
+import { SeriesProcessor } from './series.interfaces';
 
 declare global {
     interface Window {
@@ -14,7 +16,7 @@ declare global {
                 getPathForFile: (file: File) => string;
             },
             upload: {
-                localUpload: (filePaths: string[]) => Promise<string[]>,
+                localUpload: (filePaths: string[]) => Promise<SeriesProcessor[]>,
             },
             series: {
                 createSerie: (filePaths: string[]) => Promise<void>,

@@ -1,5 +1,4 @@
 import { IpcMain } from "electron";
-import MangaManager from "../services/MangaManager";
 import CollectionsOperations from "../services/CollectionsOperations";
 
 export default function collectionHandlers(ipcMain: IpcMain) {

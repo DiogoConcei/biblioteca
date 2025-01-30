@@ -1,10 +1,12 @@
 import "./Home.css";
 import ComicCards from "../../components/ComicCards/ComicCards";
 import SearchBar from "../../components/SearchBar/SearchBar";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState<string>("");
+  const navigate = useNavigate();
 
   const searchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
@@ -30,10 +32,11 @@ export default function Home() {
     });
 
     try {
-      const newPaths = await Promise.all(
+      const newSeries = await Promise.all(
         await window.electron.upload.localUpload(filePaths)
       );
-      await window.electron.series.createSerie(newPaths);
+      console.log(newSeries);
+      navigate("/local-upload/serie", { state: { newSeries } });
     } catch (error) {
       console.error("Erro ao carregar arquivos", error);
       throw error;

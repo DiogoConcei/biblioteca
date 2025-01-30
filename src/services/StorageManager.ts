@@ -3,6 +3,7 @@ import fs from "fs/promises";
 import jsonfile from "jsonfile";
 import FileOperations from "./FileOperations";
 import { FileSystem } from "./abstract/FileSystem";
+import { SeriesProcessor } from "../types/series.interfaces";
 import { Comic } from "../types/comic.interfaces";
 
 export default class StorageManager extends FileSystem {
@@ -100,12 +101,28 @@ export default class StorageManager extends FileSystem {
       throw error;
     }
   }
+
+  public async preProcessData(seriePath: string): Promise<SeriesProcessor> {
+    const randomNumber = Math.random() * 1000;
+    const serieName = path.basename(seriePath);
+
+    return {
+      id: randomNumber,
+      name: serieName,
+      sanitized_name: this.fileManager.sanitizeFilename(serieName),
+      archives_path: seriePath,
+      chapters_path: path.join(this.imagesFilesPath, serieName),
+      created_at: new Date().toISOString(),
+      collections: [],
+      deleted_at: ""
+    }
+  }
 }
 
 // (async () => {
 //   try {
 //     const MangaOperations = new StorageManager();
-//     console.log(await MangaOperations.foundLastDownload("SPY×FAMILY"))
+//     const data = await MangaOperations.preProcessData('C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\books\\Dr.Stone');
 //   } catch (error) {
 //     console.error('Erro ao executar a função:', error);
 //   }

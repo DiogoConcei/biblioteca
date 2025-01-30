@@ -1,0 +1,16 @@
+{
+  "collections": [
+    {
+      "name": "Favorites",
+      "description": "Coleção dos quadrinhos favoritos.",
+      "comics": [],
+      "comments": [""]
+    },
+    {
+      "name": "Recent Reads",
+      "description": "Quadrinhos que foram lidos recentemente.",
+      "comics": [],
+      "comments": [""]
+    }
+  ]
+}

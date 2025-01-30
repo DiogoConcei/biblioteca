@@ -1,9 +1,10 @@
 import { useParams } from "react-router-dom";
-import { Comic, ComicCollectionInfo } from "../../../types/comic.interfaces";
+import { Comic } from "../../../types/comic.interfaces";
+import { ComicCollectionInfo } from "../../../types/collections.interfaces";
 import { useState, useEffect } from "react";
 import ChaptersInfo from "../../../components/ChaptersInfo/ChaptersInfo";
 import ComicActions from "../../../components/ComicActions/ComicActions";
-import "./SeriePage.css";
+import "./ComicPage.css";
 
 export default function SeriePage() {
   const [serie, setSerie] = useState<Comic | null>(null);

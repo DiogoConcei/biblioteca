@@ -1,4 +1,4 @@
-import { Comic, ComicCollection, ComicConfig, ComicEdition } from "../types/comic.interfaces";
+import { Comic, ComicEdition, ComicConfig } from "../types/comic.interfaces";
 import { FileSystem } from "./abstract/FileSystem";
 import fs from "fs/promises"
 import path from "path";
@@ -43,87 +43,87 @@ export default class MangaManager extends FileSystem {
         }
     }
 
-    public async createMangaData(series: string[]): Promise<Comic[]> {
-        try {
-            this.globalMangaId = await this.systemManager.getMangaId()
-            const currentDate = new Date().toLocaleDateString();
+    // public async createMangaData(series: string[]): Promise<Comic[]> {
+    //     try {
+    //         this.globalMangaId = await this.systemManager.getMangaId()
+    //         const currentDate = new Date().toLocaleDateString();
 
-            return await Promise.all(
-                series.map(async (serie) => {
-                    const id = ++this.globalMangaId;
-                    const name = path.basename(serie);
-                    const sanitizedName = this.fileManager.sanitizeFilename(name);
+    //         return await Promise.all(
+    //             series.map(async (serie) => {
+    //                 const id = ++this.globalMangaId;
+    //                 const name = path.basename(serie);
+    //                 const sanitizedName = this.fileManager.sanitizeFilename(name);
 
-                    let chaptersPath = await this.foundFiles(serie);
-                    chaptersPath = await this.fileManager.orderByChapters(chaptersPath)
-                    const chaptersData = await this.createEditionData(chaptersPath, currentDate);
-                    chaptersData[0].is_dowload = true
+    //                 let chaptersPath = await this.foundFiles(serie);
+    //                 chaptersPath = await this.fileManager.orderByChapters(chaptersPath)
+    //                 const chaptersData = await this.createEditionData(chaptersPath, currentDate);
+    //                 chaptersData[0].is_dowload = true
 
-                    const comments: string[] = [];
+    //                 const comments: string[] = [];
 
-                    return {
-                        id,
-                        name,
-                        sanitized_name: sanitizedName,
-                        archives_path: serie,
-                        chapters_path: "",
-                        cover_image: "",
-                        total_chapters: chaptersData.length,
-                        created_at: currentDate,
-                        chapters_read: 0,
-                        reading_data: {
-                            last_chapter_id: 1,
-                            last_read_at: "",
-                        },
-                        chapters: chaptersData,
-                        metadata: {
-                            status: "em andamento",
-                            is_favorite: false,
-                            recommended_by: "",
-                            original_owner: "",
-                            last_download: 0,
-                            rating: 0,
-                        },
-                        comments: comments,
-                    };
-                })
-            );
-        } catch (error) {
-            console.error(`erro ao criar dados principais: ${error}`);
-            throw error;
-        }
-    }
+    //                 return {
+    //                     id,
+    //                     name,
+    //                     sanitized_name: sanitizedName,
+    //                     archives_path: serie,
+    //                     chapters_path: "",
+    //                     cover_image: "",
+    //                     total_chapters: chaptersData.length,
+    //                     created_at: currentDate,
+    //                     chapters_read: 0,
+    //                     reading_data: {
+    //                         last_chapter_id: 1,
+    //                         last_read_at: "",
+    //                     },
+    //                     chapters: chaptersData,
+    //                     metadata: {
+    //                         status: "em andamento",
+    //                         is_favorite: false,
+    //                         recommended_by: "",
+    //                         original_owner: "",
+    //                         last_download: 0,
+    //                         rating: 0,
+    //                     },
+    //                     comments: comments,
+    //                 };
+    //             })
+    //         );
+    //     } catch (error) {
+    //         console.error(`erro ao criar dados principais: ${error}`);
+    //         throw error;
+    //     }
+    // }
 
-    public async createEditionData(chaptersPath: string[], currentDate: string): Promise<ComicEdition[]> {
-        return chaptersPath.map((chapter, index) => {
-            const name = path.basename(chapter, path.extname(chapter));
-            const sanitized_name = this.fileManager.sanitizeFilename(name);
+    // public async createEditionData(chaptersPath: string[], currentDate: string): Promise<ComicEdition[]> {
+    //     return chaptersPath.map((chapter, index) => {
+    //         const name = path.basename(chapter, path.extname(chapter));
+    //         const sanitized_name = this.fileManager.sanitizeFilename(name);
 
 
-            return {
-                id: index + 1,
-                name,
-                sanitized_name,
-                archive_path: path.resolve(chapter),
-                chapter_path: "",
-                create_date: currentDate,
-                is_dowload: false,
-                is_read: false,
-                last_page_read: 0,
-            };
-        });
-    }
+    //         return {
+    //             id: index + 1,
+    //             name,
+    //             sanitized_name,
+    //             archive_path: path.resolve(chapter),
+    //             chapter_path: "",
+    //             create_date: currentDate,
+    //             is_dowload: false,
+    //             is_read: false,
+    //             last_page_read: 0,
+    //         };
+    //     });
+    // }
 
-    public async createManga(series: string[]): Promise<void> {
-        try {
-            const seriesData = await this.createMangaData(series);
-            await Promise.all(seriesData.map((serieData) => this.storageManager.writeSerieData(serieData)));
-            this.systemManager.setMangaId(this.globalMangaId)
-        } catch (e) {
-            console.error(`Erro ao armazenar o conteúdo: ${e}`);
-            throw e;
-        }
-    }
+    // public async createManga(series: string[]): Promise<void> {
+    //     try {
+    //         const seriesData = await this.createMangaData(series);
+    //         await Promise.all(seriesData.map((serieData) => this.storageManager.writeSerieData(serieData)));
+    //         this.systemManager.setMangaId(this.globalMangaId)
+    //     } catch (e) {
+    //         console.error(`Erro ao armazenar o conteúdo: ${e}`);
+    //         throw e;
+    //     }
+    // }
 }
 
 // (async () => {

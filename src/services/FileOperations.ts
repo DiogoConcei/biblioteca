@@ -1,5 +1,4 @@
 import { FileSystem } from "./abstract/FileSystem";
-import { ComicConfig } from "../types/comic.interfaces";
 import path from "path";
 import fse from 'fs-extra'
 

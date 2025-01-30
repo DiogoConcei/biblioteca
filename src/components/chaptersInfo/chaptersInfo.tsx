@@ -91,7 +91,7 @@ export default function ChaptersInfo({ serie }: OnlySerieProp) {
               </div>
 
               <div className="chapterExtraInfo">
-                <span className="createDate">{chapter.create_date}</span>
+                <span className="createDate">{chapter.created_at}</span>
                 <div className="dataInfo">
                   <button
                     onClick={(event) =>

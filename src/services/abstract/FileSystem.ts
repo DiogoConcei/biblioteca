@@ -13,6 +13,11 @@ export abstract class FileSystem {
   protected readonly configFilePath: string;
   protected readonly comicConfig: string;
   protected readonly comicCollections: string;
+  protected readonly mangaConfig: string;
+  protected readonly mangaCollections: string;
+  protected readonly bookConfig: string;
+  protected readonly bookCollections: string;
+
 
   protected constructor() {
     this.storage = path.join(this.absoluteBasePath, "storage");
@@ -22,9 +27,13 @@ export abstract class FileSystem {
     this.imagesFilesPath = path.join(this.dataPath, "images files");
     this.jsonFilesPath = path.join(this.dataPath, "json files");
     this.showcaseImages = path.join(this.imagesFilesPath, "showCaseImages");
-    this.configFilePath = path.join(this.jsonFilesPath, "config", "app")
-    this.comicConfig = path.join(this.jsonFilesPath, "config", "comic", "comicsConfig.json")
-    this.comicCollections = path.join(this.jsonFilesPath, "config", "comic", "comicCollections.json")
+    this.configFilePath = path.join(this.storage, "config", "app")
+    this.comicConfig = path.join(this.storage, "config", "comic", "comicsConfig.json")
+    this.comicCollections = path.join(this.storage, "config", "comic", "comicCollections.json")
+    this.mangaConfig = path.join(this.storage, "config", "manga", "mangasConfig.json")
+    this.mangaCollections = path.join(this.storage, "config", "manga", "mangaCollections.json")
+    this.bookConfig = path.join(this.storage, "config", "books", "bookConfig.json")
+    this.bookCollections = path.join(this.storage, "config", "books", "bookCollections.json")
   }
 
   public async createFolder(path: string): Promise<void> {

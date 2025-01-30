@@ -92,4 +92,6 @@ typings/
 out/
 
 # Storage
-storage
+storage/user libray
+storage/user library/Books
+storage/data store

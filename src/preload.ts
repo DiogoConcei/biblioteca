@@ -1,5 +1,7 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
-import { Comic, ComicCollectionInfo } from "./types/comic.interfaces";
+import { Comic } from "./types/comic.interfaces";
+import { ComicCollectionInfo } from "./types/collections.interfaces";
+import { SeriesProcessor } from "./types/series.interfaces";
 
 const windowAction = {
   minimize: () => ipcRenderer.invoke("minimize-window"),
@@ -57,7 +59,7 @@ const download = {
 };
 
 const upload = {
-  localUpload: (filePaths: string[]): Promise<string[]> =>
+  localUpload: (filePaths: string[]): Promise<SeriesProcessor[]> =>
     ipcRenderer.invoke("localUpload", filePaths),
 };
 
