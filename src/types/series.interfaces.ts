@@ -18,11 +18,11 @@ export interface SerieForm {
     genre?: string;
     author?: string;
     language?: string;
-    literatureForm: "Option 1" | "Option 2" | "Option 3";
+    literatureForm: "Manga" | "Quadrinho" | "Livro" | "";
     collection: string[];
-    privacy: "Publica" | "Privada";
-    autoBackup: "Sim" | "Não";
-    readingStatus: "Em andamento" | "Completo" | "Pendente";
+    privacy: "Publica" | "Privada" | "";
+    autoBackup: "Sim" | "Não" | "";
+    readingStatus: "Em andamento" | "Completo" | "Pendente" | "";
     tags: string[];
 }
 

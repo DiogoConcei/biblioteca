@@ -5,11 +5,24 @@ import { SeriesProcessor, SerieForm } from "../../types/series.interfaces";
 import { useLocation } from "react-router-dom";
 
 export default function LocalUpload() {
+  const emptyForm: SerieForm = {
+    name: "",
+    genre: "",
+    author: "",
+    language: "",
+    literatureForm: "",
+    privacy: "",
+    autoBackup: "",
+    readingStatus: "",
+    tags: [] as string[],
+    collection: [] as string[],
+  };
+
   const location = useLocation();
   const [newSeries, setNewSeries] = useState<SeriesProcessor[]>(
     location.state.newSeries || []
   );
-  const [formData, setFormData] = useState<SerieForm>();
+  const [formData, setFormData] = useState<SerieForm>(emptyForm);
   const [isCreatingCollection, setIsCreatingCollection] =
     useState<boolean>(false);
   const [newCollection, setNewCollection] = useState<string>("");
@@ -27,46 +40,62 @@ export default function LocalUpload() {
     }
   };
 
-  // const handleTagInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const value = e.target.value;
-  //   const tagArray = value.split(",").map((tag) => tag.trim());
-  //   setTags(tagArray);
-  // };
+  const handleChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const updatedSeries = [...newSeries];
+    updatedSeries[index] = {
+      ...updatedSeries[index],
+      [e.target.name]: e.target.value,
+    };
+    setNewSeries(updatedSeries);
 
-  // const handleFormDataChange = (key: keyof SerieForm, value: any) => {
-  //   setFormData((prevData) => ({
-  //     ...prevData,
-  //     [key]: value,
-  //   }));
-  // };
+    setFormData((prevData) => ({
+      ...prevData,
+      ["name"]: e.target.name,
+    }));
+  };
 
-  // const handleAddCollection = () => {
-  //   if (newCollection) {
-  //     setFormData((prevData) => ({
-  //       ...prevData,
-  //       collection: [...prevData.collection, newCollection],
-  //     }));
-  //     setNewCollection("");
-  //     setIsCreatingCollection(false);
-  //   }
-  // };
+  const handleDataChange = (key: string, value: string) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      [key]: value,
+    }));
+  };
 
-  // Função para adicionar tags
-  // const addTags = () => {
-  //   setFormData((prevData) => ({
-  //     ...prevData,
-  //     tags: [...prevData.tags, ...tags],
-  //   }));
-  //   setTags([]);
-  // };
+  const handleTagInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const tagArray = value.split(",").map((tag) => tag.trim());
+    setTags(tagArray);
+  };
 
-  // const handleReadingStatus = (status: string) => {
-  //   handleFormDataChange("readingStatus", status);
-  // };
+  const handleAddCollection = () => {
+    if (newCollection) {
+      setFormData((prevData) => ({
+        ...prevData,
+        collection: [...prevData.collection, newCollection],
+      }));
+      setNewCollection("");
+      setIsCreatingCollection(false);
+    }
+  };
 
-  // const handlePrivacy = (option: string) => {
-  //   handleFormDataChange("privacy", option);
-  // };
+  const addTags = () => {
+    setFormData((prevData) => ({
+      ...prevData,
+      tags: [...prevData.tags, ...tags],
+    }));
+    setTags([]);
+  };
+
+  const handleReadingStatus = (status: string) => {
+    handleDataChange("readingStatus", status);
+  };
+
+  const handlePrivacy = (option: string) => {
+    handleDataChange("privacy", option);
+  };
 
   return (
     <article>
@@ -103,197 +132,224 @@ export default function LocalUpload() {
 
             {newSeries.map((serie, index) => (
               <div key={index}>
-                {/* <h1>Personalizando {serie.name}</h1>
-              <input
-                type="text"
-                name="name"
-                value={serie.name}
-                onChange={(e) => handleFormDataChange("name", e.target.value)}
-              />
-              <input
-                type="text"
-                name="genre"
-                placeholder="Gênero"
-                onChange={(e) => handleFormDataChange("genre", e.target.value)}
-              />
-              <input
-                type="text"
-                name="author"
-                placeholder="Autor"
-                onChange={(e) => handleFormDataChange("author", e.target.value)}
-              />
-              <input
-                type="text"
-                name="language"
-                placeholder="Idioma original"
-                onChange={(e) =>
-                  handleFormDataChange("language", e.target.value)
-                }
-              /> */}
-
-                {/* <h2>Forma de literatura: </h2>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    name="literatureForm"
-                    value="Option 1"
-                    onChange={() =>
-                      handleFormDataChange("literatureForm", "Option 1")
-                    }
-                  />
-                  Manga
-                </label>
-
-                <label>
-                  <input
-                    type="radio"
-                    name="literatureForm"
-                    value="Option 2"
-                    onChange={() =>
-                      handleFormDataChange("literatureForm", "Option 2")
-                    }
-                  />
-                  Quadrinhos
-                </label> 
-
-                <label>
-                  <input
-                    type="radio"
-                    name="literatureForm"
-                    value="Option 3"
-                    onChange={() =>
-                      handleFormDataChange("literatureForm", "Option 3")
-                    }
-                  />
-                  Livros
-                </label>
-              </div> */}
-
-                {/* <h2>Adicionar a coleção: </h2>
-              <div>
-                <label>
-                  <input type="checkbox" value="Option 1" />
-                  Favoritas
-                </label>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setIsCreatingCollection(!isCreatingCollection)
-                  }>
-                  Outra
-                </button>
-
-                {isCreatingCollection && (
-                  <div>
+                <div>
+                  <label htmlFor="">
                     <input
                       type="text"
-                      value={newCollection}
-                      placeholder="Digite o nome da nova coleção"
-                      onChange={(e) => setNewCollection(e.target.value)}
+                      name="name"
+                      value={serie.name}
+                      onChange={(e) => handleChange(index, e)}
+                      required
                     />
-                    <button type="button" onClick={handleAddCollection}>
-                      Adicionar Coleção
-                    </button>
-                  </div>
-                )}
-              </div>
- */}
-                {/* <h2>Privacidade: </h2>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    name="privacy"
-                    value="Publica"
-                    onChange={() => handleFormDataChange("privacy", "Publica")}
-                  />
-                  Pública
-                </label>
+                  </label>
 
-                <label>
-                  <input
-                    type="radio"
-                    name="privacy"
-                    value="Privada"
-                    onChange={() => handleFormDataChange("privacy", "Privada")}
-                  />
-                  Privada
-                </label>
-              </div> */}
+                  <label htmlFor="">
+                    <input
+                      type="text"
+                      name="genre"
+                      placeholder="Gênero"
+                      onChange={(e) =>
+                        handleDataChange("genre", e.target.value)
+                      }
+                    />
+                  </label>
 
-                {/* <h2>Adicionar ao auto backup: </h2>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    name="autoBackup"
-                    value="Sim"
-                    onChange={() => handleFormDataChange("autoBackup", "Sim")}
-                  />
-                  Sim
-                </label>
+                  <label htmlFor="">
+                    <input
+                      type="text"
+                      name="author"
+                      placeholder="Autor"
+                      onChange={(e) =>
+                        handleDataChange("author", e.target.value)
+                      }
+                    />
+                  </label>
 
-                <label>
-                  <input
-                    type="radio"
-                    name="autoBackup"
-                    value="Não"
-                    onChange={() => handleFormDataChange("autoBackup", "Não")}
-                  />
-                  Não
-                </label>
-              </div> */}
+                  <label htmlFor="">
+                    <input
+                      type="text"
+                      name="language"
+                      placeholder="Idioma original"
+                      onChange={(e) =>
+                        handleDataChange("language", e.target.value)
+                      }
+                    />
+                  </label>
+                </div>
 
-                {/* <h2>Status de leitura: </h2>
-              <div>
-                <label>
-                  <input
-                    type="radio"
-                    name="status"
-                    value="Em andamento"
-                    onChange={() => handleReadingStatus("Em andamento")}
-                  />
-                  Em andamento
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="status"
-                    value="Completo"
-                    onChange={() => handleReadingStatus("Completo")}
-                  />
-                  Completo
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="status"
-                    value="Pendente"
-                    onChange={() => handleReadingStatus("Pendente")}
-                  />
-                  Pendente
-                </label>
-              </div> */}
+                <h2>Forma de literatura: </h2>
+                <div>
+                  <label htmlFor="">
+                    <input
+                      type="radio"
+                      name="literatureForm"
+                      value="Manga"
+                      onChange={() =>
+                        handleDataChange("literatureForm", "Manga")
+                      }
+                    />
+                    Manga
+                  </label>
 
-                {/* <h2>Tags: </h2>
-              <input
-                type="text"
-                placeholder="Digite tags separadas por vírgula"
-                onChange={(e) => handleTagInput(e)}
-              />
-              <button type="button" onClick={addTags}>
-                Adicionar Tags
-              </button> */}
+                  <label htmlFor="">
+                    <input
+                      type="radio"
+                      name="literatureForm"
+                      value="Quadrinhos"
+                      onChange={() =>
+                        handleDataChange("literatureForm", "Quadrinhos")
+                      }
+                    />
+                    Quadrinhos
+                  </label>
 
-                {/* <h3>Tags Inseridas:</h3> */}
-                {/* <ul>
-                {tags.map((tag, tagIndex) => (
-                  <li key={tagIndex}>{tag}</li>
-                ))}
-              </ul> */}
-                {/* <button type="submit">Salvar</button> */}
+                  <label htmlFor="">
+                    <input
+                      type="radio"
+                      name="literatureForm"
+                      value="Livros"
+                      onChange={() =>
+                        handleDataChange("literatureForm", "Livros")
+                      }
+                    />
+                    Livros
+                  </label>
+                </div>
+
+                <h2>Adicionar a coleção: </h2>
+                <div>
+                  <label>
+                    <input type="checkbox" value="Favoritas" />
+                    Favoritas
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIsCreatingCollection(!isCreatingCollection)
+                    }>
+                    Outra
+                  </button>
+
+                  {/* Necessário adicionar uma funcionalidade para salvar as coleções  */}
+                  {/* visando facilitar as exibições em relação as coleções */}
+
+                  {formData.collection.map((collection, index) => (
+                    <label key={index}>
+                      <input type="checkbox" value={collection} />
+                      {collection}
+                    </label>
+                  ))}
+
+                  {isCreatingCollection && (
+                    <div>
+                      <input
+                        type="text"
+                        value={newCollection}
+                        placeholder="Digite o nome da nova coleção"
+                        onChange={(e) => setNewCollection(e.target.value)}
+                      />
+                      <button type="button" onClick={handleAddCollection}>
+                        Adicionar Coleção
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <h2>Privacidade: </h2>
+                <div>
+                  <label>
+                    <input
+                      type="radio"
+                      name="privacy"
+                      value="Publica"
+                      onChange={() => handleDataChange("privacy", "Publica")}
+                    />
+                    Pública
+                  </label>
+
+                  <label>
+                    <input
+                      type="radio"
+                      name="privacy"
+                      value="Privada"
+                      onChange={() => handleDataChange("privacy", "Privada")}
+                    />
+                    Privada
+                  </label>
+                </div>
+
+                <h2>Adicionar ao auto backup: </h2>
+                <div>
+                  <label>
+                    <input
+                      type="radio"
+                      name="autoBackup"
+                      value="Sim"
+                      onChange={() => handleDataChange("autoBackup", "Sim")}
+                    />
+                    Sim
+                  </label>
+
+                  <label>
+                    <input
+                      type="radio"
+                      name="autoBackup"
+                      value="Não"
+                      onChange={() => handleDataChange("autoBackup", "Não")}
+                    />
+                    Não
+                  </label>
+                </div>
+
+                <h2>Status de leitura: </h2>
+                <div>
+                  <label>
+                    <input
+                      type="radio"
+                      name="status"
+                      value="Em andamento"
+                      onChange={() => handleReadingStatus("Em andamento")}
+                    />
+                    Em andamento
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name="status"
+                      value="Completo"
+                      onChange={() => handleReadingStatus("Completo")}
+                    />
+                    Completo
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name="status"
+                      value="Pendente"
+                      onChange={() => handleReadingStatus("Pendente")}
+                    />
+                    Pendente
+                  </label>
+                </div>
+
+                <h2>Tags: </h2>
+                <input
+                  type="text"
+                  placeholder="Digite tags separadas por vírgula"
+                  onChange={(e) => handleTagInput(e)}
+                />
+                <button type="button" onClick={addTags}>
+                  Adicionar Tags
+                </button>
+
+                <h3>Tags Inseridas:</h3>
+                <ul>
+                  {tags.map((tag, tagIndex) => (
+                    <li key={tagIndex}>{tag}</li>
+                  ))}
+                </ul>
+                <button type="submit">Salvar</button>
               </div>
             ))}
           </form>
