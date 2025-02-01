@@ -1,0 +1,22 @@
+.form-inputs {
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.form-inputs input[type="text"] {
+  font-size: 1.2rem;
+  width: 300px;
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #8963ba;
+  background: #282c34;
+  color: #fcf7f8;
+  outline: none;
+}
+
+.form-inputs input[type="text"]::placeholder {
+  color: #cd5c5c;
+}

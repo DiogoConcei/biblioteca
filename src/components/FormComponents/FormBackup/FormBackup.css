@@ -1,0 +1,37 @@
+.form-backup-container {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-flow: column;
+  gap: 20px;
+}
+
+.form-backup {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 20px;
+}
+
+.form-backup label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border: 2px solid #8963ba;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background-color: transparent;
+  color: #cd5c5c;
+}
+
+.form-backup input[type="radio"] {
+  display: none;
+}
+
+.form-backup input:checked + label {
+  background-color: #8963ba;
+  color: #fcf7f8;
+}

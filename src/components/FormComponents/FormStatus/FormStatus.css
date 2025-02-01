@@ -1,0 +1,35 @@
+.form-status-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-status {
+  display: flex;
+  flex-direction: row wrap;
+  justify-content: flex-start;
+  gap: 20px;
+}
+
+.form-status label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border: 2px solid #8963ba;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background-color: transparent;
+  color: #cd5c5c;
+}
+
+.form-status input[type="radio"] {
+  display: none;
+}
+
+.form-status input:checked + label {
+  background-color: #8963ba;
+  color: #fcf7f8;
+}

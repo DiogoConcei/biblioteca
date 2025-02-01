@@ -1,36 +1,17 @@
+.div-form-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .form-view {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: center;
-  flex-flow: column nowrap;
-  margin: 20px;
+  gap: 20px;
   padding: 20px;
-  gap: 10px;
-  height: 95.5vh;
-}
-
-.series-title h1 {
-  margin-left: 10px;
-  text-align: center;
-  font-size: 2rem;
-  color: #cd5c5c;
-}
-
-.image-upload {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid #8963ba;
-  border-radius: 10px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.cover-container {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  width: 80vw;
 }
 
 .cover-title {
@@ -38,32 +19,39 @@
   color: #cd5c5c;
 }
 
-.cover-preview {
-  height: 40vh;
-  object-fit: cover;
-}
-
-.alert {
+.form-content {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 300px;
-  height: 440px;
-  color: gray;
+  flex-flow: column nowrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
 }
 
-.file-input {
-  display: none;
-}
-
-.insert-image {
-  font-size: 32px;
+.series-title h1 {
+  text-align: center;
+  font-size: 1.5rem;
+  color: #cd5c5c;
 }
 
 .form-container {
   display: flex;
-  flex-direction: row nowrap;
-  gap: 20px;
-  flex-grow: 1;
+  align-items: flex-start;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-subtitle {
+  font-size: 1.3rem;
+  color: #cd5c5c;
+}
+
+.form-radio {
+  display: flex;
+  gap: 10px;
+}
+
+.form-radio {
+  display: flex;
+  gap: 10px;
 }

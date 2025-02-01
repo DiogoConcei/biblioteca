@@ -1,4 +1,6 @@
 import { Comic } from './comic.interfaces'
+import { SerieForm } from './series.interfaces';
+import { SeriesProcessor } from './series.interfaces';
 
 export interface OnlySerieProp {
     serie: Comic;
@@ -51,4 +53,26 @@ export interface GlobalContext {
     setIsHidden: (value: boolean) => void;
     theme: boolean;
     setTheme: (value: boolean) => void;
+}
+
+export interface FormInputsProps {
+    serie: SeriesProcessor;
+    index: number;
+    newSeries: SeriesProcessor[];
+    setNewSeries: React.Dispatch<React.SetStateAction<SeriesProcessor[]>>;
+    handleDataChange: (key: string, value: string) => void;
+}
+
+export interface OnlyDataChangeProp {
+    handleDataChange: (key: string, value: string) => void;
+}
+
+export interface FormCollectionProps {
+    formData: SerieForm;
+    setFormData: React.Dispatch<React.SetStateAction<SerieForm>>;
+}
+
+export interface FormTagProps {
+    setFormData: React.Dispatch<React.SetStateAction<SerieForm>>;
+    handleDataChange: (key: string, value: string) => void;
 }

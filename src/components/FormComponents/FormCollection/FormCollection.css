@@ -1,0 +1,66 @@
+/* Paleta de Cores */
+/* cd5c5c -> indian red */
+/* 8963BA -> Amethyst */
+/* 282C34 -> Gunmetal */
+/* fcf7f8 -> Snow */
+/* 31afd4 -> Pacific cyan */
+
+.form-collection-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-collection {
+  display: flex;
+  flex-direction: row wrap;
+  justify-content: flex-start;
+  gap: 20px;
+}
+
+.form-collection label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border: 2px solid #8963ba;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background-color: transparent;
+  color: #cd5c5c;
+}
+
+.form-collection input[type="checkbox"] {
+  display: none;
+}
+
+.form-collection input:checked + label {
+  background-color: #8963ba;
+  color: #fcf7f8;
+}
+
+.form-collection button {
+  color: #fcf7f8;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 5px;
+  background: #cd5c5c;
+  border: 1px solid #cd5c5c;
+}
+
+.form-collection input[type="text"] {
+  display: flex;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #8963ba;
+  width: 280px;
+  color: #fcf7f8;
+  background: #282c34;
+  font-size: 16px;
+}
+
+.form-collection input[type="text"]::placeholder {
+  color: #cd5c5c;
+}
