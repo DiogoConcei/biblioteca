@@ -2,7 +2,10 @@ import "./FormCollection.css";
 import { FormCollectionProps } from "../../../types/components.interfaces";
 import { useState } from "react";
 
-export default function FormCollection({ setFormData }: FormCollectionProps) {
+export default function FormCollection({
+  setFormData,
+  handleDataChange,
+}: FormCollectionProps) {
   const [isCreatingCollection, setIsCreatingCollection] =
     useState<boolean>(false);
   const [collections, setCollections] = useState<string[]>(["Favoritas"]);
@@ -10,7 +13,7 @@ export default function FormCollection({ setFormData }: FormCollectionProps) {
 
   const handleButtonClick = () => {
     if (isCreatingCollection) {
-      if (newCollection) {
+      if (newCollection && !collections.includes(newCollection)) {
         setFormData((prevData) => ({
           ...prevData,
           collection: [...prevData.collection, newCollection],
@@ -39,6 +42,9 @@ export default function FormCollection({ setFormData }: FormCollectionProps) {
               value={collection}
               id={collection}
               name={collection}
+              onChange={(e) =>
+                handleDataChange(collection, e.target.checked.toString())
+              }
             />
             <label htmlFor={collection}>{collection}</label>
           </span>

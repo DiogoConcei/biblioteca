@@ -70,6 +70,7 @@ export interface OnlyDataChangeProp {
 export interface FormCollectionProps {
     formData: SerieForm;
     setFormData: React.Dispatch<React.SetStateAction<SerieForm>>;
+    handleDataChange: (key: string, value: string) => void;
 }
 
 export interface FormTagProps {

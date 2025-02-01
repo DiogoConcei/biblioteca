@@ -55,3 +55,12 @@
   display: flex;
   gap: 10px;
 }
+
+.form-content button[type="submit"] {
+  background-color: #cd5c5c;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}

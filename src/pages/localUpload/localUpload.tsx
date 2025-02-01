@@ -39,13 +39,20 @@ export default function LocalUpload() {
     }));
   };
 
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    console.log("Dados do formulário:", formData);
+    console.log("Novas séries:", newSeries);
+  };
+
   return (
     <article>
       <section className="div-form-container">
         <div className="form-view">
           <CostumizeImage />
 
-          <form action="" className="form-content">
+          <form action="" className="form-content" onSubmit={handleSubmit}>
             <span className="series-title">
               {newSeries.map((serie, index) => (
                 <h1 key={index}>Personalizando série: {serie.name}</h1>
@@ -62,7 +69,11 @@ export default function LocalUpload() {
                   handleDataChange={handleDataChange}
                 />
                 <FormGenre handleDataChange={handleDataChange} />
-                <FormCollection formData={formData} setFormData={setFormData} />
+                <FormCollection
+                  formData={formData}
+                  setFormData={setFormData}
+                  handleDataChange={handleDataChange}
+                />
                 <FormBackup handleDataChange={handleDataChange} />
                 <FormPrivacy handleDataChange={handleDataChange} />
                 <FormStatus handleDataChange={handleDataChange} />

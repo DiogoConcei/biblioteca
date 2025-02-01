@@ -14,6 +14,7 @@ export default function FormTag({
       tags: [...prevData.tags, ...tags],
     }));
     setTags([]);
+    handleDataChange("tags", tags.join(","));
   };
 
   const handleTagInput = (e: React.ChangeEvent<HTMLInputElement>) => {

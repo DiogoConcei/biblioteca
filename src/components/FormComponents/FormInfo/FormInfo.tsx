@@ -18,6 +18,7 @@ export default function FormInfo({
       [e.target.name]: e.target.value,
     };
     setNewSeries(updatedSeries);
+    handleDataChange("name", e.target.value);
   };
 
   return (
