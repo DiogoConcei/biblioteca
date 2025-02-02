@@ -5,7 +5,7 @@
 /* fcf7f8 -> Snow */
 /* 31afd4 -> Pacific cyan */
 
-.form-tag {
+/* .form-tag {
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
@@ -25,37 +25,45 @@
   font-size: 14px;
 }
 
-.form-tag-input,
-.form-tag-preview {
+.form-tag-input {
   display: flex;
   align-items: center;
   justify-content: flex-start;
   gap: 10px;
 }
 
-.tag-list {
+.form-tag-preview {
   display: flex;
-  flex-wrap: wrap;
-  background: #cd5c5c;
-  border-radius: 5px;
-  padding: 5px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-flow: column nowrap;
   gap: 10px;
 }
 
+.tag-list {
+  display: grid;
+  grid-template-columns: repeat(
+    5,
+    minmax(0, 1fr)
+  );
+  gap: 10px;
+  border: 1px solid blue;
+  border-bottom: 1px solid #cd5c5c;
+  border-radius: 5px;
+  padding: 5px;
+  width: 100%; 
+  overflow: hidden; 
+}
+
 .tag-list li {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   font-size: 1rem;
   color: #fcf7f8;
-}
-
-.form-tag button {
-  padding: 12px;
-  background-color: #cd5c5c;
-  color: #fcf7f8;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.form-tag button:hover {
-  background-color: #0056b3;
-}
+  padding: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0; 
+} */

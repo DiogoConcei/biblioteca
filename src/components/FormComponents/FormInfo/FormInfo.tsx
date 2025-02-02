@@ -1,13 +1,19 @@
 import "./FormInfo.css";
 import { FormInputsProps } from "../../../types/components.interfaces";
+import { useEffect } from "react";
 
 export default function FormInfo({
-  serie,
   index,
   newSeries,
   setNewSeries,
   handleDataChange,
 }: FormInputsProps) {
+  useEffect(() => {
+    handleChange(index, {
+      target: { name: "name", value: newSeries[index].name },
+    });
+  }, []);
+
   const handleChange = (
     index: number,
     e: { target: { name: string; value: string } }
@@ -18,7 +24,7 @@ export default function FormInfo({
       [e.target.name]: e.target.value,
     };
     setNewSeries(updatedSeries);
-    handleDataChange("name", e.target.value);
+    handleDataChange("name", updatedSeries[index].name);
   };
 
   return (
@@ -27,7 +33,7 @@ export default function FormInfo({
         <input
           type="text"
           name="name"
-          value={serie.name}
+          value={newSeries[index].name}
           onChange={(e) => handleChange(index, e)}
           placeholder="Nome da série"
           required

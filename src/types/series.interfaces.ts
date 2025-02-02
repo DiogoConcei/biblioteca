@@ -18,12 +18,12 @@ export interface SerieForm {
     genre?: string;
     author?: string;
     language?: string;
+    cover_path: string;
     literatureForm: "Manga" | "Quadrinho" | "Livro" | "";
     collection: string[];
     privacy: "Publica" | "Privada" | "";
     autoBackup: "Sim" | "Não" | "";
     readingStatus: "Em andamento" | "Completo" | "Pendente" | "";
-    tags: string[];
 }
 
 export interface SeriesTypes {

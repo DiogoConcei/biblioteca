@@ -56,7 +56,6 @@ export interface GlobalContext {
 }
 
 export interface FormInputsProps {
-    serie: SeriesProcessor;
     index: number;
     newSeries: SeriesProcessor[];
     setNewSeries: React.Dispatch<React.SetStateAction<SeriesProcessor[]>>;
@@ -70,7 +69,6 @@ export interface OnlyDataChangeProp {
 export interface FormCollectionProps {
     formData: SerieForm;
     setFormData: React.Dispatch<React.SetStateAction<SerieForm>>;
-    handleDataChange: (key: string, value: string) => void;
 }
 
 export interface FormTagProps {

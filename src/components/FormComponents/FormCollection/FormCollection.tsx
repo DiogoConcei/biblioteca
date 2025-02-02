@@ -3,13 +3,22 @@ import { FormCollectionProps } from "../../../types/components.interfaces";
 import { useState } from "react";
 
 export default function FormCollection({
+  formData,
   setFormData,
-  handleDataChange,
 }: FormCollectionProps) {
   const [isCreatingCollection, setIsCreatingCollection] =
     useState<boolean>(false);
   const [collections, setCollections] = useState<string[]>(["Favoritas"]);
   const [newCollection, setNewCollection] = useState<string>("");
+
+  const handleCheckboxChange = (collection: string, checked: boolean) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      collection: checked
+        ? [...prevData.collection, collection]
+        : prevData.collection.filter((col) => col !== collection),
+    }));
+  };
 
   const handleButtonClick = () => {
     if (isCreatingCollection) {
@@ -32,7 +41,7 @@ export default function FormCollection({
 
   return (
     <div className="form-collection-container">
-      <h2 className="form-subtitle">Adicionar a coleção: </h2>
+      <h2 className="form-subtitle">Incluir na coleção: </h2>
 
       <div className="form-collection">
         {collections.map((collection, index) => (
@@ -42,14 +51,17 @@ export default function FormCollection({
               value={collection}
               id={collection}
               name={collection}
+              checked={formData.collection.includes(collection)}
               onChange={(e) =>
-                handleDataChange(collection, e.target.checked.toString())
+                handleCheckboxChange(collection, e.target.checked)
               }
             />
             <label htmlFor={collection}>{collection}</label>
           </span>
         ))}
+      </div>
 
+      <div className="form-add-collection">
         {isCreatingCollection && (
           <input
             type="text"

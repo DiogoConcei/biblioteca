@@ -1,5 +1,4 @@
 import "./localUpload.css";
-import { MdOutlineEdit, MdDelete, MdOutlineImage } from "react-icons/md";
 import { useState } from "react";
 import { SeriesProcessor, SerieForm } from "../../types/series.interfaces";
 import { useLocation } from "react-router-dom";
@@ -10,19 +9,18 @@ import FormCollection from "../../components/FormComponents/FormCollection/FormC
 import FormBackup from "../../components/FormComponents/FormBackup/FormBackup";
 import FormPrivacy from "../../components/FormComponents/FormPrivacy/FormPrivacy";
 import FormStatus from "../../components/FormComponents/FormStatus/FormStatus";
-import FormTag from "../../components/FormComponents/FormTag/FormTag";
 
 export default function LocalUpload() {
   const emptyForm: SerieForm = {
     name: "",
     genre: "",
     author: "",
+    cover_path: "",
     language: "",
     literatureForm: "",
     privacy: "",
     autoBackup: "",
     readingStatus: "",
-    tags: [] as string[],
     collection: [] as string[],
   };
 
@@ -49,38 +47,29 @@ export default function LocalUpload() {
   return (
     <article>
       <section className="div-form-container">
+        <span className="series-title">
+          {newSeries.map((serie, index) => (
+            <h1 key={index}>Personalizando série: {serie.name}</h1>
+          ))}
+        </span>
+
         <div className="form-view">
-          <CostumizeImage />
+          <CostumizeImage handleDataChange={handleDataChange} />
 
           <form action="" className="form-content" onSubmit={handleSubmit}>
-            <span className="series-title">
-              {newSeries.map((serie, index) => (
-                <h1 key={index}>Personalizando série: {serie.name}</h1>
-              ))}
-            </span>
-
             {newSeries.map((serie, index) => (
               <div key={index} className="form-container">
                 <FormInfo
-                  serie={serie}
                   index={index}
                   newSeries={newSeries}
                   setNewSeries={setNewSeries}
                   handleDataChange={handleDataChange}
                 />
                 <FormGenre handleDataChange={handleDataChange} />
-                <FormCollection
-                  formData={formData}
-                  setFormData={setFormData}
-                  handleDataChange={handleDataChange}
-                />
+                <FormCollection formData={formData} setFormData={setFormData} />
                 <FormBackup handleDataChange={handleDataChange} />
                 <FormPrivacy handleDataChange={handleDataChange} />
                 <FormStatus handleDataChange={handleDataChange} />
-                <FormTag
-                  handleDataChange={handleDataChange}
-                  setFormData={setFormData}
-                />
               </div>
             ))}
 

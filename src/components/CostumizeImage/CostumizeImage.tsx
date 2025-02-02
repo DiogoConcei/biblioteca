@@ -1,8 +1,11 @@
 import "./CostumizeImage.css";
 import { MdOutlineImage } from "react-icons/md";
+import { OnlyDataChangeProp } from "../../types/components.interfaces";
 import { useState } from "react";
 
-export default function CostumizeImage() {
+export default function CostumizeImage({
+  handleDataChange,
+}: OnlyDataChangeProp) {
   const [imageSrc, setImageSrc] = useState<string>();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -10,7 +13,9 @@ export default function CostumizeImage() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImageSrc(reader.result as string);
+        const result = reader.result as string;
+        setImageSrc(result);
+        handleDataChange("cover_path", result); // Passa o valor correto da imagem
       };
       reader.readAsDataURL(file);
     }
