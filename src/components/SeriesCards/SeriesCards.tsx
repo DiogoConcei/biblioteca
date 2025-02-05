@@ -1,13 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Comic } from "../../types/comic.interfaces";
+import { ExhibitionSerieData } from "../../types/series.interfaces";
 import { ComicCardsProps } from "../../types/components.interfaces";
 import { FaPlay } from "react-icons/fa";
-import "./ComicCards.css";
+import "./SeriesCards.css";
 import { useEffect, useState } from "react";
 
-export default function ComicCards({ searchInput }: ComicCardsProps) {
-  const [series, setSeries] = useState<Comic[]>([]);
-  let isActive = true;
+export default function SeriesCards({ searchInput }: ComicCardsProps) {
+  const [series, setSeries] = useState<ExhibitionSerieData[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -63,7 +62,7 @@ export default function ComicCards({ searchInput }: ComicCardsProps) {
       <div className="seriesContent">
         {filteredSeries.map((serie) => (
           <Link
-            to={isActive ? `/${serie.name}/${serie.id}` : "#"}
+            to={`${serie.literatureForm}/${serie.name}/${serie.id}`}
             key={serie.id}
             className="serieLink">
             <figure className="coverCard">

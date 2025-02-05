@@ -3,13 +3,13 @@ import { useState } from "react";
 import { OnlySerieProp } from "../../types/components.interfaces";
 import "./Rating.css";
 
-export default function Rating({ serie }: OnlySerieProp) {
+export default function Rating({ manga }: OnlySerieProp) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedRating, setSelectedRating] = useState<number>(
-    serie.metadata.rating
+    manga.metadata.rating
   );
   const [previousRating, setPreviousRating] = useState<number>(
-    serie.metadata.rating
+    manga.metadata.rating
   );
 
   const starsRating = [
@@ -30,7 +30,7 @@ export default function Rating({ serie }: OnlySerieProp) {
     setSelectedRating(ratingIndex);
 
     try {
-      await window.electron.userAction.ratingSerie(serie.name, ratingIndex);
+      await window.electron.userAction.ratingSerie(manga, ratingIndex);
       setIsOpen(false);
     } catch (error) {
       console.error("Erro ao atualizar o rating:", error);

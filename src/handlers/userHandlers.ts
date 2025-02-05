@@ -1,107 +1,45 @@
 import { IpcMain } from "electron";
+import { Manga } from "../types/manga.interfaces";
+import { Comic } from "../types/comic.interfaces";
+import { Book } from "../types/book.interfaces";
+import { Literatures } from "../types/series.interfaces";
+import UserManager from "../services/UserManager";
 import StorageManager from "../services/StorageManager";
-import CollectionsOperations from "../services/CollectionsOperations";
+import CollectionsOperations from "../services/CollectionsManager";
 
 export default function userHandlers(ipcMain: IpcMain) {
     const StorageOperations = new StorageManager()
-    const CollectionsManager = new CollectionsOperations()
+    const UserOperations = new UserManager()
 
-    ipcMain.handle("rating-serie", async (_event, serieName: string, userRating: string) => {
-        const serie = await StorageOperations.selectSerieData(serieName)
-
-        if (!serie) {
-            throw new Error(`Série com o nome "${serieName}" não encontrada.`);
+    ipcMain.handle("rating-serie", async (_event, serieData: Literatures, userRating: string) => {
+        try {
+            const updateData = await UserOperations.ratingSerie(serieData, userRating)
+            this.StorageOperations.updateSerieData(updateData, serieData.data_path);
+            return { success: true };
+        } catch (e) {
+            console.error(`Falha em ranquear serie: ${e}`)
+            return { success: false };
         }
-
-        const starsRating = [
-            "1 - Péssimo",
-            "2 - Horrível",
-            "3 - Regular",
-            "4 - Bom",
-            "5 - Excelente",
-        ];
-
-        let caseIndex = starsRating.indexOf(userRating)
-
-        switch (caseIndex) {
-            case 0:
-                serie.metadata.rating = 1
-                break
-            case 1:
-                serie.metadata.rating = 2
-                break
-            case 2:
-                serie.metadata.rating = 3
-                break
-            case 3:
-                serie.metadata.rating = 4
-                break
-            case 4:
-                serie.metadata.rating = 5
-                break
-        }
-
-        await StorageOperations.updateserieData(JSON.stringify(serie), serieName);
     })
 
-    ipcMain.handle("favorite-serie", async (_event, serieName: string) => {
+    ipcMain.handle("favorite-serie", async (_event, serieData: Literatures) => {
         try {
-            const serie = await StorageOperations.selectSerieData(serieName);
-
-            if (!serie) {
-                throw new Error(`Série com o nome "${serieName}" não encontrada.`);
-            }
-
-            const collections = await CollectionsManager.getCollections();
-            const favCollection = collections.collections.find((collection) => collection.name === "Favorites");
-
-            if (!favCollection) {
-                throw new Error('Coleção de favoritos não encontrada.');
-            }
-
-            const favSerieJson = {
-                id: serie.id,
-                name: serie.name,
-                cover_image: serie.cover_image,
-                comic_path: serie.chapters_path,
-                total_chapters: serie.total_chapters,
-                status: serie.metadata.status,
-                recommended_by: serie.metadata.recommended_by || "",
-                original_owner: serie.metadata.original_owner || "",
-                rating: serie.metadata.rating || 0
-            };
-
-            const newFavoriteStatus = !serie.metadata.is_favorite;
-
-            const serieExists = favCollection.comics.some((series) => series.name === serieName);
-
-            if (newFavoriteStatus && !serieExists) {
-                favCollection.comics.push(favSerieJson);
-            } else if (!newFavoriteStatus) {
-                favCollection.comics = favCollection.comics.filter((series) => series.name !== serieName);
-            }
-
-
-            serie.metadata.is_favorite = newFavoriteStatus;
-
-            await StorageOperations.updateserieData(JSON.stringify(serie), serieName);
-            await StorageOperations.updateFavCollection(JSON.stringify(collections));
-
+            const updateSerieData = await UserOperations.favoriteSerie(serieData)
+            await StorageOperations.updateSerieData(updateSerieData, updateSerieData.data_path);
             return { success: true };
-        } catch (error) {
-            console.error(`Erro ao atualizar coleção de favoritos: ${error}`);
+        } catch (e) {
+            console.error(`Erro em favoritar serie: ${e}`)
             return { success: false };
         }
     });
 
-    ipcMain.handle("mark-read", async (_event, serieName: string, chapter_id: number) => {
+    ipcMain.handle("mark-read", async (_event, serieData: Literatures, chapter_id: number) => {
         try {
-            const serieData = await StorageOperations.selectSerieData(serieName);
             const chapter = serieData.chapters.find((c) => c.id === chapter_id);
 
             if (chapter) chapter.is_read = true;
 
-            await StorageOperations.updateserieData(JSON.stringify(serieData), serieName);
+            await StorageOperations.updateSerieData(serieData, serieData.data_path);
         } catch (error) {
             console.error(`Erro ao marcar capítulo como lido: ${error}`);
             throw error;

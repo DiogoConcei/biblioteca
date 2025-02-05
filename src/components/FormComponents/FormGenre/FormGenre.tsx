@@ -13,6 +13,7 @@ export default function FormGenre({ handleDataChange }: OnlyDataChangeProp) {
             name="literatureForm"
             value="Manga"
             id="Manga"
+            required
             onChange={() => handleDataChange("literatureForm", "Manga")}
           />
           <label htmlFor="Manga">Manga</label>

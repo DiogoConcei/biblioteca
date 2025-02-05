@@ -4,9 +4,8 @@ import { HashRouter, Routes, Route } from "react-router-dom";
 import Layout from "./pages/layout/Layout";
 import Home from "./pages/home/Home";
 import Page404 from "./pages/page404/page404";
-import SeriePage from "./pages/comics/comicPage/ComicPage";
-import ComicVisualizer from "./pages/comics/comicVisualizer/ComicVisualizer";
-import LocalUpload from "./pages/localUpload/localUpload";
+import LocalUpload from "./pages/upload/localUpload/localUpload";
+import MangaPage from "./pages/mangas/mangaPage/MangaPage";
 import { GlobalProvider } from "./GlobalContext";
 
 const root = ReactDOM.createRoot(
@@ -20,11 +19,18 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index path="" element={<Home />} />
-            <Route path="/:book_name/:book_id" element={<SeriePage />} />
             <Route
-              path="/:book_name/:book_id/:chapter_name/:chapter_id/:page"
-              element={<ComicVisualizer />}
+              path="/Manga/:manga_name/:manga_id"
+              element={<MangaPage />}
             />
+            {/* Comic Page */}
+            {/* Book Page */}
+            {/* <Route
+              path="/:manga_name/:manga_id/:chapter_name/:chapter_id/:page"
+              element={<MangaVisualizer />}
+            /> */}
+            {/* Comic Visualizer */}
+            {/* Book Visualizer */}
             <Route path="/local-upload/serie" element={<LocalUpload />} />
             <Route path="*" element={<Page404 />} />
           </Route>

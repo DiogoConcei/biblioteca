@@ -12,8 +12,8 @@
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
-  -webkit-app-region: drag;
   cursor: pointer;
+  -webkit-app-region: no-drag;
 }
 
 .link {

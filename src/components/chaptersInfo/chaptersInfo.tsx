@@ -6,16 +6,16 @@ import { MdOutlineDownload, MdFileDownload, MdUpload } from "react-icons/md";
 import { PiSortDescendingThin, PiSortAscendingThin } from "react-icons/pi";
 import { FaUser } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { ComicEdition } from "../../types/comic.interfaces";
+import { MangaChapter } from "../../types/manga.interfaces";
 import Pagination from "../Pagination/Pagination";
 import "./ChaptersInfo.css";
 
-export default function ChaptersInfo({ serie }: OnlySerieProp) {
+export default function ChaptersInfo({ manga }: OnlySerieProp) {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isAscendig, setAscending] = useState<boolean>(false);
-  const [chapters, setChapters] = useState<ComicEdition[]>(serie.chapters);
+  const [chapters, setChapters] = useState<MangaChapter[]>(manga.chapters);
   const itemsPerPage = 11;
-  const totalPages = Math.ceil(serie.chapters.length / itemsPerPage);
+  const totalPages = Math.ceil(manga.chapters.length / itemsPerPage);
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -47,7 +47,7 @@ export default function ChaptersInfo({ serie }: OnlySerieProp) {
     chapter_id: number
   ) => {
     event.preventDefault();
-    await window.electron.userAction.markRead(serieName, chapter_id);
+    await window.electron.userAction.markRead(manga, chapter_id);
   };
 
   const downloadIndividual = async (
@@ -80,7 +80,7 @@ export default function ChaptersInfo({ serie }: OnlySerieProp) {
       <ul className="chaptersList">
         {currentItems.map((chapter) => (
           <Link
-            to={`/${serie.name}/${serie.id}/${chapter.name}/${chapter.id}/${chapter.last_page_read}`}
+            to={`/${manga.name}/${manga.id}/${chapter.name}/${chapter.id}/${chapter.page.last_page_read}`}
             key={chapter.id}>
             <li className={`chapter ${chapter.is_read ? "read" : "unread"}`}>
               <div className="filesInfo">
@@ -95,7 +95,7 @@ export default function ChaptersInfo({ serie }: OnlySerieProp) {
                 <div className="dataInfo">
                   <button
                     onClick={(event) =>
-                      markAsRead(event, serie.name, chapter.id)
+                      markAsRead(event, manga.name, chapter.id)
                     }>
                     {chapter.is_read ? (
                       <IoCheckmarkCircle className="read" aria-label="Lido" />
@@ -109,7 +109,7 @@ export default function ChaptersInfo({ serie }: OnlySerieProp) {
 
                   <button
                     onClick={(event) =>
-                      downloadIndividual(event, serie.name, chapter.id)
+                      downloadIndividual(event, manga.name, chapter.id)
                     }>
                     {chapter.is_dowload ? (
                       <MdFileDownload

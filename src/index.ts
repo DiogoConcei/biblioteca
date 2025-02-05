@@ -34,7 +34,14 @@ const createWindow = async (): Promise<void> => {
   })
 
   ipcMain.handle("fullScreen-window", () => {
-    mainWindow.setFullScreen(true)
+    mainWindow.maximize()
+  })
+
+  ipcMain.handle("restore-window", () => {
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize();
+      mainWindow.restore()
+    }
   })
 
   ipcMain.handle("close-window", () => {

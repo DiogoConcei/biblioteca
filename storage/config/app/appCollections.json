@@ -1,0 +1,29 @@
+[
+  {
+    "name": "Leituras Recentes",
+    "description": "Mangas que foram lidos recentemente.",
+    "mangas": [],
+    "comments": [
+      ""
+    ],
+    "updated_at": ""
+  },
+  {
+    "name": "Favoritas",
+    "description": "",
+    "series": [
+      {
+        "id": 6,
+        "name": "Dr. Stone",
+        "cover_image": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\showCaseImages\\Cover.jpg",
+        "archive_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\books\\Dr. Stone",
+        "total_chapters": 235,
+        "recommended_by": "",
+        "original_owner": "",
+        "rating": 0
+      }
+    ],
+    "comments": [],
+    "updated_at": ""
+  }
+]

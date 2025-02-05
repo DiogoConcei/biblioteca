@@ -1,8 +1,8 @@
 import "./Home.css";
-import ComicCards from "../../components/ComicCards/ComicCards";
 import SearchBar from "../../components/SearchBar/SearchBar";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import SeriesCards from "../../components/SeriesCards/SeriesCards";
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState<string>("");
@@ -35,7 +35,6 @@ export default function Home() {
       const newSeries = await Promise.all(
         await window.electron.upload.localUpload(filePaths)
       );
-      console.log(newSeries);
       navigate("/local-upload/serie", { state: { newSeries } });
     } catch (error) {
       console.error("Erro ao carregar arquivos", error);
@@ -55,7 +54,7 @@ export default function Home() {
       onDragOver={handleDrag}
       onDrop={handleDrop}>
       <SearchBar searchInput={searchInput} onSearchChange={searchChange} />
-      <ComicCards searchInput={searchInput} />
+      <SeriesCards searchInput={searchInput} />
     </section>
   );
 }

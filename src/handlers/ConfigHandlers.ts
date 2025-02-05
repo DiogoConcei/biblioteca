@@ -1,5 +1,5 @@
 import { IpcMain } from "electron";
-import SystemConfig from "../services/SystemConfig";
+import SystemConfig from "../services/SystemManager";
 
 
 export default function ConfigHandlers(ipcMain: IpcMain) {
@@ -54,4 +54,5 @@ export default function ConfigHandlers(ipcMain: IpcMain) {
             throw error
         }
     })
+
 }

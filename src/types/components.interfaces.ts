@@ -1,9 +1,10 @@
 import { Comic } from './comic.interfaces'
+import { Manga } from './manga.interfaces';
 import { SerieForm } from './series.interfaces';
 import { SeriesProcessor } from './series.interfaces';
 
 export interface OnlySerieProp {
-    serie: Comic;
+    manga: Manga;
 }
 
 export interface PageControlProps {
@@ -40,8 +41,8 @@ export interface ComicCardsProps {
 }
 
 export interface ComicActionsProps {
-    serie: Comic;
-    setSerie: React.Dispatch<React.SetStateAction<Comic | null>>
+    manga: Manga;
+    setManga: React.Dispatch<React.SetStateAction<Manga | null>>
 }
 
 export interface downloadButtonProps {
@@ -64,6 +65,12 @@ export interface FormInputsProps {
 
 export interface OnlyDataChangeProp {
     handleDataChange: (key: string, value: string) => void;
+}
+
+export interface CostumizeImageProps {
+    handleDataChange: (key: string, value: string) => void;
+    setImageSrc: React.Dispatch<React.SetStateAction<string>>;
+    imageSrc: string;
 }
 
 export interface FormCollectionProps {

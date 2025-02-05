@@ -1,11 +1,11 @@
-import "./ComicVisualizer.css";
+import "./MangaVisualizer.css";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import PageControl from "../../../components/PageControl/PageControl";
 import VisualizerMenu from "../../../components/VisualizerMenu/VisualizerMenu";
 import { useGlobal } from "../../../GlobalContext";
 
-export default function ComicVisualizer() {
+export default function MangaVisualizer() {
   const [pageNumber, setPageNumber] = useState<number>(0);
   const [pages, setPages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);

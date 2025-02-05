@@ -5,23 +5,32 @@ export interface Comic {
   sanitized_name: string;
   archives_path: string;
   chapters_path: string;
+  data_path: string;
   cover_image: string;
   total_chapters: number;
-  created_at: string;
   chapters_read: number;
+  genre?: string;
+  author?: string;
+  language?: string;
+  literatureForm: "Manga" | "Quadrinho" | "Livro" | "";
   reading_data: {
     last_chapter_id: number;
     last_read_at: string;
   };
   chapters: ComicEdition[];
   metadata: {
-    status: "em andamento" | "completada" | "pausada";
-    is_favorite: boolean;
+    status: "Em andamento" | "Completo" | "Pendente" | "";
+    collections: string[];
     recommended_by?: string;
     original_owner?: string;
     last_download: number;
+    privacy: "Publica" | "Privada" | "";
     rating?: number;
+    is_favorite: boolean;
+    autoBackup: "Sim" | "Não" | "";
   };
+  deleted_at: string
+  created_at: string;
   comments: string[];
 }
 
@@ -34,7 +43,10 @@ export interface ComicEdition {
   created_at: string;
   is_read: boolean;
   is_dowload: boolean;
-  last_page_read: number;
+  page: {
+    last_page_read: number;
+    favorite_page: number
+  }
 }
 
 
@@ -46,9 +58,6 @@ export interface ComicConfig {
       ligth_mode: boolean,
       full_screen: boolean
     };
-  };
-  metadata: {
-    global_id: number;
   };
 }
 

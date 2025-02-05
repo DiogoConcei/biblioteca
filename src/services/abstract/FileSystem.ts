@@ -11,29 +11,48 @@ export abstract class FileSystem {
   protected readonly showcaseImages: string;
   protected readonly jsonFilesPath: string;
   protected readonly configFilePath: string;
-  protected readonly comicConfig: string;
-  protected readonly comicCollections: string;
-  protected readonly mangaConfig: string;
-  protected readonly mangaCollections: string;
-  protected readonly bookConfig: string;
-  protected readonly bookCollections: string;
 
+  protected readonly comicConfig: string;
+
+  protected readonly mangaConfig: string;
+
+  protected readonly bookConfig: string;
+
+  protected readonly booksData: string;
+  protected readonly mangasData: string;
+  protected readonly comicsData: string;
+
+  protected readonly booksImages: string;
+  protected readonly comicsImages: string;
+  protected readonly mangasImages: string;
+
+  protected readonly appCollections: string;
 
   protected constructor() {
     this.storage = path.join(this.absoluteBasePath, "storage");
     this.basePath = path.join(this.storage, "user library");
     this.seriesPath = path.join(this.basePath, "books");
+
     this.dataPath = path.join(this.storage, "data store");
     this.imagesFilesPath = path.join(this.dataPath, "images files");
     this.jsonFilesPath = path.join(this.dataPath, "json files");
+
     this.showcaseImages = path.join(this.imagesFilesPath, "showCaseImages");
-    this.configFilePath = path.join(this.storage, "config", "app")
-    this.comicConfig = path.join(this.storage, "config", "comic", "comicsConfig.json")
-    this.comicCollections = path.join(this.storage, "config", "comic", "comicCollections.json")
+    this.configFilePath = path.join(this.storage, "config", "app", "appConfig.json")
+    this.appCollections = path.join(this.storage, "config", "app", "appCollections.json")
+
+    this.comicConfig = path.join(this.storage, "config", "app", "appConfig.json")
     this.mangaConfig = path.join(this.storage, "config", "manga", "mangasConfig.json")
-    this.mangaCollections = path.join(this.storage, "config", "manga", "mangaCollections.json")
     this.bookConfig = path.join(this.storage, "config", "books", "bookConfig.json")
-    this.bookCollections = path.join(this.storage, "config", "books", "bookCollections.json")
+
+    this.booksData = path.join(this.jsonFilesPath, "Books")
+    this.comicsData = path.join(this.jsonFilesPath, "Comics")
+    this.mangasData = path.join(this.jsonFilesPath, "Mangas")
+
+    this.booksImages = path.join(this.imagesFilesPath, "Book")
+    this.comicsImages = path.join(this.imagesFilesPath, "Comic")
+    this.mangasImages = path.join(this.imagesFilesPath, "Manga")
+
   }
 
   public async createFolder(path: string): Promise<void> {

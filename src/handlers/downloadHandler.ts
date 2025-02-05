@@ -1,7 +1,7 @@
 import { IpcMain } from "electron";
-import ImageOperations from "../services/ImageOperations";
+import ImageOperations from "../services/ImageManager";
 import StorageManager from "../services/StorageManager";
-import ValidationOperations from "../services/ValidationOperations";
+import ValidationOperations from "../services/ValidationManager";
 
 export default function downloadHandlers(ipcMain: IpcMain) {
     const ImageManager = new ImageOperations()
@@ -10,7 +10,7 @@ export default function downloadHandlers(ipcMain: IpcMain) {
 
     ipcMain.handle("download-chapter", async (_event, serieName: string, quantity: number) => {
         try {
-            await ImageManager.createComic(serieName, quantity)
+            await ImageManager.createMangaEdtion(serieName, quantity)
         } catch (error) {
             console.error(`erro em realizar o download: ${error}`)
             throw error
@@ -24,12 +24,12 @@ export default function downloadHandlers(ipcMain: IpcMain) {
 
             if (already_download) return
 
-            const serieData = await StorageOperations.selectSerieData(serieName)
+            const serieData = await StorageOperations.selectMangaData(serieName)
             const chapterData = serieData.chapters
 
             for (let chapters of chapterData) {
                 if (chapters.id === nextChapter_id) {
-                    await ImageManager.createComicById(serieName, nextChapter_id)
+                    await ImageManager.createMangaEdtionById(serieName, nextChapter_id)
                 }
             }
 
@@ -45,12 +45,12 @@ export default function downloadHandlers(ipcMain: IpcMain) {
 
             if (already_download) return
 
-            const serieData = await StorageOperations.selectSerieData(serieName)
+            const serieData = await StorageOperations.selectMangaData(serieName)
             const chapterData = serieData.chapters
 
             for (let chapters of chapterData) {
                 if (chapters.id === chapter_id) {
-                    await ImageManager.createComicById(serieName, chapter_id)
+                    await ImageManager.createMangaEdtionById(serieName, chapter_id)
                 }
             }
 

@@ -1,33 +1,36 @@
 import { IpcMain } from "electron";
+import { SerieForm } from "../types/series.interfaces";
 import StorageManager from "../services/StorageManager";
 import MangaManager from "../services/MangaManager";
-import ImageOperations from "../services/ImageOperations";
+import BookManager from "../services/BookManager";
+import ComicManager from "../services/ComicManager";
+import ImageOperations from "../services/ImageManager";
 import path from 'path'
 
 
 export default function seriesHandlers(ipcMain: IpcMain) {
-    const ComicOperations = new MangaManager()
+    const MangaOperations = new MangaManager()
+    const ComicOperations = new ComicManager()
+    const BookOperations = new BookManager()
     const StorageOperations = new StorageManager()
     const ImageManager = new ImageOperations()
 
 
-    ipcMain.handle("create-serie", async (_event, filePaths: string[]) => {
+    ipcMain.handle("create-serie", async (_event, serieData: SerieForm) => {
         try {
-            // await ComicOperations.createManga(filePaths);
-
-            const filesName = await Promise.all(
-                filePaths.map(async (file) => {
-                    const fileName = path.basename(file);
-                    return fileName;
-                })
-            );
-
-            await ImageManager.extractInitialCovers(filesName);
-
-            await new Promise((resolve) => {
-                _event.sender.send("serie-created", { message: "Nova série criada com sucesso!" });
-                resolve(null);
-            });
+            switch (serieData.literatureForm) {
+                case "Manga":
+                    await MangaOperations.createManga(serieData)
+                    break;
+                case "Quadrinho":
+                    await ComicOperations.createComic(serieData)
+                    break;
+                case "Livro":
+                    await BookOperations.createBook(serieData)
+                    break;
+                default:
+                    throw new Error("Tipo de literatura inválido");
+            }
         } catch (error) {
             console.error(`Erro ao criar a série: ${error}`);
             throw error;
@@ -56,9 +59,9 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         }
     })
 
-    ipcMain.handle("get-serie", async (_event, serieName: string) => {
+    ipcMain.handle("get-manga-series", async (_event, serieName: string) => {
         try {
-            const data = await StorageOperations.selectSerieData(serieName)
+            const data = await StorageOperations.selectMangaData(serieName)
 
             const processedData = {
                 ...data,
@@ -71,5 +74,23 @@ export default function seriesHandlers(ipcMain: IpcMain) {
             throw error;
         }
     })
+
+
+    ipcMain.handle("get-comic-series", async (_event, serieName: string) => {
+        try {
+            const data = await StorageOperations.selectMangaData(serieName)
+
+            const processedData = {
+                ...data,
+                cover_image: await ImageManager.encodeImageToBase64(data.cover_image),
+            };
+
+            return processedData
+        } catch (error) {
+            console.error("Erro ao buscar dados da series:", error);
+            throw error;
+        }
+    })
+
 
 }

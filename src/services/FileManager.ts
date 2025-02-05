@@ -1,4 +1,7 @@
 import { FileSystem } from "./abstract/FileSystem";
+import { Manga } from "../types/manga.interfaces";
+import { Book } from "../types/book.interfaces";
+import { Comic } from "../types/comic.interfaces";
 import path from "path";
 import fse from 'fs-extra'
 
@@ -69,19 +72,41 @@ export default class FileOperations extends FileSystem {
     }
   }
 
-  public async findJsonFile(serieName: string): Promise<string> {
+  public async uploadCover(file: string): Promise<string> {
     try {
-      const seriesPath = await this.foundFiles(this.jsonFilesPath)
-      const filePath = seriesPath.find((serie) => path.basename(serie, path.extname(serie)) === serieName)
+      const destPath = path.join(this.showcaseImages, path.basename(file))
+      await fse.move(file, destPath)
+      return destPath
+    } catch (e) {
+      console.error(`Erro ao fazer upload de imagem: ${e}`)
+      throw e
+    }
+  }
 
-      if (!filePath) {
-        console.error(`arquivo inexistente`)
-      }
 
-      return filePath
-    } catch (error) {
-      console.error(`erro ao recuperar arquivo de dados: ${error}`)
-      throw error;
+  public async uploadImage(file: string): Promise<string> {
+    try {
+      const destPath = path.join(this.imagesFilesPath, path.basename(file))
+      await fse.move(file, destPath)
+      return destPath
+    } catch (e) {
+      console.error(`Erro ao fazer upload de imagem: ${e}`)
+      throw e
+    }
+  }
+
+
+  public async getSeries(): Promise<string[]> {
+    try {
+      const bookContent = (await fse.readdir(this.booksData, { withFileTypes: true })).map((bookPath) => path.join(bookPath.parentPath, bookPath.name))
+      const comicContent = (await fse.readdir(this.comicsData, { withFileTypes: true })).map((comicPath) => path.join(comicPath.parentPath, comicPath.name))
+      const mangaContent = (await fse.readdir(this.mangasData, { withFileTypes: true })).map((mangaPath) => path.join(mangaPath.parentPath, mangaPath.name))
+      const content = [...bookContent, ...comicContent, ...mangaContent]
+
+      return content;
+    } catch (e) {
+      console.error(`erro encontrado: ${e}`);
+      throw e;
     }
   }
 

@@ -17,7 +17,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
     ipcMain.handle("save-last-read", async (_event, serieName: string, chapter_id: number, page_number: number) => {
         try {
-            const serieData = await StorageOperations.selectSerieData(serieName);
+            const serieData = await StorageOperations.selectMangaData(serieName);
             const chapter = serieData.chapters.find((c) => c.id === chapter_id);
             if (chapter) {
                 chapter.last_page_read = page_number;
@@ -32,7 +32,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
     ipcMain.handle("acess-last-read", async (_event, serieName: string) => {
         try {
-            const serieData = await StorageOperations.selectSerieData(serieName);
+            const serieData = await StorageOperations.selectMangaData(serieName);
             const lastChapterId = serieData.reading_data.last_chapter_id;
             const lastChapter = serieData.chapters.find((c) => c.id === lastChapterId);
 
@@ -47,7 +47,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
     ipcMain.handle("get-next-chapter", async (_event, serieName: string, chapter_id: number) => {
         try {
-            const serieData = await StorageOperations.selectSerieData(serieName);
+            const serieData = await StorageOperations.selectMangaData(serieName);
             const totalChapters = serieData.chapters.length;
 
             if (chapter_id + 1 >= totalChapters) {
@@ -71,7 +71,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
     ipcMain.handle("get-prev-chapter", async (_event, serieName: string, chapter_id: number) => {
         try {
-            const serieData = await StorageOperations.selectSerieData(serieName);
+            const serieData = await StorageOperations.selectMangaData(serieName);
 
             const prevChapterId = chapter_id - 1;
 

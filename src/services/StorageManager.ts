@@ -1,10 +1,13 @@
 import path from "path";
 import fs from "fs/promises";
 import jsonfile from "jsonfile";
-import FileOperations from "./FileOperations";
+import FileOperations from "./FileManager";
 import { FileSystem } from "./abstract/FileSystem";
-import { SeriesProcessor } from "../types/series.interfaces";
+import { NormalizedSerieData, SeriesProcessor, Literatures, ExhibitionSerieData } from "../types/series.interfaces";
 import { Comic } from "../types/comic.interfaces";
+import { Manga } from "../types/manga.interfaces";
+import { Book } from "../types/book.interfaces";
+import { SerieCollection, SerieCollectionInfo } from "../types/collections.interfaces";
 
 export default class StorageManager extends FileSystem {
   private readonly fileManager: FileOperations;
@@ -14,19 +17,53 @@ export default class StorageManager extends FileSystem {
     this.fileManager = new FileOperations();
   }
 
-  public async seriesData(): Promise<Comic[]> {
+  public createNormalizedData(serie: Manga | Comic | Book): NormalizedSerieData {
+    return {
+      id: serie.id,
+      name: serie.name,
+      cover_image: serie.cover_image,
+      archive_path: serie.archives_path, // Garantindo consistência nos nomes
+      chapters_path: serie.chapters_path,
+      total_chapters: serie.total_chapters,
+      status: serie.metadata.status,
+      collections: serie.metadata.collections || [],
+      recommended_by: serie.metadata.recommended_by,
+      original_owner: serie.metadata.original_owner,
+      rating: serie.metadata.rating
+    };
+  }
+
+  public async seriesData(): Promise<ExhibitionSerieData[]> {
     try {
-      const seriesData = await this.foundFiles(this.jsonFilesPath);
-      return await Promise.all(seriesData.map((serieData) => jsonfile.readFile(serieData)));
+      const dataPaths = await this.fileManager.getSeries();
+
+      const seriesData = await Promise.all(
+        dataPaths.map((serieData) =>
+          jsonfile.readFile(serieData) as Promise<Manga | Comic | Book>
+        )
+      );
+
+      const exhibData = seriesData.map((serie) => {
+        return {
+          id: serie.id,
+          name: serie.name,
+          cover_image: serie.cover_image,
+          chapters_read: serie.chapters_read,
+          total_chapters: serie.total_chapters,
+          literatureForm: serie.literatureForm
+        }
+      })
+
+      return exhibData
     } catch (e) {
       console.error(`Erro ao ler todo o conteúdo: ${e}`);
       throw e;
     }
   }
 
-  public async selectSerieData(serieName: string): Promise<Comic> {
+  public async selectMangaData(serieName: string): Promise<Manga> {
     try {
-      const seriesData = await this.fileManager.foundFiles(this.jsonFilesPath);
+      const seriesData = await this.fileManager.foundFiles(this.mangasData);
       const serieData = seriesData.find((serie) =>
         path.basename(serie, path.extname(serie)) === serieName
       );
@@ -35,52 +72,88 @@ export default class StorageManager extends FileSystem {
 
       return await jsonfile.readFile(serieData);
     } catch (e) {
-      console.error("Erro ao selecionar dados do arquivo:", e);
+      console.error("Erro ao selecionar dados do Manga:", e);
       throw e;
     }
   }
 
-  public async updateserieData(data: string, serieName: string): Promise<void> {
+  public async selectComicData(serieName: string): Promise<Comic> {
     try {
-      const seriesData = await this.foundFiles(this.jsonFilesPath);
-      const correctFile = seriesData.find(
-        (serie) => path.basename(serie, path.extname(serie)) === serieName
+      const seriesData = await this.fileManager.foundFiles(this.mangasData);
+      const serieData = seriesData.find((serie) =>
+        path.basename(serie, path.extname(serie)) === serieName
       );
 
-      if (!correctFile) {
-        throw new Error(`Arquivo da série "${serieName}" não encontrado.`);
-      }
+      if (!serieData) throw new Error(`Nenhuma série encontrada com o nome: ${serieName}`);
 
-      await jsonfile.writeFile(correctFile, JSON.parse(data), { spaces: 2 });
-    } catch (error) {
-      console.error(`Erro ao atualizar arquivo da série "${serieName}":`, error);
-      throw error;
-    }
-  }
-
-  public async updateFavCollection(data: string): Promise<void> {
-    try {
-      await jsonfile.writeFile(this.comicCollections, JSON.parse(data), { spaces: 2 });
-    } catch (error) {
-      console.error("Erro ao atualizar coleção de favoritos:", error);
-      throw error;
-    }
-  }
-
-  public async writeSerieData(serieData: Comic): Promise<void> {
-    const tempPath = path.join(this.jsonFilesPath, `${serieData.name}.json`);
-    try {
-      await fs.writeFile(tempPath, JSON.stringify(serieData, null, 2), "utf-8");
+      return await jsonfile.readFile(serieData);
     } catch (e) {
-      console.error(`Erro ao tentar gravar o arquivo ${serieData.name}.json: ${e.message}`);
+      console.error("Erro ao selecionar dados do Manga:", e);
+      throw e;
+    }
+  }
+
+  public async selectBookData(serieName: string): Promise<Book> {
+    try {
+      const seriesData = await this.fileManager.foundFiles(this.mangasData);
+      const serieData = seriesData.find((serie) =>
+        path.basename(serie, path.extname(serie)) === serieName
+      );
+
+      if (!serieData) throw new Error(`Nenhuma série encontrada com o nome: ${serieName}`);
+
+      return await jsonfile.readFile(serieData);
+    } catch (e) {
+      console.error("Erro ao selecionar dados do Manga:", e);
+      throw e;
+    }
+  }
+
+  public async updateSerieData(data: Literatures, dataPath: string): Promise<void> {
+    try {
+      await jsonfile.writeFile(dataPath, data, { spaces: 2 });
+    } catch (error) {
+      console.error(`Erro ao atualizar arquivo da série "${data.name}":`, error);
+      throw error;
+    }
+  }
+
+  // public async readSerieData(dataPath: string): Promise<Literatures> {
+  //   try {
+
+  //   } catch (e) {
+
+  //   }
+  // }
+
+  public async writeSerieData(serie: Literatures): Promise<void> {
+    try {
+      let tempPath
+
+      switch (serie.literatureForm) {
+        case "":
+          return
+        case "Manga":
+          tempPath = path.join(this.mangasData, `${serie.name}.json`)
+          await fs.writeFile(tempPath, JSON.stringify(serie, null, 2), "utf-8");
+          break;
+        case "Quadrinho":
+          tempPath = path.join(this.comicsData, `${serie.name}.json`);
+          await fs.writeFile(tempPath, JSON.stringify(serie, null, 2), "utf-8");
+          break;
+        case "Livro":
+          tempPath = path.join(this.booksData, `${serie.name}.json`);
+          await fs.writeFile(tempPath, JSON.stringify(serie, null, 2), "utf-8");
+          break;
+      }
+    } catch (e) {
       throw e;
     }
   }
 
 
-  public async foundLastDownload(serieName: string): Promise<number> {
+  public async foundLastDownload(serieData: Literatures): Promise<number> {
     try {
-      const serieData = await this.selectSerieData(serieName);
       const chaptersData = serieData.chapters
       let metadata_last_download = serieData.metadata.last_download
       let correct_last_download
@@ -97,7 +170,7 @@ export default class StorageManager extends FileSystem {
 
       return serieData.metadata.last_download;
     } catch (error) {
-      console.error(`Erro ao recuperar o último download da série "${serieName}": ${error}`);
+      console.error(`Erro ao recuperar o último download da série "${serieData.name}": ${error}`);
       throw error;
     }
   }
@@ -107,7 +180,7 @@ export default class StorageManager extends FileSystem {
     const serieName = path.basename(seriePath);
 
     return {
-      id: randomNumber,
+      id: Math.round(randomNumber),
       name: serieName,
       sanitized_name: this.fileManager.sanitizeFilename(serieName),
       archives_path: seriePath,
@@ -117,12 +190,13 @@ export default class StorageManager extends FileSystem {
       deleted_at: ""
     }
   }
+
 }
 
 // (async () => {
 //   try {
 //     const MangaOperations = new StorageManager();
-//     const data = await MangaOperations.preProcessData('C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\books\\Dr.Stone');
+//     console.log(await MangaOperations.selectMangaData("Spy x Family"))
 //   } catch (error) {
 //     console.error('Erro ao executar a função:', error);
 //   }

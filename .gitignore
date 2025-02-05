@@ -94,4 +94,4 @@ out/
 # Storage
 storage/user libray
 storage/user library/Books
-storage/data store
+storage/data store/*

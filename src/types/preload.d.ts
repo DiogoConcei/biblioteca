@@ -1,7 +1,9 @@
 export { };
+import { Manga } from './manga.interfaces';
 import { Comic } from './comic.interfaces'
+import { Book } from './book.interfaces';
 import { Collections } from './collections.interfaces';
-import { SeriesProcessor } from './series.interfaces';
+import { SeriesProcessor, SerieForm, Literatures } from './series.interfaces';
 
 declare global {
     interface Window {
@@ -9,7 +11,8 @@ declare global {
             windowAction: {
                 minimize: () => void,
                 fullScreen: () => void,
-                close: () => void
+                close: () => void,
+                restore: () => void
             },
 
             webUtilities: {
@@ -19,12 +22,14 @@ declare global {
                 localUpload: (filePaths: string[]) => Promise<SeriesProcessor[]>,
             },
             series: {
-                createSerie: (filePaths: string[]) => Promise<void>,
-                getSeries: () => Comic[],
-                getSerie: (serieName: string) => Comic
+                createSerie: (serieData: SerieForm) => Promise<void>,
+                getSeries: () => ExhibitionSerieData[],
+                getManga: (serieName: string) => Manga,
+                getComic: (serieName: string) => Comic,
+                getBook: (serieName: string) => Book
             },
             download: {
-                downloadLocal: (seriePath: string, quantity: number) => Promise<void>,
+                downloadLocal: (dataPath: string, quantity: number) => Promise<void>,
                 lineReading: (serieName: string, chapter_id: number) => Promise<void>,
                 downloadIndividual: (serieName: string, chapter_id: number) => Promise<void>
             },
@@ -40,12 +45,14 @@ declare global {
                 acessLastRead: (serieName: string) => Promise<string>,
             },
             collections: {
-                getFavSeries: () => Promise<ComicCollectionInfo>,
+                getFavSeries: () => Promise<Collections>,
+                createCollection: (collectionName: string) => Promise<void>,
+                addToCollection: (serieData: NormalizedSerieData) => Promise<void>
             },
             userAction: {
-                favoriteSerie: (serieName: string) => Promise<{ success: boolean }>,
-                ratingSerie: (serieName: string, userRating: number) => Promise<void>,
-                markRead: (serieName: string, chapter_id: number) => Promise<void>,
+                favoriteSerie: (data: Literatures) => Promise<{ success: boolean }>,
+                ratingSerie: (data: Literatures, userRating: number) => Promise<{ success: boolean }>,
+                markRead: (data: Literatures, chapter_id: number) => Promise<{ success: boolean }>,
             },
             AppConfig: {
                 getScreenConfig: (urlLocation: string) => Promise<boolean>,

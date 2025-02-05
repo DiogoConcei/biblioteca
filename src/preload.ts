@@ -1,12 +1,16 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
+import { Manga } from "./types/manga.interfaces";
+import { Book } from "./types/book.interfaces";
 import { Comic } from "./types/comic.interfaces";
-import { ComicCollectionInfo } from "./types/collections.interfaces";
-import { SeriesProcessor } from "./types/series.interfaces";
+import { Collections } from "./types/collections.interfaces";
+import { SerieForm } from "./types/series.interfaces";
+import { SeriesProcessor, Literatures, NormalizedSerieData } from "./types/series.interfaces";
 
 const windowAction = {
   minimize: () => ipcRenderer.invoke("minimize-window"),
   fullScreen: () => ipcRenderer.invoke("fullScreen-window"),
   close: () => ipcRenderer.invoke("close-window"),
+  restore: () => ipcRenderer.invoke("restore-window"),
 };
 
 const contextMenu = {
@@ -18,10 +22,10 @@ const contextMenu = {
 
 
 const userAction = {
-  ratingSerie: (serieName: string, userRating: number): Promise<void> => ipcRenderer.invoke("rating-serie", serieName, userRating),
-  favoriteSerie: (serieName: string): Promise<{ success: boolean }> =>
-    ipcRenderer.invoke("favorite-serie", serieName),
-  markRead: async (serieName: string, chapter_id: number): Promise<void> => ipcRenderer.invoke("mark-read", serieName, chapter_id),
+  ratingSerie: (data: Literatures, data_path: string, userRating: number): Promise<{ success: boolean }> => ipcRenderer.invoke("rating-serie", data, userRating, data_path),
+  favoriteSerie: (data: Literatures, data_path: string): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke("favorite-serie", data, data_path),
+  markRead: async (chapter_id: number, data: Literatures, data_path: string): Promise<{ success: boolean }> => ipcRenderer.invoke("mark-read", data, chapter_id, data_path),
 }
 
 const AppConfig = {
@@ -32,7 +36,9 @@ const AppConfig = {
 }
 
 const collections = {
-  getFavSeries: async (): Promise<ComicCollectionInfo> => ipcRenderer.invoke("get-favSeries"),
+  getFavSeries: async (): Promise<Collections> => ipcRenderer.invoke("get-fav-series"),
+  addToCollection: async (serieData: NormalizedSerieData) => ipcRenderer.invoke("add-to-collection", serieData),
+  createCollection: async (collectionName: string): Promise<void> => ipcRenderer.invoke("create-collection")
 }
 
 const chapters = {
@@ -44,16 +50,21 @@ const chapters = {
 }
 
 const series = {
-  createSerie: (filePaths: string[]): Promise<void> =>
-    ipcRenderer.invoke("create-serie", filePaths),
+  createSerie: (serieData: SerieForm): Promise<void> =>
+    ipcRenderer.invoke("create-serie", serieData),
   getSeries: async (): Promise<Comic[]> => ipcRenderer.invoke("get-all-series"),
-  getSerie: async (serieName: string): Promise<Comic> =>
-    ipcRenderer.invoke("get-serie", serieName),
+  getManga: async (serieName: string): Promise<Manga> =>
+    ipcRenderer.invoke("get-manga-series", serieName),
+  getComic: async (serieName: string): Promise<Comic> =>
+    ipcRenderer.invoke("get-comic-series", serieName),
+  getBook: async (serieName: string): Promise<Book> =>
+    ipcRenderer.invoke("get-book-series", serieName),
+
 };
 
 const download = {
-  downloadLocal: (serieName: string, quantity: number): Promise<void> =>
-    ipcRenderer.invoke("download-chapter", serieName, quantity),
+  downloadLocal: (dataPath: string, quantity: number): Promise<void> =>
+    ipcRenderer.invoke("download-chapter", dataPath, quantity),
   lineReading: (serieName: string, chapter_id: number): Promise<void> => ipcRenderer.invoke("download-in-reading", serieName, chapter_id),
   downloadIndividual: (serieName: string, chapter_id: number): Promise<void> => ipcRenderer.invoke("download-individual", serieName, chapter_id)
 };

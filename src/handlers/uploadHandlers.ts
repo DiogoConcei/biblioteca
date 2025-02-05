@@ -1,8 +1,7 @@
 import { IpcMain } from "electron";
-import { SeriesProcessor } from "../types/series.interfaces";
-import FileOperations from "../services/FileOperations"
+import FileOperations from "../services/FileManager"
 import StorageManager from "../services/StorageManager";
-import ValidationOperations from "../services/ValidationOperations";
+import ValidationOperations from "../services/ValidationManager";
 
 export default function uploadHandlers(ipcMain: IpcMain) {
     const FileManager = new FileOperations()

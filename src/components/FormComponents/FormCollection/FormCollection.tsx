@@ -14,9 +14,9 @@ export default function FormCollection({
   const handleCheckboxChange = (collection: string, checked: boolean) => {
     setFormData((prevData) => ({
       ...prevData,
-      collection: checked
-        ? [...prevData.collection, collection]
-        : prevData.collection.filter((col) => col !== collection),
+      collections: checked
+        ? [...prevData.collections, collection]
+        : prevData.collections.filter((col) => col !== collection),
     }));
   };
 
@@ -25,13 +25,15 @@ export default function FormCollection({
       if (newCollection && !collections.includes(newCollection)) {
         setFormData((prevData) => ({
           ...prevData,
-          collection: [...prevData.collection, newCollection],
+          collection: [...prevData.collections, newCollection],
         }));
         setCollections((prevCollections) => [
           ...prevCollections,
           newCollection,
         ]);
         setNewCollection("");
+
+        window.electron.collections.createCollection(newCollection);
       }
       setIsCreatingCollection(false);
     } else {
@@ -51,10 +53,11 @@ export default function FormCollection({
               value={collection}
               id={collection}
               name={collection}
-              checked={formData.collection.includes(collection)}
+              checked={formData.collections.includes(collection)}
               onChange={(e) =>
                 handleCheckboxChange(collection, e.target.checked)
               }
+              required={true}
             />
             <label htmlFor={collection}>{collection}</label>
           </span>

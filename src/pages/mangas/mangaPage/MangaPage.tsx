@@ -1,27 +1,25 @@
 import { useParams } from "react-router-dom";
-import { Comic } from "../../../types/comic.interfaces";
-import { ComicCollectionInfo } from "../../../types/collections.interfaces";
+import { Manga } from "..//../../types/manga.interfaces";
+import { Collections } from "../../../types/collections.interfaces";
 import { useState, useEffect } from "react";
 import ChaptersInfo from "../../../components/ChaptersInfo/ChaptersInfo";
-import ComicActions from "../../../components/ComicActions/ComicActions";
-import "./ComicPage.css";
+import SerieActions from "../../../components/SerieActions/SerieActions";
+import "./MangaPage.css";
 
-export default function SeriePage() {
-  const [serie, setSerie] = useState<Comic | null>(null);
-  const [collectionInfo, setCollectionInfo] = useState<
-    ComicCollectionInfo[] | null
-  >(null);
+export default function MangaPage() {
+  const [manga, setManga] = useState<Manga | null>(null);
+  const [favCollection, setfavCollection] = useState<Collections | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { book_name } = useParams();
+  const { manga_name } = useParams();
 
   useEffect(() => {
     const getData = async () => {
       try {
         setIsLoading(true);
-        const data = await window.electron.series.getSerie(book_name);
+        const data = await window.electron.series.getManga(manga_name);
         const favSeries = await window.electron.collections.getFavSeries();
-        setSerie(data);
-        setCollectionInfo(favSeries);
+        setManga(data);
+        setfavCollection(favSeries);
       } catch (error) {
         console.error("Erro ao carregar série:", error);
         throw error;
@@ -33,7 +31,7 @@ export default function SeriePage() {
     getData();
   }, []);
 
-  if (!serie || !collectionInfo) {
+  if (isLoading) {
     return <p>Carrengado dados...</p>;
   }
 
@@ -43,36 +41,36 @@ export default function SeriePage() {
         <figure>
           <img
             className="serieCover"
-            src={`data:image/png;base64,${serie.cover_image}`}
-            alt={`Capa do quadrinho ${serie.name}`}
+            src={`data:image/png;base64,${manga.cover_image}`}
+            alt={`Capa do quadrinho ${manga.name}`}
           />
         </figure>
-        <h2 className="owner">Upload por: {serie.metadata.original_owner}</h2>
+        <h2 className="owner">Upload por: {manga.metadata.original_owner}</h2>
         <h2 className="recomend">
-          recomendada por: {serie.metadata.recommended_by}
+          recomendada por: {manga.metadata.recommended_by}
         </h2>
       </div>
       <section className="mainContent">
-        <h2>{serie.name}</h2>
+        <h2>{manga.name}</h2>
         <div className="serieMetadata">
-          <p>Status: {serie.metadata.status}</p>
-          <p>Capítulos lidos: {serie.chapters_read}</p>
-          <p>Quantidade de capítulos: {serie.total_chapters}</p>
-          <p>Criado em: {serie.created_at}</p>
-          <p>Último capítulo lido: {serie.reading_data.last_chapter_id}</p>
+          <p>Status: {manga.metadata.status}</p>
+          <p>Capítulos lidos: {manga.chapters_read}</p>
+          <p>Quantidade de capítulos: {manga.total_chapters}</p>
+          <p>Criado em: {manga.created_at}</p>
+          <p>Último capítulo lido: {manga.reading_data.last_chapter_id}</p>
         </div>
         <div className="serieActions">
-          <ComicActions serie={serie} setSerie={setSerie} />
+          <SerieActions manga={manga} setManga={setManga} />
         </div>
         <section className="serieChapters">
-          <ChaptersInfo serie={serie} />
+          <ChaptersInfo manga={manga} />
         </section>
       </section>
       <aside className="seriesInfo">
         <section className="favorites">
           <h3>Séries Favoritas</h3>
           <ul className="fav-series">
-            {collectionInfo.map((serie) => (
+            {favCollection.series.map((serie) => (
               <li key={serie.id}>{serie.name}</li>
             ))}
           </ul>

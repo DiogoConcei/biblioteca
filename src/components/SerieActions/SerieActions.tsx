@@ -5,25 +5,19 @@ import { ComicActionsProps } from "../../types/components.interfaces";
 import DownloadButton from "../DonwloadButton/DownloadButton";
 import Rating from "../Rating/Rating";
 import { useNavigate } from "react-router-dom";
-import "./ComicActions.css";
+import "./SerieActions.css";
 
-export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
+export default function SerieActions({ manga, setManga }: ComicActionsProps) {
   const navigate = useNavigate();
 
-  const favorite = async (
-    event: React.MouseEvent<HTMLButtonElement>,
-    serieName: string,
-    is_favorite: boolean
-  ) => {
+  const favorite = async (is_favorite: boolean) => {
     const newFavoriteStatus = !is_favorite;
 
     try {
-      const response = await window.electron.userAction.favoriteSerie(
-        serieName
-      );
+      const response = await window.electron.userAction.favoriteSerie(manga);
 
       if (response.success) {
-        setSerie((prevSerie) => ({
+        setManga((prevSerie) => ({
           ...prevSerie!,
           metadata: {
             ...prevSerie!.metadata,
@@ -49,13 +43,11 @@ export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
 
   return (
     <div className="serieActions">
-      <DownloadButton serieName={serie.name} />
+      <DownloadButton serieName={manga.name} />
       <button
         className="favorite"
-        onClick={(event) =>
-          favorite(event, serie.name, serie.metadata.is_favorite)
-        }>
-        {serie.metadata.is_favorite ? <IoBookmark /> : <IoBookmarkOutline />}
+        onClick={(event) => favorite(manga.metadata.is_favorite)}>
+        {manga.metadata.is_favorite ? <IoBookmark /> : <IoBookmarkOutline />}
         Favoritar
       </button>
       <button className="collection">
@@ -64,11 +56,11 @@ export default function ComicActions({ serie, setSerie }: ComicActionsProps) {
       </button>
       <button
         className="reading"
-        onClick={(event) => lastRead(event, serie.name)}>
+        onClick={(event) => lastRead(event, manga.name)}>
         <FaBookOpen />
         Continuar
       </button>
-      <Rating serie={serie} />
+      <Rating manga={manga} />
     </div>
   );
 }

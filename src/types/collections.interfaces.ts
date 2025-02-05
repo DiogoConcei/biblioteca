@@ -1,21 +1,21 @@
-export interface ComicCollection {
-    collections: Collections[];
+export interface UserCollections {
+    collections: Collection[];
 }
 
-export interface Collections {
+export interface Collection {
     name: string;
     description: string;
-    comics: ComicCollectionInfo[];
+    series: SerieCollectionInfo[];
     comments: string[];
+    updatedAt: string;
 }
 
-export interface ComicCollectionInfo {
-    id: number,
-    name: string,
-    cover_image: string,
-    comic_path: string,
-    total_chapters: number,
-    status: "em andamento" | "completada" | "pausada";
+export interface SerieCollectionInfo {
+    id: number;
+    name: string;
+    cover_image: string;
+    archive_path: string;
+    total_chapters: number;
     recommended_by?: string;
     original_owner?: string;
     rating?: number;
