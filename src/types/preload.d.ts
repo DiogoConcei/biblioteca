@@ -45,12 +45,13 @@ declare global {
                 acessLastRead: (serieName: string) => Promise<string>,
             },
             collections: {
-                getFavSeries: () => Promise<Collections>,
+                getCollections: () => Promise<Collection[]>,
                 createCollection: (collectionName: string) => Promise<void>,
-                addToCollection: (serieData: NormalizedSerieData) => Promise<void>
+                serieToCollection: (data_path: string) => Promise<void>
+                getFavSeries: () => Promise<Collections>,
             },
             userAction: {
-                favoriteSerie: (data: Literatures) => Promise<{ success: boolean }>,
+                favoriteSerie: (data_path: string) => Promise<{ success: boolean }>,
                 ratingSerie: (data: Literatures, userRating: number) => Promise<{ success: boolean }>,
                 markRead: (data: Literatures, chapter_id: number) => Promise<{ success: boolean }>,
             },

@@ -7,7 +7,7 @@ import { NormalizedSerieData, SeriesProcessor, Literatures, ExhibitionSerieData 
 import { Comic } from "../types/comic.interfaces";
 import { Manga } from "../types/manga.interfaces";
 import { Book } from "../types/book.interfaces";
-import { SerieCollection, SerieCollectionInfo } from "../types/collections.interfaces";
+import { Collection, SerieCollectionInfo } from "../types/collections.interfaces";
 
 export default class StorageManager extends FileSystem {
   private readonly fileManager: FileOperations;
@@ -17,13 +17,14 @@ export default class StorageManager extends FileSystem {
     this.fileManager = new FileOperations();
   }
 
-  public createNormalizedData(serie: Manga | Comic | Book): NormalizedSerieData {
+  public createNormalizedData(serie: Literatures): NormalizedSerieData {
     return {
       id: serie.id,
       name: serie.name,
       cover_image: serie.cover_image,
-      archive_path: serie.archives_path, // Garantindo consistência nos nomes
+      archive_path: serie.archives_path,
       chapters_path: serie.chapters_path,
+      is_favorite: false,
       total_chapters: serie.total_chapters,
       status: serie.metadata.status,
       collections: serie.metadata.collections || [],
@@ -118,35 +119,21 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  // public async readSerieData(dataPath: string): Promise<Literatures> {
-  //   try {
-
-  //   } catch (e) {
-
-  //   }
-  // }
+  public async readSerieData(dataPath: string): Promise<Literatures> {
+    try {
+      const serieData: Literatures = await jsonfile.readFile(dataPath, "utf-8")
+      return serieData
+    } catch (e) {
+      console.error(`erro ao tentar ler diretamente o dado das series: ${e}`)
+      throw e
+    }
+  }
 
   public async writeSerieData(serie: Literatures): Promise<void> {
     try {
-      let tempPath
-
-      switch (serie.literatureForm) {
-        case "":
-          return
-        case "Manga":
-          tempPath = path.join(this.mangasData, `${serie.name}.json`)
-          await fs.writeFile(tempPath, JSON.stringify(serie, null, 2), "utf-8");
-          break;
-        case "Quadrinho":
-          tempPath = path.join(this.comicsData, `${serie.name}.json`);
-          await fs.writeFile(tempPath, JSON.stringify(serie, null, 2), "utf-8");
-          break;
-        case "Livro":
-          tempPath = path.join(this.booksData, `${serie.name}.json`);
-          await fs.writeFile(tempPath, JSON.stringify(serie, null, 2), "utf-8");
-          break;
-      }
+      await fs.writeFile(serie.data_path, JSON.stringify(serie, null, 2), "utf-8");
     } catch (e) {
+      console.error(`Erro em criar dados da serie: ${e}`)
       throw e;
     }
   }

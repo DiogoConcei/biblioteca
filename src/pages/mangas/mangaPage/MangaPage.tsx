@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { Manga } from "..//../../types/manga.interfaces";
-import { Collections } from "../../../types/collections.interfaces";
+import { Collection } from "../../../types/collections.interfaces";
 import { useState, useEffect } from "react";
 import ChaptersInfo from "../../../components/ChaptersInfo/ChaptersInfo";
 import SerieActions from "../../../components/SerieActions/SerieActions";
@@ -8,7 +8,7 @@ import "./MangaPage.css";
 
 export default function MangaPage() {
   const [manga, setManga] = useState<Manga | null>(null);
-  const [favCollection, setfavCollection] = useState<Collections | null>(null);
+  const [favCollection, setfavCollection] = useState<Collection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { manga_name } = useParams();
 

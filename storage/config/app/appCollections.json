@@ -16,14 +16,17 @@
         "id": 6,
         "name": "Dr. Stone",
         "cover_image": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\showCaseImages\\Cover.jpg",
-        "archive_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\books\\Dr. Stone",
+        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Manga\\Dr. Stone\\Dr. Stone chapters",
+        "archives_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\books\\Dr. Stone",
         "total_chapters": 235,
+        "status": "Em andamento",
         "recommended_by": "",
         "original_owner": "",
         "rating": 0
       }
     ],
     "comments": [],
-    "updated_at": ""
+    "updated_at": "",
+    "updatedAt": "2025-02-06T14:19:19.100Z"
   }
 ]

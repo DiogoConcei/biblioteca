@@ -22,10 +22,10 @@ export default function userHandlers(ipcMain: IpcMain) {
         }
     })
 
-    ipcMain.handle("favorite-serie", async (_event, serieData: Literatures) => {
+    ipcMain.handle("favorite-serie", async (_event, data_path: string) => {
         try {
-            const updateSerieData = await UserOperations.favoriteSerie(serieData)
-            await StorageOperations.updateSerieData(updateSerieData, updateSerieData.data_path);
+            const serieData = await StorageOperations.readSerieData(data_path)
+            await UserOperations.favoriteSerie(serieData)
             return { success: true };
         } catch (e) {
             console.error(`Erro em favoritar serie: ${e}`)

@@ -82,3 +82,7 @@ export interface FormTagProps {
     setFormData: React.Dispatch<React.SetStateAction<SerieForm>>;
     handleDataChange: (key: string, value: string) => void;
 }
+
+export interface CollectionButtonProps {
+    dataPath: string
+}

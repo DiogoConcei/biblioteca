@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer, webUtils } from "electron";
 import { Manga } from "./types/manga.interfaces";
 import { Book } from "./types/book.interfaces";
 import { Comic } from "./types/comic.interfaces";
-import { Collections } from "./types/collections.interfaces";
+import { Collection } from "./types/collections.interfaces";
 import { SerieForm } from "./types/series.interfaces";
 import { SeriesProcessor, Literatures, NormalizedSerieData } from "./types/series.interfaces";
 
@@ -23,8 +23,8 @@ const contextMenu = {
 
 const userAction = {
   ratingSerie: (data: Literatures, data_path: string, userRating: number): Promise<{ success: boolean }> => ipcRenderer.invoke("rating-serie", data, userRating, data_path),
-  favoriteSerie: (data: Literatures, data_path: string): Promise<{ success: boolean }> =>
-    ipcRenderer.invoke("favorite-serie", data, data_path),
+  favoriteSerie: (data_path: string): Promise<{ success: boolean }> =>
+    ipcRenderer.invoke("favorite-serie", data_path),
   markRead: async (chapter_id: number, data: Literatures, data_path: string): Promise<{ success: boolean }> => ipcRenderer.invoke("mark-read", data, chapter_id, data_path),
 }
 
@@ -36,9 +36,10 @@ const AppConfig = {
 }
 
 const collections = {
-  getFavSeries: async (): Promise<Collections> => ipcRenderer.invoke("get-fav-series"),
-  addToCollection: async (serieData: NormalizedSerieData) => ipcRenderer.invoke("add-to-collection", serieData),
-  createCollection: async (collectionName: string): Promise<void> => ipcRenderer.invoke("create-collection")
+  getCollections: async (): Promise<Collection[]> => ipcRenderer.invoke("get-collections"),
+  createCollection: async (collectionName: string): Promise<void> => ipcRenderer.invoke("create-collection", collectionName),
+  serieToCollection: async (data_path: string) => ipcRenderer.invoke("serie-to-collection", data_path),
+  getFavSeries: async (): Promise<Collection> => ipcRenderer.invoke("get-fav-series")
 }
 
 const chapters = {

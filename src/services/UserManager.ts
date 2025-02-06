@@ -1,5 +1,7 @@
 import { FileSystem } from "./abstract/FileSystem";
 import CollectionsManager from "./CollectionsManager";
+import StorageManager from "./StorageManager";
+import { SerieCollectionInfo } from "../types/collections.interfaces"
 import { Manga } from "../types/manga.interfaces";
 import { Collection } from "../types/collections.interfaces";
 import { Comic } from "../types/comic.interfaces";
@@ -8,6 +10,7 @@ import { Literatures } from "../types/series.interfaces";
 
 export default class UserManager extends FileSystem {
     private readonly CollectionsOperations: CollectionsManager = new CollectionsManager()
+    private readonly StorageOperations: StorageManager = new StorageManager()
 
     constructor() {
         super()
@@ -48,45 +51,52 @@ export default class UserManager extends FileSystem {
     public async favoriteSerie(serieData: Literatures): Promise<Literatures> {
         try {
             const collections: Collection[] = await this.CollectionsOperations.getCollections();
-            const favCollection = await this.CollectionsOperations.getFavorites(collections)
+            const favCollection = await this.CollectionsOperations.getFavorites(collections);
 
             if (!favCollection) {
                 throw new Error('Coleção de favoritos não encontrada.');
             }
 
-            const favSerieJson = {
+            const favSerieJson: SerieCollectionInfo = {
                 id: serieData.id,
                 name: serieData.name,
                 cover_image: serieData.cover_image,
                 comic_path: serieData.chapters_path,
+                archives_path: serieData.archives_path,
                 total_chapters: serieData.total_chapters,
                 status: serieData.metadata.status,
                 recommended_by: serieData.metadata.recommended_by || "",
                 original_owner: serieData.metadata.original_owner || "",
-                archive_path: serieData.archives_path,
                 rating: serieData.metadata.rating || 0
             };
 
             const newFavoriteStatus = !serieData.metadata.is_favorite;
 
-            const serieExists = favCollection.series.some((series) => series.name === serieData.name);
+            const serieExists = favCollection.series.some(
+                (series) => series.name === serieData.name
+            );
 
             if (newFavoriteStatus && !serieExists) {
                 favCollection.series.push(favSerieJson);
             } else if (!newFavoriteStatus) {
-                favCollection.series = favCollection.series.filter((series) => series.name !== serieData.name);
+                favCollection.series = favCollection.series.filter(
+                    (series) => series.name !== serieData.name
+                );
             }
-
 
             serieData.metadata.is_favorite = newFavoriteStatus;
 
+            favCollection.updatedAt = new Date().toISOString();
+
             await this.CollectionsOperations.updateFavCollection(collections, this.appCollections);
-            return serieData
+            await this.StorageOperations.updateSerieData(serieData, serieData.data_path);
+
+            return serieData;
         } catch (e) {
             console.error(`Erro ao atualizar coleção de favoritos: ${e}`);
-            throw e
+            throw e;
         }
-
     }
+
 
 }

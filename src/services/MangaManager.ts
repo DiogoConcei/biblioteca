@@ -139,6 +139,7 @@ export default class MangaManager extends FileSystem {
             }
 
             await this.storageManager.writeSerieData(MangaData)
+
             this.systemManager.setMangaId(this.globalMangaId)
         } catch (error) {
             console.error(`Erro ao gerar conteúdo para o manga: ${error}`)

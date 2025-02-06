@@ -1,4 +1,3 @@
-import { MdFormatListBulletedAdd } from "react-icons/md";
 import { IoBookmarkOutline, IoBookmark } from "react-icons/io5";
 import { FaBookOpen } from "react-icons/fa";
 import { ComicActionsProps } from "../../types/components.interfaces";
@@ -6,6 +5,7 @@ import DownloadButton from "../DonwloadButton/DownloadButton";
 import Rating from "../Rating/Rating";
 import { useNavigate } from "react-router-dom";
 import "./SerieActions.css";
+import CollectionButton from "../CollectionButton/CollectionButton";
 
 export default function SerieActions({ manga, setManga }: ComicActionsProps) {
   const navigate = useNavigate();
@@ -14,7 +14,9 @@ export default function SerieActions({ manga, setManga }: ComicActionsProps) {
     const newFavoriteStatus = !is_favorite;
 
     try {
-      const response = await window.electron.userAction.favoriteSerie(manga);
+      const response = await window.electron.userAction.favoriteSerie(
+        manga.data_path
+      );
 
       if (response.success) {
         setManga((prevSerie) => ({
@@ -50,10 +52,7 @@ export default function SerieActions({ manga, setManga }: ComicActionsProps) {
         {manga.metadata.is_favorite ? <IoBookmark /> : <IoBookmarkOutline />}
         Favoritar
       </button>
-      <button className="collection">
-        <MdFormatListBulletedAdd />
-        Coleção
-      </button>
+      <CollectionButton dataPath={manga.data_path} />
       <button
         className="reading"
         onClick={(event) => lastRead(event, manga.name)}>
