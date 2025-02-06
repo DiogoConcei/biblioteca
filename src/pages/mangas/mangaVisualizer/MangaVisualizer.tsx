@@ -182,7 +182,8 @@ export default function MangaVisualizer() {
     setPosition({ x: 0, y: 0 });
   };
 
-  if (!pages || pages.length === 0 || !pages[pageNumber]) {
+  // || !pages[pageNumber]
+  if (!pages || pages.length === 0) {
     return <p>Loading...</p>;
   }
 

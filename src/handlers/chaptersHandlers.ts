@@ -10,8 +10,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
     ipcMain.handle("get-chapter", async (_event, dataPath: string, chapter_id: number) => {
         try {
-            await mangaOperations.getChapter(dataPath, chapter_id);
-            return
+            return await mangaOperations.getChapter(dataPath, chapter_id);
         } catch (error) {
             console.error(`Erro ao recuperar o capítulo: ${error}`);
             throw error;

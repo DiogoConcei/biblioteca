@@ -33,7 +33,7 @@ export default class MangaManager extends FileSystem {
                 .filter(
                     (dirent) =>
                         dirent.isFile() &&
-                        /\.(jpe?g|png|webp|tiff)$/i.test(dirent.name)
+                        /\.(jpeg|png|webp|tiff|jpg)$/i.test(dirent.name)
                 )
                 .map((dirent) => path.join(chapter.chapter_path, dirent.name));
 

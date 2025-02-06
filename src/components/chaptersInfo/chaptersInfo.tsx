@@ -82,7 +82,7 @@ export default function ChaptersInfo({ manga }: OnlySerieProp) {
           <Link
             to={`/${manga.name}/${manga.id}/${chapter.name}/${chapter.id}/${chapter.page.last_page_read}`}
             key={chapter.id}
-            state={{ state: manga.data_path }}>
+            state={{ dataPath: manga.data_path }}>
             <li className={`chapter ${chapter.is_read ? "read" : "unread"}`}>
               <div className="filesInfo">
                 <span className="chapterName">{chapter.name}</span>
