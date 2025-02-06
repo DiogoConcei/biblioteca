@@ -2,7 +2,7 @@ import { FileSystem } from "./abstract/FileSystem";
 import fse from "fs-extra"
 import { AppConfig } from "../types/series.interfaces";
 
-export default class SystemConfig extends FileSystem {
+export default class SystemManager extends FileSystem {
 
     constructor() {
         super()
@@ -52,7 +52,7 @@ export default class SystemConfig extends FileSystem {
 
     public async getMangaId(): Promise<number> {
         try {
-            let data: AppConfig = JSON.parse(await fse.readFile(this.comicConfig, "utf-8"));
+            let data: AppConfig = JSON.parse(await fse.readFile(this.configFilePath, "utf-8"));
             return data.metadata.global_id
         } catch (e) {
             console.error(`Erro ao obter o ID atual: ${e}`);
@@ -74,4 +74,14 @@ export default class SystemConfig extends FileSystem {
 
 }
 
+// (async () => {
+//     try {
+//         const MangaOperations = new SystemManager();
+//         console.log(await MangaOperations.getMangaId())
+//         await MangaOperations.setMangaId(1)
+//         console.log(await MangaOperations.getMangaId())
+//     } catch (error) {
+//         console.error('Erro ao executar a função:', error);
+//     }
+// })();
 

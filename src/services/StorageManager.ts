@@ -7,7 +7,6 @@ import { NormalizedSerieData, SeriesProcessor, Literatures, ExhibitionSerieData 
 import { Comic } from "../types/comic.interfaces";
 import { Manga } from "../types/manga.interfaces";
 import { Book } from "../types/book.interfaces";
-import { Collection, SerieCollectionInfo } from "../types/collections.interfaces";
 
 export default class StorageManager extends FileSystem {
   private readonly fileManager: FileOperations;
@@ -40,7 +39,7 @@ export default class StorageManager extends FileSystem {
 
       const seriesData = await Promise.all(
         dataPaths.map((serieData) =>
-          jsonfile.readFile(serieData) as Promise<Manga | Comic | Book>
+          jsonfile.readFile(serieData) as Promise<Literatures>
         )
       );
 
@@ -50,6 +49,7 @@ export default class StorageManager extends FileSystem {
           name: serie.name,
           cover_image: serie.cover_image,
           chapters_read: serie.chapters_read,
+          dataPath: serie.data_path,
           total_chapters: serie.total_chapters,
           literatureForm: serie.literatureForm
         }
@@ -179,11 +179,10 @@ export default class StorageManager extends FileSystem {
   }
 
 }
-
 // (async () => {
 //   try {
-//     const MangaOperations = new StorageManager();
-//     console.log(await MangaOperations.selectMangaData("Spy x Family"))
+//     const MangaOperations = new ImageOperations();
+//     await MangaOperations.createMangaEdtion("Dr. Stone", 2)
 //   } catch (error) {
 //     console.error('Erro ao executar a função:', error);
 //   }

@@ -69,9 +69,6 @@ export default class ValidationManager extends FileSystem {
         }
     }
 
-
-
-
     public async checkDownload(serieName: string, nextChapter_id: number): Promise<boolean> {
         try {
             const serieData = await this.storageOperations.selectMangaData(serieName)

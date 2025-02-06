@@ -38,11 +38,11 @@ declare global {
                 off: (channel: string, listener: (...args: any[]) => void) => void,
             },
             chapters: {
-                getChapter: (serieName: string, chapter_id: number) => Promise<string[]>,
-                getNextChapter: (serieName: string, chapter_id: number) => Promise<string>,
-                getPrevChapter: (serieName: string, chapter_id: number) => Promise<string>,
-                saveLastRead: (serieName: string, chapter_id: number, page_number) => Promise<void>,
-                acessLastRead: (serieName: string) => Promise<string>,
+                getChapter: (dataPath: string, chapter_id: number) => Promise<string[]>,
+                getNextChapter: (dataPath: string, chapter_id: number) => Promise<string>,
+                getPrevChapter: (dataPath: string, chapter_id: number) => Promise<string>,
+                saveLastRead: (dataPath: string, chapter_id: number, page_number) => Promise<void>,
+                acessLastRead: (dataPath: string,) => Promise<string>,
             },
             collections: {
                 getCollections: () => Promise<Collection[]>,
@@ -52,8 +52,8 @@ declare global {
             },
             userAction: {
                 favoriteSerie: (data_path: string) => Promise<{ success: boolean }>,
-                ratingSerie: (data: Literatures, userRating: number) => Promise<{ success: boolean }>,
-                markRead: (data: Literatures, chapter_id: number) => Promise<{ success: boolean }>,
+                ratingSerie: (dataPath: string, userRating: number) => Promise<{ success: boolean }>,
+                markRead: (data_path: string, chapter_id: number) => Promise<{ success: boolean }>,
             },
             AppConfig: {
                 getScreenConfig: (urlLocation: string) => Promise<boolean>,

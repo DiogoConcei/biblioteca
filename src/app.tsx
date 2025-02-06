@@ -6,6 +6,8 @@ import Home from "./pages/home/Home";
 import Page404 from "./pages/page404/page404";
 import LocalUpload from "./pages/upload/localUpload/localUpload";
 import MangaPage from "./pages/mangas/mangaPage/MangaPage";
+7;
+import MangaVisualizer from "./pages/mangas/mangaVisualizer/MangaVisualizer";
 import { GlobalProvider } from "./GlobalContext";
 
 const root = ReactDOM.createRoot(
@@ -25,10 +27,10 @@ const App = () => {
             />
             {/* Comic Page */}
             {/* Book Page */}
-            {/* <Route
+            <Route
               path="/:manga_name/:manga_id/:chapter_name/:chapter_id/:page"
               element={<MangaVisualizer />}
-            /> */}
+            />
             {/* Comic Visualizer */}
             {/* Book Visualizer */}
             <Route path="/local-upload/serie" element={<LocalUpload />} />

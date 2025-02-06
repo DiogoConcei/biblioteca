@@ -23,10 +23,34 @@
         "recommended_by": "",
         "original_owner": "",
         "rating": 0
+      },
+      {
+        "id": 7,
+        "name": "Spy x Family",
+        "cover_image": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\showCaseImages\\Spy x Family.jpg",
+        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\SPY×FAMILY",
+        "archives_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\books\\SPY×FAMILY",
+        "total_chapters": 135,
+        "status": "Em andamento",
+        "recommended_by": "",
+        "original_owner": "",
+        "rating": 0
+      },
+      {
+        "id": 3,
+        "name": "Jujutsu Kaisen",
+        "cover_image": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\showCaseImages\\Jujutsu Cover.jpg",
+        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Jujutsu Kaisen",
+        "archives_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\books\\Jujutsu Kaisen",
+        "total_chapters": 259,
+        "status": "Em andamento",
+        "recommended_by": "",
+        "original_owner": "",
+        "rating": 0
       }
     ],
     "comments": [],
     "updated_at": "",
-    "updatedAt": "2025-02-06T14:19:19.100Z"
+    "updatedAt": "2025-02-06T15:44:49.315Z"
   }
 ]

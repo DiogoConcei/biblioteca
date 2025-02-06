@@ -9,10 +9,10 @@ import ImageOperations from "./ImageManager";
 import SystemConfig from "./SystemManager";
 import CollectionsManager from "./CollectionsManager";
 
-// Concertar set e get do global id
 
 export default class MangaManager extends FileSystem {
-    private globalMangaId: number
+    private global_id: number
+    private readonly imageManager: ImageOperations = new ImageOperations()
     private readonly fileManager: FileOperations = new FileOperations()
     private readonly storageManager: StorageManager = new StorageManager()
     private readonly collectionsOperations: CollectionsManager = new CollectionsManager()
@@ -22,29 +22,30 @@ export default class MangaManager extends FileSystem {
         super()
     }
 
-    // public async getChapter(serieName: string, chapter_id: number): Promise<string[] | string> {
-    //     try {
-    //         const serieData = await this.storageManager.selectMangaData(serieName);
-    //         const chaptersData = serieData.chapters;
-    //         const chapter = chaptersData.find((chap) => chap.id === chapter_id);
-    //         const chapterDirents = await fs.readdir(chapter.chapter_path, { withFileTypes: true });
+    public async getChapter(dataPath: string, chapter_id: number): Promise<string[] | string> {
+        try {
+            const serieData = await this.storageManager.readSerieData(dataPath);
+            const chaptersData = serieData.chapters;
+            const chapter = chaptersData.find((chap) => chap.id === chapter_id);
+            const chapterDirents = await fs.readdir(chapter.chapter_path, { withFileTypes: true });
 
-    //         const imageFiles = chapterDirents
-    //             .filter(
-    //                 (dirent) =>
-    //                     dirent.isFile() &&
-    //                     /\.(jpe?g|png|webp|tiff)$/i.test(dirent.name)
-    //             )
-    //             .map((dirent) => path.join(chapter.chapter_path, dirent.name));
+            const imageFiles = chapterDirents
+                .filter(
+                    (dirent) =>
+                        dirent.isFile() &&
+                        /\.(jpe?g|png|webp|tiff)$/i.test(dirent.name)
+                )
+                .map((dirent) => path.join(chapter.chapter_path, dirent.name));
 
-    //         const processedImages = await this.imageManager.encodeImageToBase64(imageFiles)
 
-    //         return processedImages
-    //     } catch (error) {
-    //         console.error(`Erro ao obter conteúdo do capítulo: ${error.message}`);
-    //         throw error;
-    //     }
-    // }
+            const processedImages = await this.imageManager.encodeImageToBase64(imageFiles)
+
+            return processedImages
+        } catch (error) {
+            console.error(`Erro ao obter conteúdo do capítulo: ${error.message}`);
+            throw error;
+        }
+    }
 
     public async createMangaChapters(serie: Manga): Promise<MangaChapter[]> {
         try {
@@ -80,11 +81,11 @@ export default class MangaManager extends FileSystem {
 
     public async createMangaData(serie: SerieForm): Promise<Manga> {
         try {
-            const global_id = await this.systemManager.getMangaId() + 1
+            this.global_id = await this.systemManager.getMangaId() + 1
             const total_chapters = (await fs.readdir(serie.archives_path, { withFileTypes: true })).length
 
             return {
-                id: global_id,
+                id: this.global_id,
                 name: serie.name,
                 sanitized_name: serie.sanitized_name,
                 archives_path: serie.archives_path,
@@ -98,7 +99,7 @@ export default class MangaManager extends FileSystem {
                 literatureForm: serie.literatureForm,
                 chapters_read: 0,
                 reading_data: {
-                    last_chapter_id: 0,
+                    last_chapter_id: 1,
                     last_read_at: ""
                 },
                 chapters: [],
@@ -140,7 +141,7 @@ export default class MangaManager extends FileSystem {
 
             await this.storageManager.writeSerieData(MangaData)
 
-            this.systemManager.setMangaId(this.globalMangaId)
+            this.systemManager.setMangaId(this.global_id)
         } catch (error) {
             console.error(`Erro ao gerar conteúdo para o manga: ${error}`)
             throw error
@@ -152,7 +153,8 @@ export default class MangaManager extends FileSystem {
 // (async () => {
 //     try {
 //         const MangaOperations = new MangaManager();
-//         await MangaOperations.createManga(["C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\Books\\Dr. Stone"])
+//         const dataPath = "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\json files\\Mangas\\Dr. Stone.json"
+//         console.log(await MangaOperations.getChapter(dataPath, 1))
 //     } catch (error) {
 //         console.error('Erro ao executar a função:', error);
 //     }

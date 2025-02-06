@@ -1,6 +1,6 @@
 import "./MangaVisualizer.css";
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import PageControl from "../../../components/PageControl/PageControl";
 import VisualizerMenu from "../../../components/VisualizerMenu/VisualizerMenu";
 import { useGlobal } from "../../../GlobalContext";
@@ -14,17 +14,21 @@ export default function MangaVisualizer() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const pageRef = useRef(null);
 
-  const { book_name, book_id, chapter_id, page } = useParams();
+  const { manga_name, book_id, chapter_id, page } = useParams();
   const { theme, setTheme } = useGlobal();
   const navigate = useNavigate();
   const loadingTime = 1;
+
+  const location = useLocation();
+  const state = location.state;
+  const mangaDataPath = state.dataPath;
 
   useEffect(() => {
     const getChapter = async () => {
       try {
         setLoading(true);
         const data = await window.electron.chapters.getChapter(
-          book_name,
+          mangaDataPath,
           Number(chapter_id)
         );
 
@@ -55,7 +59,7 @@ export default function MangaVisualizer() {
         pages.length > 0
       ) {
         await window.electron.download.lineReading(
-          book_name,
+          manga_name,
           Number(chapter_id)
         );
       }
@@ -123,15 +127,18 @@ export default function MangaVisualizer() {
   const nextChapter = async () => {
     try {
       const nextChapterUrl = await window.electron.chapters.getNextChapter(
-        book_name,
+        mangaDataPath,
         Number(chapter_id)
       );
       await window.electron.chapters.saveLastRead(
-        book_name,
+        mangaDataPath,
         Number(chapter_id),
         pageNumber
       );
-      await window.electron.userAction.markRead(book_name, Number(chapter_id));
+      await window.electron.userAction.markRead(
+        mangaDataPath,
+        Number(chapter_id)
+      );
       navigate(nextChapterUrl);
     } catch (error) {
       console.error(`Erro ao navegar para o próximo capítulo: ${error}`);
@@ -149,7 +156,7 @@ export default function MangaVisualizer() {
   const prevChapter = async () => {
     try {
       const prevChapterUrl = await window.electron.chapters.getPrevChapter(
-        book_name,
+        mangaDataPath,
         Number(chapter_id)
       );
       navigate(prevChapterUrl);
@@ -172,10 +179,10 @@ export default function MangaVisualizer() {
   };
 
   const resetDrag = () => {
-    setPosition({ x: 0, y: 0 }); // Resetando a posição do elemento (caso necessário)
+    setPosition({ x: 0, y: 0 });
   };
 
-  if (loading || !pages || pages.length === 0 || !pages[pageNumber]) {
+  if (!pages || pages.length === 0 || !pages[pageNumber]) {
     return <p>Loading...</p>;
   }
 

@@ -47,13 +47,13 @@ export default function SeriesCards({ searchInput }: ComicCardsProps) {
 
   const lastChapter = async (
     e: React.MouseEvent<HTMLDivElement | SVGElement>,
-    serieName: string
+    dataPath: string
   ) => {
     e.preventDefault();
     const lastChapterUrl = await window.electron.chapters.acessLastRead(
-      serieName
+      dataPath
     );
-    navigate(lastChapterUrl);
+    navigate(lastChapterUrl, { state: { dataPath } });
     console.log(lastChapterUrl);
   };
 
@@ -73,7 +73,7 @@ export default function SeriesCards({ searchInput }: ComicCardsProps) {
               <figcaption>
                 <FaPlay
                   className="playChapter"
-                  onClick={(e) => lastChapter(e, serie.name)}
+                  onClick={(e) => lastChapter(e, serie.dataPath)}
                 />
               </figcaption>
             </figure>

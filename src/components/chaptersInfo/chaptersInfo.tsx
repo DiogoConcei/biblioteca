@@ -47,7 +47,7 @@ export default function ChaptersInfo({ manga }: OnlySerieProp) {
     chapter_id: number
   ) => {
     event.preventDefault();
-    await window.electron.userAction.markRead(manga, chapter_id);
+    await window.electron.userAction.markRead(manga.data_path, chapter_id);
   };
 
   const downloadIndividual = async (
@@ -81,7 +81,8 @@ export default function ChaptersInfo({ manga }: OnlySerieProp) {
         {currentItems.map((chapter) => (
           <Link
             to={`/${manga.name}/${manga.id}/${chapter.name}/${chapter.id}/${chapter.page.last_page_read}`}
-            key={chapter.id}>
+            key={chapter.id}
+            state={{ state: manga.data_path }}>
             <li className={`chapter ${chapter.is_read ? "read" : "unread"}`}>
               <div className="filesInfo">
                 <span className="chapterName">{chapter.name}</span>

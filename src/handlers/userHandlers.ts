@@ -8,13 +8,14 @@ import StorageManager from "../services/StorageManager";
 import CollectionsOperations from "../services/CollectionsManager";
 
 export default function userHandlers(ipcMain: IpcMain) {
-    const StorageOperations = new StorageManager()
-    const UserOperations = new UserManager()
+    const storageOperations = new StorageManager()
+    const userOperations = new UserManager()
 
-    ipcMain.handle("rating-serie", async (_event, serieData: Literatures, userRating: string) => {
+    ipcMain.handle("rating-serie", async (_event, dataPath: string, userRating: number) => {
         try {
-            const updateData = await UserOperations.ratingSerie(serieData, userRating)
-            this.StorageOperations.updateSerieData(updateData, serieData.data_path);
+            const serieData = await storageOperations.readSerieData(dataPath)
+            const updateData = await userOperations.ratingSerie(serieData, userRating)
+            storageOperations.updateSerieData(updateData, serieData.data_path);
             return { success: true };
         } catch (e) {
             console.error(`Falha em ranquear serie: ${e}`)
@@ -24,8 +25,8 @@ export default function userHandlers(ipcMain: IpcMain) {
 
     ipcMain.handle("favorite-serie", async (_event, data_path: string) => {
         try {
-            const serieData = await StorageOperations.readSerieData(data_path)
-            await UserOperations.favoriteSerie(serieData)
+            const serieData = await storageOperations.readSerieData(data_path)
+            await userOperations.favoriteSerie(serieData)
             return { success: true };
         } catch (e) {
             console.error(`Erro em favoritar serie: ${e}`)
@@ -33,15 +34,11 @@ export default function userHandlers(ipcMain: IpcMain) {
         }
     });
 
-    ipcMain.handle("mark-read", async (_event, serieData: Literatures, chapter_id: number) => {
+    ipcMain.handle("mark-read", async (_event, dataPath: string, chapter_id: number) => {
         try {
-            const chapter = serieData.chapters.find((c) => c.id === chapter_id);
-
-            if (chapter) chapter.is_read = true;
-
-            await StorageOperations.updateSerieData(serieData, serieData.data_path);
+            await userOperations.markChapterRead(dataPath, chapter_id)
         } catch (error) {
-            console.error(`Erro ao marcar capítulo como lido: ${error}`);
+            console.error(`Falha em marcar como lido: ${error}`);
             throw error;
         }
     });

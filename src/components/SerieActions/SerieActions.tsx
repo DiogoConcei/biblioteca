@@ -35,17 +35,18 @@ export default function SerieActions({ manga, setManga }: ComicActionsProps) {
 
   const lastRead = async (
     event: React.MouseEvent<HTMLButtonElement>,
-    serieName: string
+    dataPath: string
   ) => {
+    event.preventDefault();
     const lastChapterUrl = await window.electron.chapters.acessLastRead(
-      serieName
+      dataPath
     );
-    navigate(lastChapterUrl);
+    navigate(lastChapterUrl, { state: { dataPath } });
   };
 
   return (
     <div className="serieActions">
-      <DownloadButton serieName={manga.name} />
+      <DownloadButton dataPath={manga.data_path} />
       <button
         className="favorite"
         onClick={(event) => favorite(manga.metadata.is_favorite)}>
@@ -55,7 +56,7 @@ export default function SerieActions({ manga, setManga }: ComicActionsProps) {
       <CollectionButton dataPath={manga.data_path} />
       <button
         className="reading"
-        onClick={(event) => lastRead(event, manga.name)}>
+        onClick={(event) => lastRead(event, manga.data_path)}>
         <FaBookOpen />
         Continuar
       </button>

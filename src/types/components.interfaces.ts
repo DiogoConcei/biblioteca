@@ -46,7 +46,7 @@ export interface ComicActionsProps {
 }
 
 export interface downloadButtonProps {
-    serieName: string
+    dataPath: string
 }
 
 export interface GlobalContext {

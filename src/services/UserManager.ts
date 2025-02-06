@@ -10,13 +10,13 @@ import { Literatures } from "../types/series.interfaces";
 
 export default class UserManager extends FileSystem {
     private readonly CollectionsOperations: CollectionsManager = new CollectionsManager()
-    private readonly StorageOperations: StorageManager = new StorageManager()
+    private readonly storageOperations: StorageManager = new StorageManager()
 
     constructor() {
         super()
     }
 
-    public ratingSerie(serieData: Literatures, userRating: string): Manga | Comic | Book {
+    public ratingSerie(serieData: Literatures, userRating: number): Literatures {
         const starsRating = [
             "1 - Péssimo",
             "2 - Horrível",
@@ -25,7 +25,7 @@ export default class UserManager extends FileSystem {
             "5 - Excelente",
         ];
 
-        let caseIndex = starsRating.indexOf(userRating)
+        let caseIndex = userRating
 
         switch (caseIndex) {
             case 0:
@@ -89,7 +89,7 @@ export default class UserManager extends FileSystem {
             favCollection.updatedAt = new Date().toISOString();
 
             await this.CollectionsOperations.updateFavCollection(collections, this.appCollections);
-            await this.StorageOperations.updateSerieData(serieData, serieData.data_path);
+            await this.storageOperations.updateSerieData(serieData, serieData.data_path);
 
             return serieData;
         } catch (e) {
@@ -98,5 +98,18 @@ export default class UserManager extends FileSystem {
         }
     }
 
+    public async markChapterRead(dataPath: string, chapter_id: number): Promise<void> {
+        try {
+            const serieData = await this.storageOperations.readSerieData(dataPath)
+            const chapter = serieData.chapters.find((c) => c.id === chapter_id);
+
+            if (chapter) chapter.is_read = true;
+
+            await this.storageOperations.updateSerieData(serieData, serieData.data_path);
+        } catch (error) {
+            console.error(`Erro ao marcar capítulo como lido: ${error}`);
+            throw error;
+        }
+    }
 
 }

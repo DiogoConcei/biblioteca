@@ -8,9 +8,6 @@ export default function Rating({ manga }: OnlySerieProp) {
   const [selectedRating, setSelectedRating] = useState<number>(
     manga.metadata.rating
   );
-  const [previousRating, setPreviousRating] = useState<number>(
-    manga.metadata.rating
-  );
 
   const starsRating = [
     "1 - Péssimo",
@@ -25,17 +22,15 @@ export default function Rating({ manga }: OnlySerieProp) {
   };
 
   const onSelect = async (ratingIndex: number) => {
-    const previousRatingValue = selectedRating;
-    setPreviousRating(previousRatingValue);
-    setSelectedRating(ratingIndex);
-
     try {
-      await window.electron.userAction.ratingSerie(manga, ratingIndex);
+      await window.electron.userAction.ratingSerie(
+        manga.data_path,
+        ratingIndex
+      );
       setIsOpen(false);
     } catch (error) {
       console.error("Erro ao atualizar o rating:", error);
       throw error;
-      setSelectedRating(previousRatingValue);
     }
   };
 

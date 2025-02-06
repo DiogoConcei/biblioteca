@@ -9,14 +9,12 @@ import fse from "fs/promises";
 import jsonfile from "jsonfile";
 import path from "path";
 
-export default class ImageOperations extends FileSystem {
-  private readonly dataManager: StorageManager;
-  private readonly fileManager: FileOperations;
+export default class ImageManager extends FileSystem {
+  private readonly storageOperations: StorageManager = new StorageManager()
+  private readonly fileOperations: FileOperations = new FileOperations()
 
   constructor() {
     super();
-    this.dataManager = new StorageManager();
-    this.fileManager = new FileOperations();
   }
 
   private async extractionProcess(chapterSeriePath: string, chapterFile: string): Promise<void> {
@@ -35,36 +33,6 @@ export default class ImageOperations extends FileSystem {
     }
   }
 
-  // É necessário reescreve-lo
-  // public async extractInitialCovers(fileNames: string[]): Promise<void> {
-  //   try {
-  //     const seriesData = await Promise.all(
-  //       fileNames.map(fileName => this.dataManager.selectSerieData(fileName))
-  //     );
-
-  //     const archivesPath = seriesData.map(serie => serie.name);
-
-  //     const extractedPaths = await Promise.all(
-  //       archivesPath.map(archivePath => this.createComic(archivePath, 1))
-  //     );
-
-
-  //     const chapterImages = await Promise.all(
-  //       extractedPaths.map(chapterPath => this.foundFiles(chapterPath))
-  //     );
-
-  //     const initialCovers = (await Promise.all(
-  //       chapterImages.map(images => this.analyzeImage(images))
-  //     )).flat();
-
-  //     for (const cover of initialCovers) {
-  //       await this.CoverCreation(cover);
-  //     }
-  //   } catch (error) {
-  //     console.error(`Erro em extrair a showcaseImage: ${error}`)
-  //     throw error;
-  //   }
-  // }
 
   public async encodeImageToBase64(filePath: string[] | string): Promise<string | string[]> {
     try {
@@ -88,63 +56,8 @@ export default class ImageOperations extends FileSystem {
     }
   }
 
-
-  private async analyzeImage(imagePaths: string[]): Promise<string[]> {
-    const validImages: string[] = [];
-    for (const imagePath of imagePaths) {
-      try {
-        const image = await Jimp.read(imagePath);
-        if (image.bitmap.width <= 1200 && image.bitmap.height >= 1300) {
-          validImages.push(imagePath);
-          break;
-        }
-      } catch (error) {
-        console.error(`[ERROR] Erro ao processar a imagem ${imagePath}:`, error);
-        throw error;
-      }
-    }
-
-    if (validImages.length === 0) {
-      const specialImage = await this.analyzeSpecialImage(imagePaths);
-      if (specialImage) validImages.push(specialImage);
-    }
-
-    return validImages;
-  }
-
-  private async analyzeSpecialImage(imagePaths: string[]): Promise<string | null> {
-    for (const imagePath of imagePaths) {
-      try {
-        const image = await Jimp.read(imagePath);
-        if (image.bitmap.width >= 400 || image.bitmap.height >= 600) {
-          return imagePath;
-        }
-      } catch (error) {
-        console.error(`[ERROR] Erro ao processar a imagem especial ${imagePath}:`, error);
-        throw error;
-      }
-    }
-    return null;
-  }
-
-
-  private async CoverCreation(imagePath: string): Promise<string> {
-    const dirPath = path.dirname(imagePath);
-    const directories = dirPath.split(path.sep);
-    const serieName = directories[directories.length - 2];
-    const chapterName = path.basename(dirPath);
-    const coverFileName = `${serieName}_${chapterName}_${path.basename(imagePath)}`;
-    const destinationPath = path.join(this.showcaseImages, coverFileName);
-
-    const fileExists = await fs.promises.stat(imagePath).catch(() => false);
-    if (!fileExists) throw new Error(`Arquivo ${imagePath} não encontrado.`);
-
-    await fs.promises.copyFile(imagePath, destinationPath);
-    return serieName;
-  }
-
-  public async createMangaEdtionById(serieName: string, chapter_id: number): Promise<string> {
-    const serieData = await this.dataManager.selectMangaData(serieName);
+  public async createMangaEdtionById(dataPath: string, chapter_id: number): Promise<string> {
+    const serieData = await this.storageOperations.readSerieData(dataPath);
 
     try {
       const chaptersData = serieData.chapters
@@ -183,14 +96,14 @@ export default class ImageOperations extends FileSystem {
   }
 
   public async createMangaEdtion(serieName: string, quantity: number): Promise<string> {
-    const serieData = await this.dataManager.selectMangaData(serieName);
+    const serieData = await this.storageOperations.selectMangaData(serieName);
 
     try {
-      const organizedChapters = await this.fileManager.orderByChapters(
-        await this.fileManager.foundFiles(serieData.archives_path)
+      const organizedChapters = await this.fileOperations.orderByChapters(
+        await this.fileOperations.foundFiles(serieData.archives_path)
       );
 
-      const lastDownload = await this.dataManager.foundLastDownload(serieData);
+      const lastDownload = await this.storageOperations.foundLastDownload(serieData);
       const firstItem = lastDownload;
       const lastItem = Math.min(lastDownload + quantity, organizedChapters.length);
       const chaptersPath = path.join(this.mangasImages, serieData.name, `${serieData.name} chapters`);
@@ -219,13 +132,112 @@ export default class ImageOperations extends FileSystem {
     }
   }
 
+  // É necessário reescreve-lo
+  // public async extractInitialCovers(fileNames: string[]): Promise<void> {
+  //   try {
+  //     const seriesData = await Promise.all(
+  //       fileNames.map(fileName => this.storageOperations.selectSerieData(fileName))
+  //     );
 
+  //     const archivesPath = seriesData.map(serie => serie.name);
+
+  //     const extractedPaths = await Promise.all(
+  //       archivesPath.map(archivePath => this.createComic(archivePath, 1))
+  //     );
+
+
+  //     const chapterImages = await Promise.all(
+  //       extractedPaths.map(chapterPath => this.foundFiles(chapterPath))
+  //     );
+
+  //     const initialCovers = (await Promise.all(
+  //       chapterImages.map(images => this.analyzeImage(images))
+  //     )).flat();
+
+  //     for (const cover of initialCovers) {
+  //       await this.CoverCreation(cover);
+  //     }
+  //   } catch (error) {
+  //     console.error(`Erro em extrair a showcaseImage: ${error}`)
+  //     throw error;
+  //   }
+  // }
+
+
+  // private async analyzeImage(imagePaths: string[]): Promise<string[]> {
+  //   const validImages: string[] = [];
+  //   for (const imagePath of imagePaths) {
+  //     try {
+  //       const image = await Jimp.read(imagePath);
+  //       if (image.bitmap.width <= 1200 && image.bitmap.height >= 1300) {
+  //         validImages.push(imagePath);
+  //         break;
+  //       }
+  //     } catch (error) {
+  //       console.error(`[ERROR] Erro ao processar a imagem ${imagePath}:`, error);
+  //       throw error;
+  //     }
+  //   }
+
+  //   if (validImages.length === 0) {
+  //     const specialImage = await this.analyzeSpecialImage(imagePaths);
+  //     if (specialImage) validImages.push(specialImage);
+  //   }
+
+  //   return validImages;
+  // }
+
+  // private async analyzeSpecialImage(imagePaths: string[]): Promise<string | null> {
+  //   for (const imagePath of imagePaths) {
+  //     try {
+  //       const image = await Jimp.read(imagePath);
+  //       if (image.bitmap.width >= 400 || image.bitmap.height >= 600) {
+  //         return imagePath;
+  //       }
+  //     } catch (error) {
+  //       console.error(`[ERROR] Erro ao processar a imagem especial ${imagePath}:`, error);
+  //       throw error;
+  //     }
+  //   }
+  //   return null;
+  // }
+
+
+  // private async CoverCreation(imagePath: string): Promise<string> {
+  //   const dirPath = path.dirname(imagePath);
+  //   const directories = dirPath.split(path.sep);
+  //   const serieName = directories[directories.length - 2];
+  //   const chapterName = path.basename(dirPath);
+  //   const coverFileName = `${serieName}_${chapterName}_${path.basename(imagePath)}`;
+  //   const destinationPath = path.join(this.showcaseImages, coverFileName);
+
+  //   const fileExists = await fs.promises.stat(imagePath).catch(() => false);
+  //   if (!fileExists) throw new Error(`Arquivo ${imagePath} não encontrado.`);
+
+  //   await fs.promises.copyFile(imagePath, destinationPath);
+  //   return serieName;
+  // }
+
+  // public async teste() {
+  //   const serieData = await this.storageOperations.readSerieData("C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\json files\\Mangas\\Dr. Stone.json")
+  //   const lastChapterId = serieData.reading_data.last_chapter_id;
+  //   const lastChapter = serieData.chapters.find((c) => c.id === lastChapterId);
+
+  //   if (!lastChapter) throw new Error(`Último capítulo não encontrado para a série ${serieData.name}`);
+
+  //   if (lastChapter.is_dowload === false) {
+  //     await this.createMangaEdtionById(serieData.data_path, lastChapter.id)
+  //   }
+
+  //   console.log(`/${serieData.name}/${serieData.id}/${lastChapter.name}/${lastChapterId}/${lastChapter.page.last_page_read}`)
+  // }
 }
+
 
 // (async () => {
 //   try {
-//     const MangaOperations = new ImageOperations();
-//     await MangaOperations.createMangaEdtion("Dr. Stone", 2)
+//     const MangaOperations = new ImageManager();
+//     console.log(await MangaOperations.teste())
 //   } catch (error) {
 //     console.error('Erro ao executar a função:', error);
 //   }

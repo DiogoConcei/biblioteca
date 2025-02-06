@@ -20,8 +20,9 @@ export interface ExhibitionSerieData {
     name: string,
     cover_image: string,
     chapters_read: number,
-    total_chapters: number
-    literatureForm: "Manga" | "Quadrinho" | "Livro" | "";
+    dataPath: string,
+    total_chapters: number,
+    literatureForm: "Manga" | "Quadrinho" | "Livro" | ""
 }
 
 export interface NormalizedSerieData {
