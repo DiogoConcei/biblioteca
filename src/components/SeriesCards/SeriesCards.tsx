@@ -54,7 +54,7 @@ export default function SeriesCards({ searchInput }: ComicCardsProps) {
       dataPath
     );
     navigate(lastChapterUrl, { state: { dataPath } });
-    console.log(lastChapterUrl);
+    lastChapterUrl;
   };
 
   return (

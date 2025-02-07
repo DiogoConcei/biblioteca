@@ -18,7 +18,6 @@ export default function CostumizeImage({
         const image_path = await window.electron.webUtilities.getPathForFile(
           file
         );
-        console.log(image_path);
         handleDataChange("cover_path", image_path);
       };
       reader.readAsDataURL(file);

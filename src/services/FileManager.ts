@@ -5,7 +5,7 @@ import { Comic } from "../types/comic.interfaces";
 import path from "path";
 import fse from 'fs-extra'
 
-export default class FileOperations extends FileSystem {
+export default class FileManager extends FileSystem {
   constructor() {
     super();
   }
@@ -96,17 +96,40 @@ export default class FileOperations extends FileSystem {
   }
 
 
-  public async getSeries(): Promise<string[]> {
+  public async getDataPaths(): Promise<string[]> {
     try {
-      const bookContent = (await fse.readdir(this.booksData, { withFileTypes: true })).map((bookPath) => path.join(bookPath.parentPath, bookPath.name))
-      const comicContent = (await fse.readdir(this.comicsData, { withFileTypes: true })).map((comicPath) => path.join(comicPath.parentPath, comicPath.name))
-      const mangaContent = (await fse.readdir(this.mangasData, { withFileTypes: true })).map((mangaPath) => path.join(mangaPath.parentPath, mangaPath.name))
-      const content = [...bookContent, ...comicContent, ...mangaContent]
+      const directories = [this.booksData, this.comicsData, this.mangasData];
 
-      return content;
+      const contentPromises = directories.map(async (dir) => {
+        const items = await fse.readdir(dir, { withFileTypes: true });
+        return items.map((item) => path.join(dir, item.name));
+      });
+
+      const contentArrays = await Promise.all(contentPromises);
+      return contentArrays.flat();
     } catch (e) {
-      console.error(`erro encontrado: ${e}`);
+      console.error(`Erro ao obter séries: ${e}`);
       throw e;
+    }
+  }
+
+  public async getDataPath(serieName: string): Promise<string> {
+    try {
+      const directories = [this.booksData, this.comicsData, this.mangasData];
+
+      const contentPromises = await directories.map(async (dir) => {
+        const items = await fse.readdir(dir, { withFileTypes: true });
+        return items.map((item) => path.join(dir, item.name));
+      })
+
+      const contentArrays = (await Promise.all(contentPromises)).flat()
+
+      const dataPath = contentArrays.find((contentPath) => path.basename(contentPath, path.extname(contentPath)) === serieName)
+
+      return dataPath
+    } catch (e) {
+      console.error(`Erro ao obter série: ${e}`)
+      console.error
     }
   }
 
@@ -114,8 +137,10 @@ export default class FileOperations extends FileSystem {
 
 // (async () => {
 //   try {
-//     const comicManager = new FileOperations()
-//     console.log(await comicManager.orderByChapters(['C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\books\\SPY×FAMILY\\Potrinho Alegre_Vol.1 Ch.1 - Missão 01.cbz', 'C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\books\\SPY×FAMILY\\TQ Scans & Space Celestial & Eleven Scanlator_Ch.93 - Missão_ 93.cbz']))
+//     const comicManager = new FileManager()
+//     console.log(await comicManager.getDataPath("Spy x Family"))
+//     // const paths = await comicManager.getSeries()
+//     // console.log(await comicManager.orderByChapters(['C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\books\\SPY×FAMILY\\Potrinho Alegre_Vol.1 Ch.1 - Missão 01.cbz', 'C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\books\\SPY×FAMILY\\TQ Scans & Space Celestial & Eleven Scanlator_Ch.93 - Missão_ 93.cbz']))
 //   } catch (error) {
 //     console.error("Erro ao buscar os dados:", error);
 //   }

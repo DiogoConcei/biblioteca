@@ -4,9 +4,14 @@ import StorageManager from "./StorageManager";
 import jsonfile from "jsonfile"
 import path from 'path'
 import fse from 'fs-extra'
+import FileManager from "./FileManager";
+import { Literatures } from "../types/series.interfaces";
+import ImageManager from "./ImageManager";
 
 export default class ValidationManager extends FileSystem {
-    private readonly storageOperations: StorageManager = new StorageManager()
+    private readonly storageManager: StorageManager = new StorageManager()
+    private readonly fileManager: FileManager = new FileManager()
+    private readonly imageManager: ImageManager = new ImageManager()
 
     constructor() {
         super()
@@ -69,25 +74,41 @@ export default class ValidationManager extends FileSystem {
         }
     }
 
-    public async checkDownload(serieName: string, nextChapter_id: number): Promise<boolean> {
+    public async checkDownload(serieData: Literatures, chapter_id: number): Promise<boolean> {
         try {
-            const serieData = await this.storageOperations.selectMangaData(serieName)
             const chaptersData = serieData.chapters
 
-            if (chaptersData.length - 1 >= nextChapter_id) return false
+            if (chapter_id > chaptersData.length) return
 
             for (let chapters of chaptersData) {
-                if (nextChapter_id === chapters.id) {
+                if (chapter_id === chapters.id) {
                     return chapters.is_dowload
                 }
             }
 
         } catch (error) {
             console.error(`Falha em verificar o estado do proximo capitulo: ${error}`)
-            throw new error
+            throw error
         }
         return
     }
 
 }
 
+// (async () => {
+//     try {
+//         const MangaOperations = new StorageManager();
+//         const imageOperations = new ImageManager()
+//         const validationManager = new ValidationManager()
+//         const serieData = await MangaOperations.readSerieData("C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\json files\\Mangas\\Dr. Stone.json")
+
+//         const already_download = await validationManager.checkDownload(serieData, 3)
+
+//         if (already_download) return
+
+//         await imageOperations.createMangaEdtionById(serieData.data_path, 3)
+
+//     } catch (error) {
+//         console.error('Erro ao executar a função:', error);
+//     }
+// })();

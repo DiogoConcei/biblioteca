@@ -2,10 +2,10 @@ import jsonfile from "jsonfile";
 import { FileSystem } from "./abstract/FileSystem";
 import { NormalizedSerieData } from "../types/series.interfaces";
 import { Collection, SerieCollectionInfo } from "../types/collections.interfaces";
-import ValidationOperations from "./ValidationManager";
+import ValidationManager from "./ValidationManager";
 
 export default class CollectionsManager extends FileSystem {
-    private readonly validationManager: ValidationOperations = new ValidationOperations();
+    private readonly validationManager: ValidationManager = new ValidationManager();
 
     constructor() {
         super();

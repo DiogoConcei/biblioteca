@@ -19,16 +19,12 @@ export default function MangaVisualizer() {
   const navigate = useNavigate();
   const loadingTime = 1;
 
-  const location = useLocation();
-  const state = location.state;
-  const mangaDataPath = state.dataPath;
-
   useEffect(() => {
     const getChapter = async () => {
       try {
         setLoading(true);
         const data = await window.electron.chapters.getChapter(
-          mangaDataPath,
+          manga_name,
           Number(chapter_id)
         );
 
@@ -127,18 +123,15 @@ export default function MangaVisualizer() {
   const nextChapter = async () => {
     try {
       const nextChapterUrl = await window.electron.chapters.getNextChapter(
-        mangaDataPath,
+        manga_name,
         Number(chapter_id)
       );
       await window.electron.chapters.saveLastRead(
-        mangaDataPath,
+        manga_name,
         Number(chapter_id),
         pageNumber
       );
-      await window.electron.userAction.markRead(
-        mangaDataPath,
-        Number(chapter_id)
-      );
+      await window.electron.userAction.markRead(manga_name, Number(chapter_id));
       navigate(nextChapterUrl);
     } catch (error) {
       console.error(`Erro ao navegar para o próximo capítulo: ${error}`);
@@ -156,7 +149,7 @@ export default function MangaVisualizer() {
   const prevChapter = async () => {
     try {
       const prevChapterUrl = await window.electron.chapters.getPrevChapter(
-        mangaDataPath,
+        manga_name,
         Number(chapter_id)
       );
       navigate(prevChapterUrl);
@@ -182,8 +175,7 @@ export default function MangaVisualizer() {
     setPosition({ x: 0, y: 0 });
   };
 
-  // || !pages[pageNumber]
-  if (!pages || pages.length === 0) {
+  if (!pages || pages.length === 0 || !pages[pageNumber]) {
     return <p>Loading...</p>;
   }
 

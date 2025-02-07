@@ -1,19 +1,18 @@
 import path from "path";
 import fs from "fs/promises";
 import jsonfile from "jsonfile";
-import FileOperations from "./FileManager";
+import FileManager from "./FileManager";
 import { FileSystem } from "./abstract/FileSystem";
-import { NormalizedSerieData, SeriesProcessor, Literatures, ExhibitionSerieData } from "../types/series.interfaces";
 import { Comic } from "../types/comic.interfaces";
 import { Manga } from "../types/manga.interfaces";
 import { Book } from "../types/book.interfaces";
+import { NormalizedSerieData, SeriesProcessor, Literatures, ExhibitionSerieData } from "../types/series.interfaces";
 
 export default class StorageManager extends FileSystem {
-  private readonly fileManager: FileOperations;
+  private readonly fileManager: FileManager = new FileManager();
 
   constructor() {
     super();
-    this.fileManager = new FileOperations();
   }
 
   public createNormalizedData(serie: Literatures): NormalizedSerieData {
@@ -35,7 +34,7 @@ export default class StorageManager extends FileSystem {
 
   public async seriesData(): Promise<ExhibitionSerieData[]> {
     try {
-      const dataPaths = await this.fileManager.getSeries();
+      const dataPaths = await this.fileManager.getDataPaths();
 
       const seriesData = await Promise.all(
         dataPaths.map((serieData) =>
@@ -179,10 +178,11 @@ export default class StorageManager extends FileSystem {
   }
 
 }
+
 // (async () => {
 //   try {
-//     const MangaOperations = new ImageOperations();
-//     await MangaOperations.createMangaEdtion("Dr. Stone", 2)
+//     const MangaOperations = new StorageManager();
+//     console.log(await MangaOperations.readSerieData("C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\json files\\Mangas\\Dr. Stone.json"))
 //   } catch (error) {
 //     console.error('Erro ao executar a função:', error);
 //   }

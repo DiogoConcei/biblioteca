@@ -1,4 +1,5 @@
 import { IpcMain } from "electron";
+import FileOperations from "../services/FileManager";
 import ImageManager from "../services/ImageManager";
 import MangaManager from "../services/MangaManager";
 import StorageManager from "../services/StorageManager";
@@ -7,9 +8,11 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
     const mangaOperations = new MangaManager();
     const imageOperations = new ImageManager()
     const storageOperations = new StorageManager();
+    const fileOperations = new FileOperations()
 
-    ipcMain.handle("get-chapter", async (_event, dataPath: string, chapter_id: number) => {
+    ipcMain.handle("get-chapter", async (_event, serieName: string, chapter_id: number) => {
         try {
+            const dataPath = await fileOperations.getDataPath(serieName)
             return await mangaOperations.getChapter(dataPath, chapter_id);
         } catch (error) {
             console.error(`Erro ao recuperar o capítulo: ${error}`);
@@ -17,9 +20,10 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         }
     });
 
-    ipcMain.handle("save-last-read", async (_event, dataPath: string, chapter_id: number, page_number: number) => {
+    ipcMain.handle("save-last-read", async (_event, serieName: string, chapter_id: number, page_number: number) => {
         try {
-            const serieData = await storageOperations.readSerieData(dataPath);
+            const dataPath = await fileOperations.getDataPath(serieName)
+            const serieData = await storageOperations.readSerieData(dataPath)
             const chapter = serieData.chapters.find((c) => c.id === chapter_id);
 
             if (chapter) {
@@ -52,9 +56,10 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         }
     });
 
-    ipcMain.handle("get-next-chapter", async (_event, dataPath: string, chapter_id: number) => {
+    ipcMain.handle("get-next-chapter", async (_event, serieName: string, chapter_id: number) => {
         try {
-            const serieData = await storageOperations.readSerieData(dataPath);
+            const dataPath = await fileOperations.getDataPath(serieName)
+            const serieData = await storageOperations.readSerieData(dataPath)
             const totalChapters = serieData.chapters.length;
 
             if (chapter_id + 1 >= totalChapters) {
@@ -76,8 +81,9 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         }
     });
 
-    ipcMain.handle("get-prev-chapter", async (_event, dataPath: string, chapter_id: number) => {
+    ipcMain.handle("get-prev-chapter", async (_event, serieName: string, chapter_id: number) => {
         try {
+            const dataPath = await fileOperations.getDataPath(serieName)
             const serieData = await storageOperations.readSerieData(dataPath);
 
             const prevChapterId = chapter_id - 1;
@@ -93,7 +99,6 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
                 throw new Error(`Capítulo ${prevChapterId} não encontrado na série: ${serieData.name}`);
             }
 
-            console.log(prevChapter.id)
             return `/${serieData.name}/${serieData.id}/${prevChapter.name}/${prevChapter.id}/${prevChapter.page.last_page_read}`;
         } catch (error) {
             console.error(`Erro ao buscar capítulo anterior: ${error}`);

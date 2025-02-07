@@ -2,7 +2,7 @@ import { Comic } from "../types/comic.interfaces";
 import { Jimp } from "jimp";
 import { FileSystem } from "./abstract/FileSystem";
 import StorageManager from "./StorageManager";
-import FileOperations from "./FileManager";
+import FileManager from "./FileManager";
 import unzipper from "unzipper";
 import fs from "fs";
 import fse from "fs/promises";
@@ -10,8 +10,8 @@ import jsonfile from "jsonfile";
 import path from "path";
 
 export default class ImageManager extends FileSystem {
-  private readonly storageOperations: StorageManager = new StorageManager()
-  private readonly fileOperations: FileOperations = new FileOperations()
+  private readonly storageManager: StorageManager = new StorageManager()
+  private readonly fileManager: FileManager = new FileManager()
 
   constructor() {
     super();
@@ -57,7 +57,7 @@ export default class ImageManager extends FileSystem {
   }
 
   public async createMangaEdtionById(dataPath: string, chapter_id: number): Promise<string> {
-    const serieData = await this.storageOperations.readSerieData(dataPath);
+    const serieData = await this.storageManager.readSerieData(dataPath);
 
     try {
       const chaptersData = serieData.chapters
@@ -96,14 +96,14 @@ export default class ImageManager extends FileSystem {
   }
 
   public async createMangaEdtion(serieName: string, quantity: number): Promise<string> {
-    const serieData = await this.storageOperations.selectMangaData(serieName);
+    const serieData = await this.storageManager.selectMangaData(serieName);
 
     try {
-      const organizedChapters = await this.fileOperations.orderByChapters(
-        await this.fileOperations.foundFiles(serieData.archives_path)
+      const organizedChapters = await this.fileManager.orderByChapters(
+        await this.fileManager.foundFiles(serieData.archives_path)
       );
 
-      const lastDownload = await this.storageOperations.foundLastDownload(serieData);
+      const lastDownload = await this.storageManager.foundLastDownload(serieData);
       const firstItem = lastDownload;
       const lastItem = Math.min(lastDownload + quantity, organizedChapters.length);
       const chaptersPath = path.join(this.mangasImages, serieData.name, `${serieData.name} chapters`);

@@ -25,7 +25,8 @@ const userAction = {
   ratingSerie: (data_path: string, userRating: number): Promise<{ success: boolean }> => ipcRenderer.invoke("rating-serie", data_path, userRating),
   favoriteSerie: (data_path: string): Promise<{ success: boolean }> =>
     ipcRenderer.invoke("favorite-serie", data_path),
-  markRead: async (data_path: string, chapter_id: number): Promise<{ success: boolean }> => ipcRenderer.invoke("mark-read", data_path, chapter_id),
+  markRead: async (serieName: string, chapter_id: number): Promise<{ success: boolean }> => ipcRenderer.invoke("mark-read", serieName, chapter_id),
+  returnPage: async (serieName: string): Promise<{ sucess: Boolean }> => ipcRenderer.invoke("return-page", serieName)
 }
 
 const AppConfig = {
@@ -43,11 +44,11 @@ const collections = {
 }
 
 const chapters = {
-  getChapter: async (dataPath: string, chapter_id: number): Promise<string[]> => ipcRenderer.invoke("get-chapter", dataPath, chapter_id),
-  getNextChapter: async (dataPath: string, chapter_id: number): Promise<string> => ipcRenderer.invoke("get-next-chapter", dataPath, chapter_id),
-  getPrevChapter: async (dataPath: string, chapter_id: number): Promise<string> => ipcRenderer.invoke("get-prev-chapter", dataPath, chapter_id),
-  saveLastRead: async (dataPath: string, chapter_id: number, page_number: number): Promise<void> => ipcRenderer.invoke("save-last-read", dataPath, chapter_id, page_number),
-  acessLastRead: async (dataPath: string): Promise<string> => ipcRenderer.invoke("acess-last-read", dataPath),
+  getChapter: async (serieName: string, chapter_id: number): Promise<string[]> => ipcRenderer.invoke("get-chapter", serieName, chapter_id),
+  getNextChapter: async (serieName: string, chapter_id: number): Promise<string> => ipcRenderer.invoke("get-next-chapter", serieName, chapter_id),
+  getPrevChapter: async (serieName: string, chapter_id: number): Promise<string> => ipcRenderer.invoke("get-prev-chapter", serieName, chapter_id),
+  saveLastRead: async (serieName: string, chapter_id: number, page_number: number): Promise<void> => ipcRenderer.invoke("save-last-read", serieName, chapter_id, page_number),
+  acessLastRead: async (serieName: string): Promise<string> => ipcRenderer.invoke("acess-last-read", serieName),
 }
 
 const series = {

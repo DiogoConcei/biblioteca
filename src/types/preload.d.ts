@@ -30,7 +30,7 @@ declare global {
             },
             download: {
                 downloadLocal: (dataPath: string, quantity: number) => Promise<void>,
-                lineReading: (serieName: string, chapter_id: number) => Promise<void>,
+                lineReading: (data_path: string, chapter_id: number) => Promise<void>,
                 downloadIndividual: (serieName: string, chapter_id: number) => Promise<void>
             },
             eventEmitter: {
@@ -38,11 +38,11 @@ declare global {
                 off: (channel: string, listener: (...args: any[]) => void) => void,
             },
             chapters: {
-                getChapter: (dataPath: string, chapter_id: number) => Promise<string[]>,
-                getNextChapter: (dataPath: string, chapter_id: number) => Promise<string>,
-                getPrevChapter: (dataPath: string, chapter_id: number) => Promise<string>,
-                saveLastRead: (dataPath: string, chapter_id: number, page_number) => Promise<void>,
-                acessLastRead: (dataPath: string,) => Promise<string>,
+                getChapter: (serieName: string, chapter_id: number) => Promise<string[]>,
+                getNextChapter: (serieName: string, chapter_id: number) => Promise<string>,
+                getPrevChapter: (serieName: string, chapter_id: number) => Promise<string>,
+                saveLastRead: (serieName: string, chapter_id: number, page_number) => Promise<void>,
+                acessLastRead: (serieName: string,) => Promise<string>,
             },
             collections: {
                 getCollections: () => Promise<Collection[]>,
@@ -53,7 +53,8 @@ declare global {
             userAction: {
                 favoriteSerie: (data_path: string) => Promise<{ success: boolean }>,
                 ratingSerie: (dataPath: string, userRating: number) => Promise<{ success: boolean }>,
-                markRead: (data_path: string, chapter_id: number) => Promise<{ success: boolean }>,
+                markRead: (serieName: string, chapter_id: number) => Promise<{ success: boolean }>,
+                returnPage: (data_path: string) => Promise<string>
             },
             AppConfig: {
                 getScreenConfig: (urlLocation: string) => Promise<boolean>,

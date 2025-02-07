@@ -3,20 +3,20 @@ import { SerieForm } from "../types/series.interfaces";
 import { FileSystem } from "./abstract/FileSystem";
 import fs from "fs/promises"
 import path from "path";
-import FileOperations from "./FileManager";
+import FileManager from "./FileManager";
 import StorageManager from "./StorageManager";
-import ImageOperations from "./ImageManager";
-import SystemConfig from "./SystemManager";
+import ImageManager from "./ImageManager";
+import SystemManager from "./SystemManager";
 import CollectionsManager from "./CollectionsManager";
 
 
 export default class MangaManager extends FileSystem {
     private global_id: number
-    private readonly imageManager: ImageOperations = new ImageOperations()
-    private readonly fileManager: FileOperations = new FileOperations()
+    private readonly imageManager: ImageManager = new ImageManager()
+    private readonly fileManager: FileManager = new FileManager()
     private readonly storageManager: StorageManager = new StorageManager()
-    private readonly collectionsOperations: CollectionsManager = new CollectionsManager()
-    private readonly systemManager: SystemConfig = new SystemConfig()
+    private readonly collectionsManager: CollectionsManager = new CollectionsManager()
+    private readonly systemManager: SystemManager = new SystemManager()
 
     constructor() {
         super()
@@ -133,7 +133,7 @@ export default class MangaManager extends FileSystem {
             const MangaCoverPath = await this.fileManager.uploadCover(MangaData.cover_image)
             MangaData.cover_image = MangaCoverPath
             const NormalizedMangaData = this.storageManager.createNormalizedData(MangaData)
-            this.collectionsOperations.serieToCollection(NormalizedMangaData)
+            this.collectionsManager.serieToCollection(NormalizedMangaData)
 
             if (MangaData.metadata.collections.includes("Favoritas")) {
                 MangaData.metadata.is_favorite = true

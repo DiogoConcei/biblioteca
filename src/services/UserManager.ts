@@ -9,8 +9,8 @@ import { Book } from "../types/book.interfaces";
 import { Literatures } from "../types/series.interfaces";
 
 export default class UserManager extends FileSystem {
-    private readonly CollectionsOperations: CollectionsManager = new CollectionsManager()
-    private readonly storageOperations: StorageManager = new StorageManager()
+    private readonly collectionsManager: CollectionsManager = new CollectionsManager()
+    private readonly storageManager: StorageManager = new StorageManager()
 
     constructor() {
         super()
@@ -50,8 +50,8 @@ export default class UserManager extends FileSystem {
 
     public async favoriteSerie(serieData: Literatures): Promise<Literatures> {
         try {
-            const collections: Collection[] = await this.CollectionsOperations.getCollections();
-            const favCollection = await this.CollectionsOperations.getFavorites(collections);
+            const collections: Collection[] = await this.collectionsManager.getCollections();
+            const favCollection = await this.collectionsManager.getFavorites(collections);
 
             if (!favCollection) {
                 throw new Error('Coleção de favoritos não encontrada.');
@@ -88,8 +88,8 @@ export default class UserManager extends FileSystem {
 
             favCollection.updatedAt = new Date().toISOString();
 
-            await this.CollectionsOperations.updateFavCollection(collections, this.appCollections);
-            await this.storageOperations.updateSerieData(serieData, serieData.data_path);
+            await this.collectionsManager.updateFavCollection(collections, this.appCollections);
+            await this.storageManager.updateSerieData(serieData, serieData.data_path);
 
             return serieData;
         } catch (e) {
@@ -100,12 +100,12 @@ export default class UserManager extends FileSystem {
 
     public async markChapterRead(dataPath: string, chapter_id: number): Promise<void> {
         try {
-            const serieData = await this.storageOperations.readSerieData(dataPath)
+            const serieData = await this.storageManager.readSerieData(dataPath)
             const chapter = serieData.chapters.find((c) => c.id === chapter_id);
 
             if (chapter) chapter.is_read = true;
 
-            await this.storageOperations.updateSerieData(serieData, serieData.data_path);
+            await this.storageManager.updateSerieData(serieData, serieData.data_path);
         } catch (error) {
             console.error(`Erro ao marcar capítulo como lido: ${error}`);
             throw error;

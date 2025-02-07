@@ -17,7 +17,7 @@ export default function VisualizerMenu({
   prevChapter,
 }: visualizerProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { book_name, book_id, chapter_id, page } = useParams();
+  const { manga_name, manga_id, chapter_id, page } = useParams();
   const navigate = useNavigate();
   const { setTheme } = useGlobal();
 
@@ -44,7 +44,7 @@ export default function VisualizerMenu({
 
   const goHome = async () => {
     await window.electron.chapters.saveLastRead(
-      book_name,
+      manga_name,
       Number(chapter_id),
       currentPage
     );
@@ -53,11 +53,12 @@ export default function VisualizerMenu({
 
   const seriePage = async () => {
     await window.electron.chapters.saveLastRead(
-      book_name,
+      manga_name,
       Number(chapter_id),
       currentPage
     );
-    navigate(`/${book_name}/${book_id}`);
+    const toSeriePage = await window.electron.userAction.returnPage(manga_name);
+    navigate(toSeriePage);
   };
 
   const toggleTheme = async () => {
@@ -74,7 +75,7 @@ export default function VisualizerMenu({
   };
 
   const jumpToNext = async () => {
-    await window.electron.download.lineReading(book_name, Number(chapter_id));
+    await window.electron.download.lineReading(manga_name, Number(chapter_id));
     nextChapter();
   };
 
