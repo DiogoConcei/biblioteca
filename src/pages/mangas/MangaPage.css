@@ -21,6 +21,14 @@
   padding: 10px;
 }
 
+.imageContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-flow: column nowrap;
+  gap: 20px;
+}
+
 .serieCover {
   height: 40vh;
   border-radius: 0px 10px 0px 10px;
@@ -86,4 +94,33 @@
 
 .recent h3 {
   border-top: none;
+}
+
+.DinamicLink {
+  text-decoration: none;
+  color: #fcf7f8;
+  font-size: 1.3rem;
+}
+
+.mangaTags {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-flow: row wrap;
+  gap: 10px;
+  max-height: 250px;
+  max-width: 600px;
+}
+
+.mangaTags span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: #cd5c5c;
+  cursor: default;
+  padding: 5px;
+  border-radius: 10px;
+  color: #fcf7f8;
+  cursor: pointer;
 }

@@ -4,93 +4,103 @@ import StorageManager from "../services/StorageManager";
 import MangaManager from "../services/MangaManager";
 import BookManager from "../services/BookManager";
 import ComicManager from "../services/ComicManager";
-import ImageOperations from "../services/ImageManager";
-import path from 'path'
-
+import ImageManager from "../services/ImageManager";
 
 export default function seriesHandlers(ipcMain: IpcMain) {
-    const MangaOperations = new MangaManager()
-    const ComicOperations = new ComicManager()
-    const BookOperations = new BookManager()
-    const StorageOperations = new StorageManager()
-    const ImageManager = new ImageOperations()
+  const mangaManager = new MangaManager();
+  const comicManager = new ComicManager();
+  const bookManager = new BookManager();
+  const storageManager = new StorageManager();
+  const imageManager = new ImageManager();
+  ipcMain.removeHandler("create-serie");
 
+  ipcMain.handle("create-serie", async (_event, serieData: SerieForm) => {
+    try {
+      switch (serieData.literatureForm) {
+        case "Manga":
+          await mangaManager.createMangaSerie(serieData);
+          break;
+        case "Quadrinho":
+          await comicManager.createComicSerie(serieData);
+          break;
+        case "Livro":
+          await bookManager.createBook(serieData);
+          break;
+        default:
+          throw new Error("Tipo de literatura inválido");
+      }
+    } catch (error) {
+      console.error(`Erro ao criar a série: ${error}`);
+      throw error;
+    }
+  });
 
-    ipcMain.handle("create-serie", async (_event, serieData: SerieForm) => {
-        try {
-            switch (serieData.literatureForm) {
-                case "Manga":
-                    await MangaOperations.createManga(serieData)
-                    break;
-                case "Quadrinho":
-                    await ComicOperations.createComic(serieData)
-                    break;
-                case "Livro":
-                    await BookOperations.createBook(serieData)
-                    break;
-                default:
-                    throw new Error("Tipo de literatura inválido");
-            }
-        } catch (error) {
-            console.error(`Erro ao criar a série: ${error}`);
-            throw error;
-        }
+  ipcMain.handle("get-all-series", async () => {
+    try {
+      const getData = await storageManager.seriesData();
 
-    })
+      const processData = await Promise.all(
+        getData.map(async (serieData) => {
+          const encodedImage = await imageManager.encodeImageToBase64(
+            serieData.coverImage
+          );
 
+          return {
+            ...serieData,
+            coverImage: encodedImage,
+          };
+        })
+      );
 
-    ipcMain.handle("get-all-series", async () => {
+      return processData;
+    } catch (error) {
+      console.error("Erro ao buscar dados das séries:", error);
+      throw error;
+    }
+  });
 
-        try {
-            const getData = await StorageOperations.seriesData();
+  ipcMain.handle("get-manga-serie", async (_event, serieName: string) => {
+    try {
+      const data = await storageManager.selectMangaData(serieName);
 
-            const processData = await Promise.all(getData.map(async (serieData) => {
-                const encodedImage = await ImageManager.encodeImageToBase64(serieData.cover_image);
-                return {
-                    ...serieData,
-                    cover_image: encodedImage,
-                };
-            }));
+      const processedData = {
+        ...data,
+        coverImage: await imageManager.encodeImageToBase64(data.coverImage),
+      };
 
-            return processData;
-        } catch (error) {
-            console.error("Erro ao buscar dados das séries:", error);
-            throw error;
-        }
-    })
+      return processedData;
+    } catch (error) {
+      console.error("Erro ao buscar dados da series:", error);
+      throw error;
+    }
+  });
 
-    ipcMain.handle("get-manga-series", async (_event, serieName: string) => {
-        try {
-            const data = await StorageOperations.selectMangaData(serieName)
+  ipcMain.handle("get-comic-serie", async (_event, serieName: string) => {
+    try {
+      const data = await storageManager.selectComicData(serieName);
 
-            const processedData = {
-                ...data,
-                cover_image: await ImageManager.encodeImageToBase64(data.cover_image),
-            };
+      const updatedChapters = await Promise.all(
+        data.chapters.map(async (chapter) => {
+          const encodedCover = await imageManager.encodeImageToBase64(
+            chapter.coverPath
+          );
 
-            return processedData
-        } catch (error) {
-            console.error("Erro ao buscar dados da series:", error);
-            throw error;
-        }
-    })
+          return {
+            ...chapter,
+            coverPath: encodedCover,
+          };
+        })
+      );
 
+      const processedData = {
+        ...data,
+        chapters: updatedChapters,
+      };
 
-    ipcMain.handle("get-comic-series", async (_event, serieName: string) => {
-        try {
-            const data = await StorageOperations.selectMangaData(serieName)
-
-            const processedData = {
-                ...data,
-                cover_image: await ImageManager.encodeImageToBase64(data.cover_image),
-            };
-
-            return processedData
-        } catch (error) {
-            console.error("Erro ao buscar dados da series:", error);
-            throw error;
-        }
-    })
-
-
+      return processedData;
+    } catch (error) {
+      console.error("Erro ao buscar dados da series:", error);
+      throw error;
+    }
+  });
 }

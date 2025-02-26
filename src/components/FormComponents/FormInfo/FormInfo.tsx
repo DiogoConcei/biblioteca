@@ -9,22 +9,22 @@ export default function FormInfo({
   handleDataChange,
 }: FormInputsProps) {
   useEffect(() => {
-    handleChange(index, {
-      target: { name: "name", value: newSeries[index].name },
-    });
-  }, []);
+    handleDataChange("name", newSeries[index].name);
+  }, [index]);
 
   const handleChange = (
     index: number,
-    e: { target: { name: string; value: string } }
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
+    const { name, value } = e.target;
     const updatedSeries = [...newSeries];
     updatedSeries[index] = {
       ...updatedSeries[index],
-      [e.target.name]: e.target.value,
+      [name]: value,
     };
     setNewSeries(updatedSeries);
-    handleDataChange("name", updatedSeries[index].name);
+
+    handleDataChange(name, value);
   };
 
   return (

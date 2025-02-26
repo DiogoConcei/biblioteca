@@ -58,11 +58,23 @@
   gap: 10px;
 }
 
-.form-content button[type="submit"] {
+.FormBtnContainer {
+  display: flex;
+  gap: 20px;
+}
+
+.form-content button[type="submit"],
+.form-content-buttons {
   background-color: #cd5c5c;
   color: white;
   border: none;
   padding: 10px 20px;
   border-radius: 5px;
   cursor: pointer;
+}
+
+.FormBtnContainer.dinamicCovers {
+  display: flex;
+  align-self: center;
+  padding: 10px;
 }

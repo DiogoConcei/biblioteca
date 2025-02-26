@@ -64,10 +64,11 @@ export default function SeriesCards({ searchInput }: ComicCardsProps) {
           <Link
             to={`${serie.literatureForm}/${serie.name}/${serie.id}`}
             key={serie.id}
-            className="serieLink">
+            className="serieLink"
+          >
             <figure className="coverCard">
               <img
-                src={`data:image/png;base64,${serie.cover_image}`}
+                src={`data:image;base64,${serie.coverImage}`}
                 alt={`Série: ${serie.name}`}
               />
               <figcaption>
@@ -84,13 +85,14 @@ export default function SeriesCards({ searchInput }: ComicCardsProps) {
                   className="progress-bar-completed"
                   style={{
                     width: `${
-                      (serie.chapters_read / serie.total_chapters) * 100
+                      (serie.chaptersRead / serie.totalChapters) * 100
                     }%`,
-                  }}></div>
+                  }}
+                ></div>
               </div>
               <span className="readsInfo">
-                <p>{serie.chapters_read}</p>
-                <p>{serie.total_chapters}</p>
+                <p>{serie.chaptersRead}</p>
+                <p>{serie.totalChapters}</p>
               </span>
             </div>
           </Link>

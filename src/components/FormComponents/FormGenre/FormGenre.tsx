@@ -24,7 +24,7 @@ export default function FormGenre({ handleDataChange }: OnlyDataChangeProp) {
             name="literatureForm"
             value="Quadrinho"
             id="Quadrinho"
-            onChange={() => handleDataChange("literatureForm", "Quadrinhos")}
+            onChange={() => handleDataChange("literatureForm", "Quadrinho")}
           />
           <label htmlFor="Quadrinho">Quadrinho</label>
         </div>
@@ -35,7 +35,7 @@ export default function FormGenre({ handleDataChange }: OnlyDataChangeProp) {
             name="literatureForm"
             value="Livro"
             id="Livro"
-            onChange={() => handleDataChange("literatureForm", "Livros")}
+            onChange={() => handleDataChange("literatureForm", "Livro")}
           />
           <label htmlFor="Livro">Livro</label>
         </div>

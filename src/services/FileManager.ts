@@ -1,9 +1,6 @@
-import { FileSystem } from "./abstract/FileSystem";
-import { Manga } from "../types/manga.interfaces";
-import { Book } from "../types/book.interfaces";
-import { Comic } from "../types/comic.interfaces";
+import FileSystem from "./abstract/FileSystem";
 import path from "path";
-import fse from 'fs-extra'
+import fse from "fs-extra";
 
 export default class FileManager extends FileSystem {
   constructor() {
@@ -18,28 +15,6 @@ export default class FileManager extends FileSystem {
       .replace(/^-+|-+$/g, "")
       .replace(/\.{2,}/g, ".");
   }
-
-  public extractSerieInfo(fileName: string): { volume: number; chapter: number } {
-    const regex = /Vol\.\s*(\d+)|Ch\.\s*(\d+(\.\d+)?)|Chapter\s*(\d+(\.\d+)?)|Capítulo\s*(\d+(\.\d+)?)/gi;
-    const matches = [...fileName.matchAll(regex)];
-
-    let volume = 0;
-    let chapter = 0;
-
-    matches.forEach((match) => {
-      if (match[1]) {
-        volume = parseInt(match[1], 10); // Extrai o volume
-      }
-      if (match[2] || match[4] || match[6]) {
-        const chapterValue = match[2] || match[4] || match[6];
-        const chapterNumber = parseFloat(chapterValue); // Extrai o capítulo
-        chapter = chapterNumber;
-      }
-    });
-
-    return { volume, chapter };
-  }
-
 
   public async orderByChapters(filesPath: string[]): Promise<string[]> {
     const fileDetails = await Promise.all(
@@ -61,9 +36,34 @@ export default class FileManager extends FileSystem {
     return orderedPaths;
   }
 
+  private extractSerieInfo(fileName: string): {
+    volume: number;
+    chapter: number;
+  } {
+    const regex =
+      /Vol\.\s*(\d+)|Ch\.\s*(\d+(\.\d+)?)|Chapter\s*(\d+(\.\d+)?)|Capítulo\s*(\d+(\.\d+)?)/gi;
+    const matches = [...fileName.matchAll(regex)];
+
+    let volume = 0;
+    let chapter = 0;
+
+    matches.forEach((match) => {
+      if (match[1]) {
+        volume = parseInt(match[1], 10);
+      }
+      if (match[2] || match[4] || match[6]) {
+        const chapterValue = match[2] || match[4] || match[6];
+        const chapterNumber = parseFloat(chapterValue);
+        chapter = chapterNumber;
+      }
+    });
+
+    return { volume, chapter };
+  }
+
   public async localUpload(file: string): Promise<string> {
     try {
-      const destPath = path.join(this.seriesPath, path.basename(file));
+      const destPath = path.join(this.basePath, path.basename(file));
       await fse.move(file, destPath);
       return destPath;
     } catch (error) {
@@ -74,38 +74,42 @@ export default class FileManager extends FileSystem {
 
   public async uploadCover(file: string): Promise<string> {
     try {
-      const destPath = path.join(this.showcaseImages, path.basename(file))
-      await fse.move(file, destPath)
-      return destPath
+      const destPath = path.join(this.showcaseImages, path.basename(file));
+      await fse.move(file, destPath);
+      return destPath;
     } catch (e) {
-      console.error(`Erro ao fazer upload de imagem: ${e}`)
-      throw e
+      console.error(`Erro ao fazer upload de imagem: ${e}`);
+      throw e;
     }
   }
-
 
   public async uploadImage(file: string): Promise<string> {
     try {
-      const destPath = path.join(this.imagesFilesPath, path.basename(file))
-      await fse.move(file, destPath)
-      return destPath
+      const destPath = path.join(
+        this.imagesFilesPath,
+        "dinamicImages",
+        path.basename(file)
+      );
+      await fse.move(file, destPath);
+      return destPath;
     } catch (e) {
-      console.error(`Erro ao fazer upload de imagem: ${e}`)
-      throw e
+      console.error(`Erro ao fazer upload de imagem: ${e}`);
+      throw e;
     }
   }
-
 
   public async getDataPaths(): Promise<string[]> {
     try {
       const directories = [this.booksData, this.comicsData, this.mangasData];
 
-      const contentPromises = directories.map(async (dir) => {
-        const items = await fse.readdir(dir, { withFileTypes: true });
-        return items.map((item) => path.join(dir, item.name));
-      });
+      const contentArrays = await Promise.all(
+        directories.map(async (dir) =>
+          (
+            await fse.readdir(dir, { withFileTypes: true })
+          ).map((item) => path.join(dir, item.name))
+        )
+      );
 
-      const contentArrays = await Promise.all(contentPromises);
       return contentArrays.flat();
     } catch (e) {
       console.error(`Erro ao obter séries: ${e}`);
@@ -113,36 +117,87 @@ export default class FileManager extends FileSystem {
     }
   }
 
-  public async getDataPath(serieName: string): Promise<string> {
+  public async getDataPath(serieName: string): Promise<string | undefined> {
     try {
       const directories = [this.booksData, this.comicsData, this.mangasData];
 
-      const contentPromises = await directories.map(async (dir) => {
+      for (const dir of directories) {
         const items = await fse.readdir(dir, { withFileTypes: true });
-        return items.map((item) => path.join(dir, item.name));
-      })
+        const foundPath = items
+          .map((item) => path.join(dir, item.name))
+          .find(
+            (contentPath) =>
+              path.basename(contentPath, path.extname(contentPath)) ===
+              serieName
+          );
 
-      const contentArrays = (await Promise.all(contentPromises)).flat()
+        if (foundPath) return foundPath;
+      }
 
-      const dataPath = contentArrays.find((contentPath) => path.basename(contentPath, path.extname(contentPath)) === serieName)
-
-      return dataPath
+      return undefined;
     } catch (e) {
-      console.error(`Erro ao obter série: ${e}`)
-      console.error
+      console.error(`Erro ao obter série: ${e}`);
+      throw e;
     }
   }
 
+  public purifyOutput(rawOutput: string): string {
+    const lines = rawOutput.split("\n");
+
+    const headerIndex = lines.findIndex(
+      (line) =>
+        line.includes("Date") && line.includes("Time") && line.includes("Attr")
+    );
+    if (headerIndex === -1) {
+      throw new Error("Cabeçalho da tabela não encontrado na saída.");
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}/;
+    const lineRegex =
+      /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\s+\S+\s+\d+\s+\d+\s+(.*)$/;
+    const imageExtensionRegex = /\.(jpg|jpeg|png|gif)$/i;
+    const lastDigitsRegex = /^(?:0+|0*[12])$/;
+
+    for (let i = headerIndex + 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+
+      if (!dateRegex.test(line) || line.includes("files,")) continue;
+
+      const match = line.match(lineRegex);
+      if (!match?.[1]) continue;
+
+      const filePath = match[1].trim();
+      const lastSlashIndex = Math.max(
+        filePath.lastIndexOf("/"),
+        filePath.lastIndexOf("\\")
+      );
+      const fileName = filePath.substring(lastSlashIndex + 1);
+
+      if (!imageExtensionRegex.test(fileName)) continue;
+
+      const baseName = fileName.replace(imageExtensionRegex, "");
+      const lastDigitsMatch = baseName.match(/(\d+)(?!.*\d)/);
+
+      if (!lastDigitsMatch || !lastDigitsRegex.test(lastDigitsMatch[1]))
+        continue;
+
+      const specialDir =
+        lastSlashIndex > -1 ? filePath.substring(0, lastSlashIndex + 1) : "";
+      return specialDir ? `${specialDir}${fileName}` : fileName;
+    }
+
+    throw new Error("Nenhum arquivo válido encontrado.");
+  }
+
+  public foundLiteratureForm(dataPath: string): string {
+    try {
+      const LiteratureForm = path.basename(path.dirname(dataPath));
+      return LiteratureForm;
+    } catch (e) {
+      console.error(
+        `Falha em descobrir o tipo da serie: ${path.basename(dataPath)}`
+      );
+      throw e;
+    }
+  }
 }
-
-// (async () => {
-//   try {
-//     const comicManager = new FileManager()
-//     console.log(await comicManager.getDataPath("Spy x Family"))
-//     // const paths = await comicManager.getSeries()
-//     // console.log(await comicManager.orderByChapters(['C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\books\\SPY×FAMILY\\Potrinho Alegre_Vol.1 Ch.1 - Missão 01.cbz', 'C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\books\\SPY×FAMILY\\TQ Scans & Space Celestial & Eleven Scanlator_Ch.93 - Missão_ 93.cbz']))
-//   } catch (error) {
-//     console.error("Erro ao buscar os dados:", error);
-//   }
-// })();
-

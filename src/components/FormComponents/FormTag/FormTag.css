@@ -5,7 +5,10 @@
 /* fcf7f8 -> Snow */
 /* 31afd4 -> Pacific cyan */
 
-/* .form-tag {
+/* Nunca mais quero fazer algo relacionado a tag  */
+/* Nem nada vida nem na próxima */
+
+.form-tag {
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
@@ -25,11 +28,19 @@
   font-size: 14px;
 }
 
-.form-tag-input {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
+.form-tag input[type="text"] {
+  font-size: 1.2rem;
+  width: 400px;
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #8963ba;
+  background: #282c34;
+  color: #fcf7f8;
+  outline: none;
+}
+
+.form-tag input[type="text"]::placeholder {
+  color: #cd5c5c;
 }
 
 .form-tag-preview {
@@ -41,18 +52,15 @@
 }
 
 .tag-list {
-  display: grid;
-  grid-template-columns: repeat(
-    5,
-    minmax(0, 1fr)
-  );
-  gap: 10px;
-  border: 1px solid blue;
-  border-bottom: 1px solid #cd5c5c;
+  display: flex;
+  flex-flow: row wrap;
+  border: 1px solid #8963ba;
   border-radius: 5px;
   padding: 5px;
-  width: 100%; 
-  overflow: hidden; 
+  overflow: auto;
+  width: 400px;
+  height: 100px;
+  gap: 10px;
 }
 
 .tag-list li {
@@ -65,5 +73,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  min-width: 0; 
-} */
+  min-width: 0;
+}
+
+.tag-list li span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  padding: 10px;
+  background: #cd5c5c;
+}

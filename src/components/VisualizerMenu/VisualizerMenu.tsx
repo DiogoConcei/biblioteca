@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { IoMdArrowDropleft, IoMdArrowDropright } from "react-icons/io";
 import { GoHome } from "react-icons/go";
 import { FaArrowLeft } from "react-icons/fa";
+import { TbMaximize, TbMinimize } from "react-icons/tb";
 import { MdLightMode } from "react-icons/md";
 import { CiZoomIn, CiZoomOut } from "react-icons/ci";
 import { useGlobal } from "../../GlobalContext";
@@ -17,7 +18,7 @@ export default function VisualizerMenu({
   prevChapter,
 }: visualizerProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { manga_name, manga_id, chapter_id, page } = useParams();
+  const { manga_name, manga_id, chapter_id, page, isRead } = useParams();
   const navigate = useNavigate();
   const { setTheme } = useGlobal();
 
@@ -111,6 +112,9 @@ export default function VisualizerMenu({
             </button>
             <button onClick={toggleTheme}>
               <MdLightMode />
+            </button>
+            <button>
+              <TbMaximize />
             </button>
           </div>
         )}

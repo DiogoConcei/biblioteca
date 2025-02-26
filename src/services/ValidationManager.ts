@@ -1,9 +1,9 @@
-import { FileSystem } from "./abstract/FileSystem";
+import FileSystem from "./abstract/FileSystem";
 import { Collection } from "../types/collections.interfaces";
 import StorageManager from "./StorageManager";
 import jsonfile from "jsonfile"
 import path from 'path'
-import fse from 'fs-extra'
+import fs from 'fs-extra'
 import FileManager from "./FileManager";
 import { Literatures } from "../types/series.interfaces";
 import ImageManager from "./ImageManager";
@@ -19,7 +19,7 @@ export default class ValidationManager extends FileSystem {
 
     public async serieExist(file: string): Promise<boolean> {
         const newSerieName = path.basename(file).toLocaleLowerCase()
-        const seriesDir = await fse.readdir(this.seriesPath, { withFileTypes: true })
+        const seriesDir = await fs.readdir(this.basePath, { withFileTypes: true })
         const seriesName = seriesDir.map((seriesDir) => seriesDir.name.toLowerCase())
 
 
@@ -44,15 +44,12 @@ export default class ValidationManager extends FileSystem {
             }
 
             if (collections.some((collection) => collection.name === collectionName)) {
-                console.log("Coleção já existente. Abandonando criação.");
-                console.log("passou no false")
                 return false;
             }
 
-            console.log("passou no true")
             return true;
         } catch (e) {
-            console.log(`Falha em checar se a coleção existe: ${e}`);
+            console.error(`Falha em checar se a coleção existe: ${e}`);
             throw e;
         }
     }
@@ -82,7 +79,7 @@ export default class ValidationManager extends FileSystem {
 
             for (let chapters of chaptersData) {
                 if (chapter_id === chapters.id) {
-                    return chapters.is_dowload
+                    return chapters.isDownload
                 }
             }
 
@@ -93,21 +90,48 @@ export default class ValidationManager extends FileSystem {
         return
     }
 
+    public async isDinamicImage(imagePath: string): Promise<boolean> {
+        try {
+            if (await this.isWebp(imagePath)) return false
+
+            const dinamicDir = path.join(this.imagesFilesPath, "DinamicImages")
+            const content = (await fs.readdir(dinamicDir, { withFileTypes: true })).map((contentPath) => path.join(dinamicDir, contentPath.name))
+            const findImage = content.find((contentPath) => path.basename(contentPath) === path.basename(imagePath))
+
+            if (fs.existsSync(findImage)) {
+                return false
+            }
+
+            return true
+        } catch (e) {
+            console.error(`Falha em verificar se é uma imagem dinamica: ${e}`)
+            throw e
+        }
+    }
+
+    public async isWebp(imagePath: string): Promise<boolean> {
+        try {
+            const extName = path.extname(imagePath).toLowerCase()
+
+            if (extName == ".webp") {
+                return true
+            }
+
+            return false
+        } catch (e) {
+            console.error(`Falha em checar extensão da imagem`)
+            throw e
+        }
+    }
+
 }
 
 // (async () => {
 //     try {
-//         const MangaOperations = new StorageManager();
-//         const imageOperations = new ImageManager()
 //         const validationManager = new ValidationManager()
-//         const serieData = await MangaOperations.readSerieData("C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\json files\\Mangas\\Dr. Stone.json")
-
-//         const already_download = await validationManager.checkDownload(serieData, 3)
-
-//         if (already_download) return
-
-//         await imageOperations.createMangaEdtionById(serieData.data_path, 3)
-
+//         const teste = "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\showCaseImages\\Spidey Cover.jpg"
+//         console.log(await validationManager.isWebp(teste))
+//         console.log(await validationManager.isDinamicImage(teste))
 //     } catch (error) {
 //         console.error('Erro ao executar a função:', error);
 //     }

@@ -1,5 +1,5 @@
 import jsonfile from "jsonfile";
-import { FileSystem } from "./abstract/FileSystem";
+import FileSystem from "./abstract/FileSystem";
 import { NormalizedSerieData } from "../types/series.interfaces";
 import { Collection, SerieCollectionInfo } from "../types/collections.interfaces";
 import ValidationManager from "./ValidationManager";
@@ -23,26 +23,22 @@ export default class CollectionsManager extends FileSystem {
 
     public async createCollection(collectionName: string): Promise<void> {
         try {
-            console.log("Tentando criar coleção:", collectionName);
             const date = new Date();
+
 
             let collections: Collection[] = [];
             try {
                 const data = await jsonfile.readFile(this.appCollections, "utf-8");
                 collections = Array.isArray(data) ? data : [];
             } catch (readError) {
-                // Se ocorrer erro na leitura, assume que ainda não há coleções
                 collections = [];
             }
 
-            // Verifica se a coleção já existe
             const canCreate = await this.validationManager.collectionExist(collectionName);
             if (!canCreate) {
-                console.log(`Coleção "${collectionName}" já existe. Não será criada.`);
                 return;
             }
 
-            console.log("Criando nova coleção:", collectionName);
             const newCollection: Collection = {
                 name: collectionName,
                 description: "",
@@ -51,7 +47,6 @@ export default class CollectionsManager extends FileSystem {
                 updatedAt: date.toISOString()
             };
 
-            // Adiciona a nova coleção e grava o arquivo
             collections.push(newCollection);
             await jsonfile.writeFile(this.appCollections, collections, { spaces: 2 });
         } catch (e) {
@@ -66,6 +61,10 @@ export default class CollectionsManager extends FileSystem {
                 await this.createCollection(collectionName);
             }
 
+            if (serieData.collections.includes("Favoritas")) {
+                serieData.isFavorite = true
+            }
+
             const fileData: Collection[] = await jsonfile.readFile(this.appCollections, "utf-8");
 
             const updatedCollections = fileData.map((collection) => {
@@ -75,20 +74,20 @@ export default class CollectionsManager extends FileSystem {
                     );
 
                     if (collection.name === "Favoritas") {
-                        serieData.is_favorite = true
+                        serieData.isFavorite = true
                     }
 
                     if (!seriesExists) {
                         const newSerie: SerieCollectionInfo = {
                             id: serieData.id,
                             name: serieData.name,
-                            cover_image: serieData.cover_image,
-                            comic_path: serieData.chapters_path,
-                            archives_path: serieData.archive_path,
-                            total_chapters: serieData.total_chapters,
+                            coverImage: serieData.coverImage,
+                            comic_path: serieData.chaptersPath,
+                            archivesPath: serieData.archivesPath,
+                            totalChapters: serieData.totalChapters,
                             status: serieData.status,
-                            recommended_by: serieData.recommended_by || "",
-                            original_owner: serieData.original_owner || "",
+                            recommendedBy: serieData.recommendedBy || "",
+                            originalOwner: serieData.originalOwner || "",
                             rating: serieData.rating
                         };
 
@@ -140,15 +139,15 @@ export default class CollectionsManager extends FileSystem {
 //         const serieData: NormalizedSerieData = {
 //             id: 1,
 //             name: "My Test Serie",
-//             cover_image: "https://example.com/cover.jpg",
-//             archive_path: "/path/to/series/raw/files",
-//             chapters_path: "/path/to/series/processed/files",
-//             total_chapters: 10,
+//             coverImage: "https://example.com/cover.jpg",
+//             archivesPath: "/path/to/series/raw/files",
+//             chaptersPath: "/path/to/series/processed/files",
+//             totalChapters: 10,
 //             status: "Em andamento",
-//             is_favorite: false,
+//             isFavorite: false,
 //             collections: ["Teste 10", "Teste 11", "Teste 12"],
-//             recommended_by: "John Doe",
-//             original_owner: "Jane Doe",
+//             recommendedBy: "John Doe",
+//             originalOwner: "Jane Doe",
 //             rating: 4.5
 //         };
 

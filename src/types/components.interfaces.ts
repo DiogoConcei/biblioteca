@@ -1,10 +1,16 @@
 import { Comic } from './comic.interfaces'
-import { Manga } from './manga.interfaces';
+import { Manga, MangaChapter } from './manga.interfaces';
 import { SerieForm } from './series.interfaces';
 import { SeriesProcessor } from './series.interfaces';
+import { Collection } from "./collections.interfaces"
 
 export interface OnlySerieProp {
     manga: Manga;
+}
+
+export interface ChaptersInfoProp {
+    manga: Manga;
+    setManga: React.Dispatch<React.SetStateAction<Manga | null>>
 }
 
 export interface PageControlProps {
@@ -42,10 +48,13 @@ export interface ComicCardsProps {
 
 export interface ComicActionsProps {
     manga: Manga;
+    setfavCollection: React.Dispatch<React.SetStateAction<Collection | null>>,
     setManga: React.Dispatch<React.SetStateAction<Manga | null>>
 }
 
 export interface downloadButtonProps {
+    manga: Manga;
+    setManga: React.Dispatch<React.SetStateAction<Manga | null>>
     dataPath: string
 }
 
@@ -68,9 +77,17 @@ export interface OnlyDataChangeProp {
 }
 
 export interface CostumizeImageProps {
-    handleDataChange: (key: string, value: string) => void;
-    setImageSrc: React.Dispatch<React.SetStateAction<string>>;
+    handleDataChange: (field: string, value: any) => void;
+    setImageSrc: (src: string) => void;
     imageSrc: string;
+    formSteps: number;
+}
+
+export interface IntegrateFormProps {
+    setImageSrc: React.Dispatch<React.SetStateAction<string>>,
+    archivesPath: string,
+    literatureForm: string,
+    setFormData: React.Dispatch<React.SetStateAction<SerieForm>>
 }
 
 export interface FormCollectionProps {
@@ -80,7 +97,6 @@ export interface FormCollectionProps {
 
 export interface FormTagProps {
     setFormData: React.Dispatch<React.SetStateAction<SerieForm>>;
-    handleDataChange: (key: string, value: string) => void;
 }
 
 export interface CollectionButtonProps {

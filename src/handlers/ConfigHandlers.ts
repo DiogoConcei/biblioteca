@@ -7,9 +7,10 @@ export default function ConfigHandlers(ipcMain: IpcMain) {
 
     ipcMain.handle("get-screen-config", async (_event, urlLocation: string) => {
         try {
-            let isVisualizerActive = /^\/[^/]+\/[^/]+\/[^/]+\/[^/]+\/[^/]+$/.test(
-                urlLocation
-            );
+            let isVisualizerActive = /^\/[^/]+\/[^/]+\/[^/]+\/[^/]+\/[^/]+\/[^/]+$/
+                .test(
+                    urlLocation
+                );
             const ScreenConfig = await SystemOperations.getFullScreenConfig()
 
             if (ScreenConfig && isVisualizerActive) {

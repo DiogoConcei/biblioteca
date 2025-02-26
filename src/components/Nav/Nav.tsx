@@ -56,8 +56,8 @@ export default function Nav({ isHidden }: dinamicNavProp) {
           </Link>
         </li>
         <li>
-          <Link className="link tab" to="/mangas">
-            Mangas
+          <Link className="link tab" to="/teste">
+            Teste de componentes
           </Link>
         </li>
         {/* <li>
@@ -87,21 +87,24 @@ export default function Nav({ isHidden }: dinamicNavProp) {
           <button
             onClick={minimize}
             aria-label="Minimizar"
-            className="ActionsBtn">
+            className="ActionsBtn"
+          >
             <FiMinus className="icon" />
           </button>
           {isFull ? (
             <button
               onClick={restore}
               aria-label="Maximizar"
-              className="ActionsBtn">
+              className="ActionsBtn"
+            >
               <VscChromeRestore className="icon" />
             </button>
           ) : (
             <button
               onClick={fullScreen}
               aria-label="Maximizar"
-              className="ActionsBtn">
+              className="ActionsBtn"
+            >
               <FaRegSquareFull className="icon" />
             </button>
           )}

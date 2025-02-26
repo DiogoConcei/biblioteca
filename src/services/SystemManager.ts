@@ -1,4 +1,4 @@
-import { FileSystem } from "./abstract/FileSystem";
+import FileSystem from "./abstract/FileSystem";
 import fse from "fs-extra"
 import { AppConfig } from "../types/series.interfaces";
 

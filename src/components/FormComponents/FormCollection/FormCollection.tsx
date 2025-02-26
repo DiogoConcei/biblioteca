@@ -57,7 +57,6 @@ export default function FormCollection({
               onChange={(e) =>
                 handleCheckboxChange(collection, e.target.checked)
               }
-              required={true}
             />
             <label htmlFor={collection}>{collection}</label>
           </span>

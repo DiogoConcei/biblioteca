@@ -1,4 +1,4 @@
-import { status } from "./manga.interfaces";
+import { Status } from "./manga.interfaces";
 
 export interface UserCollections {
     collections: Collection[];
@@ -15,12 +15,12 @@ export interface Collection {
 export interface SerieCollectionInfo {
     id: number;
     name: string,
-    cover_image: string,
+    coverImage: string,
     comic_path: string,
-    archives_path: string,
-    total_chapters: number,
-    status: status,
-    recommended_by: string,
-    original_owner: string,
+    archivesPath: string,
+    totalChapters: number,
+    status: Status,
+    recommendedBy: string,
+    originalOwner: string,
     rating: number
 }

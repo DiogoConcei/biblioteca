@@ -23,10 +23,7 @@ export default function Rating({ manga }: OnlySerieProp) {
 
   const onSelect = async (ratingIndex: number) => {
     try {
-      await window.electron.userAction.ratingSerie(
-        manga.data_path,
-        ratingIndex
-      );
+      await window.electron.userAction.ratingSerie(manga.dataPath, ratingIndex);
       setIsOpen(false);
     } catch (error) {
       console.error("Erro ao atualizar o rating:", error);

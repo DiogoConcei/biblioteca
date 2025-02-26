@@ -1,12 +1,12 @@
-import "./CostumizeImage.css";
+import "./ImageUpload.css";
 import { MdOutlineImage } from "react-icons/md";
 import { CostumizeImageProps } from "../../types/components.interfaces";
-import { useState } from "react";
 
-export default function CostumizeImage({
+export default function ImageUpload({
   handleDataChange,
   setImageSrc,
   imageSrc,
+  formSteps,
 }: CostumizeImageProps) {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -25,7 +25,7 @@ export default function CostumizeImage({
   };
 
   return (
-    <div className="cover-container">
+    <div className={`cover-container ${formSteps ? "clear" : ""}`}>
       <p className="cover-title">Capa de exibição</p>
       <div
         className=" image-upload"

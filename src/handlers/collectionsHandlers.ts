@@ -27,9 +27,9 @@ export default function collectionHandlers(ipcMain: IpcMain) {
         }
     })
 
-    ipcMain.handle("serie-to-collection", async (_event, data_path: string) => {
+    ipcMain.handle("serie-to-collection", async (_event, dataPath: string) => {
         try {
-            const serieData = await storageOperations.readSerieData(data_path)
+            const serieData = await storageOperations.readSerieData(dataPath)
             const normalizedData = await storageOperations.createNormalizedData(serieData)
             await collectionsOperations.serieToCollection(normalizedData)
         } catch (e) {

@@ -1,11 +1,11 @@
-import "./MangaVisualizer.css";
+import "./Visualizer.css";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import PageControl from "../../../components/PageControl/PageControl";
-import VisualizerMenu from "../../../components/VisualizerMenu/VisualizerMenu";
-import { useGlobal } from "../../../GlobalContext";
+import PageControl from "../../components/PageControl/PageControl";
+import VisualizerMenu from "../../components/VisualizerMenu/VisualizerMenu";
+import { useGlobal } from "../../GlobalContext";
 
-export default function MangaVisualizer() {
+export default function Visualizer() {
   const [pageNumber, setPageNumber] = useState<number>(0);
   const [pages, setPages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +14,7 @@ export default function MangaVisualizer() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const pageRef = useRef(null);
 
-  const { manga_name, book_id, chapter_id, page } = useParams();
+  const { manga_name, book_id, chapter_id, page, isRead } = useParams();
   const { theme, setTheme } = useGlobal();
   const navigate = useNavigate();
   const loadingTime = 1;
@@ -131,7 +131,6 @@ export default function MangaVisualizer() {
         Number(chapter_id),
         pageNumber
       );
-      await window.electron.userAction.markRead(manga_name, Number(chapter_id));
       navigate(nextChapterUrl);
     } catch (error) {
       console.error(`Erro ao navegar para o próximo capítulo: ${error}`);
@@ -194,7 +193,7 @@ export default function MangaVisualizer() {
         }}
         ref={pageRef}
         draggable={false}
-        src={`data:image/png;base64,${pages[pageNumber]}`}
+        src={`data:image;base64,${pages[pageNumber]}`}
         alt={`Page ${pageNumber}`}
       />
       <div className="pageControlWrapper">
