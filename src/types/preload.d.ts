@@ -77,7 +77,7 @@ declare global {
         saveLastRead: (
           serieName: string,
           chapter_id: number,
-          page_number
+          page_number: number
         ) => Promise<void>;
         acessLastRead: (serieName: string) => Promise<string>;
       };

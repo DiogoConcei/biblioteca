@@ -258,6 +258,7 @@ export default class MangaManager extends FileSystem {
     const chapterToProcess = mangaData.chapters.find(
       (chapter) => chapter.id === chapter_id
     );
+    
     try {
       const outputDir = path.join(
         this.mangasImages,

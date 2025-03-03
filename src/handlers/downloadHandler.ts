@@ -3,12 +3,14 @@ import FileManager from "../services/FileManager";
 import StorageManager from "../services/StorageManager";
 import ValidationManager from "../services/ValidationManager";
 import MangaManager from "../services/MangaManager";
+import ComicManager from "../services/ComicManager";
 
 export default function downloadHandlers(ipcMain: IpcMain) {
-  const storageOperations = new StorageManager();
+  const storageManager = new StorageManager();
   const validationManager = new ValidationManager();
   const fileManager = new FileManager();
   const mangaManager = new MangaManager();
+  const comicManager = new ComicManager();
 
   ipcMain.handle(
     "download-chapter",
@@ -28,25 +30,26 @@ export default function downloadHandlers(ipcMain: IpcMain) {
     async (_event, serieName: string, chapter_id: number) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
-        const serieData = await storageOperations.readSerieData(dataPath);
+        const serieData = await storageManager.readSerieData(dataPath);
+        const nextChapter = chapter_id + 1;
 
-        const nextChapter_id = chapter_id + 1;
-        let already_download = await validationManager.checkDownload(
-          serieData,
-          nextChapter_id
+        const chapter = serieData.chapters.find(
+          (chap) => chap.id === nextChapter
         );
 
-        if (already_download) return;
+        const literatureForm = fileManager.foundLiteratureForm(dataPath);
 
-        const chapterData = serieData.chapters;
+        if (await validationManager.checkDownload(serieData, chapter.id))
+          return;
 
-        for (let chapters of chapterData) {
-          if (chapters.id === nextChapter_id) {
-            await mangaManager.createEditionById(
-              serieData.dataPath,
-              nextChapter_id
-            );
-          }
+        switch (literatureForm) {
+          case "Mangas":
+            await mangaManager.createEditionById(dataPath, nextChapter);
+            break;
+          case "Comics":
+            await comicManager.createEditionById(dataPath, nextChapter);
+          default:
+            break;
         }
       } catch (e) {
         console.error(`Falha em baixar próximo capitulo: ${e}`);
@@ -59,7 +62,7 @@ export default function downloadHandlers(ipcMain: IpcMain) {
     "download-individual",
     async (_event, dataPath: string, chapter_id: number) => {
       try {
-        const serieData = await storageOperations.readSerieData(dataPath);
+        const serieData = await storageManager.readSerieData(dataPath);
         const chapter = serieData.chapters.find(
           (chap) => chap.id === chapter_id
         );
@@ -92,7 +95,7 @@ export default function downloadHandlers(ipcMain: IpcMain) {
     async (_event, serieName: string, chapter_id: number) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
-        const serieData = await storageOperations.readSerieData(dataPath);
+        const serieData = await storageManager.readSerieData(dataPath);
         const chapter = serieData.chapters.find(
           (chap) => chap.id === chapter_id
         );

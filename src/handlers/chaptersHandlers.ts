@@ -15,7 +15,9 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
     async (_event, serieName: string, chapter_id: number) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
+
         const LiteratureForm = fileManager.foundLiteratureForm(dataPath);
+
         switch (LiteratureForm) {
           case "Mangas":
             return await mangaManager.getChapter(dataPath, chapter_id);
@@ -63,6 +65,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
     try {
       const serieData = await storageManager.readSerieData(dataPath);
       const lastChapterId = serieData.readingData.lastChapterId;
+      const literatureForm = fileManager.foundLiteratureForm(dataPath);
       const lastChapter = serieData.chapters.find(
         (c) => c.id === lastChapterId
       );
@@ -72,11 +75,23 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
           `Último capítulo não encontrado para a série ${serieData.name}`
         );
 
-      if (lastChapter.isDownload === false) {
-        await mangaManager.createEditionById(
-          serieData.dataPath,
-          lastChapter.id
-        );
+      if (!lastChapter.isDownload) {
+        switch (literatureForm) {
+          case "Mangas":
+            await mangaManager.createEditionById(
+              serieData.dataPath,
+              lastChapter.id
+            );
+            break;
+          case "Comics":
+            await comicManager.createEditionById(
+              serieData.dataPath,
+              lastChapterId
+            );
+            break;
+          default:
+            break;
+        }
       }
 
       const url = `/${serieData.name}/${serieData.id}/${lastChapter.name}/${lastChapterId}/${lastChapter.page.lastPageRead}/${lastChapter.isRead}`;
@@ -94,27 +109,18 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
         const serieData = await storageManager.readSerieData(dataPath);
-        const totalChapters = serieData.chapters.length;
+        const nextChapter = serieData.chapters.find(
+          (chapter) => chapter.id === chapter_id + 1
+        );
 
-        if (chapter_id + 1 >= totalChapters) {
-          console.warn(
+        if (!nextChapter || nextChapter.id >= serieData.totalChapters) {
+          console.error(
             `Não há próximo capítulo para a série: ${serieData.name}, capítulo atual: ${chapter_id}`
           );
           return null;
         }
 
-        const nextChapterId = chapter_id + 1;
-        const nextChapter = serieData.chapters.find(
-          (c) => c.id === nextChapterId
-        );
-
-        if (!nextChapter) {
-          throw new Error(
-            `Capítulo ${nextChapterId} não encontrado na série: ${serieData.name}`
-          );
-        }
-
-        const url = `/${serieData.name}/${serieData.id}/${nextChapter.name}/${nextChapterId}/${nextChapter.page.lastPageRead}/${nextChapter.isRead}`;
+        const url = `/${serieData.name}/${serieData.id}/${nextChapter.name}/${nextChapter.id}/${nextChapter.page.lastPageRead}/${nextChapter.isRead}`;
 
         return url;
       } catch (error) {
@@ -130,27 +136,18 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
         const serieData = await storageManager.readSerieData(dataPath);
+        const prevChapter = serieData.chapters.find(
+          (chapter) => chapter.id === chapter_id - 1
+        );
 
-        const prevChapterId = chapter_id - 1;
-
-        if (prevChapterId < 0) {
-          console.warn(
+        if (!prevChapter || prevChapter.id < 0) {
+          console.error(
             `Não há capítulo anterior para a série: ${serieData.name}, capítulo atual: ${chapter_id}`
           );
           return null;
         }
 
-        const prevChapter = serieData.chapters.find(
-          (c) => c.id === prevChapterId
-        );
-
-        if (!prevChapter) {
-          throw new Error(
-            `Capítulo ${prevChapterId} não encontrado na série: ${serieData.name}`
-          );
-        }
-
-        const url = `/${serieData.name}/${serieData.id}/${prevChapter.name}/${prevChapterId}/${prevChapter.page.lastPageRead}/${prevChapter.isRead}`;
+        const url = `/${serieData.name}/${serieData.id}/${prevChapter.name}/${prevChapter.id}/${prevChapter.page.lastPageRead}/${prevChapter.isRead}`;
 
         return url;
       } catch (error) {

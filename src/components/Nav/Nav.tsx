@@ -60,26 +60,6 @@ export default function Nav({ isHidden }: dinamicNavProp) {
             Teste de componentes
           </Link>
         </li>
-        {/* <li>
-          <Link className="link tab" to="/quadrinhos">
-            quadrinhos
-          </Link>
-        </li> */}
-        {/* <li>
-          <Link className="link tab" to="/books">
-            livros
-          </Link>
-        </li>
-        <li>
-          <Link className="link tab" to="/colecoes">
-            Coleções
-          </Link>
-        </li>
-        <li key="arquivos">
-          <Link className="link tab" to="/arquivos">
-            Séries sincronizadas
-          </Link>
-        </li> */}
       </ul>
 
       <div className="containerBtns">

@@ -214,8 +214,6 @@ export default class ComicManager extends FileSystem {
           chap.coverPath = await this.coverToComic(chap.chapterPath);
         })
       );
-
-      console.log("terminou");
     } catch (e) {
       console.error(`Falha em criar covers para ${serieName}: `);
       throw e;
@@ -289,8 +287,10 @@ export default class ComicManager extends FileSystem {
   ): Promise<string[] | string> {
     try {
       const serieData = await this.storageManager.readSerieData(dataPath);
-      const chaptersData = serieData.chapters;
+      const chaptersData: ComicEdition[] = serieData.chapters as ComicEdition[];
+
       const chapter = chaptersData.find((chap) => chap.id === chapter_id);
+
       const chapterDirents = await fse.readdir(chapter.chapterPath, {
         withFileTypes: true,
       });
@@ -320,9 +320,9 @@ export default class ComicManager extends FileSystem {
     try {
       const comicData = await this.storageManager.readSerieData(dataPath);
 
-      const chapter = comicData.chapters.find(
+      const chapter: ComicEdition = comicData.chapters.find(
         (chapter) => chapter.id === editionId
-      );
+      ) as ComicEdition;
 
       const chapterName = this.fileManager
         .sanitizeFilename(chapter.name)
@@ -351,37 +351,3 @@ export default class ComicManager extends FileSystem {
     }
   }
 }
-
-// (async () => {
-// const comicManger = new ComicManager();
-// const storageManager = new StorageManager();
-// const imageManager = new ImageManager();
-// const fileManager = new FileManager();
-
-// const comicData = await storageManager.selectComicData(
-// "1.6 O Espetacular Homem-Aranha Vol. 2 1 a 58 (1998)"
-// );
-
-// comicManger.createEditionById(comicData.dataPath, 1);
-
-// for (const chapter of comicData.chapters) {
-//   console.log(
-//     typeof (await imageManager.encodeImageToBase64(chapter.coverPath))
-//   );
-// }
-// const chapters = comicData.chapters;
-
-// const fixChapData: ComicEdition[] = await Promise.all(
-//   chapters.map(async (chap) => {
-//     return {
-//       ...chap,
-//       coverPath: "",
-//     };
-//   })
-// );
-
-// comicData.chapters = fixChapData;
-
-// await comicManger.createCovers(comicData.name, fixChapData);
-// await storageManager.updateSerieData(comicData);
-// })();

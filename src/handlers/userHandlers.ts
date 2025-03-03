@@ -9,20 +9,17 @@ import FileManager from "../services/FileManager";
 import CollectionsOperations from "../services/CollectionsManager";
 
 export default function userHandlers(ipcMain: IpcMain) {
-  const storageOperations = new StorageManager();
-  const fileOperations = new FileManager();
-  const userOperations = new UserManager();
+  const storageManager = new StorageManager();
+  const fileManager = new FileManager();
+  const userManager = new UserManager();
 
   ipcMain.handle(
     "rating-serie",
     async (_event, dataPath: string, userRating: number) => {
       try {
-        const serieData = await storageOperations.readSerieData(dataPath);
-        const updateData = await userOperations.ratingSerie(
-          serieData,
-          userRating
-        );
-        storageOperations.updateSerieData(updateData);
+        const serieData = await storageManager.readSerieData(dataPath);
+        const updateData = await userManager.ratingSerie(serieData, userRating);
+        storageManager.updateSerieData(updateData);
         return { success: true };
       } catch (e) {
         console.error(`Falha em ranquear serie: ${e}`);
@@ -33,8 +30,8 @@ export default function userHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle("favorite-serie", async (_event, dataPath: string) => {
     try {
-      const serieData = await storageOperations.readSerieData(dataPath);
-      await userOperations.favoriteSerie(serieData);
+      const serieData = await storageManager.readSerieData(dataPath);
+      await userManager.favoriteSerie(serieData);
       return { success: true };
     } catch (e) {
       console.error(`Erro em favoritar serie: ${e}`);
@@ -46,7 +43,7 @@ export default function userHandlers(ipcMain: IpcMain) {
     "mark-read",
     async (_event, dataPath: string, chapter_id: number, isRead: boolean) => {
       try {
-        await userOperations.markChapterRead(dataPath, chapter_id, isRead);
+        await userManager.markChapterRead(dataPath, chapter_id, isRead);
         return { success: true };
       } catch (error) {
         console.error(`Falha em marcar como lido: ${error}`);
@@ -57,8 +54,8 @@ export default function userHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle("return-page", async (_event, serieName: string) => {
     try {
-      const dataPath = await fileOperations.getDataPath(serieName);
-      const serieData = await storageOperations.readSerieData(dataPath);
+      const dataPath = await fileManager.getDataPath(serieName);
+      const serieData = await storageManager.readSerieData(dataPath);
       return `/${serieData.literatureForm}/${serieData.name}/${serieData.id}`;
     } catch (e) {
       console.error(
