@@ -344,7 +344,7 @@ export default class ComicManager extends FileSystem {
       chapter.isDownload = true;
       comicData.metadata.lastDownload = chapter.id;
 
-      this.storageManager.updateSerieData(comicData);
+      await this.storageManager.updateSerieData(comicData);
     } catch (error) {
       console.error(`Falha em criar a edição: ${error}`);
       throw error;

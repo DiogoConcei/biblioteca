@@ -44,7 +44,7 @@ export default function DownloadButton({
     });
 
     setSelectedQuantity(quantity);
-    await window.electron.download.downloadLocal(manga.dataPath, quantity);
+    await window.electron.download.multipleDownload(manga.dataPath, quantity);
     setIsOpen(false);
   };
 
@@ -61,7 +61,8 @@ export default function DownloadButton({
             <li key={quantity} className="dropdown-item">
               <button
                 className="dropdown-option"
-                onClick={() => onSelect(quantity)}>
+                onClick={() => onSelect(quantity)}
+              >
                 {quantity}
               </button>
             </li>

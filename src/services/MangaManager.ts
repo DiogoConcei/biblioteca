@@ -211,9 +211,10 @@ export default class MangaManager extends FileSystem {
     }
   }
 
-  public async createEdition(dataPath: string, quantity: number) {
+  public async createEditions(dataPath: string, quantity: number) {
     const mangaData = await this.storageManager.readSerieData(dataPath);
-    const lastDownload = await this.storageManager.foundLastDownload(mangaData);
+    const lastDownload = mangaData.metadata.lastDownload;
+
     const firstItem = lastDownload;
     const lastItem = Math.min(
       lastDownload + quantity,
@@ -224,14 +225,14 @@ export default class MangaManager extends FileSystem {
       (chapter) => chapter.id >= firstItem && chapter.id <= lastItem
     );
 
-    try {
-      for await (const chapter of chaptersToProcess) {
-        const outputDir = path.join(
-          this.mangasImages,
-          mangaData.name,
-          chapter.name
-        );
+    for await (const chapter of chaptersToProcess) {
+      const outputDir = path.join(
+        this.mangasImages,
+        mangaData.name,
+        chapter.name
+      );
 
+      try {
         await this.storageManager.extractWith7zip(
           chapter.archivesPath,
           outputDir
@@ -241,14 +242,16 @@ export default class MangaManager extends FileSystem {
         chapter.isDownload = true;
         chapter.chapterPath = outputDir;
         mangaData.metadata.lastDownload = chapter.id;
-      }
 
-      await this.storageManager.updateSerieData(mangaData);
-    } catch (e) {
-      console.error(
-        `Erro ao processar os capítulos em "${mangaData.name}": ${e}`
-      );
-      throw e;
+        await this.storageManager.updateSerieData(mangaData);
+      } catch (e) {
+        console.error(
+          `Erro ao processar os capítulos em "${mangaData.name}": ${e}`
+        );
+        throw e;
+      } finally {
+        await this.imageManager.clearChapter(outputDir);
+      }
     }
   }
 
@@ -258,18 +261,19 @@ export default class MangaManager extends FileSystem {
     const chapterToProcess = mangaData.chapters.find(
       (chapter) => chapter.id === chapter_id
     );
-    
-    try {
-      const outputDir = path.join(
-        this.mangasImages,
-        mangaData.name,
-        chapterToProcess.name
-      );
 
+    const outputDir = path.join(
+      this.mangasImages,
+      mangaData.name,
+      chapterToProcess.name
+    );
+
+    try {
       await this.storageManager.extractWith7zip(
         chapterToProcess.archivesPath,
         outputDir
       );
+
       await this.imageManager.normalizeChapter(outputDir);
       chapterToProcess.isDownload = true;
       chapterToProcess.chapterPath = outputDir;
@@ -283,39 +287,11 @@ export default class MangaManager extends FileSystem {
       throw e;
     }
   }
-
-  public async deleteMangaEditionById(
-    dataPath: string,
-    chapter_id: number
-  ): Promise<void> {
-    try {
-      const serieData = await this.storageManager.readSerieData(dataPath);
-      const chapters = serieData.chapters;
-
-      for (const chapter of chapters) {
-        if (chapter.id === chapter_id) {
-          if (chapter.chapterPath && fse.exists(chapter.chapterPath)) {
-            await fse.rm(chapter.chapterPath, {
-              recursive: true,
-              force: true,
-            });
-            chapter.isDownload = false;
-            chapter.chapterPath = "";
-          }
-        }
-      }
-
-      await this.storageManager.updateSerieData(serieData);
-    } catch (e) {
-      console.error(`Falha em excluir capítulo: ${e}`);
-      throw e;
-    }
-  }
 }
 
 // (async () => {
 //   const mangaManager = new MangaManager();
 //   const testePath =
-//     "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\Dr. Stone";
-//   console.log(await mangaManager.createMangaCovers(testePath));
+//     "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\json files\\Mangas\\Dr. Stone.json";
+//   await mangaManager.createEditions(testePath, 3);
 // })();

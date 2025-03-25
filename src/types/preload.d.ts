@@ -18,6 +18,7 @@ declare global {
       webUtilities: {
         getPathForFile: (file: File) => string;
       };
+
       upload: {
         localUpload: (filePaths: string[]) => Promise<SeriesProcessor[]>;
         decodePathFile: (
@@ -25,10 +26,12 @@ declare global {
           codePath: string
         ) => Promise<string>;
       };
+
       series: {
         createSerie: (serieData: SerieForm) => Promise<void>;
         getSeries: () => ExhibitionSerieData[];
       };
+
       manga: {
         getManga: (serieName: string) => Manga;
         coverDinamic: (
@@ -36,31 +39,39 @@ declare global {
           literatureForm: LiteratureForms
         ) => Promise<string[]>;
       };
+
       comic: {
         getComic: (serieName: string) => Comic;
       };
+
       book: {
         getBook: (serieName: string) => Book;
       };
+
       download: {
-        downloadLocal: (
+        multipleDownload: (
           dataPath: string,
           quantity: number
-        ) => Promise<{ success: boolean }>;
+        ) => Promise<boolean>;
+        singleDownload: (
+          dataPath: string,
+          chapter_id: number
+        ) => Promise<boolean>;
+        readingDownload: (
+          serieName: string,
+          chapter_id: number
+        ) => Promise<boolean>;
         checkDownload: (
           serieName: string,
           chapter_id: number
         ) => Promise<boolean>;
-        lineReading: (dataPath: string, chapter_id: number) => Promise<void>;
-        downloadIndividual: (
-          dataPath: string,
-          chapter_id: number
-        ) => Promise<{ success: boolean }>;
       };
+
       eventEmitter: {
         on: (channel: string, listener: (...args: any[]) => void) => void;
         off: (channel: string, listener: (...args: any[]) => void) => void;
       };
+
       chapters: {
         getChapter: (
           serieName: string,
@@ -81,12 +92,14 @@ declare global {
         ) => Promise<void>;
         acessLastRead: (serieName: string) => Promise<string>;
       };
+
       collections: {
         getCollections: () => Promise<Collection[]>;
         createCollection: (collectionName: string) => Promise<void>;
         serieToCollection: (dataPath: string) => Promise<void>;
         getFavSeries: () => Promise<Collections>;
       };
+
       userAction: {
         favoriteSerie: (dataPath: string) => Promise<{ success: boolean }>;
         ratingSerie: (
@@ -100,12 +113,14 @@ declare global {
         ) => Promise<{ success: boolean }>;
         returnPage: (dataPath: string) => Promise<string>;
       };
+
       AppConfig: {
         getScreenConfig: (urlLocation: string) => Promise<boolean>;
         controlScreen: () => Promise<boolean>;
         getThemeConfig: () => Promise<boolean>;
         switchTheme: () => Promise<boolean>;
       };
+
       contextMenu: {
         show: () => void;
         excluir: (itemName: string) => Promise<void>;

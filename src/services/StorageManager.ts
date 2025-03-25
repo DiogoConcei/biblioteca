@@ -3,13 +3,14 @@ import FileManager from "./FileManager";
 import jsonfile from "jsonfile";
 import path from "path";
 import fse from "fs-extra";
-import { Manga } from "../types/manga.interfaces";
+import { Manga, MangaChapter } from "../types/manga.interfaces";
 import { Comic } from "../types/comic.interfaces";
 import { Book } from "../types/book.interfaces";
 import {
   SeriesProcessor,
   NormalizedSerieData,
   ExhibitionSerieData,
+  LiteratureChapter,
 } from "../types/series.interfaces";
 import { Literatures } from "../types/series.interfaces";
 import { promisify } from "util";
@@ -29,6 +30,33 @@ export default class StorageManager extends FileSystem {
       await jsonfile.writeFile(serie.dataPath, serie, { spaces: 2 });
     } catch (e) {
       console.error(`Erro em criar dados da série: ${e}`);
+      throw e;
+    }
+  }
+
+  public async deleteSerieChapter(
+    serieData: Literatures,
+    chapter: LiteratureChapter,
+    literatureForm: string
+  ) {
+    try {
+      if (literatureForm === "Mangas") {
+        await fse.remove(chapter.chapterPath);
+      } else if (literatureForm === "Comics") {
+        const pages = await fse.readdir(chapter.chapterPath, {
+          withFileTypes: true,
+        });
+        const pagePaths = pages.map((page) =>
+          path.join(chapter.chapterPath, page.name)
+        );
+        await Promise.all(pagePaths.map((filePath) => fse.remove(filePath)));
+      }
+
+      chapter.isDownload = false;
+      chapter.chapterPath = "";
+      await this.updateSerieData(serieData);
+    } catch (e) {
+      console.error("Falha em deletar capítulos", e);
       throw e;
     }
   }
@@ -170,7 +198,6 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  // Se trata de um caso especifico mas recorrente
   public async fixComicDir(brokenPath: string, correctPath: string) {
     try {
       const brokenEntries = await fse.readdir(brokenPath, {
@@ -194,31 +221,6 @@ export default class StorageManager extends FileSystem {
     } catch (e) {
       console.error(`Falha em corrigir o diretório: ${brokenPath}`, e);
       throw e;
-    }
-  }
-
-  public async foundLastDownload(serieData: Literatures): Promise<number> {
-    try {
-      const chaptersData = serieData.chapters;
-      let metadata_lastDownload = serieData.metadata.lastDownload;
-      let correct_lastDownload: number;
-
-      for (const chapter of chaptersData) {
-        if (chapter.isDownload === false) {
-          correct_lastDownload = chapter.id;
-        }
-      }
-
-      if (metadata_lastDownload !== correct_lastDownload) {
-        metadata_lastDownload = correct_lastDownload;
-      }
-
-      return serieData.metadata.lastDownload;
-    } catch (error) {
-      console.error(
-        `Erro ao recuperar o último download da série "${serieData.name}": ${error}`
-      );
-      throw error;
     }
   }
 
@@ -251,3 +253,11 @@ export default class StorageManager extends FileSystem {
     }
   }
 }
+
+// (async () => {
+//   const storageManager = new StorageManager();
+//   const testePath =
+//     "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\json files\\Mangas\\Dr. Stone.json";
+//   const data = await storageManager.readSerieData(testePath);
+//   console.log(await storageManager.foundLastDownload(data));
+// })();

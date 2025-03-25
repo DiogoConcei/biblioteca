@@ -19,7 +19,7 @@ export default function userHandlers(ipcMain: IpcMain) {
       try {
         const serieData = await storageManager.readSerieData(dataPath);
         const updateData = await userManager.ratingSerie(serieData, userRating);
-        storageManager.updateSerieData(updateData);
+        await storageManager.updateSerieData(updateData);
         return { success: true };
       } catch (e) {
         console.error(`Falha em ranquear serie: ${e}`);

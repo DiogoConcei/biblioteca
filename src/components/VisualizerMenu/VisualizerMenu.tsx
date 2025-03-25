@@ -52,7 +52,10 @@ export default function VisualizerMenu({
   }, [setScale]);
 
   const jumpToNext = useCallback(async () => {
-    await window.electron.download.lineReading(serie_name, Number(chapter_id));
+    await window.electron.download.readingDownload(
+      serie_name,
+      Number(chapter_id)
+    );
     nextChapter();
   }, [serie_name, chapter_id, nextChapter]);
 

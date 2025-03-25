@@ -1,8 +1,9 @@
-import { Comic } from "./comic.interfaces";
-import { Book } from "./book.interfaces";
-import { Manga } from "./manga.interfaces";
+import { Comic, ComicEdition } from "./comic.interfaces";
+import { Book, BookPage } from "./book.interfaces";
+import { Manga, MangaChapter } from "./manga.interfaces";
 
 export type Literatures = Manga | Book | Comic;
+export type LiteratureChapter = ComicEdition | BookPage | MangaChapter;
 export type LiteratureForms = "Manga" | "Quadrinho";
 
 export interface SeriesProcessor {

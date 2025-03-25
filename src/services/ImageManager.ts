@@ -36,6 +36,8 @@ export default class ImageManager extends FileSystem {
           await this.normalizeImage(entryPath);
         })
       );
+
+      await this.clearChapter(dirPath);
     } catch (error) {
       console.error(`Falha em normalizar diretório: ${error}`);
       throw error;
@@ -43,6 +45,8 @@ export default class ImageManager extends FileSystem {
   }
 
   public async normalizeImage(imagePath: string): Promise<string | null> {
+    let imageInstance: sharp.Sharp | null = null;
+
     try {
       const imageFilter = /\.(jpg|jpeg|png|gif|bmp|webp|tiff)$/i;
       if (!imageFilter.test(imagePath)) return null;
@@ -71,13 +75,43 @@ export default class ImageManager extends FileSystem {
         return normalizedPath;
       }
 
-      await sharp(normalizedPath).webp({ quality: 100 }).toFile(destPath);
+      imageInstance = sharp(normalizedPath);
+      await imageInstance.webp({ quality: 100 }).toFile(destPath);
 
-      await fse.unlink(normalizedPath);
       return destPath;
     } catch (error) {
       console.error(`Erro ao converter a imagem ${imagePath}:`, error);
       throw error;
+    } finally {
+      if (imageInstance) {
+        imageInstance.destroy();
+      }
+    }
+  }
+
+  public async clearChapter(dirChapter: string): Promise<void> {
+    try {
+      const pathDirents = await fse.readdir(dirChapter, {
+        withFileTypes: true,
+      });
+      const imageFiles = pathDirents
+        .filter(
+          (dirent) =>
+            dirent.isFile() && /\.(jpeg|png|tiff|jpg)$/i.test(dirent.name)
+        )
+        .map((dirent) => path.join(dirChapter, dirent.name));
+
+      for (const imageFile of imageFiles) {
+        try {
+          if (await fse.pathExists(imageFile)) {
+            await fse.remove(imageFile);
+          }
+        } catch (error) {
+          console.error(`Falha ao limpar o arquivo ${imageFile}: ${error}`);
+        }
+      }
+    } catch (e) {
+      console.error("Falha em limpar os arquivos do capítulo:", e);
     }
   }
 
@@ -129,3 +163,10 @@ export default class ImageManager extends FileSystem {
     }
   }
 }
+
+// (async () => {
+// const imageManager = new ImageManager();
+// const testPath =
+// "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Manga\\Dragon Ball\\Kyodai Scans_Vol. 2, Ch. 21";
+// imageManager.clearChapter(testPath);
+// })();

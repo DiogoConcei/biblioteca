@@ -127,12 +127,12 @@ export default function ChaptersInfo({ manga, setManga }: ChaptersInfoProp) {
     );
 
     try {
-      const response = await window.electron.download.downloadIndividual(
+      const response = await window.electron.download.singleDownload(
         dataPath,
         chapter_id
       );
 
-      if (!response.success) {
+      if (!response) {
         throw new Error("Falha no download");
       }
     } catch (e) {

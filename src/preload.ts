@@ -55,20 +55,26 @@ const book = {
 };
 
 const download = {
-  downloadLocal: (
+  multipleDownload: async (
     dataPath: string,
     quantity: number
-  ): Promise<{ success: boolean }> =>
-    ipcRenderer.invoke("download-chapter", dataPath, quantity),
-  checkDownload: (
+  ): Promise<boolean> =>
+    ipcRenderer.invoke("multiple-download", dataPath, quantity),
+  singleDownload: async (
+    dataPath: string,
+    chapter_id: number
+  ): Promise<boolean> =>
+    ipcRenderer.invoke("single-download", dataPath, chapter_id),
+  readingDownload: async (
     serieName: string,
     chapter_id: number
-  ): Promise<{ success: boolean }> =>
+  ): Promise<boolean> =>
+    ipcRenderer.invoke("donwload-in-reading", serieName, chapter_id),
+  checkDownload: async (
+    serieName: string,
+    chapter_id: number
+  ): Promise<boolean> =>
     ipcRenderer.invoke("check-download", serieName, chapter_id),
-  lineReading: (serieName: string, chapter_id: number): Promise<void> =>
-    ipcRenderer.invoke("download-in-reading", serieName, chapter_id),
-  downloadIndividual: (dataPath: string, chapter_id: number): Promise<void> =>
-    ipcRenderer.invoke("download-individual", dataPath, chapter_id),
 };
 
 const eventEmitter = {

@@ -109,6 +109,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
         const serieData = await storageManager.readSerieData(dataPath);
+
         const nextChapter = serieData.chapters.find(
           (chapter) => chapter.id === chapter_id + 1
         );

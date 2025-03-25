@@ -44,6 +44,14 @@ export default function ComicPage() {
       navigate(
         `/${serieName}/${serieId}/${chapterName}/${chapterId}/${page.lastPageRead}/${isRead}`
       );
+    } else {
+      await window.electron.download.singleDownload(
+        comicData.dataPath,
+        chapterId
+      );
+      navigate(
+        `/${serieName}/${serieId}/${chapterName}/${chapterId}/${page.lastPageRead}/${isRead}`
+      );
     }
   };
 
