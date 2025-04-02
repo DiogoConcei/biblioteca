@@ -1,4 +1,5 @@
 import "./Visualizer.css";
+import { ImSpinner2 } from "react-icons/im";
 import PageControl from "../../components/PageControl/PageControl";
 import VisualizerMenu from "../../components/VisualizerMenu/VisualizerMenu";
 import {
@@ -9,11 +10,12 @@ import useDrag from "../../hooks/useDrag";
 import useChapter from "../../hooks/useChapter";
 import useSimpleNavigation from "../../hooks/useSimpleNavigation";
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Visualizer() {
   const { serie_name, chapter_id, page } = useParams();
   const [scale, setScale] = useState<number>(1);
+  const lastCallRef = useRef<number>(0);
 
   const chapter: useChapterReturn = useChapter({
     serieName: serie_name,
@@ -27,9 +29,27 @@ export default function Visualizer() {
     useSimpleNavigation(chapter);
 
   useEffect(() => {
+    const debounceTime = 2000;
+
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "ArrowLeft") chapterNavigation.prevPage();
-      if (event.key === "ArrowRight") chapterNavigation.nextPage();
+      const now = Date.now();
+
+      if (event.key === "ArrowLeft") {
+        chapterNavigation.prevPage();
+        lastCallRef.current = now;
+      }
+
+      if (event.key === "ArrowRight") {
+        if (
+          now - lastCallRef.current < debounceTime &&
+          chapter.currentPage === chapter.quantityPages
+        ) {
+          return;
+        }
+
+        chapterNavigation.nextPage();
+        lastCallRef.current = now;
+      }
     };
 
     window.addEventListener("keydown", handleKey);
@@ -54,17 +74,21 @@ export default function Visualizer() {
         setScale={setScale}
       />
       <div className="containerPage">
-        <img
-          className="chapterPage"
-          draggable={false}
-          style={{
-            transform: `scale(${scale})  translate(${position.x}px, ${position.y}px)`,
-          }}
-          ref={elementRef}
-          src={`data:image;base64,${chapter.pages[chapter.currentPage]}`}
-          alt="pagina do capitulo"
-        />
+        <div className="chapterContainer">
+          <img
+            className="chapterPage"
+            draggable={false}
+            style={{
+              transform: `scale(${scale})  translate(${position.x}px, ${position.y}px)`,
+            }}
+            ref={elementRef}
+            src={`data:image;base64,${chapter.pages[chapter.currentPage]}`}
+            alt="pagina do capitulo"
+          />
+          {chapter.downloaded && <ImSpinner2 className="spinner" />}
+        </div>
       </div>
+
       <div className="pageControlWrapper">
         <PageControl
           currentPage={chapter.currentPage}

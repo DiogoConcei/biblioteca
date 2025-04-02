@@ -2,7 +2,8 @@ import {
   useChapterReturn,
   useSimpleNavigationReturn,
 } from "../types/customHooks.interfaces";
-import { useCallback } from "react";
+import useDownload from "./useDownload";
+import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function useSimpleNavigation(
@@ -10,66 +11,102 @@ export default function useSimpleNavigation(
 ): useSimpleNavigationReturn {
   const navigate = useNavigate();
 
-  const nextChapter = useCallback(async () => {
-    try {
-      const nextChapterUrl = await window.electron.chapters.getNextChapter(
-        chapter.serieName,
-        chapter.chapterId
-      );
-      await window.electron.chapters.saveLastRead(
-        chapter.serieName,
-        chapter.chapterId,
-        chapter.currentPage
-      );
+  const downloadChapter = useDownload({
+    setError: chapter.setError,
+    setDownloaded: chapter.setDownloaded,
+  });
 
-      chapter.downloadingNext.current = false;
-      if (chapter.downloadingNext) {
-        navigate(nextChapterUrl);
+  const nextChapter = useCallback(async () => {
+    await downloadChapter({
+      serieName: chapter.serieName,
+      chapterId: chapter.chapterId + 1,
+      alreadyDownloaded: chapter.isNextDownloaded,
+    });
+
+    if (!chapter.error) {
+      try {
+        const nextChapterUrl = await window.electron.chapters.getNextChapter(
+          chapter.serieName,
+          chapter.chapterId
+        );
+        await window.electron.chapters.saveLastRead(
+          chapter.serieName,
+          chapter.chapterId,
+          chapter.currentPage
+        );
+        if (chapter.isNextDownloaded.current) {
+          navigate(nextChapterUrl);
+        }
+      } catch {
+        chapter.setError("Falha em exibir o proximo capitulo");
       }
-    } catch {
-      chapter.setError("Falha em exibir o proximo capitulo");
     }
-  }, [chapter.chapterId, chapter.currentPage]);
+  }, [
+    chapter.chapterId,
+    chapter.currentPage,
+    chapter.isNextDownloaded,
+    chapter.isPrevDownloaded,
+  ]);
 
   const prevChapter = useCallback(async () => {
-    try {
-      const prevChapterUrl = await window.electron.chapters.getPrevChapter(
-        chapter.serieName,
-        Number(chapter.chapterId)
-      );
-      navigate(prevChapterUrl);
-    } catch {
-      chapter.setError("Falha em exibir o capitulo anterior");
+    await downloadChapter({
+      serieName: chapter.serieName,
+      chapterId: chapter.chapterId - 1,
+      alreadyDownloaded: chapter.isPrevDownloaded,
+    });
+
+    if (!chapter.error) {
+      try {
+        const prevChapterUrl = await window.electron.chapters.getPrevChapter(
+          chapter.serieName,
+          Number(chapter.chapterId)
+        );
+
+        await window.electron.chapters.saveLastRead(
+          chapter.serieName,
+          chapter.chapterId,
+          chapter.currentPage
+        );
+
+        if (chapter.isPrevDownloaded) {
+          navigate(prevChapterUrl);
+        }
+      } catch {
+        chapter.setError("Falha em exibir o capitulo anterior");
+      }
     }
-  }, [chapter.chapterId, chapter.currentPage]);
+  }, [
+    chapter.chapterId,
+    chapter.currentPage,
+    chapter.isNextDownloaded,
+    chapter.isPrevDownloaded,
+  ]);
 
   const nextPage = useCallback(async () => {
     try {
-      const newPage = chapter.currentPage + 1;
-
-      if (newPage <= chapter.quantityPages) {
-        if (
-          newPage >= Math.round(chapter.quantityPages / 2) &&
-          chapter.downloadingNext
-        ) {
-          await chapter.triggerDownload();
-        }
-        chapter.setCurrentPage(newPage);
+      if (chapter.currentPage < chapter.quantityPages) {
+        chapter.setCurrentPage((prev) => prev + 1);
       } else {
         await nextChapter();
       }
     } catch (error) {
       chapter.setError("Falha ao avançar páginas");
     }
-  }, [chapter.currentPage, chapter.quantityPages]);
+  }, [
+    chapter.currentPage,
+    chapter.pages,
+    chapter.isNextDownloaded,
+    chapter.isPrevDownloaded,
+    ,
+    nextChapter,
+  ]);
 
   const prevPage = useCallback(async () => {
     try {
       if (chapter.currentPage > 0) {
         chapter.setCurrentPage(chapter.currentPage - 1);
       } else {
-        // Preciso de um safe back
-        prevChapter();
+        await prevChapter();
       }
     } catch {
       chapter.setError("Falha ao retroceder páginas");

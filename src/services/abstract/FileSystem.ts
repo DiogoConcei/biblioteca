@@ -7,6 +7,7 @@ export default abstract class FileSystem {
   protected readonly basePath: string;
   protected readonly dataPath: string;
   protected readonly seriesPath: string;
+
   protected readonly imagesFilesPath: string;
   protected readonly showcaseImages: string;
   protected readonly jsonFilesPath: string;

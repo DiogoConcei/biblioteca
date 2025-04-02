@@ -12,10 +12,12 @@ export interface useChapterReturn {
   quantityPages: number;
   isLoading: boolean;
   error: string | null;
-  downloadingNext: React.RefObject<boolean>;
+  isNextDownloaded: React.RefObject<boolean>;
+  isPrevDownloaded: React.RefObject<boolean>;
+  downloaded: boolean;
+  setDownloaded: React.Dispatch<React.SetStateAction<boolean>>;
   setError: React.Dispatch<React.SetStateAction<string>>;
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
-  triggerDownload: () => Promise<void>;
 }
 
 export interface useSimpleNavigationReturn {
@@ -31,7 +33,13 @@ export interface useChapterNavigationParams {
   pages: string[];
 }
 
-type navigationAction =
-  | { type: "NEXT_PAGE"; pagesLength: number }
-  | { type: "PREV_PAGE" }
-  | { type: "SET_PAGE"; page: number };
+export interface useDownloadParams {
+  setError: React.Dispatch<React.SetStateAction<string>>;
+  setDownloaded: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export interface downloadChapter {
+  serieName: string;
+  chapterId: number;
+  alreadyDownloaded: React.RefObject<boolean>;
+}

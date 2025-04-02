@@ -9,10 +9,8 @@ export default function PageControl({
   nextPage,
   prevPage,
 }: PageControlProps) {
-  // Inicializa o progresso com base nos valores recebidos por props
   const [progress, setProgress] = useState(currentPage / TamPages);
 
-  // Handlers que atualizam o progresso e chamam a função de navegação
   const handleNextPage = () => {
     nextPage();
     const newPage = currentPage + 1;

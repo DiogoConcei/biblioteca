@@ -13,7 +13,9 @@ export default function useChapter({
   const [pages, setPages] = useState<string[] | null>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const downloadingNext = useRef(true);
+  const [downloaded, setDownloaded] = useState<boolean>(false);
+  const isNextDownloaded = useRef<boolean>(false);
+  const isPrevDownloaded = useRef<boolean>(false);
 
   useEffect(() => {
     async function getChapter() {
@@ -21,14 +23,26 @@ export default function useChapter({
       setError(null);
 
       try {
+        const chapter_id = Number(chapterId);
+
         const data = await window.electron.chapters.getChapter(
           serieName,
-          Number(chapterId)
+          chapter_id
         );
 
         if (data) {
           setPages(data);
           setCurrentPage(Number(page));
+          isNextDownloaded.current =
+            await window.electron.download.checkDownload(
+              serieName,
+              chapter_id + 1
+            );
+          isPrevDownloaded.current =
+            await window.electron.download.checkDownload(
+              serieName,
+              chapter_id - 1
+            );
         } else if (pages.length === 0) {
           setError("Nenhuma página encontrada");
         } else {
@@ -46,20 +60,6 @@ export default function useChapter({
     getChapter();
   }, [serieName, chapterId]);
 
-  const triggerDownload = async () => {
-    if (downloadingNext.current) {
-      downloadingNext.current = false;
-      try {
-        await window.electron.download.readingDownload(
-          serieName,
-          Number(chapterId)
-        );
-      } catch {
-        setError("Falha ao baixar capitulo");
-      }
-    }
-  };
-
   const chapterInfo: useChapterReturn = {
     serieName: serieName,
     chapterId: Number(chapterId),
@@ -67,11 +67,13 @@ export default function useChapter({
     pages: pages,
     quantityPages: pages.length - 1,
     isLoading: loading,
-    downloadingNext: downloadingNext,
     error: error,
+    downloaded: downloaded,
+    setDownloaded: setDownloaded,
+    isNextDownloaded: isNextDownloaded,
+    isPrevDownloaded: isPrevDownloaded,
     setError: setError,
     setCurrentPage: setCurrentPage,
-    triggerDownload,
   };
 
   return chapterInfo;

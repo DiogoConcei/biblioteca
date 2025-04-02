@@ -23,12 +23,29 @@
   object-fit: contain;
 }
 
-.no-select {
-  user-select: none;
-  -webkit-user-select: none;
+.chapterContainer {
+  position: relative;
+  display: inline-block; /* Ajusta ao tamanho do conteúdo (a imagem) */
 }
 
-.chapterPage {
-  touch-action: none;
-  transition: transform 0.15s ease-out;
+.spinner {
+  position: absolute;
+  top: 5%;
+  right: 5%;
+  width: 5%;
+  max-width: 30px;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  animation: spin 5s linear infinite;
+  color: #8963ba;
+  z-index: 10;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

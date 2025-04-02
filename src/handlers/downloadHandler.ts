@@ -70,11 +70,8 @@ export default function downloadHandlers(ipcMain: IpcMain) {
       const dataPath = await fileManager.getDataPath(serieName);
       const serieData = await storageManager.readSerieData(dataPath);
       const literatureForm = fileManager.foundLiteratureForm(dataPath);
-      const nextChapter = chapter_id + 1;
 
-      const chapter = serieData.chapters.find(
-        (chap) => chap.id === nextChapter
-      );
+      const chapter = serieData.chapters.find((chap) => chap.id === chapter_id);
 
       if (await validationManager.checkDownload(serieData, chapter.id))
         return true;
@@ -84,10 +81,10 @@ export default function downloadHandlers(ipcMain: IpcMain) {
       try {
         switch (literatureForm) {
           case "Mangas":
-            await mangaManager.createEditionById(dataPath, nextChapter);
+            await mangaManager.createEditionById(dataPath, chapter_id);
             break;
           case "Comics":
-            await comicManager.createEditionById(dataPath, nextChapter);
+            await comicManager.createEditionById(dataPath, chapter_id);
           default:
             break;
         }
@@ -99,8 +96,6 @@ export default function downloadHandlers(ipcMain: IpcMain) {
       }
     }
   );
-
-  // Verificar o download
 
   ipcMain.handle(
     "check-download",
