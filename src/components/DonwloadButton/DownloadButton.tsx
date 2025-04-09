@@ -1,16 +1,24 @@
 import { useState } from "react";
-import { downloadButtonProps } from "../../types/components.interfaces";
 import { HiDownload } from "react-icons/hi";
+
+import useDownload from "../../hooks/useDownload";
+import useSerie from "../../hooks/useSerie";
+
+import { downloadButtonProps } from "../../types/components.interfaces";
+
 import "./DownloadButton.css";
-import { MangaChapter } from "../../types/manga.interfaces";
 
 export default function DownloadButton({
-  manga,
-  setManga,
+  serie,
+  updateSerie,
 }: downloadButtonProps) {
+  const [error, setError] = useState<string | null>(null);
   const [selectedQuantity, setSelectedQuantity] = useState<number>(0);
-  const [chapters, setChapters] = useState<MangaChapter[]>(manga.chapters);
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const { updateChapters } = useSerie(serie.name);
+  const { downloadMultipleChapters: downloadChapters } = useDownload({
+    setError,
+  });
 
   const options = [1, 5, 10, 20, 25];
 
@@ -19,33 +27,28 @@ export default function DownloadButton({
   };
 
   const onSelect = async (quantity: number) => {
-    setManga((prevManga) => {
-      const startIndex = prevManga.metadata.lastDownload;
-
-      const endIndex = Math.min(
-        startIndex + quantity,
-        prevManga.chapters.length
-      );
-
-      const updatedChapters = prevManga.chapters.map((chapter, index) =>
-        index >= startIndex && index < endIndex
-          ? { ...chapter, isDownload: true }
-          : chapter
-      );
-
-      return {
-        ...prevManga,
-        chapters: updatedChapters,
-        metadata: {
-          ...prevManga.metadata,
-          lastdownload: endIndex,
-        },
-      };
-    });
-
     setSelectedQuantity(quantity);
-    await window.electron.download.multipleDownload(manga.dataPath, quantity);
-    setIsOpen(false);
+
+    if (quantity > 0) {
+      const startIndex = serie.metadata.lastDownload;
+      const endIndex = startIndex + quantity;
+      let chapters: string[] = [];
+
+      for (let i = startIndex; i < endIndex; i++) {
+        const path = `chapters.${i}.isDownload`;
+        chapters.push(path);
+      }
+
+      updateChapters(chapters, true);
+      const response = await downloadChapters(serie.dataPath, quantity);
+
+      if (!response) {
+        updateChapters(chapters, false);
+        setError("Falha ao baixar capítulos");
+      }
+
+      setIsOpen(false);
+    }
   };
 
   return (

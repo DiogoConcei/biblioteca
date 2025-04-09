@@ -1,3 +1,5 @@
+import { LiteratureChapter } from "../types/series.interfaces";
+
 export interface UseChapterParams {
   serieName: string;
   chapterId: string;
@@ -35,11 +37,22 @@ export interface useChapterNavigationParams {
 
 export interface useDownloadParams {
   setError: React.Dispatch<React.SetStateAction<string>>;
-  setDownloaded: React.Dispatch<React.SetStateAction<boolean>>;
+  setDownloaded?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export interface downloadChapter {
   serieName: string;
   chapterId: number;
   alreadyDownloaded: React.RefObject<boolean>;
+}
+
+export interface UsePaginationProps {
+  chapters: LiteratureChapter[];
+  itemsPerPage?: number;
+  initialPage?: number;
+  ascending?: boolean;
+}
+
+export interface userActionProps {
+  dataPath: string;
 }

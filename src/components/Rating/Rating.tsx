@@ -1,3 +1,4 @@
+import useAction from "../../hooks/useAction";
 import { IoMdStar, IoIosStarOutline } from "react-icons/io";
 import { useState } from "react";
 import { OnlySerieProp } from "../../types/components.interfaces";
@@ -5,6 +6,7 @@ import "./Rating.css";
 
 export default function Rating({ manga }: OnlySerieProp) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const { ratingSerie } = useAction({ dataPath: manga.dataPath });
   const [selectedRating, setSelectedRating] = useState<number>(
     manga.metadata.rating
   );
@@ -19,16 +21,9 @@ export default function Rating({ manga }: OnlySerieProp) {
 
   const onToggle = () => {
     setIsOpen(!isOpen);
-  };
-
-  const onSelect = async (ratingIndex: number) => {
-    try {
-      await window.electron.userAction.ratingSerie(manga.dataPath, ratingIndex);
+    setTimeout(() => {
       setIsOpen(false);
-    } catch (error) {
-      console.error("Erro ao atualizar o rating:", error);
-      throw error;
-    }
+    }, 1000);
   };
 
   return (
@@ -41,7 +36,10 @@ export default function Rating({ manga }: OnlySerieProp) {
         <ul className="rating-list">
           {starsRating.map((quantity, index) => (
             <li key={index} className="rating-item">
-              <button className="rating-option" onClick={() => onSelect(index)}>
+              <button
+                className="rating-option"
+                onClick={() => ratingSerie(manga.dataPath, index)}
+              >
                 {quantity}
               </button>
             </li>

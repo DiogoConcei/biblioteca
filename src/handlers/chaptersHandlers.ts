@@ -114,7 +114,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
           (chapter) => chapter.id === chapter_id + 1
         );
 
-        if (!nextChapter || nextChapter.id >= serieData.totalChapters) {
+        if (!nextChapter || nextChapter.id > serieData.totalChapters) {
           console.error(
             `Não há próximo capítulo para a série: ${serieData.name}, capítulo atual: ${chapter_id}`
           );

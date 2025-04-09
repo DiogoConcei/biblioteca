@@ -11,17 +11,19 @@ export default function useSimpleNavigation(
 ): useSimpleNavigationReturn {
   const navigate = useNavigate();
 
-  const downloadChapter = useDownload({
+  const { downloadInReading } = useDownload({
     setError: chapter.setError,
     setDownloaded: chapter.setDownloaded,
   });
 
   const nextChapter = useCallback(async () => {
-    await downloadChapter({
-      serieName: chapter.serieName,
-      chapterId: chapter.chapterId + 1,
-      alreadyDownloaded: chapter.isNextDownloaded,
-    });
+    if (!chapter.isNextDownloaded.current) {
+      await downloadInReading({
+        serieName: chapter.serieName,
+        chapterId: chapter.chapterId + 1,
+        alreadyDownloaded: chapter.isNextDownloaded,
+      });
+    }
 
     if (!chapter.error) {
       try {
@@ -29,11 +31,13 @@ export default function useSimpleNavigation(
           chapter.serieName,
           chapter.chapterId
         );
+
         await window.electron.chapters.saveLastRead(
           chapter.serieName,
           chapter.chapterId,
           chapter.currentPage
         );
+
         if (chapter.isNextDownloaded.current) {
           navigate(nextChapterUrl);
         }
@@ -49,7 +53,7 @@ export default function useSimpleNavigation(
   ]);
 
   const prevChapter = useCallback(async () => {
-    await downloadChapter({
+    await downloadInReading({
       serieName: chapter.serieName,
       chapterId: chapter.chapterId - 1,
       alreadyDownloaded: chapter.isPrevDownloaded,
@@ -90,7 +94,7 @@ export default function useSimpleNavigation(
         await nextChapter();
       }
     } catch (error) {
-      chapter.setError("Falha ao avançar páginas");
+      chapter.setError("falha em localizar próxima a página");
     }
   }, [
     chapter.currentPage,

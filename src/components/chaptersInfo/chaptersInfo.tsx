@@ -1,178 +1,52 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { ChaptersInfoProp } from "../../types/components.interfaces";
+import { PiSortDescendingThin, PiSortAscendingThin } from "react-icons/pi";
+import { MdOutlineDownload, MdFileDownload, MdUpload } from "react-icons/md";
+import { FaUser } from "react-icons/fa";
 import { IoCheckmarkCircleOutline } from "react-icons/io5";
 import { IoCheckmarkCircle } from "react-icons/io5";
-import { MdOutlineDownload, MdFileDownload, MdUpload } from "react-icons/md";
-import { PiSortDescendingThin, PiSortAscendingThin } from "react-icons/pi";
-import { FaUser } from "react-icons/fa";
-import { Manga, MangaChapter } from "../../types/manga.interfaces";
+
 import Pagination from "../Pagination/Pagination";
+import { ChaptersInfoProp } from "../../types/components.interfaces";
+import { MangaChapter } from "../../types/manga.interfaces";
+
+import usePagination from "../../hooks/usePagination";
+import useAction from "../../hooks/useAction";
+import useDownload from "../../hooks/useDownload";
+
+import { useState } from "react";
 import "./ChaptersInfo.css";
 
-export default function ChaptersInfo({ manga, setManga }: ChaptersInfoProp) {
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [isAscendig, setAscending] = useState<boolean>(false);
-  const [chapters, setChapters] = useState<MangaChapter[]>(manga.chapters);
-  const itemsPerPage = 11;
-  const totalPages = Math.ceil(manga.chapters.length / itemsPerPage);
+export default function ChaptersInfo({
+  manga,
+  updateSerie,
+  updateChapters,
+}: ChaptersInfoProp) {
+  const [error, setError] = useState<string | null>(null);
+  const [downloaded, setDownloaded] = useState<boolean>(false);
 
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentItems = chapters.slice(startIndex, endIndex);
+  const chapters = manga.chapters as MangaChapter[];
 
-  const navigate = useNavigate();
+  const {
+    currentPage,
+    totalPages,
+    currentItems,
+    handlePageChange,
+    isAscending,
+    toggleOrder,
+    paginationNumbers,
+  } = usePagination({ chapters });
 
-  useEffect(() => {
-    setChapters(manga.chapters);
-  }, [manga.chapters]);
+  const { openChapter, markAsRead } = useAction({ dataPath: manga.dataPath });
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-  };
-
-  const changeOrder = () => {
-    const sortedChapters = [...chapters].sort((a, b) => {
-      const numA = parseFloat(a.name.split(" ")[1]);
-      const numB = parseFloat(b.name.split(" ")[1]);
-
-      if (isAscendig) {
-        return numA - numB;
-      } else {
-        return numB - numA;
-      }
-    });
-
-    setChapters(sortedChapters);
-    setAscending(!isAscendig);
-  };
-
-  const markAsRead = async (
-    event: React.MouseEvent<HTMLButtonElement>,
-    dataPath: string,
-    chapter: MangaChapter,
-    chapter_id: number
-  ) => {
-    event.stopPropagation();
-
-    const originalIsRead = chapter.isRead;
-
-    setManga((prevManga) => {
-      const updatedChapters = prevManga.chapters.map((chap) =>
-        chap.id === chapter_id ? { ...chap, isRead: !chap.isRead } : chap
-      );
-
-      const chaptersRead = !originalIsRead
-        ? prevManga.chaptersRead + 1
-        : prevManga.chaptersRead - 1;
-
-      return {
-        ...prevManga,
-        chapters: updatedChapters,
-        chaptersRead: Math.max(0, chaptersRead),
-        readingData: {
-          ...prevManga.readingData,
-          lastChapterId: chapter_id,
-        },
-      };
-    });
-
-    try {
-      const response = await window.electron.userAction.markRead(
-        dataPath,
-        chapter_id,
-        !originalIsRead
-      );
-
-      if (!response.success) {
-        throw new Error("Falha na operação");
-      }
-    } catch (e) {
-      setManga((prevManga) => {
-        const revertedChapters = prevManga.chapters.map((chap) =>
-          chap.id === chapter_id ? { ...chap, isRead: originalIsRead } : chap
-        );
-
-        return {
-          ...prevManga,
-          chapters: revertedChapters,
-          chaptersRead: originalIsRead
-            ? prevManga.chaptersRead + 1
-            : prevManga.chaptersRead - 1,
-          readingData: {
-            ...prevManga.readingData,
-            lastChapterId: chapter_id,
-          },
-        };
-      });
-    }
-  };
-
-  const downloadIndividual = async (
-    event: React.MouseEvent<HTMLButtonElement>,
-    dataPath: string,
-    chapter_id: number,
-    chapter: MangaChapter
-  ) => {
-    event.stopPropagation();
-
-    const isDownload = chapter.isDownload;
-
-    setChapters((prevChapters) =>
-      prevChapters.map((chap) =>
-        chap.id === chapter_id
-          ? { ...chap, isDownload: !chap.isDownload }
-          : chap
-      )
-    );
-
-    try {
-      const response = await window.electron.download.singleDownload(
-        dataPath,
-        chapter_id
-      );
-
-      if (!response) {
-        throw new Error("Falha no download");
-      }
-    } catch (e) {
-      setChapters((prevChapters) =>
-        prevChapters.map((chap) =>
-          chap.id === chapter_id ? { ...chap, isDownload: isDownload } : chap
-        )
-      );
-    }
-  };
-
-  const openChapter = async (
-    e: React.MouseEvent<HTMLDivElement>,
-    manga: Manga,
-    chapter: MangaChapter
-  ) => {
-    e.stopPropagation();
-
-    const { name: serieName, id: serieId } = manga;
-    const { name: chapterName, id: chapterId, page, isRead } = chapter;
-
-    const safeOpen = await window.electron.download.checkDownload(
-      serieName,
-      chapterId
-    );
-
-    if (safeOpen) {
-      navigate(
-        `/${serieName}/${serieId}/${chapterName}/${chapterId}/${page.lastPageRead}/${isRead}`
-      );
-    }
-  };
+  const { downloadIndividual } = useDownload({ setError, setDownloaded });
 
   return (
     <section className="Control">
       <div className="chaptersTitle">
         <h2>Capítulos</h2>
+
         <div>
-          <span className="orderChapters" onClick={(e) => changeOrder()}>
-            {isAscendig ? (
+          <span className="orderChapters" onClick={(e) => toggleOrder()}>
+            {isAscending ? (
               <PiSortAscendingThin className="asc" />
             ) : (
               <PiSortDescendingThin className="desc" />
@@ -199,8 +73,8 @@ export default function ChaptersInfo({ manga, setManga }: ChaptersInfoProp) {
                 <span className="createDate">{chapter.createdAt}</span>
                 <div className="dataInfo">
                   <button
-                    onClick={(event) =>
-                      markAsRead(event, manga.dataPath, chapter, chapter.id)
+                    onClick={(e) =>
+                      markAsRead(e, chapter, chapter.id, updateChapters)
                     }
                   >
                     {chapter.isRead ? (
@@ -214,12 +88,13 @@ export default function ChaptersInfo({ manga, setManga }: ChaptersInfoProp) {
                   </button>
 
                   <button
-                    onClick={(event) =>
+                    onClick={(event: React.MouseEvent<HTMLButtonElement>) =>
                       downloadIndividual(
                         event,
                         manga.dataPath,
                         chapter.id,
-                        chapter
+                        chapter,
+                        updateChapters
                       )
                     }
                   >
@@ -241,10 +116,12 @@ export default function ChaptersInfo({ manga, setManga }: ChaptersInfoProp) {
           </div>
         ))}
       </ul>
+
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
+        paginationNumbers={paginationNumbers}
       />
     </section>
   );

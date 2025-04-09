@@ -1,6 +1,7 @@
 import "./Visualizer.css";
 import { ImSpinner2 } from "react-icons/im";
 import PageControl from "../../components/PageControl/PageControl";
+import ErrorScreen from "../../components/ErrorScreen/ErrorScreen";
 import VisualizerMenu from "../../components/VisualizerMenu/VisualizerMenu";
 import {
   useChapterReturn,
@@ -29,7 +30,7 @@ export default function Visualizer() {
     useSimpleNavigation(chapter);
 
   useEffect(() => {
-    const debounceTime = 2000;
+    const debounceTime = 500;
 
     const handleKey = (event: KeyboardEvent) => {
       const now = Date.now();
@@ -58,7 +59,13 @@ export default function Visualizer() {
   }, [chapterNavigation]);
 
   if (chapter.error) {
-    return <p>{chapter.error}</p>;
+    return (
+      <ErrorScreen
+        error={chapter.error}
+        serieName={chapter.serieName}
+        dinamicRedirect=""
+      />
+    );
   }
 
   if (chapter.isLoading || !chapter.pages) {

@@ -13,24 +13,12 @@
     "description": "",
     "series": [
       {
-        "id": 9,
-        "name": "Spy x Family",
-        "coverImage": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\showCaseImages\\Spy x Family.webp",
-        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\SPY×FAMILY",
-        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\SPY×FAMILY",
-        "totalChapters": 135,
-        "status": "Em andamento",
-        "recommendedBy": "",
-        "originalOwner": "",
-        "rating": 0
-      },
-      {
-        "id": 11,
-        "name": "Jujutsu no Kaisen",
-        "coverImage": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\showCaseImages\\Jujutsu Cover.webp",
-        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Manga\\Jujutsu no Kaisen",
-        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\Jujutsu Kaisen",
-        "totalChapters": 259,
+        "id": 7,
+        "name": "Dr. Stone",
+        "coverImage": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\showCaseImages\\Cover.webp",
+        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Manga\\Dr. Stone",
+        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\Dr. Stone",
+        "totalChapters": 235,
         "status": "Em andamento",
         "recommendedBy": "",
         "originalOwner": "",
@@ -39,158 +27,6 @@
     ],
     "comments": [],
     "updated_at": "",
-    "updatedAt": "2025-02-18T18:24:51.253Z"
-  },
-  {
-    "name": "",
-    "description": "",
-    "series": [
-      {
-        "id": 13,
-        "name": "1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "coverImage": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\DinamicImages\\Cover.webp",
-        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Quadrinho\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Comics Upload testes\\01 - Pré Vingadores A Queda\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "totalChapters": 69,
-        "status": "Em andamento",
-        "recommendedBy": "",
-        "originalOwner": "",
-        "rating": 0
-      },
-      {
-        "id": 14,
-        "name": "1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "coverImage": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\showCaseImages\\Spidey Cover.webp",
-        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Quadrinho\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Comics Upload testes\\01 - Pré Vingadores A Queda\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "totalChapters": 0,
-        "status": "Em andamento",
-        "recommendedBy": "",
-        "originalOwner": "",
-        "rating": 0
-      },
-      {
-        "id": 15,
-        "name": "1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "coverImage": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\showCaseImages\\Spidey Cover.webp",
-        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Quadrinho\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "totalChapters": 71,
-        "status": "Em andamento",
-        "recommendedBy": "",
-        "originalOwner": "",
-        "rating": 0
-      },
-      {
-        "id": 16,
-        "name": "1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "coverImage": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\showCaseImages\\Spidey Cover.webp",
-        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Quadrinho\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "totalChapters": 70,
-        "status": "Em andamento",
-        "recommendedBy": "",
-        "originalOwner": "",
-        "rating": 0
-      },
-      {
-        "id": 17,
-        "name": "1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "coverImage": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\showCaseImages\\Spidey Cover.webp",
-        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Quadrinho\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "totalChapters": 39,
-        "status": "Em andamento",
-        "recommendedBy": "",
-        "originalOwner": "",
-        "rating": 0
-      },
-      {
-        "id": 18,
-        "name": "1.0.1 Vingadores - Resumo Formação- Os Maiores Herois da Terra 1 de 8 (BR)",
-        "coverImage": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\DinamicImages\\Original Cover.jpg",
-        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Quadrinho\\1.0.1 Vingadores - Resumo Formação- Os Maiores Herois da Terra 1 de 8 (BR)",
-        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\1.0.1 Vingadores - Resumo Formação- Os Maiores Herois da Terra 1 de 8 (BR)",
-        "totalChapters": 8,
-        "status": "Em andamento",
-        "recommendedBy": "",
-        "originalOwner": "",
-        "rating": 0
-      },
-      {
-        "id": 19,
-        "name": "1.0.1 Vingadores - Resumo Formação- Os Maiores Herois da Terra 1 de 8 (BR)",
-        "coverImage": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Original Cover.webp",
-        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Quadrinho\\1.0.1 Vingadores - Resumo Formação- Os Maiores Herois da Terra 1 de 8 (BR)",
-        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\1.0.1 Vingadores - Resumo Formação- Os Maiores Herois da Terra 1 de 8 (BR)",
-        "totalChapters": 8,
-        "status": "Em andamento",
-        "recommendedBy": "",
-        "originalOwner": "",
-        "rating": 0
-      },
-      {
-        "id": 20,
-        "name": "1.6 O Espetacular Homem-Aranha Vol. 2 1 a #58 (1998)",
-        "coverImage": "C:\\Users\\Diogo\\Desktop\\Spidey Cover.webp",
-        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Quadrinho\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "totalChapters": 39,
-        "status": "Em andamento",
-        "recommendedBy": "",
-        "originalOwner": "",
-        "rating": 0
-      },
-      {
-        "id": 21,
-        "name": "1.6 O Espetacular Homem-Aranha Vol. 2 1 a 58 (1998)",
-        "coverImage": "C:\\Users\\Diogo\\Desktop\\Spidey Cover.webp",
-        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Quadrinho\\1.6 O Espetacular Homem-Aranha Vol. 2 1 a 58 (1998)",
-        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "totalChapters": 39,
-        "status": "Em andamento",
-        "recommendedBy": "",
-        "originalOwner": "",
-        "rating": 0
-      },
-      {
-        "id": 22,
-        "name": "1.6 O Espetacular Homem-Aranha Vol. 2 1 a 58 (1998)",
-        "coverImage": "C:\\Users\\Diogo\\Desktop\\Spidey Cover.webp",
-        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Quadrinho\\1.6 O Espetacular Homem-Aranha Vol. 2 1 a 58 (1998)",
-        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "totalChapters": 39,
-        "status": "Em andamento",
-        "recommendedBy": "",
-        "originalOwner": "",
-        "rating": 0
-      },
-      {
-        "id": 23,
-        "name": "1.6 O Espetacular Homem-Aranha Vol. 2 1 a 58 (1998)",
-        "coverImage": "C:\\Users\\Diogo\\Desktop\\Spidey Cover.webp",
-        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Quadrinho\\1.6 O Espetacular Homem-Aranha Vol. 2 1 a 58 (1998)",
-        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "totalChapters": 39,
-        "status": "Em andamento",
-        "recommendedBy": "",
-        "originalOwner": "",
-        "rating": 0
-      },
-      {
-        "id": 24,
-        "name": "1.6 O Espetacular Homem-Aranha Vol. 2 1 a 58 (1998)",
-        "coverImage": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\showCaseImages\\Spidey Cover.webp",
-        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Quadrinho\\1.6 O Espetacular Homem-Aranha Vol. 2 1 a 58 (1998)",
-        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\1.6 O Espetacular Homem-Aranha Vol. 2 #1 a #58 (1998)",
-        "totalChapters": 39,
-        "status": "Em andamento",
-        "recommendedBy": "",
-        "originalOwner": "",
-        "rating": 0
-      }
-    ],
-    "comments": [],
-    "updatedAt": "2025-02-24T12:38:57.279Z"
+    "updatedAt": "2025-04-08T21:53:47.165Z"
   }
 ]

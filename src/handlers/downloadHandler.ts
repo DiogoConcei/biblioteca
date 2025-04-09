@@ -28,6 +28,7 @@ export default function downloadHandlers(ipcMain: IpcMain) {
   ipcMain.handle(
     "single-download",
     async (_event, dataPath: string, chapter_id: number) => {
+      console.log("chapterId: ", chapter_id);
       const literatureForm = fileManager.foundLiteratureForm(dataPath);
       const serieData = await storageManager.readSerieData(dataPath);
       const chapter = serieData.chapters.find((ch) => ch.id === chapter_id);
@@ -113,7 +114,6 @@ export default function downloadHandlers(ipcMain: IpcMain) {
           serieData,
           chapter_id
         );
-
         return alreadyDownloaded;
       } catch (e) {
         console.error(`falha em verificar existencia do capitulo: ${e}`);

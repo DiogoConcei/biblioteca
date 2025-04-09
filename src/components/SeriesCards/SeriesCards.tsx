@@ -53,7 +53,7 @@ export default function SeriesCards({ searchInput }: ComicCardsProps) {
     const lastChapterUrl = await window.electron.chapters.acessLastRead(
       dataPath
     );
-    navigate(lastChapterUrl, { state: { dataPath } });
+    navigate(lastChapterUrl);
     lastChapterUrl;
   };
 

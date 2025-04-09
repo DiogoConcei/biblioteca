@@ -1,104 +1,110 @@
-import { Comic } from './comic.interfaces'
-import { Manga, MangaChapter } from './manga.interfaces';
-import { SerieForm } from './series.interfaces';
-import { SeriesProcessor } from './series.interfaces';
-import { Collection } from "./collections.interfaces"
+import { Comic } from "./comic.interfaces";
+import { Manga, MangaChapter } from "./manga.interfaces";
+import { Literatures, SerieForm } from "./series.interfaces";
+import { SeriesProcessor } from "./series.interfaces";
 
 export interface OnlySerieProp {
-    manga: Manga;
+  manga: Literatures;
 }
 
 export interface ChaptersInfoProp {
-    manga: Manga;
-    setManga: React.Dispatch<React.SetStateAction<Manga | null>>
+  manga: Manga;
+  updateSerie: (path: string, newValue: any) => Promise<void>;
+  updateChapters: (path: string, newValue: any) => Promise<void>;
 }
 
 export interface PageControlProps {
-    currentPage: number,
-    TamPages: number;
-    prevPage: () => void;
-    nextPage: () => void
+  currentPage: number;
+  TamPages: number;
+  prevPage: () => void;
+  nextPage: () => void;
 }
 
 export interface visualizerProps {
-    currentPage: number,
-    prevChapter: () => void,
-    setScale: React.Dispatch<React.SetStateAction<number>>,
-    nextChapter: () => void,
+  currentPage: number;
+  prevChapter: () => void;
+  setScale: React.Dispatch<React.SetStateAction<number>>;
+  nextChapter: () => void;
 }
 
 export interface dinamicNavProp {
-    isHidden: boolean;
+  isHidden: boolean;
 }
 
 export interface PaginationProps {
-    currentPage: number;
-    totalPages: number;
-    onPageChange: (page: number) => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  paginationNumbers: number[];
 }
 
 export interface SearchBarProps {
-    searchInput: string;
-    onSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  searchInput: string;
+  onSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export interface ComicCardsProps {
-    searchInput: string;
-}
-
-export interface ComicActionsProps {
-    manga: Manga;
-    setfavCollection: React.Dispatch<React.SetStateAction<Collection | null>>,
-    setManga: React.Dispatch<React.SetStateAction<Manga | null>>
+  searchInput: string;
 }
 
 export interface downloadButtonProps {
-    manga: Manga;
-    setManga: React.Dispatch<React.SetStateAction<Manga | null>>
-    dataPath: string
+  serie: Literatures;
+  updateSerie: (path: string, newValue: any) => Promise<void>;
 }
 
 export interface GlobalContext {
-    isHidden: boolean,
-    setIsHidden: (value: boolean) => void;
-    theme: boolean;
-    setTheme: (value: boolean) => void;
+  isHidden: boolean;
+  setIsHidden: (value: boolean) => void;
+  theme: boolean;
+  setTheme: (value: boolean) => void;
 }
 
 export interface FormInputsProps {
-    index: number;
-    newSeries: SeriesProcessor[];
-    setNewSeries: React.Dispatch<React.SetStateAction<SeriesProcessor[]>>;
-    handleDataChange: (key: string, value: string) => void;
+  index: number;
+  newSeries: SeriesProcessor[];
+  setNewSeries: React.Dispatch<React.SetStateAction<SeriesProcessor[]>>;
+  handleDataChange: (key: string, value: string) => void;
 }
 
 export interface OnlyDataChangeProp {
-    handleDataChange: (key: string, value: string) => void;
+  handleDataChange: (key: string, value: string) => void;
 }
 
 export interface CostumizeImageProps {
-    handleDataChange: (field: string, value: any) => void;
-    setImageSrc: (src: string) => void;
-    imageSrc: string;
-    formSteps: number;
+  handleDataChange: (field: string, value: any) => void;
+  setImageSrc: (src: string) => void;
+  imageSrc: string;
+  formSteps: number;
 }
 
 export interface IntegrateFormProps {
-    setImageSrc: React.Dispatch<React.SetStateAction<string>>,
-    archivesPath: string,
-    literatureForm: string,
-    setFormData: React.Dispatch<React.SetStateAction<SerieForm>>
+  setImageSrc: React.Dispatch<React.SetStateAction<string>>;
+  archivesPath: string;
+  literatureForm: string;
+  setFormData: React.Dispatch<React.SetStateAction<SerieForm>>;
 }
 
 export interface FormCollectionProps {
-    formData: SerieForm;
-    setFormData: React.Dispatch<React.SetStateAction<SerieForm>>;
+  formData: SerieForm;
+  setFormData: React.Dispatch<React.SetStateAction<SerieForm>>;
 }
 
 export interface FormTagProps {
-    setFormData: React.Dispatch<React.SetStateAction<SerieForm>>;
+  setFormData: React.Dispatch<React.SetStateAction<SerieForm>>;
 }
 
 export interface CollectionButtonProps {
-    dataPath: string
+  dataPath: string;
+}
+
+export interface SerieActionProps {
+  manga: Literatures;
+  updateSerie: (path: string, newValue: any) => Promise<void>;
+  updateFavCollection: (serie: Literatures, isFav: boolean) => Promise<boolean>;
+}
+
+export interface ErrorScreenProps {
+  serieName: string;
+  error: string;
+  dinamicRedirect: string;
 }

@@ -48,7 +48,7 @@ export interface ComicEdition {
   id: number;
   name: string;
   sanitizedName: string;
-  coverPath: string;
+  coverPath?: string;
   archivesPath: string;
   chapterPath: string;
   createdAt: string;

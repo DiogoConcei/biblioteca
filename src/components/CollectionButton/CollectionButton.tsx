@@ -1,22 +1,13 @@
 import { MdFormatListBulletedAdd } from "react-icons/md";
 import { CollectionButtonProps } from "../../types/components.interfaces";
-import { Collection } from "../../types/collections.interfaces";
-import { useEffect, useState } from "react";
+import useCollection from "../../hooks/useCollection";
+import { useState } from "react";
 import "./CollectionButton.css";
 
 export default function CollectionButton({ dataPath }: CollectionButtonProps) {
-  const [collections, setCollections] = useState<Collection[]>([]);
+  const { collections, addToCollection } = useCollection();
+
   const [isAdd, setIsAdd] = useState<boolean>(false);
-
-  useEffect(() => {
-    const getData = async () => {
-      const collectionsData =
-        await window.electron.collections.getCollections();
-      setCollections(collectionsData);
-    };
-
-    getData();
-  });
 
   const filterCollections = [...collections]
     .sort(
@@ -27,13 +18,6 @@ export default function CollectionButton({ dataPath }: CollectionButtonProps) {
 
   const onToggle = () => {
     setIsAdd((prevState) => !prevState);
-  };
-
-  const toCollection = async (
-    e: React.MouseEvent<HTMLButtonElement>,
-    collectionName: string
-  ) => {
-    window.electron.collections.serieToCollection(dataPath);
   };
 
   return (
@@ -49,7 +33,8 @@ export default function CollectionButton({ dataPath }: CollectionButtonProps) {
             <li key={collection.name} className="dropdown-item">
               <button
                 className="dropdown-option"
-                onClick={(e) => toCollection(e, collection.name)}>
+                onClick={(e) => addToCollection(e, collection.name, dataPath)}
+              >
                 {collection.name}
               </button>
             </li>

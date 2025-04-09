@@ -33,16 +33,20 @@ export default function useChapter({
         if (data) {
           setPages(data);
           setCurrentPage(Number(page));
+
           isNextDownloaded.current =
             await window.electron.download.checkDownload(
               serieName,
               chapter_id + 1
             );
-          isPrevDownloaded.current =
-            await window.electron.download.checkDownload(
-              serieName,
-              chapter_id - 1
-            );
+
+          if (chapter_id > 1) {
+            isPrevDownloaded.current =
+              await window.electron.download.checkDownload(
+                serieName,
+                chapter_id - 1
+              );
+          }
         } else if (pages.length === 0) {
           setError("Nenhuma página encontrada");
         } else {
@@ -53,7 +57,7 @@ export default function useChapter({
         setError("Falha em recuperar capítulo. Tente novamente");
         setPages([]);
       } finally {
-        setTimeout(() => setLoading(false), 10);
+        setTimeout(() => setLoading(false), 0);
       }
     }
 

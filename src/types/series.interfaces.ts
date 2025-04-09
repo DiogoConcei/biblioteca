@@ -1,6 +1,7 @@
 import { Comic, ComicEdition } from "./comic.interfaces";
 import { Book, BookPage } from "./book.interfaces";
 import { Manga, MangaChapter } from "./manga.interfaces";
+import { SerieCollectionInfo } from "./collections.interfaces";
 
 export type Literatures = Manga | Book | Comic;
 export type LiteratureChapter = ComicEdition | BookPage | MangaChapter;
