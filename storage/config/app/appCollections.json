@@ -11,20 +11,7 @@
   {
     "name": "Favoritas",
     "description": "",
-    "series": [
-      {
-        "id": 7,
-        "name": "Dr. Stone",
-        "coverImage": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\showCaseImages\\Cover.webp",
-        "comic_path": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\Manga\\Dr. Stone",
-        "archivesPath": "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\user library\\Dr. Stone",
-        "totalChapters": 235,
-        "status": "Em andamento",
-        "recommendedBy": "",
-        "originalOwner": "",
-        "rating": 0
-      }
-    ],
+    "series": [ ],
     "comments": [],
     "updated_at": "",
     "updatedAt": "2025-04-08T21:53:47.165Z"
