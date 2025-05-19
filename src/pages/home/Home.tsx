@@ -1,11 +1,12 @@
-import "./Home.css";
-import SearchBar from "../../components/SearchBar/SearchBar";
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import SeriesCards from "../../components/SeriesCards/SeriesCards";
+import './Home.scss';
+import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+
+import SearchBar from '../../components/SearchBar/SearchBar';
+// import SeriesCards from "../../components/SeriesCards/SeriesCards";
 
 export default function Home() {
-  const [searchInput, setSearchInput] = useState<string>("");
+  const [searchInput, setSearchInput] = useState<string>('');
   const navigate = useNavigate();
 
   const searchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,34 +25,23 @@ export default function Home() {
 
     const files = event.dataTransfer.files;
 
-    const filePaths = Array.from(files).map((file) => {
-      return window.electron.webUtilities.getPathForFile(file);
+    const filePaths = Array.from(files).map(file => {
+      return window.electronAPI.webUtilities.getPathForFile(file);
     });
 
     try {
-      const newSeries = await Promise.all(
-        await window.electron.upload.localUpload(filePaths)
-      );
-      navigate("/local-upload/serie", { state: { newSeries } });
+      const newSeries = await Promise.all(await window.electronAPI.upload.processSerie(filePaths));
+      navigate('/local-upload/serie', { state: { newSeries } });
     } catch (error) {
-      console.error("Erro ao carregar arquivos", error);
+      console.error('Erro ao carregar arquivos', error);
       throw error;
     }
   };
 
-  const contextMenu = (event: React.MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    window.electron.contextMenu.show();
-  };
-
   return (
-    <section
-      className="home"
-      onContextMenu={contextMenu}
-      onDragOver={handleDrag}
-      onDrop={handleDrop}>
+    <section className="home" onDragOver={handleDrag} onDrop={handleDrop}>
       <SearchBar searchInput={searchInput} onSearchChange={searchChange} />
-      <SeriesCards searchInput={searchInput} />
+      {/* <SeriesCards searchInput={searchInput} /> */}
     </section>
   );
 }

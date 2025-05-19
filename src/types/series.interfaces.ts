@@ -1,16 +1,16 @@
-import { Comic, ComicEdition } from "./comic.interfaces";
-import { Book, BookPage } from "./book.interfaces";
-import { Manga, MangaChapter } from "./manga.interfaces";
-import { SerieCollectionInfo } from "./collections.interfaces";
+import { Comic, ComicEdition } from '../../electron/types/comic.interfaces';
+import { Book, BookPage } from '../../electron/types/book.interfaces';
+import { Manga, MangaChapter } from '../../electron/types/manga.interfaces';
 
 export type Literatures = Manga | Book | Comic;
 export type LiteratureChapter = ComicEdition | BookPage | MangaChapter;
-export type LiteratureForms = "Manga" | "Quadrinho";
+export type LiteratureForms = 'Manga' | 'Quadrinho';
 
-export interface SeriesProcessor {
+export interface SerieData {
   name: string;
   sanitizedName: string;
-  archivesPath: string;
+  newPath: string;
+  oldPath: string;
   chaptersPath: string;
   createdAt: string;
   collections: string[];
@@ -24,7 +24,7 @@ export interface ExhibitionSerieData {
   chaptersRead: number;
   dataPath: string;
   totalChapters: number;
-  literatureForm: "Manga" | "Quadrinho" | "Livro" | "";
+  literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
 }
 
 export interface NormalizedSerieData {
@@ -34,7 +34,7 @@ export interface NormalizedSerieData {
   archivesPath: string; // arquivos brutos
   chaptersPath: string; // arquivos tratados
   totalChapters: number;
-  status: "Em andamento" | "Completo" | "Pendente" | "";
+  status: 'Em andamento' | 'Completo' | 'Pendente' | '';
   isFavorite: boolean;
   collections: string[];
   recommendedBy?: string;
@@ -48,12 +48,12 @@ export interface SerieForm {
   author?: string;
   language?: string;
   cover_path: string;
-  literatureForm: "Manga" | "Quadrinho" | "Livro" | "";
+  literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
   collections: string[];
   tags: string[];
-  privacy: "Publica" | "Privada" | "";
-  autoBackup: "Sim" | "Não" | "";
-  readingStatus: "Em andamento" | "Completo" | "Pendente" | "";
+  privacy: 'Publica' | 'Privada' | '';
+  autoBackup: 'Sim' | 'Não' | '';
+  readingStatus: 'Em andamento' | 'Completo' | 'Pendente' | '';
   sanitizedName: string;
   archivesPath: string;
   chaptersPath: string;
@@ -68,8 +68,8 @@ export interface SeriesTypes {
 export interface AppConfig {
   config: {
     settings: {
-      reading_mode: "single_page" | "double_page" | "vertical_scroll";
-      zoom: "fit_width" | "fit_height" | "original_size";
+      reading_mode: 'single_page' | 'double_page' | 'vertical_scroll';
+      zoom: 'fit_width' | 'fit_height' | 'original_size';
       ligth_mode: boolean;
       full_screen: boolean;
     };

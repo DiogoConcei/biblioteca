@@ -1,18 +1,17 @@
 export {};
-import { Manga } from "./manga.interfaces";
-import { Comic } from "./comic.interfaces";
-import { Book } from "./book.interfaces";
-import { Collections } from "./collections.interfaces";
-import { SeriesProcessor, SerieForm, Literatures } from "./series.interfaces";
+import { Manga } from '../../electron/types/manga.interfaces';
+import { Comic } from '../../electron/types/comic.interfaces';
+import { Book } from '../../electron/types/book.interfaces';
+import { Collections } from '../../electron/types/collections.interfaces';
+import { SeriesProcessor, SerieForm, Literatures } from './series.interfaces';
 
 declare global {
   interface Window {
-    electron: {
+    electronAPI: {
       windowAction: {
-        minimize: () => void;
-        fullScreen: () => void;
-        close: () => void;
-        restore: () => void;
+        minimize: () => Promise<boolean>;
+        toggleMaximize: () => Promise<boolean>;
+        close: () => Promise<boolean>;
       };
 
       webUtilities: {
@@ -20,11 +19,8 @@ declare global {
       };
 
       upload: {
-        localUpload: (filePaths: string[]) => Promise<SeriesProcessor[]>;
-        decodePathFile: (
-          serieName: string,
-          codePath: string
-        ) => Promise<string>;
+        processSerie: (filePaths: string[]) => Promise<SeriesProcessor[]>;
+        decodePathFile: (serieName: string, codePath: string) => Promise<string>;
       };
 
       series: {
@@ -34,10 +30,7 @@ declare global {
 
       manga: {
         getManga: (serieName: string) => Manga;
-        coverDinamic: (
-          archivesPath: string,
-          literatureForm: LiteratureForms
-        ) => Promise<string[]>;
+        coverDinamic: (archivesPath: string, literatureForm: LiteratureForms) => Promise<string[]>;
       };
 
       comic: {
@@ -49,22 +42,10 @@ declare global {
       };
 
       download: {
-        multipleDownload: (
-          dataPath: string,
-          quantity: number
-        ) => Promise<boolean>;
-        singleDownload: (
-          dataPath: string,
-          chapter_id: number
-        ) => Promise<boolean>;
-        readingDownload: (
-          serieName: string,
-          chapter_id: number
-        ) => Promise<boolean>;
-        checkDownload: (
-          serieName: string,
-          chapter_id: number
-        ) => Promise<boolean>;
+        multipleDownload: (dataPath: string, quantity: number) => Promise<boolean>;
+        singleDownload: (dataPath: string, chapter_id: number) => Promise<boolean>;
+        readingDownload: (serieName: string, chapter_id: number) => Promise<boolean>;
+        checkDownload: (serieName: string, chapter_id: number) => Promise<boolean>;
       };
 
       eventEmitter: {
@@ -73,23 +54,10 @@ declare global {
       };
 
       chapters: {
-        getChapter: (
-          serieName: string,
-          chapter_id: number
-        ) => Promise<string[]>;
-        getNextChapter: (
-          serieName: string,
-          chapter_id: number
-        ) => Promise<string>;
-        getPrevChapter: (
-          serieName: string,
-          chapter_id: number
-        ) => Promise<string>;
-        saveLastRead: (
-          serieName: string,
-          chapter_id: number,
-          page_number: number
-        ) => Promise<void>;
+        getChapter: (serieName: string, chapter_id: number) => Promise<string[]>;
+        getNextChapter: (serieName: string, chapter_id: number) => Promise<string>;
+        getPrevChapter: (serieName: string, chapter_id: number) => Promise<string>;
+        saveLastRead: (serieName: string, chapter_id: number, page_number: number) => Promise<void>;
         acessLastRead: (serieName: string) => Promise<string>;
       };
 
@@ -102,14 +70,11 @@ declare global {
 
       userAction: {
         favoriteSerie: (dataPath: string) => Promise<{ success: boolean }>;
-        ratingSerie: (
-          dataPath: string,
-          userRating: number
-        ) => Promise<{ success: boolean }>;
+        ratingSerie: (dataPath: string, userRating: number) => Promise<{ success: boolean }>;
         markRead: (
           dataPath: string,
           chapter_id: number,
-          isRead: boolean
+          isRead: boolean,
         ) => Promise<{ success: boolean }>;
         returnPage: (dataPath: string) => Promise<string>;
       };

@@ -1,0 +1,47 @@
+@use '../../styles/variables' as *;
+
+.search-config {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-end;
+  gap: $spacing-2;
+  margin: $spacing-2;
+
+  .searchLabel {
+    display: flex;
+    align-items: center;
+    background-color: $baby-powder;
+    padding: $spacing-2;
+    border-radius: $radius-md;
+    gap: $spacing-2;
+
+    .searchBar {
+      @include pattern-button;
+      padding: $spacing-1;
+      font-size: $font-lg;
+      color: $gunmetal;
+      width: 100px;
+      height: 32px;
+      transition: width 1s;
+
+      &:focus {
+        width: 350px;
+      }
+
+      &:focus-within {
+        border: 1px solid $border-collor;
+      }
+
+      &::placeholder {
+        color: $gunmetal;
+        font-size: $font-lg;
+      }
+    }
+  }
+
+  .actIcon {
+    @include interactive-buttons;
+    font-size: $font-lg;
+  }
+}

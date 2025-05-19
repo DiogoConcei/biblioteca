@@ -1,0 +1,70 @@
+$blue: #00a7e1;
+$amethyst: #8963ba;
+$weak-amethyst: #a878e5;
+$gunmetal: #282c34;
+$indian-red: #cd5c5c;
+$strong-indian-red: #aa5042;
+$baby-powder: #f4f4ed;
+$snow: #fcf7f8;
+$pacific-cyan: #31afd4;
+$hover-shining: #f4f4ed1f;
+$border-collor: #fcf7f8;
+
+// ===================================
+// Spacing Scale (rem)   (— equivalent in px —)
+// ===================================
+$spacing-0: 0; // 0px
+$spacing-1: 0.25rem; // 4px
+$spacing-2: 0.5rem; // 8px
+$spacing-3: 0.75rem; // 12px
+$spacing-4: 1rem; // 16px
+$spacing-5: 1.25rem; // 20px
+$spacing-6: 1.5rem; // 24px
+$spacing-8: 2rem; // 32px
+$spacing-10: 2.5rem; // 40px
+$spacing-12: 3rem; // 48px
+$spacing-16: 4rem; // 64px
+
+// ===================================
+// Border Radius (rem)    (— equivalent in px —)
+// ===================================
+$radius-none: 0; // 0px
+$radius-sm: 0.25rem; // 4px
+$radius-md: 0.5rem; // 8px
+$radius-lg: 0.75rem; // 12px
+$radius-xl: 1rem; // 16px
+$radius-2xl: 1.5rem; // 24px
+$radius-full: 624.9375rem; // 9999px
+
+// ===================================
+// Font Sizes (rem)       (— equivalent in px —)
+// ===================================
+$font-xs: 0.75rem; // 12px
+$font-sm: 0.875rem; // 14px
+$font-base: 1rem; // 16px
+$font-lg: 1.125rem; // 18px
+$font-xl: 1.25rem; // 20px
+$font-2xl: 1.5rem; // 24px
+$font-3xl: 1.875rem; // 30px
+$font-4xl: 2.25rem; // 36px
+$font-5xl: 3rem; // 48px
+
+@mixin pattern-button {
+  border: none;
+  outline: none;
+  background: none;
+  font-size: $font-lg;
+}
+
+@mixin pattern-input {
+  border: none;
+  background: none;
+  outline: none;
+}
+
+@mixin interactive-buttons {
+  border: none;
+  background: none;
+  outline: none;
+  cursor: pointer;
+}

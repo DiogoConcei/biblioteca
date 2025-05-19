@@ -1,5 +1,5 @@
-import { Comic } from "./comic.interfaces";
-import { Manga, MangaChapter } from "./manga.interfaces";
+// import { Comic } from "../../electron/types/comic.interfaces";
+import { Manga } from "../../electron/types/manga.interfaces";
 import { Literatures, SerieForm } from "./series.interfaces";
 import { SeriesProcessor } from "./series.interfaces";
 

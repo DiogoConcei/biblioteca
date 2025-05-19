@@ -1,0 +1,81 @@
+@use '../../styles/variables' as *;
+
+.TitleBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-flow: row nowrap;
+  -webkit-app-region: drag;
+
+  .NavBar {
+    display: flex;
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+
+    .link {
+      display: flex;
+      align-items: baseline;
+      justify-content: baseline;
+      font-size: $font-2xl;
+
+      .IconHome {
+        width: 50px;
+        height: 50px;
+        padding: $spacing-2;
+
+        &:hover {
+          transition: 1s;
+          background-color: $hover-shining;
+        }
+      }
+    }
+
+    li:last-child .link {
+      padding: 0.7rem;
+      text-align: center;
+      cursor: pointer;
+      color: $amethyst;
+      transition: background-color 0.3s, color 0.3s;
+
+      &:hover {
+        transition: 1s;
+        background-color: $hover-shining;
+      }
+    }
+  }
+
+  .windowBtns {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $spacing-2;
+    min-width: 10%;
+    -webkit-app-region: no-drag;
+
+    .ActionsBtn {
+      @include pattern-button;
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
+
+      &:hover {
+        transition: 1s;
+        background-color: $hover-shining;
+      }
+    }
+  }
+}
+
+//     .icon {
+//       color: #b07ff1;
+//       width: 2rem;
+//       height: 2rem;
+//     }
+
+//     .windowBtns {
+//       display: flex;
+//       align-items: center;
+//       justify-content: center;
+//     }
+//   }
+// }

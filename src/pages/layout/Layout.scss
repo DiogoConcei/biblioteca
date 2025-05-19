@@ -1,0 +1,35 @@
+@use '../../styles/variables' as *;
+
+.Content {
+  position: relative;
+  display: flex;
+  flex-flow: column nowrap;
+  height: 100vh;
+  background: $gunmetal;
+
+  .OutletContainer {
+    background: $gunmetal;
+  }
+
+  //   .TitleBar {
+  //     position: absolute;
+  //     top: 0;
+  //     left: 0;
+  //     width: 100%;
+  //     z-index: 10;
+  //   }
+
+  //   .TitleBar.hideNav {
+  //     visibility: hidden;
+  //     display: none;
+  //     border: 1px solid green;
+  //   }
+
+  //   .OutletContainer.fullContainer {
+  //     display: flex;
+  //     height: 100vh;
+  //     flex-grow: 1;
+  //     margin-top: 0px;
+  //     background: #282c34;
+  //   }
+}

@@ -1,0 +1,441 @@
+@use '../../styles/variables' as *;
+
+.sec-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-flow: column nowrap;
+
+  h1 {
+    font-size: $font-2xl;
+    color: $indian-red;
+  }
+
+  .form-subtitle {
+    font-size: 1.3rem;
+    color: #cd5c5c;
+  }
+
+  .form-view {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-6;
+    padding: $spacing-6;
+
+    .image-upload {
+      display: flex;
+      flex-flow: column nowrap;
+      border-radius: $radius-md;
+      gap: $spacing-2;
+      text-align: center;
+
+      span {
+        font-size: $font-lg;
+        color: $indian-red;
+      }
+
+      .image-container {
+        aspect-ratio: 3 / 4;
+        border-radius: $radius-md;
+        border: 2px solid $amethyst;
+        max-width: 500px;
+        max-height: 500px;
+        overflow: hidden;
+        cursor: pointer;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .cover-preview {
+          object-fit: cover;
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
+
+        .alert {
+          display: flex;
+          text-align: center;
+          justify-content: center;
+          align-items: center;
+          min-width: 500px;
+          min-height: 500px;
+        }
+
+        .file-input {
+          display: none;
+        }
+      }
+    }
+
+    .form-container {
+      display: flex;
+      flex-flow: column nowrap;
+      align-items: center;
+      justify-content: center;
+      gap: $spacing-2;
+
+      .text-info {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        flex-flow: column nowrap;
+        gap: $spacing-3;
+
+        input[type='text'] {
+          @include pattern-button;
+          font-size: $font-2xl;
+          color: $snow;
+          padding: $spacing-2;
+          border: 2px solid $amethyst;
+          border-radius: $radius-md;
+          width: 450px;
+
+          &::placeholder {
+            color: $indian-red;
+          }
+        }
+      }
+
+      .literature-info {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        flex-flow: column nowrap;
+        width: 450px;
+
+        .form-radio {
+          display: flex;
+          justify-content: space-evenly;
+          gap: $spacing-2;
+          margin-top: $spacing-4;
+
+          input {
+            display: none;
+
+            &:checked + label {
+              background-color: #8963ba;
+              color: #fcf7f8;
+            }
+          }
+
+          label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid $amethyst;
+            border-radius: $radius-md;
+            padding: $spacing-3;
+            cursor: pointer;
+            font-size: $font-lg;
+            color: $indian-red;
+            transition: all 0.3s ease;
+            background-color: transparent;
+          }
+        }
+      }
+
+      .backup-info {
+        display: flex;
+        flex-flow: column nowrap;
+        gap: $spacing-3;
+        width: 450px;
+
+        .backup-container {
+          display: flex;
+          gap: $spacing-3;
+
+          input[type='radio'] {
+            display: none;
+
+            &:checked + label {
+              background-color: $amethyst;
+              color: $snow;
+            }
+          }
+
+          label {
+            font-size: $font-base;
+            color: $indian-red;
+            padding: $spacing-6;
+            border: 2px solid $amethyst;
+            border-radius: $radius-md;
+            transition: all 0.3s ease;
+            cursor: pointer;
+          }
+        }
+      }
+
+      .privacy-info {
+        display: flex;
+        flex-flow: column nowrap;
+        gap: $spacing-3;
+        width: 450px;
+
+        .privacy-container {
+          display: flex;
+          gap: $spacing-3;
+
+          input[type='radio'] {
+            display: none;
+
+            &:checked + label {
+              background-color: #8963ba;
+              color: #fcf7f8;
+            }
+          }
+
+          label {
+            font-size: $font-base;
+            color: $indian-red;
+            padding: $spacing-6;
+            border: 2px solid $amethyst;
+            border-radius: $radius-md;
+            transition: all 0.3s ease;
+            cursor: pointer;
+          }
+        }
+      }
+
+      .status-info {
+        display: flex;
+        flex-flow: column nowrap;
+        gap: $spacing-3;
+        width: 450px;
+
+        .status-container {
+          display: flex;
+          gap: $spacing-3;
+
+          input[type='radio'] {
+            display: none;
+
+            &:checked + label {
+              background-color: #8963ba;
+              color: #fcf7f8;
+            }
+          }
+
+          label {
+            font-size: 15px;
+            color: $indian-red;
+            padding: $spacing-6;
+            border: 2px solid $amethyst;
+            border-radius: $radius-md;
+            transition: all 0.3s ease;
+            cursor: pointer;
+          }
+        }
+      }
+
+      .tags-info {
+        display: flex;
+        flex-flow: column;
+        gap: $spacing-3;
+        width: 450px;
+
+        input[type='text'] {
+          @include pattern-input;
+          min-width: 300px;
+          font-size: $font-base;
+          padding: $spacing-3;
+          border: 2px solid $amethyst;
+          color: $snow;
+          border-radius: $radius-lg;
+
+          &::placeholder {
+            color: $indian-red;
+          }
+        }
+
+        .form-tag-preview {
+          display: flex;
+          flex-flow: column nowrap;
+          gap: $spacing-3;
+
+          .tag-list {
+            display: flex;
+            flex-flow: row nowrap;
+            border: 2px solid $amethyst;
+            border-radius: $radius-md;
+            padding: $spacing-2;
+            overflow: auto;
+            width: 400px;
+            height: 100px;
+            gap: $spacing-2;
+
+            li {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              font-size: 1rem;
+              color: #fcf7f8;
+              padding: 5px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              min-width: 0;
+
+              span {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 10px;
+                padding: 10px;
+                background: #cd5c5c;
+              }
+            }
+          }
+        }
+      }
+
+      .navigation-buttons {
+        display: flex;
+        justify-content: space-evenly;
+        width: 200px;
+
+        button {
+          @include interactive-buttons;
+          color: $indian-red;
+          padding: $spacing-2;
+          border-radius: $radius-md;
+          border: 2px solid $amethyst;
+        }
+      }
+    }
+  }
+}
+
+// .form-content {
+//   display: flex;
+//   flex-flow: column nowrap;
+//   justify-content: flex-start;
+//   align-items: flex-start;
+//   gap: 20px;
+// }
+
+// .FormBtnContainer {
+//   display: flex;
+//   gap: 20px;
+// }
+
+// .form-content button[type='submit'],
+// .form-content-buttons {
+//   background-color: #cd5c5c;
+//   color: white;
+//   border: none;
+//   padding: 10px 20px;
+//   border-radius: 5px;
+//   cursor: pointer;
+// }
+
+// .FormBtnContainer.dinamicCovers {
+//   display: flex;
+//   align-self: center;
+//   padding: 10px;
+// }
+
+/* Paleta de Cores */
+/* cd5c5c -> indian red */
+/* 8963BA -> Amethyst */
+/* 282C34 -> Gunmetal */
+/* fcf7f8 -> Snow */
+/* 31afd4 -> Pacific cyan */
+
+/* Paleta de Cores */
+/* cd5c5c -> indian red */
+/* 8963BA -> Amethyst */
+/* 282C34 -> Gunmetal */
+/* fcf7f8 -> Snow */
+/* 31afd4 -> Pacific cyan */
+
+// .form-collection-container {
+//   display: grid;
+//   grid-template-columns: 1fr;
+//   gap: 1rem;
+// }
+
+// .form-collection {
+//   display: flex;
+//   flex-flow: row wrap;
+//   border: 1px solid #8963ba;
+//   overflow: hidden;
+//   border-radius: 10px;
+//   padding: 10px;
+//   width: 400px;
+//   height: 250px;
+//   gap: 20px;
+// }
+
+// .form-collection label {
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   padding: 10px;
+//   border: 2px solid #8963ba;
+//   border-radius: 8px;
+//   cursor: pointer;
+//   font-size: 16px;
+//   transition: all 0.3s ease;
+//   background-color: transparent;
+//   color: #cd5c5c;
+// }
+
+// .form-collection input[type='checkbox'] {
+//   display: none;
+// }
+
+// .form-collection input:checked + label {
+//   background-color: #8963ba;
+//   color: #fcf7f8;
+// }
+
+// .form-add-collection {
+//   display: flex;
+//   flex-flow: row nowrap;
+//   gap: 20px;
+// }
+
+// .form-add-collection input[type='text'] {
+//   display: flex;
+//   border-radius: 5px;
+//   border: 1px solid #8963ba;
+//   color: #fcf7f8;
+//   background: #282c34;
+// }
+
+// .form-add-collection button {
+//   color: #fcf7f8;
+//   cursor: pointer;
+//   padding: 10px;
+//   border-radius: 5px;
+//   background: #cd5c5c;
+//   border: 1px solid #cd5c5c;
+// }
+
+// .form-add-collection input[type='text']::placeholder {
+//   color: #cd5c5c;
+//   text-align: center;
+//   font-size: 12px;
+// }
+
+/* 
+
+
+
+
+
+*/
+
+/* Paleta de Cores */
+/* cd5c5c -> indian red */
+/* 8963BA -> Amethyst */
+/* 282C34 -> Gunmetal */
+/* fcf7f8 -> Snow */
+/* 31afd4 -> Pacific cyan */
+
+/* Nunca mais quero fazer algo relacionado a tag  */
+/* Nem nada vida nem na próxima */
