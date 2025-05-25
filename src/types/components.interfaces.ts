@@ -1,7 +1,7 @@
 // import { Comic } from "../../electron/types/comic.interfaces";
-import { Manga } from "../../electron/types/manga.interfaces";
-import { Literatures, SerieForm } from "./series.interfaces";
-import { SeriesProcessor } from "./series.interfaces";
+import { Manga } from '../../electron/types/manga.interfaces';
+import { Literatures, SerieForm } from './series.interfaces';
+import { SerieData } from './series.interfaces';
 
 export interface OnlySerieProp {
   manga: Literatures;
@@ -61,8 +61,8 @@ export interface GlobalContext {
 
 export interface FormInputsProps {
   index: number;
-  newSeries: SeriesProcessor[];
-  setNewSeries: React.Dispatch<React.SetStateAction<SeriesProcessor[]>>;
+  newSeries: SerieData[];
+  setNewSeries: React.Dispatch<React.SetStateAction<SerieData[]>>;
   handleDataChange: (key: string, value: string) => void;
 }
 

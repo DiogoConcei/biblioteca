@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { ImagePlus, Tag } from 'lucide-react';
 
-import { SerieData, SerieForm } from '../../types/series.interfaces';
+import { SerieData, SerieForm } from '../../types/series.interfaces.ts';
 import './Upload.scss';
 
 export default function Upload() {
@@ -11,10 +11,10 @@ export default function Upload() {
   const location = useLocation();
   const navigate = useNavigate();
   const [newSeries, setNewSeries] = useState<SerieData[]>(() => {
-    return (location.state?.newSeries as SerieData[]) || [];
+    return (location.state?.serieData as SerieData[]) || [];
   });
   const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [formSteps, setFormSteps] = useState<number>(0);
+  // const [formSteps, setFormSteps] = useState<number>(0);
 
   // 2. Controle do preview de capa
   const [imageSrc, setImageSrc] = useState<string>('');
@@ -29,7 +29,6 @@ export default function Upload() {
     register,
     handleSubmit,
     reset,
-    watch,
     setValue,
     formState: { errors },
   } = useForm<SerieForm>({
@@ -52,7 +51,7 @@ export default function Upload() {
     const serie = newSeries[currentIndex];
 
     return {
-      name: serie.name.replace(/#/g, ''),
+      name: newSeries[currentIndex].name,
       genre: '',
       author: '',
       cover_path: '',
@@ -64,8 +63,9 @@ export default function Upload() {
       tags: [], // tags começam vazias
       collections: serie.collections,
       sanitizedName: serie.sanitizedName,
-      archivesPath: serie.archivesPath,
+      archivesPath: serie.newPath,
       chaptersPath: serie.chaptersPath,
+      oldPath: serie.oldPath,
       createdAt: serie.createdAt,
       deletedAt: serie.deletedAt,
     };
@@ -75,7 +75,7 @@ export default function Upload() {
   useEffect(() => {
     if (emptyForm) {
       reset(emptyForm);
-      setFormSteps(0);
+      // setFormSteps(0);
       setImageSrc('');
 
       // Sincroniza local tags state com o form (sempre vazio ao resetar)
@@ -96,7 +96,6 @@ export default function Upload() {
     reader.readAsDataURL(file);
 
     const imagePath = await window.electronAPI.webUtilities.getPathForFile(file);
-    console.log('Path da imagem:', imagePath);
 
     setValue('cover_path', imagePath, { shouldValidate: true });
   };
@@ -143,9 +142,13 @@ export default function Upload() {
 
   // 13. Função disparada ao submeter o formulário
   const onSubmit: SubmitHandler<SerieForm> = async (data: SerieForm) => {
-    console.log('Dados do formulário:', data);
-    // Exemplo: navegar para outra rota ou chamar API
-    // navigate("/outra-rota", { state: { filledForm: data } });
+    console.log(data.oldPath);
+    console.log(newSeries);
+    const response = await window.electronAPI.upload.uploadSerie(data);
+
+    if (!response) return;
+
+    navigate('/');
   };
 
   // 14. Navegação entre índices (anterior/próximo)
@@ -358,7 +361,7 @@ export default function Upload() {
                   {tags.map((tag, idx) => (
                     <li key={idx}>
                       <span>
-                        <Tag size={16} /> {tag}{' '}
+                        <Tag size={16} /> {tag}
                         <button
                           type="button"
                           onClick={() => removeTag(idx)}

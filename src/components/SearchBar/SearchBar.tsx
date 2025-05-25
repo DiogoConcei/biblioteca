@@ -1,7 +1,7 @@
 import './SearchBar.scss';
 import { ListFilter, Search } from 'lucide-react';
 
-import { SearchBarProps } from '../../types/components.interfaces';
+import { SearchBarProps } from '../../types/components.interfaces.ts';
 
 export default function SearchBar({ searchInput, onSearchChange }: SearchBarProps) {
   return (

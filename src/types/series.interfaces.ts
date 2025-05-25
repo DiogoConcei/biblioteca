@@ -1,6 +1,6 @@
-import { Comic, ComicEdition } from '../../electron/types/comic.interfaces';
-import { Book, BookPage } from '../../electron/types/book.interfaces';
-import { Manga, MangaChapter } from '../../electron/types/manga.interfaces';
+import { Comic, ComicEdition } from '../../electron/types/comic.interfaces.ts';
+import { Book, BookPage } from '../../electron/types/book.interfaces.ts';
+import { Manga, MangaChapter } from '../../electron/types/manga.interfaces.ts';
 
 export type Literatures = Manga | Book | Comic;
 export type LiteratureChapter = ComicEdition | BookPage | MangaChapter;
@@ -17,7 +17,7 @@ export interface SerieData {
   deletedAt: string;
 }
 
-export interface ExhibitionSerieData {
+export interface viewData {
   id: number;
   name: string;
   coverImage: string;
@@ -55,9 +55,9 @@ export interface SerieForm {
   autoBackup: 'Sim' | 'Não' | '';
   readingStatus: 'Em andamento' | 'Completo' | 'Pendente' | '';
   sanitizedName: string;
-  archivesPath: string;
   chaptersPath: string;
   createdAt: string;
+  oldPath: string;
   deletedAt: string;
 }
 
@@ -77,4 +77,10 @@ export interface AppConfig {
   metadata: {
     global_id: number;
   };
+}
+
+export interface Response<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
 }

@@ -1,11 +1,10 @@
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
-import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import path from 'node:path';
+// eslint-disable-next-line import/extensions
 import { registerHandlers } from './ipc';
+import path from 'path';
 import fse from 'fs-extra';
 
-const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // The built directory structure
@@ -34,9 +33,6 @@ async function ensureAppFolders() {
   const userDataPath = app.getPath('userData');
   const storageFolder = path.join(userDataPath, 'storage');
 
-  console.log(userDataPath);
-  console.log(storageFolder);
-
   // Se ainda não existe, cria “storage”
   if (!fse.existsSync(storageFolder)) {
     await fse.mkdirp(storageFolder);
@@ -44,12 +40,14 @@ async function ensureAppFolders() {
 
   // Crie já as subpastas que você sabe que sempre vai usar pelo menos uma vez
   const dataStore = path.join(storageFolder, 'data store');
+  const userLibrary = path.join(storageFolder, 'user library');
   const configFolder = path.join(storageFolder, 'config');
   const imagesFolder = path.join(dataStore, 'images files');
   const jsonFolder = path.join(dataStore, 'json files');
 
   await Promise.all([
     fse.mkdirp(dataStore),
+    fse.mkdirp(userLibrary),
     fse.mkdirp(configFolder),
     fse.mkdirp(imagesFolder),
     fse.mkdirp(jsonFolder),
@@ -57,12 +55,18 @@ async function ensureAppFolders() {
 
   // Se quiser criar logo as subpastas específicas (Books, Comics etc):
   await Promise.all([
-    fse.mkdirp(path.join(jsonFolder, 'Books')),
-    fse.mkdirp(path.join(jsonFolder, 'Comics')),
-    fse.mkdirp(path.join(jsonFolder, 'Mangas')),
-    fse.mkdirp(path.join(imagesFolder, 'Book')),
-    fse.mkdirp(path.join(imagesFolder, 'Comic')),
-    fse.mkdirp(path.join(imagesFolder, 'Manga')),
+    fse.mkdirp(path.join(configFolder, 'app')),
+    fse.mkdirp(path.join(configFolder, 'comic')),
+    fse.mkdirp(path.join(configFolder, 'book')),
+    fse.mkdirp(path.join(configFolder, 'manga')),
+    fse.mkdirp(path.join(jsonFolder, 'books')),
+    fse.mkdirp(path.join(jsonFolder, 'comics')),
+    fse.mkdirp(path.join(jsonFolder, 'mangas')),
+    fse.mkdirp(path.join(imagesFolder, 'book')),
+    fse.mkdirp(path.join(imagesFolder, 'comic')),
+    fse.mkdirp(path.join(imagesFolder, 'manga')),
+    fse.mkdirp(path.join(imagesFolder, 'showcase image')),
+    fse.mkdirp(path.join(imagesFolder, 'dinamic images')),
   ]);
 
   // Por fim, armazene apenas o caminho base “storage” no global
@@ -138,6 +142,6 @@ app.on('activate', () => {
 
 app.whenReady().then(async () => {
   await ensureAppFolders();
-  registerHandlers();
+  await registerHandlers();
   createWindow();
 });

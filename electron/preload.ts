@@ -1,7 +1,5 @@
 import { ipcRenderer, contextBridge, webUtils } from 'electron';
-
-// A mesma tipagem presente no client
-import { SerieData } from '../src/types/series.interfaces';
+import { SerieData, SerieForm, viewData, Response } from '../src/types/series.interfaces.ts';
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -33,7 +31,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   upload: {
-    processSerie: (filePaths: string[]): Promise<SerieData[]> =>
+    processSerie: (filePaths: string[]): Promise<Response<SerieData[]>> =>
       ipcRenderer.invoke('upload:process-data', filePaths),
+    uploadSerie: (serieData: SerieForm): Promise<Response<void>> =>
+      ipcRenderer.invoke('upload:process-serie', serieData),
+  },
+
+  series: {
+    getSeries: async (): Promise<Response<viewData[]>> => ipcRenderer.invoke('serie:get-all'),
   },
 });

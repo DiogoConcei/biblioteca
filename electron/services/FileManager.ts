@@ -61,22 +61,18 @@ export default class FileManager extends FileSystem {
     return { volume, chapter };
   }
 
-  public async localUpload(file: string): Promise<string> {
+  public async localUpload(oldPath: string, newPath: string): Promise<void> {
     try {
-      const destPath = path.join(this.userLibrary, path.basename(file));
-      await fse.move(file, destPath);
-      return destPath;
+      await fse.move(oldPath, newPath);
     } catch (error) {
       console.error(`Erro ao fazer upload do arquivo: ${error}`);
       throw error;
     }
   }
 
-  public async uploadCover(file: string): Promise<string> {
+  public async uploadCover(oldPath: string, newPath: string): Promise<void> {
     try {
-      const destPath = path.join(this.showcaseImages, path.basename(file));
-      await fse.move(file, destPath);
-      return destPath;
+      await fse.move(oldPath, newPath);
     } catch (e) {
       console.error(`Erro ao fazer upload de imagem: ${e}`);
       throw e;
