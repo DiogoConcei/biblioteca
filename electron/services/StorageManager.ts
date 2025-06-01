@@ -1,20 +1,18 @@
-import FileSystem from './abstract/FileSystem.ts';
-import FileManager from './FileManager.ts';
 import path from 'path';
+import fse from 'fs-extra';
+import { promisify } from 'util';
+import { exec } from 'child_process';
 
+import { Manga } from '../types/manga.interfaces';
 import {
   Literatures,
+  LiteratureChapter,
   NormalizedSerieData,
   SerieData,
   viewData,
-} from '../../src/types/series.interfaces.ts';
-
-import fse from 'fs-extra'; // Substituição do jsonfile
-// import { Manga, MangaChapter } from '../types/manga.interfaces';
-// import { Comic } from '../types/comic.interfaces';
-// import { Book } from '../types/book.interfaces';
-import { promisify } from 'util';
-import { exec } from 'child_process';
+} from '../../src/types/series.interfaces';
+import FileManager from './FileManager';
+import FileSystem from './abstract/FileSystem';
 
 export default class StorageManager extends FileSystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -166,6 +164,50 @@ export default class StorageManager extends FileSystem {
       return exhibData;
     } catch (e) {
       console.error(`Erro ao ler todo o conteúdo: ${e}`);
+      throw e;
+    }
+  }
+
+  public async selectMangaData(serieName: string): Promise<Manga> {
+    try {
+      const seriesData = await this.fileManager.foundFiles(this.mangasData);
+
+      const serieData = seriesData.find(
+        serie => path.basename(serie, path.extname(serie)) === serieName,
+      );
+
+      if (!serieData) {
+        throw new Error(`Nenhuma série encontrada com o nome: ${serieName}`);
+      }
+
+      return await fse.readJson(serieData, { encoding: 'utf-8' });
+    } catch (e) {
+      console.error('Erro ao selecionar dados do Manga:', e);
+      throw e;
+    }
+  }
+
+  public async deleteSerieChapter(
+    serieData: Literatures,
+    chapter: LiteratureChapter,
+    literatureForm: string,
+  ) {
+    try {
+      if (literatureForm === 'Mangas') {
+        await fse.remove(chapter.chapterPath);
+      } else if (literatureForm === 'Comics') {
+        const pages = await fse.readdir(chapter.chapterPath, {
+          withFileTypes: true,
+        });
+        const pagePaths = pages.map(page => path.join(chapter.chapterPath, page.name));
+        await Promise.all(pagePaths.map(filePath => fse.remove(filePath)));
+      }
+
+      chapter.isDownload = false;
+      chapter.chapterPath = '';
+      await this.updateSerieData(serieData);
+    } catch (e) {
+      console.error('Falha em deletar capítulos', e);
       throw e;
     }
   }

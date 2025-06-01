@@ -1,4 +1,4 @@
-import { Status } from "./manga.interfaces";
+import { Status } from '../../electron/types/manga.interfaces';
 
 export interface UserCollections {
   collections: Collection[];

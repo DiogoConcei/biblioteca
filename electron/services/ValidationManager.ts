@@ -1,11 +1,14 @@
-import FileSystem from './abstract/FileSystem.ts';
-import { Collection } from '../types/collections.interfaces.ts';
-// import StorageManager from './StorageManager';
-// import jsonfile from "jsonfile";
 import path from 'path';
 import fs from 'fs-extra';
+
+import FileSystem from './abstract/FileSystem.ts';
+// eslint-disable-next-line import/order
+import { Collection } from '../../src/types/collections.interfaces.ts';
+import { Literatures } from '../../src/types/series.interfaces.ts';
+
+// import StorageManager from './StorageManager';
+// import jsonfile from "jsonfile";
 // import FileManager from './FileManager';
-// import { Literatures } from "../types/series.interfaces";
 // import ImageManager from "./ImageManager";
 
 export default class ValidationManager extends FileSystem {
@@ -71,23 +74,23 @@ export default class ValidationManager extends FileSystem {
   //   }
   // }
 
-  // public async checkDownload(serieData: Literatures, chapter_id: number): Promise<boolean> {
-  //   try {
-  //     const chaptersData = serieData.chapters;
+  public async checkDownload(serieData: Literatures, chapter_id: number): Promise<boolean> {
+    try {
+      const chaptersData = serieData.chapters;
 
-  //     if (chapter_id > chaptersData.length) return;
+      if (!chaptersData || chapter_id > chaptersData.length) return false;
 
-  //     for (let chapters of chaptersData) {
-  //       if (chapter_id === chapters.id) {
-  //         return chapters.isDownload;
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error(`Falha em verificar o estado do proximo capitulo: ${error}`);
-  //     throw error;
-  //   }
-  //   return;
-  // }
+      for (const chapters of chaptersData) {
+        if (chapter_id === chapters.id) {
+          return chapters.isDownload;
+        }
+      }
+    } catch (error) {
+      console.error(`Falha em verificar o estado do proximo capitulo: ${error}`);
+      throw error;
+    }
+    return true;
+  }
 
   public async isDinamicImage(imagePath: string): Promise<boolean> {
     try {

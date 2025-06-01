@@ -144,9 +144,3 @@ export default class ImageManager extends FileSystem {
     }
   }
 }
-
-// (async () => {
-//   const imageManager = new ImageManager();
-//   const testPath = 'C:\\Users\\Diogo\\Downloads\\FireForce.jpg';
-//   console.log(await imageManager.normalizeImage(testPath));
-// })();

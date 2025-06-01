@@ -1,7 +1,8 @@
 import fse from 'fs-extra';
+
 import FileSystem from './abstract/FileSystem.ts';
-import { NormalizedSerieData } from '../../src/types/series.interfaces.ts';
-import { Collection, SerieCollectionInfo } from '../types/collections.interfaces.ts';
+import { Response, NormalizedSerieData } from '../../src/types/series.interfaces.ts';
+import { Collection, SerieCollectionInfo } from '../../src/types/collections.interfaces.ts';
 import ValidationManager from './ValidationManager.ts';
 
 export default class CollectionsManager extends FileSystem {
@@ -11,17 +12,17 @@ export default class CollectionsManager extends FileSystem {
     super();
   }
 
-  public async getCollections(): Promise<Collection[]> {
+  public async getCollections(): Promise<Response<Collection[]>> {
     try {
       const data: Collection[] = await fse.readJson(this.appCollections);
-      return data;
+      return { success: true, data: data };
     } catch (e) {
       console.error(`Falha em obter todas as coleções: ${e}`);
-      throw e;
+      return { success: false, error: String(e) };
     }
   }
 
-  public async createCollection(collectionName: string): Promise<void> {
+  public async createCollection(collectionName: string): Promise<Response<void>> {
     try {
       const date = new Date();
 
@@ -34,8 +35,9 @@ export default class CollectionsManager extends FileSystem {
       }
 
       const canCreate = await this.validationManager.collectionExist(collectionName);
+
       if (!canCreate) {
-        return;
+        return { success: false };
       }
 
       const newCollection: Collection = {
@@ -48,13 +50,14 @@ export default class CollectionsManager extends FileSystem {
 
       collections.push(newCollection);
       await fse.writeJson(this.appCollections, collections, { spaces: 2 });
+      return { success: true };
     } catch (e) {
       console.error(`Falha em criar nova coleção: ${e}`);
-      throw e;
+      return { success: false, error: String(e) };
     }
   }
 
-  public async serieToCollection(serieData: NormalizedSerieData): Promise<void> {
+  public async serieToCollection(serieData: NormalizedSerieData): Promise<Response<void>> {
     try {
       for (const collectionName of serieData.collections) {
         await this.createCollection(collectionName);
@@ -67,7 +70,7 @@ export default class CollectionsManager extends FileSystem {
       const fileData: Collection[] = await fse.readJson(this.appCollections);
 
       if (!fileData) {
-        return;
+        return { success: false };
       }
 
       const updatedCollections = fileData.map(collection => {
@@ -104,34 +107,50 @@ export default class CollectionsManager extends FileSystem {
       });
 
       await fse.writeJson(this.appCollections, updatedCollections, { spaces: 2 });
+      return { success: true };
     } catch (e) {
       console.error(`Falha em adicionar a série na coleção: ${e}`);
-      throw e;
+      return { success: false, error: String(e) };
     }
   }
 
-  public async getFavorites(collections: Collection[]): Promise<Collection> {
+  public async getFavorites(): Promise<Response<Collection>> {
     try {
-      const favCollection = collections.find(collection => collection.name === 'Favoritas');
-      if (!favCollection) {
+      const response = await this.getCollections();
+      const collection = response.data;
+
+      if (!collection) {
         throw new Error('Coleção de favoritos não encontrada.');
       }
-      return favCollection;
+
+      const favorites = collection.find(collect => collect.name === 'Favoritos');
+
+      return { success: true, data: favorites };
     } catch (e) {
       console.error(`Erro ao recuperar a coleção de favoritos: ${e}`);
-      throw e;
+      return { success: false, error: String(e) };
     }
   }
 
   public async updateFavCollection(
     collectionData: Collection[],
     collectionPath: string,
-  ): Promise<void> {
+  ): Promise<Response<void>> {
     try {
       await fse.writeJson(collectionPath, collectionData, { spaces: 2 });
-    } catch (error) {
-      console.error('Erro ao atualizar coleção de favoritos:', error);
-      throw error;
+      return { success: true };
+    } catch (e) {
+      console.error('Erro ao atualizar coleção de favoritos:', e);
+      return { success: false, error: String(e) };
     }
   }
 }
+
+// (async () => {
+//   const collectionsManager = new CollectionsManager();
+//   try {
+//     const collections = await collectionsManager.getFavorites();
+//   } catch (error) {
+//     console.error('Erro ao obter coleções:', error);
+//   }
+// })();

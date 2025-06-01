@@ -1,6 +1,6 @@
-// src/hooks/useSeriesHook.ts
 import { useEffect } from 'react';
-import { useSeriesStore } from '../store/seriesStore.ts';
+
+import { useSeriesStore } from '../store/seriesStore';
 
 export function useSeries() {
   const series = useSeriesStore(state => state.series);

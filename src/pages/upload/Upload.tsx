@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { ImagePlus, Tag } from 'lucide-react';
 
-import { SerieData, SerieForm } from '../../types/series.interfaces.ts';
+import { SerieData, SerieForm } from '../../types/series.interfaces';
 import './Upload.scss';
 
 export default function Upload() {
@@ -142,8 +142,6 @@ export default function Upload() {
 
   // 13. Função disparada ao submeter o formulário
   const onSubmit: SubmitHandler<SerieForm> = async (data: SerieForm) => {
-    console.log(data.oldPath);
-    console.log(newSeries);
     const response = await window.electronAPI.upload.uploadSerie(data);
 
     if (!response) return;

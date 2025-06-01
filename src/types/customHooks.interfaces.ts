@@ -1,4 +1,4 @@
-import { LiteratureChapter } from "../types/series.interfaces";
+import { LiteratureChapter } from '../types/series.interfaces';
 
 export interface UseChapterParams {
   serieName: string;
@@ -36,7 +36,7 @@ export interface useChapterNavigationParams {
 }
 
 export interface useDownloadParams {
-  setError: React.Dispatch<React.SetStateAction<string>>;
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
   setDownloaded?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 

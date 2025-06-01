@@ -1,29 +1,54 @@
 import { create } from 'zustand';
-import { viewData } from '../types/series.interfaces.ts';
+
+import { Literatures } from '../types/series.interfaces';
+import { Manga } from '../../electron/types/manga.interfaces';
 
 interface SeriesState {
-  series: viewData[]; // Estado
-  fetchSeries: () => Promise<void>; // ação assíncrona
-  setSeries: (newList: viewData[]) => void; // ação sincrona para setar
+  serie: Literatures | null;
+  error: string | null;
+  loading: boolean;
+
+  setSerie: (newSerie: Literatures | null) => void;
+  fetchManga: (serieName: string) => Promise<Manga | null>;
+  setError: (error: string | null) => void;
+
+  resetStates: () => void;
 }
 
-export const useSeriesStore = create<SeriesState>(set => ({
-  series: [],
-  setSeries: newList => {
-    set({ series: newList });
-  },
+export const useSerieStore = create<SeriesState>(set => ({
+  serie: null,
+  error: null,
+  loading: true,
 
-  fetchSeries: async () => {
+  setError: (error: string | null) => set({ error, loading: false }),
+  resetStates: () => set({ serie: null, error: null, loading: false }),
+
+  setSerie: (newSerie: Literatures | null) => set({ serie: newSerie }),
+
+  fetchManga: async (serieName: string) => {
     try {
-      const response = await window.electronAPI.series.getSeries();
+      const response = await window.electronAPI.series.getManga(serieName);
 
-      if (response.success) {
-        set({ series: response.data });
+      if (response.success && response.data) {
+        set({
+          loading: false,
+        });
+
+        return response.data as Manga;
       } else {
-        console.error('Falha ao obter séries: ', response.error);
+        set({
+          loading: false,
+          error: response.error ?? 'Erro inesperado ao buscar série',
+        });
+
+        return null;
       }
-    } catch (err) {
-      console.error('Erro inesperado ao chamar getSeries: ', err);
+    } catch (e) {
+      set({
+        loading: false,
+        error: 'Falha ao recuperar série. Tente novamente.',
+      });
+      return null;
     }
   },
 }));

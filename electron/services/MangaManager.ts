@@ -1,3 +1,6 @@
+import fse from 'fs-extra';
+import path from 'path';
+
 import SystemManager from './SystemManager.ts';
 import FileSystem from './abstract/FileSystem.ts';
 import ValidationManager from './ValidationManager.ts';
@@ -5,10 +8,6 @@ import ImageManager from './ImageManager.ts';
 import StorageManager from './StorageManager.ts';
 import CollectionsManager from './CollectionsManager.ts';
 import FileManager from './FileManager.ts';
-
-import fse from 'fs-extra';
-import path from 'path';
-
 import { SerieForm } from '../../src/types/series.interfaces.ts';
 import { Manga, MangaChapter } from '../types/manga.interfaces.ts';
 
@@ -122,6 +121,134 @@ export default class MangaManager extends FileSystem {
       return chapters;
     } catch (e) {
       console.error(`Falha em gerar capítulos para o mangá: ${e}`);
+      throw e;
+    }
+  }
+
+  public async createMangaCovers(archivesPath: string): Promise<string[]> {
+    try {
+      const serieName = path.basename(archivesPath);
+
+      const entries = await fse.readdir(archivesPath, { withFileTypes: true });
+      const fullPaths = entries.map(entry => path.join(archivesPath, entry.name));
+
+      const orderedChapters = await this.fileManager.orderByChapters(fullPaths);
+      const selectedChapters = orderedChapters.slice(0, 3);
+
+      const covers: string[] = [];
+
+      for (const chapter of selectedChapters) {
+        const baseName = path.basename(chapter);
+        const chapterName = this.fileManager.sanitizeFilename(baseName).slice(0, 32);
+        const outputDir = path.join(this.mangasImages, serieName, chapterName);
+
+        await this.storageManager.extractWith7zip(chapter, outputDir);
+        await this.imageManager.normalizeChapter(outputDir);
+
+        const imagesEntries = await fse.readdir(outputDir, {
+          withFileTypes: true,
+        });
+        const chapterImages = imagesEntries
+          .slice(0, 2)
+          .map(entry => path.join(outputDir, entry.name));
+
+        covers.push(...chapterImages);
+      }
+
+      return covers;
+    } catch (error) {
+      console.error(`Erro em extrair a showcaseImage: ${error}`);
+      throw error;
+    }
+  }
+
+  public async getChapter(dataPath: string, chapter_id: number): Promise<string[] | string> {
+    try {
+      const serieData = await this.storageManager.readSerieData(dataPath);
+      const chaptersData = serieData.chapters;
+      if (!chaptersData) {
+        throw new Error('Chapters data is undefined.');
+      }
+      const chapter = chaptersData.find(chap => chap.id === chapter_id);
+      if (!chapter) {
+        throw new Error(`Chapter with id ${chapter_id} not found.`);
+      }
+      const chapterDirents = await fse.readdir(chapter.chapterPath, {
+        withFileTypes: true,
+      });
+
+      const imageFiles = chapterDirents
+        .filter(dirent => dirent.isFile() && /\.(jpeg|png|webp|tiff|jpg)$/i.test(dirent.name))
+        .map(dirent => path.join(chapter.chapterPath, dirent.name));
+
+      const processedImages = await this.imageManager.encodeImageToBase64(imageFiles);
+
+      return processedImages;
+    } catch (error) {
+      console.error(`Erro ao obter conteúdo do capítulo: ${error.message}`);
+      throw error;
+    }
+  }
+
+  public async createEditions(dataPath: string, quantity: number) {
+    const mangaData = await this.storageManager.readSerieData(dataPath);
+    const lastDownload = mangaData.metadata.lastDownload;
+
+    const firstItem = lastDownload;
+    if (!mangaData.chapters) {
+      throw new Error('Chapters data is undefined.');
+    }
+    const lastItem = Math.min(lastDownload + quantity, mangaData.chapters.length);
+
+    const chaptersToProcess = mangaData.chapters.filter(
+      chapter => chapter.id >= firstItem && chapter.id <= lastItem,
+    );
+
+    for await (const chapter of chaptersToProcess) {
+      const outputDir = path.join(this.mangasImages, mangaData.name, chapter.name);
+
+      try {
+        await this.storageManager.extractWith7zip(chapter.archivesPath, outputDir);
+
+        await this.imageManager.normalizeChapter(outputDir);
+        chapter.isDownload = true;
+        chapter.chapterPath = outputDir;
+        mangaData.metadata.lastDownload = chapter.id;
+
+        await this.storageManager.updateSerieData(mangaData);
+      } catch (e) {
+        console.error(`Erro ao processar os capítulos em "${mangaData.name}": ${e}`);
+        throw e;
+      } finally {
+        await this.imageManager.clearChapter(outputDir);
+      }
+    }
+  }
+
+  public async createEditionById(dataPath: string, chapter_id: number) {
+    const mangaData = await this.storageManager.readSerieData(dataPath);
+
+    if (!mangaData.chapters) {
+      throw new Error('Chapters data is undefined.');
+    }
+    const chapterToProcess = mangaData.chapters.find(chapter => chapter.id === chapter_id);
+    if (!chapterToProcess) {
+      throw new Error(`Chapter with id ${chapter_id} not found.`);
+    }
+
+    const outputDir = path.join(this.mangasImages, mangaData.name, chapterToProcess.name);
+
+    try {
+      await this.storageManager.extractWith7zip(chapterToProcess.archivesPath, outputDir);
+
+      await this.imageManager.normalizeChapter(outputDir);
+      chapterToProcess.isDownload = true;
+      chapterToProcess.chapterPath = outputDir;
+      mangaData.metadata.lastDownload = chapterToProcess.id;
+
+      await this.storageManager.updateSerieData(mangaData);
+    } catch (e) {
+      console.error(`Erro ao processar os capítulos em "${mangaData.name}": ${e}`);
       throw e;
     }
   }

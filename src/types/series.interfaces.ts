@@ -1,10 +1,28 @@
-import { Comic, ComicEdition } from '../../electron/types/comic.interfaces.ts';
-import { Book, BookPage } from '../../electron/types/book.interfaces.ts';
-import { Manga, MangaChapter } from '../../electron/types/manga.interfaces.ts';
+import { Comic, ComicEdition } from '../../electron/types/comic.interfaces';
+import { Book, BookPage } from '../../electron/types/book.interfaces';
+import { Manga, MangaChapter } from '../../electron/types/manga.interfaces';
 
 export type Literatures = Manga | Book | Comic;
 export type LiteratureChapter = ComicEdition | BookPage | MangaChapter;
 export type LiteratureForms = 'Manga' | 'Quadrinho';
+
+export type LiteraturesAttributes =
+  | string
+  | number
+  | boolean
+  | 'Manga'
+  | 'Quadrinho'
+  | 'Livro'
+  | ''
+  | 'Em andamento'
+  | 'Completo'
+  | 'Pendente'
+  | 'Publica'
+  | 'Privada'
+  | 'Sim'
+  | 'Não';
+
+export type LiteratureChapterAttributes = string | number | boolean;
 
 export interface SerieData {
   name: string;

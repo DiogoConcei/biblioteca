@@ -1,15 +1,39 @@
 import './Home.scss';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 
-import SearchBar from '../../components/SearchBar/SearchBar.tsx';
-import { useSeries } from '../../hooks/useSerieHook.ts';
+import { viewData } from '@/types/series.interfaces';
+
+import SearchBar from '../../components/SearchBar/SearchBar';
+// import ErrorScreen from '@/components/ErrorScreen/ErrorScreen';
 
 export default function Home() {
+  const [series, setSeries] = useState<viewData[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState<string>('');
   const navigate = useNavigate();
 
-  const series = useSeries();
+  useEffect(() => {
+    async function getSeries() {
+      try {
+        const response = await window.electronAPI.series.getSeries();
+        if (response.success && response.data) {
+          setSeries(response.data);
+        } else {
+          setError('Nenhuma série encontrada.');
+        }
+      } catch (err) {
+        console.error('Erro ao buscar séries:', err);
+        setError('Erro ao buscar séries. Tente novamente.');
+      }
+    }
+
+    getSeries();
+  });
+
+  if (error) {
+    return <p>Quebrou</p>;
+  }
 
   const searchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();

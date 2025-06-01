@@ -1,0 +1,58 @@
+@use 'src/styles/variables' as *;
+
+.download {
+  @include interactive-buttons;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $snow;
+  font-size: $font-lg;
+  background: $blue;
+  padding: $spacing-2;
+  gap: $spacing-2;
+  border-radius: $radius-md;
+  transition: background-color 0.3s, color 0.3s;
+
+  &:hover {
+    background-color: rgba(244, 244, 237, 0.12);
+    color: rgba(137, 99, 186, 1);
+  }
+}
+
+.dropdown-list {
+  position: absolute;
+  list-style: none;
+  background-color: #282c34;
+  border-radius: $radius-md;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  margin-top: $spacing-2;
+  width: 150px;
+  z-index: 10;
+  animation: dropdown 0.3s ease-in-out;
+
+  .dropdown-item {
+    padding: $spacing-2;
+    border-bottom: 1px solid #444;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-option {
+      background: transparent;
+      color: $snow;
+      border: none;
+      width: 100%;
+      text-align: left;
+      font-size: $font-lg;
+      padding: $spacing-2;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+
+      &:hover {
+        border-radius: $radius-sm;
+        background-color: rgba(137, 99, 186, 0.2);
+      }
+    }
+  }
+}

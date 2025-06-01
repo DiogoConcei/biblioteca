@@ -1,7 +1,10 @@
 // .eslintrc.cjs
 module.exports = {
   root: true,
-  env: { browser: true, es2020: true },
+  env: {
+    browser: true,
+    es2020: true,
+  },
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2020,
@@ -22,19 +25,26 @@ module.exports = {
   ignorePatterns: ['dist', '.eslintrc.cjs'],
   rules: {
     'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
-    'import/extensions': [
-      'error',
-      'always',
+
+    'import/no-named-as-default-member': 'off',
+
+    // Desativa exigência de extensão nos imports
+    'import/extensions': 'off',
+
+    // Opcional: organizar imports
+    'import/order': [
+      'warn',
       {
-        ts: 'always',
-        tsx: 'always',
-        js: 'always',
-        jsx: 'always',
+        groups: [['builtin', 'external'], ['internal'], ['parent', 'sibling', 'index']],
+        'newlines-between': 'always',
       },
     ],
   },
   settings: {
     'import/resolver': {
+      typescript: {
+        project: './tsconfig.json',
+      },
       node: {
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
       },

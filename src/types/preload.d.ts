@@ -1,5 +1,6 @@
 export {};
-import { Response, SerieData, viewData } from './series.interfaces.ts';
+
+import { Literatures, Response, SerieData, viewData } from './series.interfaces.ts';
 // import { Manga } from '../../electron/types/manga.interfaces.ts';
 // import { Comic } from '../../electron/types/comic.interfaces.ts';
 // import { Book } from '../../electron/types/book.interfaces.ts';
@@ -35,6 +36,44 @@ declare global {
 
       series: {
         getSeries: () => Promise<Response<viewData[]>>;
+        getManga: (serieName: string) => Promise<Response<Literatures | null>>;
+        serieToCollection: (dataPath: string) => Promise<Response<void>>;
+        favoriteSerie: (dataPath: string) => Promise<Response<void>>;
+        ratingSerie: (dataPath: string, userRating: number) => Promise<Response<void>>;
+      };
+
+      chapters: {
+        markRead: (
+          dataPath: string,
+          chapter_id: number,
+          isRead: boolean,
+        ) => Promise<Response<void>>;
+        getChapter: (serieName: string, chapter_id: number) => Promise<Response<string[] | string>>;
+        saveLastRead: (
+          serieName: string,
+          chapter_id: number,
+          page_number: number,
+        ) => Promise<Response<void>>;
+        acessLastRead: (serieName: string) => Promise<Response<string>>;
+        getNextChapter: (serieName: string, chapter_id: number) => Promise<Response<string>>;
+        getPrevChapter: (serieName: string, chapter_id: number) => Promise<Response<string>>;
+      };
+
+      collections: {
+        getCollections: () => Promise<Response<Collection[]>>;
+        createCollection: (collectionName: string) => Promise<Response<void>>;
+        getFavSeries: () => Promise<Response<Collection>>;
+      };
+
+      userAction: {
+        returnPage: (dataPath: string) => Promise<Response<string>>;
+      };
+
+      download: {
+        multipleDownload: (dataPath: string, quantity: number) => Promise<boolean>;
+        singleDownload: (dataPath: string, chapter_id: number) => Promise<boolean>;
+        readingDownload: (serieName: string, chapter_id: number) => Promise<boolean>;
+        checkDownload: (serieName: string, chapter_id: number) => Promise<boolean>;
       };
     };
   }

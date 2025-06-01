@@ -1,7 +1,11 @@
-// import { Comic } from "../../electron/types/comic.interfaces";
 import { Manga } from '../../electron/types/manga.interfaces';
-import { Literatures, SerieForm } from './series.interfaces';
-import { SerieData } from './series.interfaces';
+import {
+  Literatures,
+  SerieForm,
+  LiteraturesAttributes,
+  LiteratureChapterAttributes,
+  SerieData,
+} from './series.interfaces';
 
 export interface OnlySerieProp {
   manga: Literatures;
@@ -9,8 +13,8 @@ export interface OnlySerieProp {
 
 export interface ChaptersInfoProp {
   manga: Manga;
-  updateSerie: (path: string, newValue: any) => Promise<void>;
-  updateChapters: (path: string, newValue: any) => Promise<void>;
+  updateSerie: (path: string, newValue: LiteraturesAttributes) => void;
+  updateChapter: (index: number, path: string, newValue: LiteratureChapterAttributes) => void;
 }
 
 export interface PageControlProps {
@@ -49,7 +53,7 @@ export interface ComicCardsProps {
 
 export interface downloadButtonProps {
   serie: Literatures;
-  updateSerie: (path: string, newValue: any) => Promise<void>;
+  updateSerie: (path: string, newValue: LiteraturesAttributes) => void;
 }
 
 export interface GlobalContext {
@@ -71,7 +75,6 @@ export interface OnlyDataChangeProp {
 }
 
 export interface CostumizeImageProps {
-  handleDataChange: (field: string, value: any) => void;
   setImageSrc: (src: string) => void;
   imageSrc: string;
   formSteps: number;
@@ -99,12 +102,11 @@ export interface CollectionButtonProps {
 
 export interface SerieActionProps {
   manga: Literatures;
-  updateSerie: (path: string, newValue: any) => Promise<void>;
+  updateSerie: (path: string, newValue: LiteraturesAttributes) => Promise<void>;
   updateFavCollection: (serie: Literatures, isFav: boolean) => Promise<boolean>;
 }
 
 export interface ErrorScreenProps {
   serieName: string;
   error: string;
-  dinamicRedirect: string;
 }
