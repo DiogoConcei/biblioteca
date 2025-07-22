@@ -1,40 +1,42 @@
-import { IpcMain } from 'electron';
+import { IpcMain } from "electron";
 
-import StorageManager from '../services/StorageManager.ts';
-import CollectionsManager from '../services/CollectionsManager';
-import ImageManager from '../services/ImageManager.ts';
-import UserManager from '../services/UserManager.ts';
+import StorageManager from "../services/StorageManager.ts";
+import CollectionsManager from "../services/CollectionsManager";
+import ImageManager from "../services/ImageManager.ts";
+import UserManager from "../services/UserManager.ts";
+import { getMainWindow } from "../main.ts";
 
 export default function seriesHandlers(ipcMain: IpcMain) {
   const storageManager = new StorageManager();
   const imageManager = new ImageManager();
-  const storageOperations = new StorageManager();
   const userManager = new UserManager();
-  const collectionsOperations = new CollectionsManager();
+  const collectionManager = new CollectionsManager();
 
-  ipcMain.handle('serie:get-all', async () => {
+  ipcMain.handle("serie:get-all", async () => {
     try {
       const getData = await storageManager.seriesData();
 
       const procesData = await Promise.all(
-        getData.map(async serieData => {
-          const encodedImage = await imageManager.encodeImageToBase64(serieData.coverImage);
+        getData.map(async (serieData) => {
+          const encodedImage = await imageManager.encodeImageToBase64(
+            serieData.coverImage
+          );
 
           return {
             ...serieData,
             coverImage: encodedImage,
           };
-        }),
+        })
       );
 
-      return { success: true, data: procesData, error: ' ' };
+      return { success: true, data: procesData, error: " " };
     } catch (e) {
       console.error(`Falha em recuperar todas as séries: ${e}`);
-      return { success: false, data: '', error: String(e) };
+      return { success: false, data: "", error: String(e) };
     }
   });
 
-  ipcMain.handle('serie:manga-serie', async (_event, serieName: string) => {
+  ipcMain.handle("serie:manga-serie", async (_event, serieName: string) => {
     try {
       const data = await storageManager.selectMangaData(serieName);
 
@@ -43,18 +45,20 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         coverImage: await imageManager.encodeImageToBase64(data.coverImage),
       };
 
-      return { success: true, data: processedData, error: ' ' };
+      return { success: true, data: processedData, error: " " };
     } catch (e) {
-      console.error('Erro ao buscar dados da series:', e);
+      console.error("Erro ao buscar dados da series:", e);
       return { success: false, error: String(e) };
     }
   });
 
-  ipcMain.handle('serie:addToCollection', async (_event, dataPath: string) => {
+  ipcMain.handle("serie:addToCollection", async (_event, dataPath: string) => {
     try {
-      const serieData = await storageOperations.readSerieData(dataPath);
-      const normalizedData = await storageOperations.createNormalizedData(serieData);
-      const result = await collectionsOperations.serieToCollection(normalizedData);
+      const serieData = await storageManager.readSerieData(dataPath);
+      const normalizedData = await storageManager.createNormalizedData(
+        serieData
+      );
+      const result = await collectionManager.serieToCollection(normalizedData);
       return { success: result };
     } catch (e) {
       console.error(`Falha em adicionar a colecao: ${e}`);
@@ -62,19 +66,32 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle('serie:rating', async (_event, dataPath: string, userRating: number) => {
-    try {
-      const serieData = await storageManager.readSerieData(dataPath);
-      const updateData = await userManager.ratingSerie(serieData, userRating);
-      await storageManager.updateSerieData(updateData);
-      return { success: true };
-    } catch (e) {
-      console.error(`Falha em ranquear serie: ${e}`);
-      return { success: false, error: String(e) };
-    }
-  });
+  ipcMain.handle(
+    "serie:rating",
+    async (_event, dataPath: string, userRating: number) => {
+      try {
+        const serieData = await storageManager.readSerieData(dataPath);
+        const updateData = await userManager.ratingSerie(serieData, userRating);
+        await collectionManager.updateSerieInAllCollections(serieData.id, {
+          rating: updateData.metadata.rating,
+        });
 
-  ipcMain.handle('serie:favorite', async (_event, dataPath: string) => {
+        const win = getMainWindow();
+
+        if (win) {
+          win.webContents.send("update-rating");
+        }
+
+        await storageManager.updateSerieData(updateData);
+        return { success: true };
+      } catch (e) {
+        console.error(`Falha em ranquear serie: ${e}`);
+        return { success: false, error: String(e) };
+      }
+    }
+  );
+
+  ipcMain.handle("serie:favorite", async (_event, dataPath: string) => {
     try {
       const serieData = await storageManager.readSerieData(dataPath);
       await userManager.favoriteSerie(serieData);
@@ -85,30 +102,45 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     }
   });
 
-  // ipcMain.handle('get-comic-serie', async (_event, serieName: string) => {
-  //   try {
-  //     const data = await storageManager.selectComicData(serieName);
+  ipcMain.handle("serie:recent-read", async (_event, dataPath: string) => {
+    try {
+      const serieData = await storageManager.readSerieData(dataPath);
+      await userManager.addToRecents(serieData);
+      return { success: true };
+    } catch (e) {
+      console.error(`Erro em favoritar serie: ${e}`);
+      return { success: false, error: String(e) };
+    }
+  });
 
-  //     const updatedChapters = await Promise.all(
-  //       data.chapters.map(async chapter => {
-  //         const encodedCover = await imageManager.encodeImageToBase64(chapter.coverPath);
+  ipcMain.handle("serie:comic-serie", async (_event, serieName: string) => {
+    try {
+      const data = await storageManager.selectComicData(serieName);
 
-  //         return {
-  //           ...chapter,
-  //           coverPath: encodedCover,
-  //         };
-  //       }),
-  //     );
+      const updatedChapters = data.chapters
+        ? await Promise.all(
+            data.chapters.map(async (chapter) => {
+              const encodedCover = chapter.coverPath
+                ? await imageManager.encodeImageToBase64(chapter.coverPath)
+                : "";
 
-  //     const processedData = {
-  //       ...data,
-  //       chapters: updatedChapters,
-  //     };
+              return {
+                ...chapter,
+                coverPath: encodedCover,
+              };
+            })
+          )
+        : [];
 
-  //     return processedData;
-  //   } catch (error) {
-  //     console.error('Erro ao buscar dados da series:', error);
-  //     throw error;
-  //   }
-  // });
+      const processedData = {
+        ...data,
+        chapters: updatedChapters,
+      };
+
+      return { success: true, data: processedData, error: "" };
+    } catch (error) {
+      console.error("Erro ao buscar dados da series:", error);
+      throw error;
+    }
+  });
 }

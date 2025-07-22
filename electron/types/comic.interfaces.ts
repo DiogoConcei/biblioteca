@@ -11,7 +11,7 @@ export interface Comic {
   genre?: string;
   author?: string;
   language?: string;
-  literatureForm: "Manga" | "Quadrinho" | "Livro" | "";
+  literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
   readingData: {
     lastChapterId: number;
     lastReadAt: string;
@@ -19,15 +19,15 @@ export interface Comic {
   chapters?: ComicEdition[];
   childSeries?: ComicTieIn[];
   metadata: {
-    status: "Em andamento" | "Completo" | "Pendente" | "";
+    status: 'Em andamento' | 'Completo' | 'Pendente' | '';
     collections: string[];
     recommendedBy?: string;
     originalOwner?: string;
     lastDownload: number;
-    privacy: "Publica" | "Privada" | "";
+    privacy: 'Publica' | 'Privada' | '';
     rating?: number;
     isFavorite: boolean;
-    autoBackup: "Sim" | "Não" | "";
+    autoBackup: 'Sim' | 'Não' | '';
     compiledComic: boolean;
   };
   createdAt: string;
@@ -63,8 +63,8 @@ export interface ComicEdition {
 export interface ComicConfig {
   config: {
     settings: {
-      readingMode: "single_page" | "double_page" | "vertical_scroll";
-      zoom: "fit_width" | "fit_height" | "original_size";
+      readingMode: 'single_page' | 'double_page' | 'vertical_scroll';
+      zoom: 'fit_width' | 'fit_height' | 'original_size';
       lightMode: boolean;
       fullScreen: boolean;
     };

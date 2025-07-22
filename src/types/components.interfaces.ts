@@ -1,11 +1,11 @@
-import { Manga } from '../../electron/types/manga.interfaces';
+import { Manga } from "../../electron/types/manga.interfaces";
 import {
   Literatures,
   SerieForm,
   LiteraturesAttributes,
   LiteratureChapterAttributes,
   SerieData,
-} from './series.interfaces';
+} from "./series.interfaces";
 
 export interface OnlySerieProp {
   manga: Literatures;
@@ -14,7 +14,11 @@ export interface OnlySerieProp {
 export interface ChaptersInfoProp {
   manga: Manga;
   updateSerie: (path: string, newValue: LiteraturesAttributes) => void;
-  updateChapter: (index: number, path: string, newValue: LiteratureChapterAttributes) => void;
+  updateChapter: (
+    index: number,
+    path: string,
+    newValue: LiteratureChapterAttributes
+  ) => void;
 }
 
 export interface PageControlProps {

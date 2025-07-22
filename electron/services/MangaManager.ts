@@ -14,10 +14,12 @@ import { Manga, MangaChapter } from '../types/manga.interfaces.ts';
 export default class MangaManager extends FileSystem {
   private global_id: number = 0;
   private readonly systemManager: SystemManager = new SystemManager();
-  private readonly validationManager: ValidationManager = new ValidationManager();
+  private readonly validationManager: ValidationManager =
+    new ValidationManager();
   private readonly imageManager: ImageManager = new ImageManager();
   private readonly storageManager: StorageManager = new StorageManager();
-  private readonly collectionsManager: CollectionsManager = new CollectionsManager();
+  private readonly collectionsManager: CollectionsManager =
+    new CollectionsManager();
   private readonly fileManager: FileManager = new FileManager();
 
   constructor() {
@@ -26,16 +28,24 @@ export default class MangaManager extends FileSystem {
 
   public async createMangaSerie(serie: SerieForm): Promise<void> {
     const mangaData = await this.createMangaData(serie);
-    const mangaChapters = await this.createMangaChapters(serie.oldPath, mangaData.createdAt);
+    const mangaChapters = await this.createMangaChapters(
+      mangaData.name,
+      serie.oldPath,
+      mangaData.createdAt,
+    );
     mangaData.chapters = mangaChapters;
 
     if (await this.validationManager.isDinamicImage(mangaData.coverImage)) {
-      const mangaCover = await this.imageManager.normalizeImage(mangaData.coverImage);
+      const mangaCover = await this.imageManager.normalizeImage(
+        mangaData.coverImage,
+        this.showcaseImages,
+      );
       await fse.remove(mangaData.coverImage);
       mangaData.coverImage = mangaCover;
     }
 
-    const normalizedMangaData = this.storageManager.createNormalizedData(mangaData);
+    const normalizedMangaData =
+      this.storageManager.createNormalizedData(mangaData);
     await this.collectionsManager.serieToCollection(normalizedMangaData);
     await this.storageManager.writeSerieData(mangaData);
     await this.systemManager.setMangaId(this.global_id);
@@ -45,14 +55,20 @@ export default class MangaManager extends FileSystem {
   public async createMangaData(serie: SerieForm): Promise<Manga> {
     try {
       this.global_id = (await this.systemManager.getMangaId()) + 1;
-      const totalChapters = (await fse.readdir(serie.oldPath, { withFileTypes: true })).length;
+      const totalChapters = (
+        await fse.readdir(serie.oldPath, { withFileTypes: true })
+      ).length;
 
       return {
         id: this.global_id,
         name: serie.name,
         sanitizedName: serie.sanitizedName,
         archivesPath: path.join(this.userLibrary, serie.name),
-        chaptersPath: path.join(this.imagesFolder, serie.literatureForm, serie.name),
+        chaptersPath: path.join(
+          this.imagesFolder,
+          serie.literatureForm,
+          serie.name,
+        ),
         dataPath: path.join(this.mangasData, `${serie.name}.json`),
         coverImage: serie.cover_path,
         totalChapters: totalChapters,
@@ -89,11 +105,16 @@ export default class MangaManager extends FileSystem {
     }
   }
 
-  public async createMangaChapters(oldPath: string, createdAt: string): Promise<MangaChapter[]> {
+  public async createMangaChapters(
+    serieName: string,
+    oldPath: string,
+    createdAt: string,
+  ): Promise<MangaChapter[]> {
     try {
-      const unPaths = (await fse.readdir(oldPath, { withFileTypes: true })).map(direntPath =>
-        path.join(direntPath.parentPath, direntPath.name),
+      const unPaths = (await fse.readdir(oldPath, { withFileTypes: true })).map(
+        (direntPath) => path.join(direntPath.parentPath, direntPath.name),
       );
+
       const chaptersPath = await this.fileManager.orderByChapters(unPaths);
 
       const chapters = await Promise.all(
@@ -105,7 +126,11 @@ export default class MangaManager extends FileSystem {
             id: index + 1,
             name: name,
             sanitizedName: sanitizedName,
-            archivesPath: path.resolve(chapterPath),
+            archivesPath: path.join(
+              this.userLibrary,
+              serieName,
+              path.basename(chapterPath),
+            ),
             chapterPath: '',
             createdAt: createdAt,
             isRead: false,
@@ -130,7 +155,9 @@ export default class MangaManager extends FileSystem {
       const serieName = path.basename(archivesPath);
 
       const entries = await fse.readdir(archivesPath, { withFileTypes: true });
-      const fullPaths = entries.map(entry => path.join(archivesPath, entry.name));
+      const fullPaths = entries.map((entry) =>
+        path.join(archivesPath, entry.name),
+      );
 
       const orderedChapters = await this.fileManager.orderByChapters(fullPaths);
       const selectedChapters = orderedChapters.slice(0, 3);
@@ -139,7 +166,9 @@ export default class MangaManager extends FileSystem {
 
       for (const chapter of selectedChapters) {
         const baseName = path.basename(chapter);
-        const chapterName = this.fileManager.sanitizeFilename(baseName).slice(0, 32);
+        const chapterName = this.fileManager
+          .sanitizeFilename(baseName)
+          .slice(0, 32);
         const outputDir = path.join(this.mangasImages, serieName, chapterName);
 
         await this.storageManager.extractWith7zip(chapter, outputDir);
@@ -150,7 +179,7 @@ export default class MangaManager extends FileSystem {
         });
         const chapterImages = imagesEntries
           .slice(0, 2)
-          .map(entry => path.join(outputDir, entry.name));
+          .map((entry) => path.join(outputDir, entry.name));
 
         covers.push(...chapterImages);
       }
@@ -162,26 +191,38 @@ export default class MangaManager extends FileSystem {
     }
   }
 
-  public async getChapter(dataPath: string, chapter_id: number): Promise<string[] | string> {
+  public async getChapter(
+    dataPath: string,
+    chapter_id: number,
+  ): Promise<string[] | string> {
     try {
       const serieData = await this.storageManager.readSerieData(dataPath);
       const chaptersData = serieData.chapters;
+
       if (!chaptersData) {
         throw new Error('Chapters data is undefined.');
       }
-      const chapter = chaptersData.find(chap => chap.id === chapter_id);
+
+      const chapter = chaptersData.find((chap) => chap.id === chapter_id);
+
       if (!chapter) {
         throw new Error(`Chapter with id ${chapter_id} not found.`);
       }
+
       const chapterDirents = await fse.readdir(chapter.chapterPath, {
         withFileTypes: true,
       });
 
       const imageFiles = chapterDirents
-        .filter(dirent => dirent.isFile() && /\.(jpeg|png|webp|tiff|jpg)$/i.test(dirent.name))
-        .map(dirent => path.join(chapter.chapterPath, dirent.name));
+        .filter(
+          (dirent) =>
+            dirent.isFile() && /\.(jpeg|png|webp|tiff|jpg)$/i.test(dirent.name),
+        )
+        .map((dirent) => path.join(chapter.chapterPath, dirent.name));
 
-      const processedImages = await this.imageManager.encodeImageToBase64(imageFiles);
+      const processedImages = await this.imageManager.encodeImageToBase64(
+        imageFiles,
+      );
 
       return processedImages;
     } catch (error) {
@@ -198,17 +239,27 @@ export default class MangaManager extends FileSystem {
     if (!mangaData.chapters) {
       throw new Error('Chapters data is undefined.');
     }
-    const lastItem = Math.min(lastDownload + quantity, mangaData.chapters.length);
+    const lastItem = Math.min(
+      lastDownload + quantity,
+      mangaData.chapters.length,
+    );
 
     const chaptersToProcess = mangaData.chapters.filter(
-      chapter => chapter.id >= firstItem && chapter.id <= lastItem,
+      (chapter) => chapter.id >= firstItem && chapter.id <= lastItem,
     );
 
     for await (const chapter of chaptersToProcess) {
-      const outputDir = path.join(this.mangasImages, mangaData.name, chapter.name);
+      const outputDir = path.join(
+        this.mangasImages,
+        mangaData.name,
+        chapter.name,
+      );
 
       try {
-        await this.storageManager.extractWith7zip(chapter.archivesPath, outputDir);
+        await this.storageManager.extractWith7zip(
+          chapter.archivesPath,
+          outputDir,
+        );
 
         await this.imageManager.normalizeChapter(outputDir);
         chapter.isDownload = true;
@@ -217,7 +268,9 @@ export default class MangaManager extends FileSystem {
 
         await this.storageManager.updateSerieData(mangaData);
       } catch (e) {
-        console.error(`Erro ao processar os capítulos em "${mangaData.name}": ${e}`);
+        console.error(
+          `Erro ao processar os capítulos em "${mangaData.name}": ${e}`,
+        );
         throw e;
       } finally {
         await this.imageManager.clearChapter(outputDir);
@@ -231,15 +284,24 @@ export default class MangaManager extends FileSystem {
     if (!mangaData.chapters) {
       throw new Error('Chapters data is undefined.');
     }
-    const chapterToProcess = mangaData.chapters.find(chapter => chapter.id === chapter_id);
+    const chapterToProcess = mangaData.chapters.find(
+      (chapter) => chapter.id === chapter_id,
+    );
     if (!chapterToProcess) {
       throw new Error(`Chapter with id ${chapter_id} not found.`);
     }
 
-    const outputDir = path.join(this.mangasImages, mangaData.name, chapterToProcess.name);
+    const outputDir = path.join(
+      this.mangasImages,
+      mangaData.name,
+      chapterToProcess.name,
+    );
 
     try {
-      await this.storageManager.extractWith7zip(chapterToProcess.archivesPath, outputDir);
+      await this.storageManager.extractWith7zip(
+        chapterToProcess.archivesPath,
+        outputDir,
+      );
 
       await this.imageManager.normalizeChapter(outputDir);
       chapterToProcess.isDownload = true;
@@ -248,7 +310,9 @@ export default class MangaManager extends FileSystem {
 
       await this.storageManager.updateSerieData(mangaData);
     } catch (e) {
-      console.error(`Erro ao processar os capítulos em "${mangaData.name}": ${e}`);
+      console.error(
+        `Erro ao processar os capítulos em "${mangaData.name}": ${e}`,
+      );
       throw e;
     }
   }

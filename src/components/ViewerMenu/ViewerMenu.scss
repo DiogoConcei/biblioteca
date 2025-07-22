@@ -1,0 +1,172 @@
+@use "../../styles/variables" as *;
+
+.viewer-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  order: 2;
+  border-radius: 0px 5px 5px 0px;
+
+  .hideMenuBtn {
+    cursor: pointer;
+    border-radius: 0px 5px 5px 0px;
+    background: $amethyst;
+    transition: background-color 0.3s ease;
+    color: $snow;
+    padding: $spacing-1;
+    z-index: 5;
+    order: 1;
+    border: none;
+
+    &:hover {
+      background: $hover-shining;
+    }
+  }
+
+  .quicklyActions {
+    display: flex;
+    flex-flow: column nowrap;
+    background: $gunmetal;
+    border-radius: 0px 5px 5px 0px;
+    width: 400px;
+    max-width: 400px;
+
+    .serieTitle {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      flex-flow: row nowrap;
+      gap: $spacing-1;
+      padding: $spacing-2;
+
+      p {
+        color: $snow;
+        font-size: $font-lg;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .chapterControl {
+      display: flex;
+      flex-flow: row nowrap;
+      align-content: flex-start;
+      justify-content: flex-start;
+      gap: $spacing-2;
+      margin: $spacing-2;
+
+      .choseChapterBtn {
+        transition: background-color 0.3s ease;
+        color: $snow;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        background: $amethyst;
+        border-radius: 5px;
+        padding: $spacing-2;
+        width: 80%;
+        border: none;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .jumpNextBtn,
+      .jumpPrevBtn {
+        background: $amethyst;
+        color: $snow;
+        border: none;
+        padding: $spacing-1 $spacing-2;
+        border-radius: 5px;
+        cursor: pointer;
+
+        &:hover {
+          background: $hover-shining;
+        }
+      }
+    }
+
+    // Revisar
+    .zoomControl {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: $spacing-1;
+
+      .positiveZoom,
+      .negativeZoom {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: $spacing-2;
+      }
+
+      .negativeZoomBtn,
+      .positiveZoomBtn {
+        @include interactive-buttons;
+        background: $amethyst;
+        width: 40px;
+        height: 40px;
+        border-radius: $radius-md;
+        color: $snow;
+        border: 1px solid $gunmetal;
+
+        &:hover {
+          background: $hover-shining;
+        }
+      }
+
+      .zoomDivisor {
+        width: 2px;
+        height: 50px;
+        border-radius: 5px;
+        background-color: $amethyst;
+      }
+    }
+
+    .returnControl {
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      flex-flow: column nowrap;
+      padding: $spacing-1;
+      gap: $spacing-2;
+      width: 400px;
+
+      label {
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        justify-content: flex-start;
+        cursor: pointer;
+        gap: $spacing-2;
+        width: 100%;
+
+        span {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          min-width: 0;
+          max-width: 100%;
+          display: inline-block;
+          color: $snow;
+          font-size: $font-lg;
+        }
+
+        button {
+          @include interactive-buttons;
+          background: $amethyst;
+          width: 40px;
+          height: 40px;
+          border-radius: $radius-md;
+          color: $snow;
+          flex-shrink: 0;
+        }
+      }
+    }
+  }
+}

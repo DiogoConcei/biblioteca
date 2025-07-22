@@ -13,15 +13,10 @@ Permitir a leitura intuitiva e organizada de arquivos compactados e documentos, 
 ### Funcionalidades-Chave
 
 - **Leitura de Arquivos**: Suporte para `.cbr` e `.cbz` com imagens ordenadas e nomeadas corretamente.
-    
 - **Multiformatos**: Compatibilidade com arquivos `.pdf`, `.epub`, `.txt`, `.doc` e outros.
-    
 - **Compartilhamento de Conteúdo**: Transfira arquivos entre dispositivos na mesma rede.
-    
 - **Gerenciamento de Coleções**: Catalogação, ordenação e gerenciamento avançado de arquivos.
-    
 - **Pacotes de Dados**: Acesso a conteúdos pré-disponibilizados pela comunidade.
-    
 
 ---
 
@@ -36,30 +31,19 @@ A inspiração para o LegacyReader surgiu da dificuldade em encontrar uma ferram
 A aplicação foi desenvolvida com tecnologias modernas e confiáveis:
 
 - **Electron.js** – Plataforma para criação de aplicações desktop.
-    
 - **React** – Biblioteca para construção de interfaces interativas.
-    
 - **TypeScript** – Superset do JavaScript que adiciona tipagem estática, promovendo código mais seguro e organizado.
-    
 - **7zip** – Ferramenta para manipulação e compactação de arquivos.
-    
 
 ### Bibliotecas e Ferramentas Complementares
 
 - **Electron Forge** – Facilita o empacotamento e a distribuição do aplicativo.
-    
 - **React Router DOM** – Gerencia a navegação e as rotas dentro da interface.
-    
 - **React Icons / FontAwesome** – Fornece ícones modernos para enriquecer a UI.
-    
 - **fs-extra** – Manipulação avançada de arquivos e diretórios.
-    
 - **unzipper / unrar.js** – Extração eficiente de arquivos compactados.
-    
 - **sharp** – Processamento rápido e eficaz de imagens.
-    
 - **pdf-poppler** – Conversão e manipulação de documentos PDF.
-    
 
 ---
 
@@ -70,21 +54,16 @@ A aplicação foi desenvolvida com tecnologias modernas e confiáveis:
 ### Passo a Passo para Testar
 
 1. **Clone o repositório** para sua máquina local.
-    
 2. **Instale as dependências** utilizando o comando:
-    
-    ```bash
-    npm install
-    ```
-    
+
+   ```bash
+   npm install
+   ```
+
 3. **Organize seus arquivos:** Crie uma pasta e coloque os arquivos `.cbr` ou `.cbz` nela.
-    
 4. **Importe a pasta:** Arraste a pasta para a aplicação.
-    
 5. **Configure os parâmetros:** Preencha o formulário exibido conforme necessário.
-    
 6. **Aproveite a experiência:** A aplicação funcionará de forma intuitiva e eficiente.
-    
 
 ---
 
@@ -100,9 +79,7 @@ Não há regras rígidas para colaboração. Basta enviar um pull request (PR) c
 A equipe de desenvolvimento está comprometida em aprimorar continuamente o LegacyReader. As próximas etapas incluem:
 
 - **Melhorias na experiência de leitura:** Transições mais suaves entre capítulos, otimização do tempo de carregamento e mais informações visuais para o usuário.
-    
 - **Otimização do Código:** Facilitar a conversão de arquivos `.pdf` para `.cbr`/`.cbz` e aprimorar o processamento de imagens.
-    
 
 ---
 
@@ -110,10 +87,8 @@ A equipe de desenvolvimento está comprometida em aprimorar continuamente o Lega
 
 Caso encontre algum problema ou tenha sugestões para novas funcionalidades, por favor, utilize um dos canais abaixo:
 
-- **Issues no GitHub.** 
-    
+- **Issues no GitHub.**
 - **E-mail:** [projetos.academicos.pessoais@gmail.com](mailto:projetos.academicos.pessoais@gmail.com)
-    
 
 ---
 

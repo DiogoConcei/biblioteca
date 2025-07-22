@@ -1,4 +1,4 @@
-import { Status } from '../../electron/types/manga.interfaces';
+import { Status } from "../../electron/types/manga.interfaces";
 
 export interface UserCollections {
   collections: Collection[];
@@ -23,4 +23,5 @@ export interface SerieCollectionInfo {
   recommendedBy: string;
   originalOwner: string;
   rating: number;
+  addAt: number;
 }

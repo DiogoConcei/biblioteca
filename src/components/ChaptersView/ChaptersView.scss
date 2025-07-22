@@ -1,0 +1,110 @@
+@use "../../styles/variables" as *;
+
+.Control {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-flow: column;
+  gap: $spacing-2;
+
+  h2 {
+    font-size: $font-2xl;
+    color: $snow;
+  }
+
+  .chaptersList {
+    display: flex;
+    flex-flow: column nowrap;
+    gap: $spacing-2;
+
+    .chapter {
+      display: flex;
+      flex-flow: row;
+      justify-content: space-between;
+      padding: $spacing-3;
+      width: 35vw;
+      max-width: 35vw;
+      background: $strong-indian-red;
+      color: $snow;
+      cursor: pointer;
+
+      .chapterName {
+        font-size: $font-base;
+        font-weight: 400;
+        max-width: 28vw;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .actionButtons {
+        display: flex;
+        justify-content: space-between;
+        width: 4vw;
+
+        button {
+          @include interactive-buttons;
+
+          &:hover {
+            color: $snow;
+          }
+        }
+      }
+    }
+  }
+
+  .ControlBtns {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 35vw;
+    margin: $spacing-1;
+
+    .prevBTN,
+    .nextBTN {
+      @include interactive-buttons;
+      color: black;
+    }
+
+    .prevBTN:disabled,
+    .nextBTN:disabled {
+      color: #ccc;
+      @include interactive-buttons;
+    }
+
+    .disable {
+      width: 30px;
+      height: 30px;
+      border-radius: 5px;
+      transition: 250ms background;
+
+      &:hover {
+        color: #a878e5;
+        background-color: $hover-shining;
+      }
+    }
+
+    .active {
+      @include interactive-buttons;
+      color: black;
+      font-size: $font-lg;
+    }
+
+    .disable {
+      @include interactive-buttons;
+      color: $snow;
+      font-size: $font-lg;
+    }
+  }
+
+  .animate-spin {
+    color: $snow;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+}

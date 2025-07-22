@@ -1,6 +1,7 @@
 import FileSystem from './abstract/FileSystem.ts';
 import path from 'path';
 import fse from 'fs-extra';
+import { LiteratureChapter } from '../../src/types/series.interfaces.ts';
 
 export default class FileManager extends FileSystem {
   constructor() {
@@ -16,9 +17,37 @@ export default class FileManager extends FileSystem {
       .replace(/\.{2,}/g, '.');
   }
 
+  public async sanitizeDirFiles(
+    dirPath: string,
+    chapters: LiteratureChapter[],
+  ): Promise<void> {
+    try {
+      const files = await fse.readdir(dirPath);
+
+      if (files.length !== chapters.length) {
+        console.warn(
+          'Número de arquivos não corresponde ao número de capítulos!',
+        );
+      }
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const chap = chapters[i];
+        const oldFilePath = path.join(dirPath, file);
+        const sanitized = this.sanitizeFilename(chap.name).slice(0, 32);
+        const extension = path.extname(file);
+        const newFilename = `${sanitized}_${extension}`;
+        const newFilePath = path.join(dirPath, newFilename);
+        await fse.rename(oldFilePath, newFilePath);
+      }
+    } catch (err) {
+      console.error('Erro ao renomear arquivos:', err);
+    }
+  }
+
   public async orderByChapters(filesPath: string[]): Promise<string[]> {
     const fileDetails = await Promise.all(
-      filesPath.map(async file => {
+      filesPath.map(async (file) => {
         const fileName = path.basename(file);
         const { volume, chapter } = this.extractSerieInfo(fileName);
 
@@ -32,7 +61,7 @@ export default class FileManager extends FileSystem {
 
     fileDetails.sort((a, b) => a.chapter - b.chapter);
 
-    const orderedPaths = fileDetails.map(fileDetail => fileDetail.filePath);
+    const orderedPaths = fileDetails.map((fileDetail) => fileDetail.filePath);
     return orderedPaths;
   }
 
@@ -40,23 +69,24 @@ export default class FileManager extends FileSystem {
     volume: number;
     chapter: number;
   } {
-    const regex =
-      /Vol\.\s*(\d+)|Ch\.\s*(\d+(\.\d+)?)|Chapter\s*(\d+(\.\d+)?)|Capítulo\s*(\d+(\.\d+)?)/gi;
-    const matches = [...fileName.matchAll(regex)];
-
     let volume = 0;
     let chapter = 0;
 
-    matches.forEach(match => {
-      if (match[1]) {
-        volume = parseInt(match[1], 10);
-      }
-      if (match[2] || match[4] || match[6]) {
-        const chapterValue = match[2] || match[4] || match[6];
-        const chapterNumber = parseFloat(chapterValue);
-        chapter = chapterNumber;
-      }
-    });
+    const normalized = fileName.replace(/[_\-]/g, ' ');
+
+    const volumeMatch = normalized.match(/\b(?:v|vol\.?)\s*(\d+)/i);
+    if (volumeMatch) {
+      volume = parseInt(volumeMatch[1], 10);
+    }
+
+    const chapterMatch =
+      normalized.match(/#\s*(\d+(\.\d+)?)/) ||
+      normalized.match(/\bch(?:apter)?\.?\s*(\d+(\.\d+)?)/i) ||
+      normalized.match(/\bcap(?:ítulo)?\.?\s*(\d+(\.\d+)?)/i) ||
+      normalized.match(/\b(\d{1,4})(?!\.\d)/);
+    if (chapterMatch) {
+      chapter = parseFloat(chapterMatch[1]);
+    }
 
     return { volume, chapter };
   }
@@ -81,7 +111,11 @@ export default class FileManager extends FileSystem {
 
   public async uploadImage(file: string): Promise<string> {
     try {
-      const destPath = path.join(this.imagesFolder, 'dinamicImages', path.basename(file));
+      const destPath = path.join(
+        this.imagesFolder,
+        'dinamicImages',
+        path.basename(file),
+      );
       await fse.move(file, destPath);
       return destPath;
     } catch (e) {
@@ -95,8 +129,10 @@ export default class FileManager extends FileSystem {
       const directories = [this.booksData, this.comicsData, this.mangasData];
 
       const contentArrays = await Promise.all(
-        directories.map(async dir =>
-          (await fse.readdir(dir, { withFileTypes: true })).map(item => path.join(dir, item.name)),
+        directories.map(async (dir) =>
+          (
+            await fse.readdir(dir, { withFileTypes: true })
+          ).map((item) => path.join(dir, item.name)),
         ),
       );
 
@@ -107,20 +143,24 @@ export default class FileManager extends FileSystem {
     }
   }
 
-  public async getDataPath(serieName: string): Promise<string | undefined> {
+  public async getDataPath(serieName: string): Promise<string> {
     try {
       const directories = [this.booksData, this.comicsData, this.mangasData];
 
       for (const dir of directories) {
         const items = await fse.readdir(dir, { withFileTypes: true });
         const foundPath = items
-          .map(item => path.join(dir, item.name))
-          .find(contentPath => path.basename(contentPath, path.extname(contentPath)) === serieName);
+          .map((item) => path.join(dir, item.name))
+          .find(
+            (contentPath) =>
+              path.basename(contentPath, path.extname(contentPath)) ===
+              serieName,
+          );
 
         if (foundPath) return foundPath;
       }
 
-      return undefined;
+      return '';
     } catch (e) {
       console.error(`Erro ao obter série: ${e}`);
       throw e;
@@ -131,16 +171,18 @@ export default class FileManager extends FileSystem {
     const lines = rawOutput.split('\n');
 
     const headerIndex = lines.findIndex(
-      line => line.includes('Date') && line.includes('Time') && line.includes('Attr'),
+      (line) =>
+        line.includes('Date') && line.includes('Time') && line.includes('Attr'),
     );
     if (headerIndex === -1) {
       throw new Error('Cabeçalho da tabela não encontrado na saída.');
     }
 
     const dateRegex = /^\d{4}-\d{2}-\d{2}/;
-    const lineRegex = /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\s+\S+\s+\d+\s+\d+\s+(.*)$/;
+    const lineRegex =
+      /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\s+\S+\s+\d+\s+\d+\s+(.*)$/;
     const imageExtensionRegex = /\.(jpg|jpeg|png|gif)$/i;
-    const lastDigitsRegex = /^(?:0+|0*[12])$/;
+    const lastDigitsRegex = /^(?:0{0,}0|0{0,}1)$/;
 
     for (let i = headerIndex + 1; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -151,7 +193,10 @@ export default class FileManager extends FileSystem {
       if (!match?.[1]) continue;
 
       const filePath = match[1].trim();
-      const lastSlashIndex = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
+      const lastSlashIndex = Math.max(
+        filePath.lastIndexOf('/'),
+        filePath.lastIndexOf('\\'),
+      );
       const fileName = filePath.substring(lastSlashIndex + 1);
 
       if (!imageExtensionRegex.test(fileName)) continue;
@@ -159,9 +204,11 @@ export default class FileManager extends FileSystem {
       const baseName = fileName.replace(imageExtensionRegex, '');
       const lastDigitsMatch = baseName.match(/(\d+)(?!.*\d)/);
 
-      if (!lastDigitsMatch || !lastDigitsRegex.test(lastDigitsMatch[1])) continue;
+      if (!lastDigitsMatch || !lastDigitsRegex.test(lastDigitsMatch[1]))
+        continue;
 
-      const specialDir = lastSlashIndex > -1 ? filePath.substring(0, lastSlashIndex + 1) : '';
+      const specialDir =
+        lastSlashIndex > -1 ? filePath.substring(0, lastSlashIndex + 1) : '';
       return specialDir ? `${specialDir}${fileName}` : fileName;
     }
 
@@ -173,7 +220,9 @@ export default class FileManager extends FileSystem {
       const LiteratureForm = path.basename(path.dirname(dataPath));
       return LiteratureForm;
     } catch (e) {
-      console.error(`Falha em descobrir o tipo da serie: ${path.basename(dataPath)}`);
+      console.error(
+        `Falha em descobrir o tipo da serie: ${path.basename(dataPath)}`,
+      );
       throw e;
     }
   }

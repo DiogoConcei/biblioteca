@@ -1,30 +1,27 @@
-import { useState, useRef, useMemo, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import { ImagePlus, Tag } from 'lucide-react';
+import { useState, useRef, useMemo, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { ImagePlus, Tag } from "lucide-react";
+import { Radius } from "lucide-react";
 
-import { SerieData, SerieForm } from '../../types/series.interfaces';
-import './Upload.scss';
+import { SerieData, SerieForm } from "../../types/series.interfaces";
+import "./Upload.scss";
 
 export default function Upload() {
-  // 1. Carrega as séries vindas da rota apenas na montagem inicial
   const location = useLocation();
   const navigate = useNavigate();
   const [newSeries, setNewSeries] = useState<SerieData[]>(() => {
     return (location.state?.serieData as SerieData[]) || [];
   });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
-  // const [formSteps, setFormSteps] = useState<number>(0);
 
-  // 2. Controle do preview de capa
-  const [imageSrc, setImageSrc] = useState<string>('');
+  const [imageSrc, setImageSrc] = useState<string>("");
   const coverRef = useRef<HTMLInputElement | null>(null);
 
-  // 3. Controle de tags (como no FormTag original)
   const [tags, setTags] = useState<string[]>([]);
   const [typingTimeout, setTypingTimeout] = useState<number | null>(null);
 
-  // 4. Inicializa o React Hook Form, já definindo defaultValues para tags
   const {
     register,
     handleSubmit,
@@ -37,7 +34,6 @@ export default function Upload() {
     },
   });
 
-  // 5. Quando a rota mudar em runtime, atualiza newSeries e zera o índice
   useEffect(() => {
     if (location.state?.newSeries) {
       setNewSeries(location.state.newSeries as SerieData[]);
@@ -45,21 +41,20 @@ export default function Upload() {
     }
   }, [location.state?.newSeries]);
 
-  // 6. Calcula o “formulário vazio” para o índice atual usando useMemo
   const emptyForm = useMemo<SerieForm | null>(() => {
     if (!newSeries.length || !newSeries[currentIndex]) return null;
     const serie = newSeries[currentIndex];
 
     return {
       name: newSeries[currentIndex].name,
-      genre: '',
-      author: '',
-      cover_path: '',
-      language: '',
-      literatureForm: '',
-      privacy: '',
-      autoBackup: '',
-      readingStatus: '',
+      genre: "",
+      author: "",
+      cover_path: "",
+      language: "",
+      literatureForm: "",
+      privacy: "",
+      autoBackup: "",
+      readingStatus: "",
       tags: [], // tags começam vazias
       collections: serie.collections,
       sanitizedName: serie.sanitizedName,
@@ -71,19 +66,15 @@ export default function Upload() {
     };
   }, [newSeries, currentIndex]);
 
-  // 7. Sempre que emptyForm mudar, preenche os campos via reset(), zera formSteps e preview
   useEffect(() => {
     if (emptyForm) {
       reset(emptyForm);
-      // setFormSteps(0);
-      setImageSrc('');
+      setImageSrc("");
 
-      // Sincroniza local tags state com o form (sempre vazio ao resetar)
       setTags(emptyForm.tags || []);
     }
   }, [emptyForm, reset]);
 
-  // 8. Preview de imagem e path usando FileReader + Electron API
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
@@ -95,23 +86,23 @@ export default function Upload() {
     };
     reader.readAsDataURL(file);
 
-    const imagePath = await window.electronAPI.webUtilities.getPathForFile(file);
+    const imagePath = await window.electronAPI.webUtilities.getPathForFile(
+      file
+    );
 
-    setValue('cover_path', imagePath, { shouldValidate: true });
+    setValue("cover_path", imagePath, { shouldValidate: true });
   };
 
-  // 9. Função chamada para atualizar o RHF quando as tags mudam
   const addTagsToForm = (updatedTags: string[]) => {
-    setValue('tags', updatedTags, { shouldValidate: true });
+    setValue("tags", updatedTags, { shouldValidate: true });
   };
 
-  // 10. Handler para input de tags com debounce de 1 segundo
   const handleTagInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const tagArray = value
-      .split(',')
-      .map(tag => tag.trim())
-      .filter(tag => tag !== '');
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter((tag) => tag !== "");
 
     setTags(tagArray);
 
@@ -124,7 +115,6 @@ export default function Upload() {
     setTypingTimeout(timeoutId);
   };
 
-  // 11. Função para adicionar as tags imediatamente (Enter ou blur)
   const flushTags = () => {
     if (typingTimeout) {
       clearTimeout(typingTimeout);
@@ -133,33 +123,43 @@ export default function Upload() {
     addTagsToForm(tags);
   };
 
-  // 12. Remover uma tag clicando no “×”
   const removeTag = (idx: number) => {
     const novaLista = tags.filter((_, i) => i !== idx);
     setTags(novaLista);
     addTagsToForm(novaLista);
   };
 
-  // 13. Função disparada ao submeter o formulário
   const onSubmit: SubmitHandler<SerieForm> = async (data: SerieForm) => {
+    setIsLoading(true);
     const response = await window.electronAPI.upload.uploadSerie(data);
 
-    if (!response) return;
+    if (response.success) {
+      setIsLoading(false);
+      navigate("/");
+    }
 
-    navigate('/');
+    return;
   };
 
   // 14. Navegação entre índices (anterior/próximo)
   const handlePrev = () => {
     if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
+      setCurrentIndex((prev) => prev - 1);
     }
   };
   const handleNext = () => {
     if (currentIndex < newSeries.length - 1) {
-      setCurrentIndex(prev => prev + 1);
+      setCurrentIndex((prev) => prev + 1);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="loadingWrapper">
+        <Radius className="spinner" />
+      </div>
+    );
+  }
 
   return (
     <article>
@@ -174,9 +174,16 @@ export default function Upload() {
           {/* ==== UPLOAD DE CAPA ==== */}
           <div className="image-upload">
             <span>Capa de exibição</span>
-            <div className="image-container" onClick={() => coverRef.current?.click()}>
+            <div
+              className="image-container"
+              onClick={() => coverRef.current?.click()}
+            >
               {imageSrc ? (
-                <img src={imageSrc} alt="Preview da capa" className="cover-preview" />
+                <img
+                  src={imageSrc}
+                  alt="Preview da capa"
+                  className="cover-preview"
+                />
               ) : (
                 <span className="alert">
                   <ImagePlus color="#8963ba" />
@@ -187,13 +194,15 @@ export default function Upload() {
                 type="file"
                 accept="image/*"
                 className="file-input"
-                ref={e => {
+                ref={(e) => {
                   coverRef.current = e;
                 }}
                 onChange={handleImageChange}
               />
             </div>
-            {errors.cover_path && <p className="error">{errors.cover_path.message}</p>}
+            {errors.cover_path && (
+              <p className="error">{errors.cover_path.message}</p>
+            )}
           </div>
 
           {/* ==== FORMULÁRIO PRINCIPAL ==== */}
@@ -204,8 +213,8 @@ export default function Upload() {
                 id="name"
                 type="text"
                 placeholder="Nome da série"
-                {...register('name', {
-                  required: 'A Série deve ter um nome',
+                {...register("name", {
+                  required: "A Série deve ter um nome",
                 })}
               />
               {errors.name && <p className="error">{errors.name.message}</p>}
@@ -214,23 +223,30 @@ export default function Upload() {
                 id="genre"
                 type="text"
                 placeholder="Gênero"
-                {...register('genre', {
-                  required: 'Diga o gênero literário',
+                {...register("genre", {
+                  required: "Diga o gênero literário",
                 })}
               />
               {errors.genre && <p className="error">{errors.genre.message}</p>}
 
-              <input id="author" type="text" placeholder="Autor" {...register('author')} />
+              <input
+                id="author"
+                type="text"
+                placeholder="Autor"
+                {...register("author")}
+              />
 
               <input
                 id="language"
                 type="text"
                 placeholder="Idioma original"
-                {...register('language', {
-                  required: 'Em qual linguagem a série está?',
+                {...register("language", {
+                  required: "Em qual linguagem a série está?",
                 })}
               />
-              {errors.language && <p className="error">{errors.language.message}</p>}
+              {errors.language && (
+                <p className="error">{errors.language.message}</p>
+              )}
             </div>
 
             {/* ----- LiteratureForm (radio) ----- */}
@@ -241,8 +257,8 @@ export default function Upload() {
                   type="radio"
                   value="Manga"
                   id="Manga"
-                  {...register('literatureForm', {
-                    required: 'Selecione a forma de literatura',
+                  {...register("literatureForm", {
+                    required: "Selecione a forma de literatura",
                   })}
                 />
                 <label htmlFor="Manga">Manga</label>
@@ -251,14 +267,21 @@ export default function Upload() {
                   type="radio"
                   value="Quadrinho"
                   id="Quadrinho"
-                  {...register('literatureForm')}
+                  {...register("literatureForm")}
                 />
                 <label htmlFor="Quadrinho">Quadrinho</label>
 
-                <input type="radio" value="Livro" id="Livro" {...register('literatureForm')} />
+                <input
+                  type="radio"
+                  value="Livro"
+                  id="Livro"
+                  {...register("literatureForm")}
+                />
                 <label htmlFor="Livro">Livro</label>
               </div>
-              {errors.literatureForm && <p className="error">{errors.literatureForm.message}</p>}
+              {errors.literatureForm && (
+                <p className="error">{errors.literatureForm.message}</p>
+              )}
             </div>
 
             {/* ----- AutoBackup (radio) ----- */}
@@ -269,16 +292,23 @@ export default function Upload() {
                   type="radio"
                   value="Sim"
                   id="SimAutoBackup"
-                  {...register('autoBackup', {
-                    required: 'Escolha Sim ou Não',
+                  {...register("autoBackup", {
+                    required: "Escolha Sim ou Não",
                   })}
                 />
                 <label htmlFor="SimAutoBackup">Sim</label>
 
-                <input type="radio" value="Não" id="NaoAutoBackup" {...register('autoBackup')} />
+                <input
+                  type="radio"
+                  value="Não"
+                  id="NaoAutoBackup"
+                  {...register("autoBackup")}
+                />
                 <label htmlFor="NaoAutoBackup">Não</label>
               </div>
-              {errors.autoBackup && <p className="error">{errors.autoBackup.message}</p>}
+              {errors.autoBackup && (
+                <p className="error">{errors.autoBackup.message}</p>
+              )}
             </div>
 
             {/* ----- Privacidade (radio) ----- */}
@@ -289,16 +319,23 @@ export default function Upload() {
                   type="radio"
                   value="Pública"
                   id="Privacypublic"
-                  {...register('privacy', {
-                    required: 'Escolha Pública ou Privada',
+                  {...register("privacy", {
+                    required: "Escolha Pública ou Privada",
                   })}
                 />
                 <label htmlFor="Privacypublic">Pública</label>
 
-                <input type="radio" value="Privada" id="Privacyprivate" {...register('privacy')} />
+                <input
+                  type="radio"
+                  value="Privada"
+                  id="Privacyprivate"
+                  {...register("privacy")}
+                />
                 <label htmlFor="Privacyprivate">Privada</label>
               </div>
-              {errors.privacy && <p className="error">{errors.privacy.message}</p>}
+              {errors.privacy && (
+                <p className="error">{errors.privacy.message}</p>
+              )}
             </div>
 
             {/* ----- Status de leitura (radio) ----- */}
@@ -309,8 +346,8 @@ export default function Upload() {
                   type="radio"
                   value="Em andamento"
                   id="StatusEmAndamento"
-                  {...register('readingStatus', {
-                    required: 'Selecione um status',
+                  {...register("readingStatus", {
+                    required: "Selecione um status",
                   })}
                 />
                 <label htmlFor="StatusEmAndamento">Em andamento</label>
@@ -319,7 +356,7 @@ export default function Upload() {
                   type="radio"
                   value="Completo"
                   id="StatusCompleto"
-                  {...register('readingStatus')}
+                  {...register("readingStatus")}
                 />
                 <label htmlFor="StatusCompleto">Completo</label>
 
@@ -327,11 +364,13 @@ export default function Upload() {
                   type="radio"
                   value="Pendente"
                   id="StatusPendente"
-                  {...register('readingStatus')}
+                  {...register("readingStatus")}
                 />
                 <label htmlFor="StatusPendente">Pendente</label>
               </div>
-              {errors.readingStatus && <p className="error">{errors.readingStatus.message}</p>}
+              {errors.readingStatus && (
+                <p className="error">{errors.readingStatus.message}</p>
+              )}
             </div>
 
             {/* ----- Tags (campo customizado com debounce) ----- */}
@@ -342,8 +381,8 @@ export default function Upload() {
                   type="text"
                   placeholder="Digite tags separadas por vírgula"
                   onChange={handleTagInput}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       flushTags();
                     }
@@ -377,7 +416,11 @@ export default function Upload() {
 
             {/* ----- Navegação e Submit ----- */}
             <div className="navigation-buttons">
-              <button type="button" onClick={handlePrev} disabled={currentIndex === 0}>
+              <button
+                type="button"
+                onClick={handlePrev}
+                disabled={currentIndex === 0}
+              >
                 Anterior
               </button>
               <button

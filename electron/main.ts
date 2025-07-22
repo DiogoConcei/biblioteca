@@ -1,24 +1,13 @@
 import { app, BrowserWindow, ipcMain, Menu } from 'electron';
 import { fileURLToPath } from 'node:url';
-// eslint-disable-next-line import/extensions
 import { registerHandlers } from './ipc';
 import path from 'path';
 import fse from 'fs-extra';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// The built directory structure
-//
-// ├─┬─┬ dist
-// │ │ └── index.html
-// │ │
-// │ ├─┬ dist-electron
-// │ │ ├── main.js
-// │ │ └── preload.mjs
-// │
 process.env.APP_ROOT = path.join(__dirname, '..');
 
-// 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL'];
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron');
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist');
@@ -27,18 +16,20 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, 'public')
   : RENDERER_DIST;
 
+export function getMainWindow(): BrowserWindow | null {
+  return win;
+}
+
 let win: BrowserWindow | null;
 
 async function ensureAppFolders() {
   const userDataPath = app.getPath('userData');
   const storageFolder = path.join(userDataPath, 'storage');
 
-  // Se ainda não existe, cria “storage”
   if (!fse.existsSync(storageFolder)) {
     await fse.mkdirp(storageFolder);
   }
 
-  // Crie já as subpastas que você sabe que sempre vai usar pelo menos uma vez
   const dataStore = path.join(storageFolder, 'data store');
   const userLibrary = path.join(storageFolder, 'user library');
   const configFolder = path.join(storageFolder, 'config');
@@ -53,7 +44,6 @@ async function ensureAppFolders() {
     fse.mkdirp(jsonFolder),
   ]);
 
-  // Se quiser criar logo as subpastas específicas (Books, Comics etc):
   await Promise.all([
     fse.mkdirp(path.join(configFolder, 'app')),
     fse.mkdirp(path.join(configFolder, 'comic')),
@@ -65,24 +55,67 @@ async function ensureAppFolders() {
     fse.mkdirp(path.join(imagesFolder, 'book')),
     fse.mkdirp(path.join(imagesFolder, 'comic')),
     fse.mkdirp(path.join(imagesFolder, 'manga')),
-    fse.mkdirp(path.join(imagesFolder, 'showcase image')),
+    fse.mkdirp(path.join(imagesFolder, 'showcase images')),
     fse.mkdirp(path.join(imagesFolder, 'dinamic images')),
   ]);
 
-  // Por fim, armazene apenas o caminho base “storage” no global
   global.storageFolder = storageFolder;
+
+  const configJsonPath = path.join(configFolder, 'app', 'config.json');
+  const collectionsJsonPath = path.join(
+    configFolder,
+    'app',
+    'appCollections.json',
+  );
+
+  if (!fse.existsSync(configJsonPath)) {
+    await fse.writeJson(
+      configJsonPath,
+      {
+        settings: {
+          reading_mode: 'single_page',
+          zoom: 'fit_width',
+          ligth_mode: true,
+          full_screen: true,
+        },
+        metadata: { global_id: 0 },
+      },
+      { spaces: 2 },
+    );
+  }
+
+  if (!fse.existsSync(collectionsJsonPath)) {
+    await fse.writeJson(
+      collectionsJsonPath,
+      [
+        {
+          name: 'Favoritas',
+          description: 'Minhas séries favoritas.',
+          series: [],
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          name: 'Recentes',
+          description: 'Séries lidas recentemente',
+          series: [],
+          comments: [],
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+      { spaces: 2 },
+    );
+  }
 }
 
 function createWindow() {
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    icon: path.join(process.env.VITE_PUBLIC || '', 'electron-vite.svg'),
     frame: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
     },
   });
 
-  // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString());
   });
@@ -92,7 +125,6 @@ function createWindow() {
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
   } else {
-    // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, 'index.html'));
   }
 
@@ -122,9 +154,6 @@ function createWindow() {
   });
 }
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
@@ -133,8 +162,6 @@ app.on('window-all-closed', () => {
 });
 
 app.on('activate', () => {
-  // On OS X it's common to re-create a win dow in the app when the
-  // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }

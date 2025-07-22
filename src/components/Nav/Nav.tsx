@@ -1,9 +1,12 @@
-import { X, House, Square, Maximize2, Minus } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import './Nav.scss';
-import { useState } from 'react';
+import { useSerieStore } from "../../store/seriesStore";
+import { X, House, Square, Maximize2, Minus } from "lucide-react";
+import { Link } from "react-router-dom";
+import "./Nav.scss";
+import { useState } from "react";
 
 export default function Nav() {
+  const resetStates = useSerieStore((state) => state.resetStates);
+
   const [isFull, setIsFull] = useState<boolean>();
 
   const minimize = async () => {
@@ -20,30 +23,42 @@ export default function Nav() {
   };
 
   return (
-    <nav className={'TitleBar'}>
+    <nav className={"TitleBar"}>
       <ul className="NavBar">
         <li key="home">
-          <Link to="/" className="link">
+          <Link to="/" className="link" onClick={resetStates}>
             <House className="IconHome" color="#8963ba" />
           </Link>
         </li>
         <li>
-          <Link className="link" to="/teste">
+          <Link className="link" to="/teste" onClick={resetStates}>
             Teste de componentes
           </Link>
         </li>
       </ul>
 
       <div className="windowBtns">
-        <button onClick={minimize} aria-label="Minimizar" className="ActionsBtn">
+        <button
+          onClick={minimize}
+          aria-label="Minimizar"
+          className="ActionsBtn"
+        >
           <Minus color="#8963ba" />
         </button>
         {isFull ? (
-          <button onClick={fullScreen} aria-label="Maximizar" className="ActionsBtn">
+          <button
+            onClick={fullScreen}
+            aria-label="Maximizar"
+            className="ActionsBtn"
+          >
             <Maximize2 color="#8963ba" />
           </button>
         ) : (
-          <button onClick={fullScreen} aria-label="Maximizar" className="ActionsBtn">
+          <button
+            onClick={fullScreen}
+            aria-label="Maximizar"
+            className="ActionsBtn"
+          >
             <Square color="#8963ba" />
           </button>
         )}

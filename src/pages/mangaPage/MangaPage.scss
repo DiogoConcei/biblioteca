@@ -1,4 +1,4 @@
-@use 'src/styles/variables' as *;
+@use "src/styles/variables" as *;
 
 .mangaPage {
   display: flex;
@@ -65,11 +65,21 @@
     align-items: flex-start;
     justify-content: flex-start;
     gap: $spacing-2;
-    height: 50vh;
+    width: 680px;
+    max-width: 100%;
 
-    h1 {
-      font-size: $font-3xl;
-      color: $snow;
+    .serieTitle {
+      max-width: 680px;
+      overflow: hidden;
+
+      h1 {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+        color: $snow;
+        font-size: $font-2xl;
+      }
     }
 
     .mangaMetadata {
@@ -113,20 +123,31 @@
   .collectionInfos {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    border-radius: $radius-sm;
     gap: $spacing-2;
     border: 1px solid $snow;
+    border-radius: $radius-md;
 
-    .DinamicLink {
-      cursor: pointer;
-      text-decoration: none;
-      color: #fcf7f8;
-      font-size: 1.3rem;
+    ul {
+      width: 200px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+
+      li {
+        width: 100%;
+      }
     }
 
-    .lastRead,
+    span {
+      color: $snow;
+      display: block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .recCollection,
     .favCollection {
       padding: $spacing-2;
       border-top: 1px solid $snow;

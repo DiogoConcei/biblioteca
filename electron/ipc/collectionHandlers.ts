@@ -19,21 +19,19 @@ export default function collectionHandlers(ipcMain: IpcMain) {
     try {
       await collectionsOperations.createCollection(collectionName);
     } catch (e) {
-      console.error(`Falha em criar nova colecao: ${e}`);
       throw e;
     }
   });
 
   ipcMain.handle('collection:get-all-fav', async () => {
     try {
-      const allCollections = await collectionsOperations.getCollections();
-      const collections = allCollections.data;
+      const response = await collectionsOperations.getFavorites();
 
-      if (!collections) {
-        throw new Error('Nenhuma coleção encontrada.');
+      if (!response.success || !response.data) {
+        throw new Error(`Falha na requisição das séries favoritas!`);
       }
 
-      const favCollection = await collectionsOperations.getFavorites();
+      const favCollection = response.data;
       return favCollection;
     } catch (error) {
       console.error(`erro em recuperar series favoritas: ${error}`);

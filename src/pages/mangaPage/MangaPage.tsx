@@ -1,27 +1,46 @@
-import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Tag, HeartPlus, HeartMinus, Book } from 'lucide-react';
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { Tag, Bookmark, BookmarkCheck, Book } from "lucide-react";
+import { useMemo } from "react";
 
-import { Manga } from 'electron/types/manga.interfaces';
+import { Manga } from "electron/types/manga.interfaces";
 
-import DownloadButton from '../../components/DonwloadButton/DownloadButton';
-import Rating from '../../components/Rating/Rating';
-import CollectionButton from '../../components/CollectionButton/CollectionButton';
-import useSerie from '../../hooks/useSerie';
-import { useSerieStore } from '../../store/seriesStore';
-import useCollection from '../../hooks/useCollection';
-import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
-import './MangaPage.scss';
+import DownloadButton from "../../components/DonwloadButton/DownloadButton";
+import Rating from "../../components/Rating/Rating";
+import CollectionButton from "../../components/CollectionButton/CollectionButton";
+import useSerie from "../../hooks/useSerie";
+import { useSerieStore } from "../../store/seriesStore";
+import ErrorScreen from "../../components/ErrorScreen/ErrorScreen";
+import useCollection from "../../hooks/useCollection";
+import "./MangaPage.scss";
+import ChaptersView from "../../components/ChaptersView/ChaptersView";
 
 export default function MangaPage() {
-  const { manga_name } = useParams<{ manga_name: string }>();
+  const { manga_name } = useParams<{
+    manga_name: string;
+  }>();
   const navigate = useNavigate();
 
-  const { serie: rawSerie, updateSerie } = useSerie(manga_name!);
+  const { serie: rawSerie, updateSerie } = useSerie(manga_name!, "Manga");
   const serie = rawSerie as Manga;
-  const loading = useSerieStore(state => state.loading);
-  const error = useSerieStore(state => state.error);
+  const loading = useSerieStore((state) => state.loading);
+  const error = useSerieStore((state) => state.error);
+  const { favorites, collections, updateFav } = useCollection();
 
-  const { favCollection, updateFav } = useCollection();
+  const orderFav = useMemo(() => {
+    return favorites
+      ? [...favorites.series].sort((a, b) => b.rating - a.rating)
+      : [];
+  }, [favorites]);
+
+  const orderRecent = useMemo(() => {
+    const recentes = collections.find((col) => col.name === "Recentes");
+
+    if (!recentes || !recentes.series) return [];
+
+    return [...recentes.series]
+      .sort((a, b) => new Date(b.addAt).getTime() - new Date(a.addAt).getTime())
+      .slice(0, 5);
+  }, [collections]);
 
   if (error) {
     return <ErrorScreen error={error} serieName={manga_name!} />;
@@ -31,7 +50,10 @@ export default function MangaPage() {
     return <div className="loading">Carregando...</div>;
   }
 
-  const lastRead = async (event: React.MouseEvent<HTMLButtonElement>, dataPath: string) => {
+  const lastRead = async (
+    event: React.MouseEvent<HTMLButtonElement>,
+    dataPath: string
+  ) => {
     event.preventDefault();
     const response = await window.electronAPI.chapters.acessLastRead(dataPath);
 
@@ -47,16 +69,14 @@ export default function MangaPage() {
 
   const favoriteSerie = async (isFav: boolean) => {
     const newFavoriteStatus = !isFav;
-    updateSerie('metadata.isFavorite', newFavoriteStatus);
+    updateSerie("metadata.isFavorite", newFavoriteStatus);
 
     const response = updateFav(serie, newFavoriteStatus);
 
     if (!response) {
-      updateSerie('metadata.isFavorite', isFav);
+      updateSerie("metadata.isFavorite", isFav);
     }
   };
-
-  const filterFavs = [...favCollection!.series].sort((a, b) => a.rating - b.rating).slice(0, 5);
 
   const tags = [...serie.tags].sort((a, b) => a.localeCompare(b)).slice(0, 5);
 
@@ -70,24 +90,28 @@ export default function MangaPage() {
         />
         <figcaption className="mangaTags">
           <div>
-            {tags.map(tag => (
+            {tags.map((tag) => (
               <span key={tag}>
                 <Tag /> {tag}
               </span>
             ))}
           </div>
           <p className="owner">Upload por: {serie.metadata.originalOwner}</p>
-          <p className="recomend">recomendada por: {serie.metadata.recommendedBy}</p>
+          <p className="recomend">
+            recomendada por: {serie.metadata.recommendedBy}
+          </p>
         </figcaption>
       </figure>
       <section className="mangaInfo">
-        <h1>{serie.name}</h1>
+        <span className="serieTitle">
+          <h1>{serie.name}</h1>{" "}
+        </span>
         <div className="mangaMetadata">
           <p>Status: {serie.metadata.status}</p>
           <p>Capítulos lidos: {serie.chaptersRead}</p>
           <p>Quantidade de capítulos: {serie.totalChapters}</p>
           <p>Criado em: {new Date(serie.createdAt).toLocaleDateString()}</p>
-          {serie.readingData.lastChapterId ? (
+          {serie.chaptersRead ? (
             <p>Último capítulo lido: {serie.readingData.lastChapterId}</p>
           ) : (
             <p></p>
@@ -96,42 +120,51 @@ export default function MangaPage() {
         <div className="serieActions">
           <DownloadButton serie={serie} updateSerie={updateSerie} />
 
-          <button className="favorite" onClick={() => favoriteSerie(serie.metadata.isFavorite)}>
-            {serie.metadata.isFavorite ? <HeartMinus /> : <HeartPlus />}
+          <button
+            className="favorite"
+            onClick={() => favoriteSerie(serie.metadata.isFavorite)}
+          >
+            {serie.metadata.isFavorite ? <Bookmark /> : <BookmarkCheck />}
             Favoritar
           </button>
 
           <CollectionButton dataPath={serie.dataPath} />
 
-          <button className="reading" onClick={event => lastRead(event, serie.dataPath)}>
+          <button
+            className="reading"
+            onClick={(event) => lastRead(event, serie.dataPath)}
+          >
             <Book />
             Continuar
           </button>
 
           <Rating manga={serie} />
         </div>
+        <ChaptersView updateSerie={updateSerie} />
       </section>
       <aside className="collectionInfos">
         <div className="favCollection">
           <h3>Séries Favoritas</h3>
           <ul>
-            {filterFavs.map(serie => (
+            {orderFav?.map((serie) => (
               <li key={serie.id}>
-                <Link to={`/Manga/${serie.name}/:${serie.id}`} className="DinamicLink">
-                  {serie.name}
+                <Link to={`/Manga/${serie.name}/:${serie.id}`}>
+                  <span>{serie.name}</span>
                 </Link>
               </li>
             ))}
           </ul>
         </div>
-        <div className="lastRead">
+        <div className="recCollection">
           <h3>Últimas séries lidas</h3>
           <ul>
-            <li>teste 1</li>
-            <li>teste 2</li>
-            <li>teste 3</li>
-            <li>teste 4</li>
-            <li>teste 5</li>
+            {orderRecent.map((col, idx) => (
+              <li key={idx}>
+                <Link to={`/Manga/${serie.name}/:${serie.id}`}>
+                  <span>{col.name}</span>
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
       </aside>

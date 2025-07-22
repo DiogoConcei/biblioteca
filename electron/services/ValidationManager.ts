@@ -22,8 +22,12 @@ export default class ValidationManager extends FileSystem {
 
   public async serieExist(file: string): Promise<boolean> {
     const newSerieName = path.basename(file).toLocaleLowerCase();
-    const seriesDir = await fs.readdir(this.userLibrary, { withFileTypes: true });
-    const seriesName = seriesDir.map(seriesDir => seriesDir.name.toLowerCase());
+    const seriesDir = await fs.readdir(this.userLibrary, {
+      withFileTypes: true,
+    });
+    const seriesName = seriesDir.map((seriesDir) =>
+      seriesDir.name.toLowerCase(),
+    );
 
     for (const serieName of seriesName) {
       if (serieName === newSerieName) {
@@ -46,7 +50,9 @@ export default class ValidationManager extends FileSystem {
         collections = [];
       }
 
-      if (collections.some(collection => collection.name === collectionName)) {
+      if (
+        collections.some((collection) => collection.name === collectionName)
+      ) {
         return false;
       }
 
@@ -74,22 +80,26 @@ export default class ValidationManager extends FileSystem {
   //   }
   // }
 
-  public async checkDownload(serieData: Literatures, chapter_id: number): Promise<boolean> {
+  public async checkDownload(
+    serieData: Literatures,
+    chapterId: number,
+  ): Promise<boolean> {
     try {
-      const chaptersData = serieData.chapters;
+      const chapters = serieData.chapters;
 
-      if (!chaptersData || chapter_id > chaptersData.length) return false;
-
-      for (const chapters of chaptersData) {
-        if (chapter_id === chapters.id) {
-          return chapters.isDownload;
-        }
+      if (!chapters || chapterId > chapters.length) {
+        return false;
       }
+
+      const chapter = chapters.find((ch) => ch.id === chapterId);
+      return chapter?.isDownload ?? false;
     } catch (error) {
-      console.error(`Falha em verificar o estado do proximo capitulo: ${error}`);
-      throw error;
+      console.error(
+        `Erro ao verificar estado do capítulo ${chapterId}:`,
+        error,
+      );
+      return false;
     }
-    return true;
   }
 
   public async isDinamicImage(imagePath: string): Promise<boolean> {
@@ -97,11 +107,12 @@ export default class ValidationManager extends FileSystem {
       if (await this.isWebp(imagePath)) return false;
 
       const dinamicDir = path.join(this.imagesFolder, 'dinamic images');
-      const content = (await fs.readdir(dinamicDir, { withFileTypes: true })).map(contentPath =>
-        path.join(dinamicDir, contentPath.name),
-      );
+      const content = (
+        await fs.readdir(dinamicDir, { withFileTypes: true })
+      ).map((contentPath) => path.join(dinamicDir, contentPath.name));
       const findImage = content.find(
-        contentPath => path.basename(contentPath) === path.basename(imagePath),
+        (contentPath) =>
+          path.basename(contentPath) === path.basename(imagePath),
       );
 
       if (findImage && fs.existsSync(findImage)) {
@@ -130,12 +141,3 @@ export default class ValidationManager extends FileSystem {
     }
   }
 }
-
-// (async () => {
-//     try {
-//         const validationManager = new ValidationManager()
-//         const teste = "C:\\Users\\Diogo\\Downloads\\Code\\gerenciador-de-arquivos\\storage\\data store\\images files\\showCaseImages\\Spidey Cover.jpg"
-//     } catch (error) {
-//         console.error('Erro ao executar a função:', error);
-//     }
-// })();

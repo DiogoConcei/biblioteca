@@ -1,16 +1,25 @@
-import { useNavigate } from 'react-router-dom';
-import { Manga, MangaChapter } from '../types/manga.interfaces';
-import { LiteratureChapter } from '../types/series.interfaces';
-import { userActionProps } from '../types/customHooks.interfaces';
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import {
+  LiteratureChapter,
+  LiteratureChapterAttributes,
+  Literatures,
+} from "../types/series.interfaces";
+import useSerie from "./useSerie";
+import useDownload from "./useDownload";
 
-export default function useAction({ dataPath }: userActionProps) {
+type DownloadStatus = "not_downloaded" | "downloading" | "downloaded";
+
+export default function useAction(dataPath: string) {
   const navigate = useNavigate();
+  const { updateChapter } = useSerie();
+  const [error, setError] = useState<string | null>(null);
 
   async function ratingSerie(dataPath: string, ratingIndex: number) {
     try {
-      await window.electron.userAction.ratingSerie(dataPath, ratingIndex);
+      await window.electronAPI.series.ratingSerie(dataPath, ratingIndex);
     } catch (error) {
-      console.error('Erro ao atualizar o rating:', error);
+      console.error("Erro ao atualizar o rating:", error);
       throw error;
     }
   }
@@ -18,51 +27,71 @@ export default function useAction({ dataPath }: userActionProps) {
   async function markAsRead(
     e: React.MouseEvent<HTMLElement>,
     chapter: LiteratureChapter,
-    chapter_id: number,
-    updateChapter: (path: string, newValue: any) => Promise<void>,
+    id: number,
+    updateChapter: (
+      index: number,
+      path: string,
+      newValue: LiteratureChapterAttributes
+    ) => void
   ) {
     e.stopPropagation();
-    const originalIsRead = chapter.isRead;
-    const path = `chapters.${chapter_id}.isRead`;
 
-    updateChapter(path, !originalIsRead);
+    const originalIsRead = chapter.isRead;
+
+    updateChapter(id, "isRead", !originalIsRead);
 
     try {
-      const response = await window.electron.userAction.markRead(
+      const response = await window.electronAPI.userAction.markRead(
         dataPath,
-        chapter_id,
-        !originalIsRead,
+        chapter.id,
+        !originalIsRead
       );
 
       if (!response.success) {
-        updateChapter(path, originalIsRead);
-        return false;
+        updateChapter(id, "isRead", originalIsRead);
       }
-
-      return true;
     } catch (e) {
-      updateChapter(path, originalIsRead);
-      console.error('Falha em realizar ação');
-      return false;
+      updateChapter(id, "isRead", originalIsRead);
+      console.error("Falha em realizar ação");
     }
+  }
+
+  interface DownloadIndividualFn {
+    (
+      dataPath: string,
+      chapterId: number,
+      edition: LiteratureChapter,
+      updateChapter: (
+        index: number,
+        path: string,
+        newValue: LiteratureChapterAttributes
+      ) => void
+    ): void;
   }
 
   async function openChapter(
     e: React.MouseEvent<HTMLDivElement>,
-    manga: Manga,
-    chapter: MangaChapter,
-  ) {
+    serie: Literatures,
+    edition: LiteratureChapter,
+    downloadIndividual: DownloadIndividualFn
+  ): Promise<void> {
     e.stopPropagation();
+    const { name: serieName, id: serieId } = serie;
+    const { name: chapterName, id: chapterId, page, isRead } = edition;
 
-    const { name: serieName, id: serieId } = manga;
-    const { name: chapterName, id: chapterId, page, isRead } = chapter;
-
-    const safeOpen = await window.electron.download.checkDownload(serieName, chapterId);
+    const safeOpen: boolean = await window.electronAPI.download.checkDownload(
+      serieName,
+      chapterId
+    );
 
     if (safeOpen) {
       navigate(
-        `/${serieName}/${serieId}/${chapterName}/${chapterId}/${page.lastPageRead}/${isRead}`,
+        `/${encodeURIComponent(serieName)}/${serieId}/${encodeURIComponent(
+          chapterName
+        )}/${chapterId}/${page.lastPageRead}/${isRead}`
       );
+    } else {
+      downloadIndividual(serie.dataPath, edition.id, edition, updateChapter);
     }
   }
 

@@ -9,7 +9,9 @@
   background: $amethyst;
   padding: $spacing-2;
   border-radius: $radius-md;
-  transition: background-color 0.3s, color 0.3s;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
 
   &:hover {
     background-color: rgba(244, 244, 237, 0.12);

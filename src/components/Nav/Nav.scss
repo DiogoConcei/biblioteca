@@ -1,4 +1,4 @@
-@use '../../styles/variables' as *;
+@use "../../styles/variables" as *;
 
 .TitleBar {
   display: flex;
@@ -65,17 +65,3 @@
     }
   }
 }
-
-//     .icon {
-//       color: #b07ff1;
-//       width: 2rem;
-//       height: 2rem;
-//     }
-
-//     .windowBtns {
-//       display: flex;
-//       align-items: center;
-//       justify-content: center;
-//     }
-//   }
-// }

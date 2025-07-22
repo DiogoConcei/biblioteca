@@ -1,5 +1,30 @@
 @use '../../styles/variables' as *;
 
+.loadingWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100vh;
+  background-color: black;
+
+  .spinner {
+    width: 30%;
+    height: 8%;
+    color: $amethyst;
+    animation: spin 5s linear infinite;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .sec-form {
   display: flex;
   align-items: center;
@@ -314,134 +339,3 @@
     }
   }
 }
-
-// .form-content {
-//   display: flex;
-//   flex-flow: column nowrap;
-//   justify-content: flex-start;
-//   align-items: flex-start;
-//   gap: 20px;
-// }
-
-// .FormBtnContainer {
-//   display: flex;
-//   gap: 20px;
-// }
-
-// .form-content button[type='submit'],
-// .form-content-buttons {
-//   background-color: #cd5c5c;
-//   color: white;
-//   border: none;
-//   padding: 10px 20px;
-//   border-radius: 5px;
-//   cursor: pointer;
-// }
-
-// .FormBtnContainer.dinamicCovers {
-//   display: flex;
-//   align-self: center;
-//   padding: 10px;
-// }
-
-/* Paleta de Cores */
-/* cd5c5c -> indian red */
-/* 8963BA -> Amethyst */
-/* 282C34 -> Gunmetal */
-/* fcf7f8 -> Snow */
-/* 31afd4 -> Pacific cyan */
-
-/* Paleta de Cores */
-/* cd5c5c -> indian red */
-/* 8963BA -> Amethyst */
-/* 282C34 -> Gunmetal */
-/* fcf7f8 -> Snow */
-/* 31afd4 -> Pacific cyan */
-
-// .form-collection-container {
-//   display: grid;
-//   grid-template-columns: 1fr;
-//   gap: 1rem;
-// }
-
-// .form-collection {
-//   display: flex;
-//   flex-flow: row wrap;
-//   border: 1px solid #8963ba;
-//   overflow: hidden;
-//   border-radius: 10px;
-//   padding: 10px;
-//   width: 400px;
-//   height: 250px;
-//   gap: 20px;
-// }
-
-// .form-collection label {
-//   display: flex;
-//   align-items: center;
-//   justify-content: center;
-//   padding: 10px;
-//   border: 2px solid #8963ba;
-//   border-radius: 8px;
-//   cursor: pointer;
-//   font-size: 16px;
-//   transition: all 0.3s ease;
-//   background-color: transparent;
-//   color: #cd5c5c;
-// }
-
-// .form-collection input[type='checkbox'] {
-//   display: none;
-// }
-
-// .form-collection input:checked + label {
-//   background-color: #8963ba;
-//   color: #fcf7f8;
-// }
-
-// .form-add-collection {
-//   display: flex;
-//   flex-flow: row nowrap;
-//   gap: 20px;
-// }
-
-// .form-add-collection input[type='text'] {
-//   display: flex;
-//   border-radius: 5px;
-//   border: 1px solid #8963ba;
-//   color: #fcf7f8;
-//   background: #282c34;
-// }
-
-// .form-add-collection button {
-//   color: #fcf7f8;
-//   cursor: pointer;
-//   padding: 10px;
-//   border-radius: 5px;
-//   background: #cd5c5c;
-//   border: 1px solid #cd5c5c;
-// }
-
-// .form-add-collection input[type='text']::placeholder {
-//   color: #cd5c5c;
-//   text-align: center;
-//   font-size: 12px;
-// }
-
-/* 
-
-
-
-
-
-*/
-
-/* Paleta de Cores */
-/* cd5c5c -> indian red */
-/* 8963BA -> Amethyst */
-/* 282C34 -> Gunmetal */
-/* fcf7f8 -> Snow */
-/* 31afd4 -> Pacific cyan */
-
-/* Nunca mais quero fazer algo relacionado a tag  */
-/* Nem nada vida nem na próxima */

@@ -1,17 +1,13 @@
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import "./styles/base.scss";
 
-import Layout from './pages/layout/Layout';
-import Home from './pages/home/Home';
-import Upload from './pages/upload/Upload';
-import MangaPage from './pages/mangaPage/MangaPage';
+import { HashRouter, Routes, Route } from "react-router-dom";
 
-import './styles/base.scss';
-// import Home from "./pages/home/Home";
-// import Page404 from "./pages/page404/page404";
-// import LocalUpload from "./pages/upload/localUpload/localUpload";
-// import ComicPage from "./pages/comic/ComicPage";
-// import Visualizer from "./pages/visualizer/Visualizer";
-// import { GlobalProvider } from "./GlobalContext";
+import Layout from "./pages/layout/Layout";
+import Home from "./pages/home/Home";
+import Upload from "./pages/upload/Upload";
+import MangaPage from "./pages/mangaPage/MangaPage";
+import ComicPage from "./pages/comicPage/comicPage";
+import Viewer from "./pages/viewer/Viewer";
 
 const App = () => {
   return (
@@ -21,18 +17,15 @@ const App = () => {
           <Route index element={<Home />} />
           <Route path="local-upload/serie" element={<Upload />} />
           <Route path="Manga/:manga_name/:manga_id" element={<MangaPage />} />
-
-          {/* <Route
+          <Route
             path="Quadrinho/:comic_name/:comic_id"
             element={<ComicPage />}
           />
-          <Route
-            path=":serie_name/:serie_id/:chapter_name/:chapter_id/:page/:isRead"
-            element={<Visualizer />}
-          />
-          <Route path="teste" element={<NativeImages />} />
-          <Route path="*" element={<Page404 />} />  */}
         </Route>
+        <Route
+          path=":serie_name/:serie_id/:chapter_name/:chapter_id/:page/:isRead"
+          element={<Viewer />}
+        />
       </Routes>
     </HashRouter>
   );

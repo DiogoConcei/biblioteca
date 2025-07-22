@@ -1,0 +1,88 @@
+@use "../../styles/variables" as *;
+
+.secondInfo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  padding: $spacing-2;
+  background-color: rgba(40, 44, 52, 0.7);
+  border-radius: $radius-md;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  font-size: $font-lg;
+
+  svg {
+    color: $snow;
+    font-size: $font-lg;
+    transition: transform 0.3s ease;
+    cursor: pointer;
+
+    &:hover {
+      transform: scale(1.1);
+      color: $indian-red;
+    }
+  }
+
+  .pageProgress {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-1;
+    flex-grow: 1;
+
+    p {
+      color: $snow;
+      font-size: $font-base;
+    }
+
+    .rangeSlider {
+      flex-grow: 1;
+      appearance: none;
+      height: 4px;
+      background: linear-gradient(
+        to right,
+        $amethyst calc(var(--progress) * 100%),
+        $gunmetal calc(var(--progress) * 100%)
+      );
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+
+      &::-webkit-slider-thumb {
+        appearance: none;
+        height: 14px;
+        width: 14px;
+        border-radius: 50%;
+        background: $amethyst;
+        box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+        margin-top: -5px;
+      }
+
+      &::-moz-range-thumb {
+        height: 14px;
+        width: 14px;
+        border-radius: 50%;
+        background: $amethyst;
+        border: none;
+      }
+
+      &::-ms-thumb {
+        height: 14px;
+        width: 14px;
+        border-radius: 50%;
+        background: $amethyst;
+        border: none;
+      }
+
+      &::-webkit-slider-runnable-track {
+        height: 4px;
+        background: transparent; // já está no próprio input
+      }
+
+      &::-moz-range-track {
+        height: 4px;
+        background: transparent;
+      }
+    }
+  }
+}

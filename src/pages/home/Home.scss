@@ -31,17 +31,25 @@
         text-decoration: none;
 
         .coverCard {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-flow: column nowrap;
+          width: 150px;
+
           position: relative;
-          display: inline-block;
           cursor: pointer;
+          aspect-ratio: 2 / 3;
+          overflow: hidden;
+          border-radius: 4px;
 
           img {
             width: auto;
-            margin: 0.5rem;
             height: 20vh;
-            object-fit: cover;
-            border-radius: 4px;
+            object-fit: contain;
+            border-radius: 5px;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            display: block;
           }
 
           figcaption {
