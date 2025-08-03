@@ -1,22 +1,23 @@
-import path from "path";
-import fse from "fs-extra";
-import { promisify } from "util";
-import { exec } from "child_process";
-import { Comic } from "../types/comic.interfaces";
-import { Manga } from "../types/manga.interfaces";
+import path from 'path';
+import fse from 'fs-extra';
+import { promisify } from 'util';
+import { exec } from 'child_process';
+import { Comic } from '../types/comic.interfaces';
+import { Manga } from '../types/manga.interfaces';
 import {
   Literatures,
   LiteratureChapter,
   NormalizedSerieData,
   SerieData,
   viewData,
-} from "../../src/types/series.interfaces";
-import FileManager from "./FileManager";
-import FileSystem from "./abstract/FileSystem";
+} from '../../src/types/series.interfaces';
+import FileManager from './FileManager';
+import FileSystem from './abstract/FileSystem';
+import { randomUUID } from 'crypto';
 
 export default class StorageManager extends FileSystem {
   private readonly fileManager: FileManager = new FileManager();
-  private readonly SEVEN_ZIP_PATH = "C:\\Program Files\\7-Zip\\7z";
+  private readonly SEVEN_ZIP_PATH = 'C:\\Program Files\\7-Zip\\7z';
   private readonly execAsync = promisify(exec);
 
   constructor() {
@@ -38,7 +39,7 @@ export default class StorageManager extends FileSystem {
     } catch (error) {
       console.error(
         `Erro ao atualizar arquivo da série "${data.name}":`,
-        error
+        error,
       );
       throw error;
     }
@@ -46,10 +47,10 @@ export default class StorageManager extends FileSystem {
 
   public async readSerieData(dataPath: string): Promise<Literatures> {
     try {
-      const serieData = await fse.readJson(dataPath, { encoding: "utf-8" });
+      const serieData = await fse.readJson(dataPath, { encoding: 'utf-8' });
 
       if (!serieData) {
-        throw new Error("Arquivo lido, mas vazio ou inválido.");
+        throw new Error('Arquivo lido, mas vazio ou inválido.');
       }
 
       return serieData;
@@ -72,10 +73,10 @@ export default class StorageManager extends FileSystem {
       sanitizedName: this.fileManager.sanitizeFilename(serieName),
       newPath: newPath,
       oldPath: seriePath,
-      chaptersPath: "",
+      chaptersPath: '',
       createdAt: new Date().toISOString(),
       collections: [],
-      deletedAt: "",
+      deletedAt: '',
     };
   }
 
@@ -98,7 +99,7 @@ export default class StorageManager extends FileSystem {
 
   public async fixComicDir(
     brokenPath: string,
-    correctPath: string
+    correctPath: string,
   ): Promise<void> {
     try {
       const entries = await fse.readdir(brokenPath, { withFileTypes: true });
@@ -118,38 +119,9 @@ export default class StorageManager extends FileSystem {
     } catch (error) {
       console.error(
         `[fixComicDir] Falha ao corrigir "${brokenPath}" → "${correctPath}"`,
-        error
+        error,
       );
       throw error;
-    }
-  }
-
-  public async extractWith7zip(
-    inputFile: string,
-    outputDir: string
-  ): Promise<void> {
-    try {
-      await fse.mkdir(outputDir, { recursive: true });
-      const extractCmd = `"${this.SEVEN_ZIP_PATH}" x "${inputFile}" -o"${outputDir}" -y`;
-      await this.execAsync(extractCmd);
-    } catch (e) {
-      console.error(`Falha em descompactar arquivos: ${e}`);
-      throw e;
-    }
-  }
-
-  public async extractCoverWith7zip(inputFile: string, outputDir: string) {
-    try {
-      await fse.mkdir(outputDir, { recursive: true });
-      const listZip = `"${this.SEVEN_ZIP_PATH}" l "${inputFile}"`;
-      const log = await this.execAsync(listZip);
-      const filePath = this.fileManager.purifyOutput(log.stdout);
-
-      const extractCmd = `"${this.SEVEN_ZIP_PATH}" x "${inputFile}" "${filePath}" -o"${outputDir}" -y`;
-      await this.execAsync(extractCmd);
-    } catch (e) {
-      console.error(`Falha em descompactar cover: ${e}`);
-      throw e;
     }
   }
 
@@ -159,8 +131,8 @@ export default class StorageManager extends FileSystem {
 
       const seriesData: Literatures[] = await Promise.all(
         dataPaths.map(async (dataPath) => {
-          return await fse.readJson(dataPath, { encoding: "utf-8" });
-        })
+          return await fse.readJson(dataPath, { encoding: 'utf-8' });
+        }),
       );
 
       const exhibData = seriesData.map((serie) => ({
@@ -185,16 +157,16 @@ export default class StorageManager extends FileSystem {
       const seriesData = await this.fileManager.foundFiles(this.mangasData);
 
       const serieData = seriesData.find(
-        (serie) => path.basename(serie, path.extname(serie)) === serieName
+        (serie) => path.basename(serie, path.extname(serie)) === serieName,
       );
 
       if (!serieData) {
         throw new Error(`Nenhuma série encontrada com o nome: ${serieName}`);
       }
 
-      return await fse.readJson(serieData, { encoding: "utf-8" });
+      return await fse.readJson(serieData, { encoding: 'utf-8' });
     } catch (e) {
-      console.error("Erro ao selecionar dados do Manga:", e);
+      console.error('Erro ao selecionar dados do Manga:', e);
       throw e;
     }
   }
@@ -202,26 +174,26 @@ export default class StorageManager extends FileSystem {
   public async deleteSerieChapter(
     serieData: Literatures,
     chapter: LiteratureChapter,
-    literatureForm: string
+    literatureForm: string,
   ) {
     try {
-      if (literatureForm === "Mangas") {
+      if (literatureForm === 'Mangas') {
         await fse.remove(chapter.chapterPath);
-      } else if (literatureForm === "Comics") {
+      } else if (literatureForm === 'Comics') {
         const pages = await fse.readdir(chapter.chapterPath, {
           withFileTypes: true,
         });
         const pagePaths = pages.map((page) =>
-          path.join(chapter.chapterPath, page.name)
+          path.join(chapter.chapterPath, page.name),
         );
         await Promise.all(pagePaths.map((filePath) => fse.remove(filePath)));
       }
 
       chapter.isDownload = false;
-      chapter.chapterPath = "";
+      chapter.chapterPath = '';
       await this.updateSerieData(serieData);
     } catch (e) {
-      console.error("Falha em deletar capítulos", e);
+      console.error('Falha em deletar capítulos', e);
       throw e;
     }
   }
@@ -230,16 +202,75 @@ export default class StorageManager extends FileSystem {
     try {
       const seriesData = await this.fileManager.foundFiles(this.comicsData);
       const serieData = seriesData.find(
-        (serie) => path.basename(serie, path.extname(serie)) === serieName
+        (serie) => path.basename(serie, path.extname(serie)) === serieName,
       );
 
       if (!serieData) {
         throw new Error(`Nenhuma série encontrada com o nome: ${serieName}`);
       }
 
-      return await fse.readJson(serieData, { encoding: "utf-8" });
+      return await fse.readJson(serieData, { encoding: 'utf-8' });
     } catch (e) {
-      console.error("Erro ao selecionar dados do Comic:", e);
+      console.error('Erro ao selecionar dados do Comic:', e);
+      throw e;
+    }
+  }
+
+  public async extractCoverWith7zip(inputFile: string, outputDir: string) {
+    try {
+      const tempDir = path.join(
+        path.dirname(outputDir),
+        `temp_${randomUUID()}`,
+      );
+
+      await fse.mkdir(tempDir, { recursive: true });
+
+      const extractCmd = `"${this.SEVEN_ZIP_PATH}" x "${inputFile}" -o"${tempDir}" -y`;
+      await this.execAsync(extractCmd);
+
+      const allFiles = await this.fileManager.getAllFilesRecursively(tempDir);
+
+      if (allFiles.length === 0) {
+        throw new Error(
+          '❌ Extração concluída, mas nenhum arquivo foi gerado.',
+        );
+      }
+
+      const bestCandidate = this.fileManager.findFirstCoverFile(
+        allFiles.map((f) => path.basename(f)),
+      );
+
+      if (!bestCandidate) {
+        throw new Error('❌ Nenhuma imagem de capa válida encontrada.');
+      }
+
+      const realPath = allFiles.find(
+        (p) => path.basename(p) === bestCandidate,
+      )!;
+      const finalName = this.fileManager.sanitizeFilename(bestCandidate);
+      const finalPath = path.join(outputDir, finalName);
+
+      await fse.mkdir(outputDir, { recursive: true });
+      await fse.move(realPath, finalPath);
+      await fse.remove(tempDir);
+
+      console.log(`✅ Capa extraída: ${finalName}`);
+    } catch (e) {
+      console.error(`❌ Falha em descompactar cover:`, e);
+      throw e;
+    }
+  }
+
+  public async extractWith7zip(
+    inputFile: string,
+    outputDir: string,
+  ): Promise<void> {
+    try {
+      await fse.mkdir(outputDir, { recursive: true });
+      const extractCmd = `"${this.SEVEN_ZIP_PATH}" x "${inputFile}" -o"${outputDir}" -y`;
+      await this.execAsync(extractCmd);
+    } catch (e) {
+      console.error(`Falha em descompactar arquivos: ${e}`);
       throw e;
     }
   }

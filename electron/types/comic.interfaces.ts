@@ -44,6 +44,29 @@ export interface ComicTieIn {
   parentId?: number;
 }
 
+export interface childSerie {
+  id: number;
+  name: string;
+  sanitizedName: string;
+  archivesPath: string;
+  chaptersPath: string;
+  dataPath: string;
+  coverImage: string;
+  literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
+  chapters?: ComicEdition[];
+  readingData: {
+    lastChapterId: number;
+    lastReadAt: string;
+  };
+  metadata: {
+    lastDownload: number;
+    isFavorite: boolean;
+  };
+  createdAt: string;
+  deletedAt?: string;
+  comments: string[];
+}
+
 export interface ComicEdition {
   id: number;
   name: string;

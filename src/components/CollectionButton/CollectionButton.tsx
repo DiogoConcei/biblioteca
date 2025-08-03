@@ -12,11 +12,14 @@ export default function CollectionButton({ dataPath }: CollectionButtonProps) {
   const [isAdd, setIsAdd] = useState<boolean>(false);
 
   const filterCollections = [...collections]
-    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+    )
     .slice(0, 3);
 
   const onToggle = () => {
-    setIsAdd(prevState => !prevState);
+    setIsAdd((prevState) => !prevState);
   };
 
   return (
@@ -28,11 +31,11 @@ export default function CollectionButton({ dataPath }: CollectionButtonProps) {
 
       {isAdd && (
         <ul className="dropdown-list">
-          {filterCollections.map(collection => (
+          {filterCollections.map((collection) => (
             <li key={collection.name} className="dropdown-item">
               <button
                 className="dropdown-option"
-                onClick={e => addToCollection(e, collection.name, dataPath)}
+                onClick={(e) => addToCollection(e, collection.name, dataPath)}
               >
                 {collection.name}
               </button>

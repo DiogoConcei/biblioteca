@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   UseChapterParams,
   useChapterReturn,
-} from "../types/customHooks.interfaces";
+} from '../types/customHooks.interfaces';
 
 export default function useChapter({
   serieName,
@@ -24,13 +24,13 @@ export default function useChapter({
     try {
       const response = await window.electronAPI.chapters.getChapter(
         serieName,
-        chapterId
+        chapterId,
       );
       const data = response.data;
 
       if (!data || data.length === 0) {
         setPages([]);
-        setError("Nenhuma página encontrada");
+        setError('Nenhuma página encontrada');
         return;
       }
 
@@ -38,9 +38,15 @@ export default function useChapter({
       setCurrentPage(page);
 
       const checks: Promise<[boolean, boolean]> = Promise.all([
-        window.electronAPI.download.checkDownload(serieName, chapterId + 1),
+        await window.electronAPI.download.checkDownload(
+          serieName,
+          chapterId + 1,
+        ),
         chapterId > 1
-          ? window.electronAPI.download.checkDownload(serieName, chapterId - 1)
+          ? await window.electronAPI.download.checkDownload(
+              serieName,
+              chapterId - 1,
+            )
           : Promise.resolve(false),
       ]).then(([next, prev]) => [next, prev]);
 
@@ -49,7 +55,7 @@ export default function useChapter({
       isPrevDownloaded.current = prev;
     } catch (e) {
       console.error(e);
-      setError("Falha em recuperar capítulo. Tente novamente");
+      setError('Falha em recuperar capítulo. Tente novamente');
       setPages([]);
     } finally {
       setLoading(false);

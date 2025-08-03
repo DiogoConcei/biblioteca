@@ -1,7 +1,6 @@
 import FileSystem from './abstract/FileSystem.ts';
 import path from 'path';
 import fse from 'fs-extra';
-import { LiteratureChapter } from '../../src/types/series.interfaces.ts';
 
 export default class FileManager extends FileSystem {
   constructor() {
@@ -17,32 +16,88 @@ export default class FileManager extends FileSystem {
       .replace(/\.{2,}/g, '.');
   }
 
-  public async sanitizeDirFiles(
-    dirPath: string,
-    chapters: LiteratureChapter[],
-  ): Promise<void> {
-    try {
-      const files = await fse.readdir(dirPath);
-
-      if (files.length !== chapters.length) {
-        console.warn(
-          'Número de arquivos não corresponde ao número de capítulos!',
+  public async orderComic(filesPath: string[]): Promise<string[]> {
+    const fileDetails = await Promise.all(
+      filesPath.map(async (file) => {
+        const { volume, chapter } = this.extractComicInfo(
+          file,
+          path.basename(file),
         );
-      }
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const chap = chapters[i];
-        const oldFilePath = path.join(dirPath, file);
-        const sanitized = this.sanitizeFilename(chap.name).slice(0, 32);
-        const extension = path.extname(file);
-        const newFilename = `${sanitized}_${extension}`;
-        const newFilePath = path.join(dirPath, newFilename);
-        await fse.rename(oldFilePath, newFilePath);
-      }
-    } catch (err) {
-      console.error('Erro ao renomear arquivos:', err);
+        return { filePath: file, volume, chapter };
+      }),
+    );
+
+    fileDetails.sort((a, b) => {
+      if (a.volume !== b.volume) return a.volume - b.volume;
+      return a.chapter - b.chapter;
+    });
+
+    return fileDetails.map((d) => d.filePath);
+  }
+
+  private extractComicInfo(
+    fullPath: string,
+    fileName: string,
+  ): { volume: number; chapter: number } {
+    let volume = 0;
+    let chapter = 0;
+
+    const normFull = fullPath.replace(/[_\-]/g, ' ').replace(/\s+/g, ' ');
+    const volM = normFull.match(/\b(?:v|vol\.?)\s*(\d+)/i);
+    if (volM) {
+      volume = parseInt(volM[1], 10);
     }
+
+    const normName = fileName
+      .replace(/[_\-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (/\(\s*[a-d]\d+\s*\)/i.test(normName)) {
+      return { volume, chapter: Number.MAX_SAFE_INTEGER };
+    }
+
+    let m: RegExpMatchArray | null;
+
+    m = normName.match(/\(\s*(\d+(?:\.\d+)?)([a-d])?\s*\)/i);
+    if (m) {
+      const num = parseFloat(m[1]);
+      const suf = m[2]?.toLowerCase();
+      chapter = suf
+        ? parseFloat((num + (suf.charCodeAt(0) - 96) / 10).toFixed(1))
+        : num;
+      return { volume, chapter };
+    }
+
+    m = normName.match(/\b(\d+)([a-d])\b/i);
+    if (m) {
+      const num = parseInt(m[1], 10);
+      const suf = m[2].toLowerCase();
+      chapter = parseFloat((num + (suf.charCodeAt(0) - 96) / 10).toFixed(1));
+      return { volume, chapter };
+    }
+
+    m =
+      normName.match(/\bch(?:apter)?\.?\s*(\d+(\.\d+)?)/i) ||
+      normName.match(/\bcap(?:ítulo)?\.?\s*(\d+(\.\d+)?)/i);
+    if (m) {
+      chapter = parseFloat(m[1]);
+      return { volume, chapter };
+    }
+
+    m = normName.match(/#\s*(\d+(\.\d+)?)/);
+    if (m) {
+      chapter = parseFloat(m[1]);
+      return { volume, chapter };
+    }
+
+    m = normName.match(/\b(\d{1,4})(?!\.\d)/);
+    if (m) {
+      chapter = parseInt(m[1], 10);
+    }
+
+    return { volume, chapter };
   }
 
   public async orderByChapters(filesPath: string[]): Promise<string[]> {
@@ -69,24 +124,23 @@ export default class FileManager extends FileSystem {
     volume: number;
     chapter: number;
   } {
+    const regex =
+      /Vol\.\s*(\d+)|Ch\.\s*(\d+(\.\d+)?)|Chapter\s*(\d+(\.\d+)?)|Capítulo\s*(\d+(\.\d+)?)/gi;
+    const matches = [...fileName.matchAll(regex)];
+
     let volume = 0;
     let chapter = 0;
 
-    const normalized = fileName.replace(/[_\-]/g, ' ');
-
-    const volumeMatch = normalized.match(/\b(?:v|vol\.?)\s*(\d+)/i);
-    if (volumeMatch) {
-      volume = parseInt(volumeMatch[1], 10);
-    }
-
-    const chapterMatch =
-      normalized.match(/#\s*(\d+(\.\d+)?)/) ||
-      normalized.match(/\bch(?:apter)?\.?\s*(\d+(\.\d+)?)/i) ||
-      normalized.match(/\bcap(?:ítulo)?\.?\s*(\d+(\.\d+)?)/i) ||
-      normalized.match(/\b(\d{1,4})(?!\.\d)/);
-    if (chapterMatch) {
-      chapter = parseFloat(chapterMatch[1]);
-    }
+    matches.forEach((match) => {
+      if (match[1]) {
+        volume = parseInt(match[1], 10);
+      }
+      if (match[2] || match[4] || match[6]) {
+        const chapterValue = match[2] || match[4] || match[6];
+        const chapterNumber = parseFloat(chapterValue);
+        chapter = chapterNumber;
+      }
+    });
 
     return { volume, chapter };
   }
@@ -107,6 +161,21 @@ export default class FileManager extends FileSystem {
       console.error(`Erro ao fazer upload de imagem: ${e}`);
       throw e;
     }
+  }
+
+  public async getAllFilesRecursively(dir: string): Promise<string[]> {
+    const entries = await fse.readdir(dir, { withFileTypes: true });
+    const files = await Promise.all(
+      entries.map(async (entry) => {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          return await this.getAllFilesRecursively(fullPath);
+        } else {
+          return fullPath;
+        }
+      }),
+    );
+    return files.flat();
   }
 
   public async uploadImage(file: string): Promise<string> {
@@ -167,52 +236,67 @@ export default class FileManager extends FileSystem {
     }
   }
 
-  public purifyOutput(rawOutput: string): string {
-    const lines = rawOutput.split('\n');
+  public findFirstCoverFile(fileNames: string[]): string | null {
+    const imageExtensionRegex = /\.(jpg|jpeg|png|gif|webp)$/i;
 
-    const headerIndex = lines.findIndex(
-      (line) =>
-        line.includes('Date') && line.includes('Time') && line.includes('Attr'),
-    );
-    if (headerIndex === -1) {
-      throw new Error('Cabeçalho da tabela não encontrado na saída.');
-    }
+    const zerosOnlyCandidates: string[] = [];
+    const zeroThenOneCandidates: string[] = [];
+    const namedCoverCandidates: string[] = [];
+    const fallbackCandidates: string[] = [];
 
-    const dateRegex = /^\d{4}-\d{2}-\d{2}/;
-    const lineRegex =
-      /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\s+\S+\s+\d+\s+\d+\s+(.*)$/;
-    const imageExtensionRegex = /\.(jpg|jpeg|png|gif)$/i;
-    const lastDigitsRegex = /^(?:0{0,}0|0{0,}1)$/;
+    const coverKeywords = [
+      'cover',
+      'front',
+      'capa',
+      'capa1',
+      'page0001',
+      'pg0001',
+      '01a',
+      '01',
+      '01b',
+      'preview',
+    ];
 
-    for (let i = headerIndex + 1; i < lines.length; i++) {
-      const line = lines[i].trim();
+    for (const name of fileNames) {
+      if (!imageExtensionRegex.test(name)) continue;
 
-      if (!dateRegex.test(line) || line.includes('files,')) continue;
+      const baseName = name.replace(imageExtensionRegex, '').toLowerCase();
 
-      const match = line.match(lineRegex);
-      if (!match?.[1]) continue;
+      if (coverKeywords.some((keyword) => baseName.includes(keyword))) {
+        namedCoverCandidates.push(name);
+      }
 
-      const filePath = match[1].trim();
-      const lastSlashIndex = Math.max(
-        filePath.lastIndexOf('/'),
-        filePath.lastIndexOf('\\'),
-      );
-      const fileName = filePath.substring(lastSlashIndex + 1);
-
-      if (!imageExtensionRegex.test(fileName)) continue;
-
-      const baseName = fileName.replace(imageExtensionRegex, '');
       const lastDigitsMatch = baseName.match(/(\d+)(?!.*\d)/);
+      if (!lastDigitsMatch) continue;
 
-      if (!lastDigitsMatch || !lastDigitsRegex.test(lastDigitsMatch[1]))
-        continue;
+      const digits = lastDigitsMatch[1];
 
-      const specialDir =
-        lastSlashIndex > -1 ? filePath.substring(0, lastSlashIndex + 1) : '';
-      return specialDir ? `${specialDir}${fileName}` : fileName;
+      if (/^0+$/.test(digits)) {
+        zerosOnlyCandidates.push(name);
+      } else if (/^0*1$/.test(digits)) {
+        zeroThenOneCandidates.push(name);
+      } else if (/^0*2$/.test(digits) || /^0*3$/.test(digits)) {
+        fallbackCandidates.push(name);
+      }
     }
 
-    throw new Error('Nenhum arquivo válido encontrado.');
+    if (zerosOnlyCandidates.length > 0) {
+      return zerosOnlyCandidates[0];
+    }
+
+    if (zeroThenOneCandidates.length > 0) {
+      return zeroThenOneCandidates[0];
+    }
+
+    if (namedCoverCandidates.length > 0) {
+      return namedCoverCandidates[0];
+    }
+
+    if (fallbackCandidates.length > 0) {
+      return fallbackCandidates[0];
+    }
+
+    return null;
   }
 
   public foundLiteratureForm(dataPath: string): string {

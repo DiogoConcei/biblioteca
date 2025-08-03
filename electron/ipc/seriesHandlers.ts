@@ -1,10 +1,10 @@
-import { IpcMain } from "electron";
+import { IpcMain } from 'electron';
 
-import StorageManager from "../services/StorageManager.ts";
-import CollectionsManager from "../services/CollectionsManager";
-import ImageManager from "../services/ImageManager.ts";
-import UserManager from "../services/UserManager.ts";
-import { getMainWindow } from "../main.ts";
+import StorageManager from '../services/StorageManager.ts';
+import CollectionsManager from '../services/CollectionsManager';
+import ImageManager from '../services/ImageManager.ts';
+import UserManager from '../services/UserManager.ts';
+import { getMainWindow } from '../main.ts';
 
 export default function seriesHandlers(ipcMain: IpcMain) {
   const storageManager = new StorageManager();
@@ -12,31 +12,31 @@ export default function seriesHandlers(ipcMain: IpcMain) {
   const userManager = new UserManager();
   const collectionManager = new CollectionsManager();
 
-  ipcMain.handle("serie:get-all", async () => {
+  ipcMain.handle('serie:get-all', async () => {
     try {
       const getData = await storageManager.seriesData();
 
       const procesData = await Promise.all(
         getData.map(async (serieData) => {
           const encodedImage = await imageManager.encodeImageToBase64(
-            serieData.coverImage
+            serieData.coverImage,
           );
 
           return {
             ...serieData,
             coverImage: encodedImage,
           };
-        })
+        }),
       );
 
-      return { success: true, data: procesData, error: " " };
+      return { success: true, data: procesData, error: ' ' };
     } catch (e) {
       console.error(`Falha em recuperar todas as séries: ${e}`);
-      return { success: false, data: "", error: String(e) };
+      return { success: false, data: '', error: String(e) };
     }
   });
 
-  ipcMain.handle("serie:manga-serie", async (_event, serieName: string) => {
+  ipcMain.handle('serie:manga-serie', async (_event, serieName: string) => {
     try {
       const data = await storageManager.selectMangaData(serieName);
 
@@ -45,18 +45,18 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         coverImage: await imageManager.encodeImageToBase64(data.coverImage),
       };
 
-      return { success: true, data: processedData, error: " " };
+      return { success: true, data: processedData, error: ' ' };
     } catch (e) {
-      console.error("Erro ao buscar dados da series:", e);
+      console.error('Erro ao buscar dados da series:', e);
       return { success: false, error: String(e) };
     }
   });
 
-  ipcMain.handle("serie:addToCollection", async (_event, dataPath: string) => {
+  ipcMain.handle('serie:addToCollection', async (_event, dataPath: string) => {
     try {
       const serieData = await storageManager.readSerieData(dataPath);
       const normalizedData = await storageManager.createNormalizedData(
-        serieData
+        serieData,
       );
       const result = await collectionManager.serieToCollection(normalizedData);
       return { success: result };
@@ -67,7 +67,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
   });
 
   ipcMain.handle(
-    "serie:rating",
+    'serie:rating',
     async (_event, dataPath: string, userRating: number) => {
       try {
         const serieData = await storageManager.readSerieData(dataPath);
@@ -79,7 +79,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         const win = getMainWindow();
 
         if (win) {
-          win.webContents.send("update-rating");
+          win.webContents.send('update-rating');
         }
 
         await storageManager.updateSerieData(updateData);
@@ -88,10 +88,10 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         console.error(`Falha em ranquear serie: ${e}`);
         return { success: false, error: String(e) };
       }
-    }
+    },
   );
 
-  ipcMain.handle("serie:favorite", async (_event, dataPath: string) => {
+  ipcMain.handle('serie:favorite', async (_event, dataPath: string) => {
     try {
       const serieData = await storageManager.readSerieData(dataPath);
       await userManager.favoriteSerie(serieData);
@@ -102,7 +102,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle("serie:recent-read", async (_event, dataPath: string) => {
+  ipcMain.handle('serie:recent-read', async (_event, dataPath: string) => {
     try {
       const serieData = await storageManager.readSerieData(dataPath);
       await userManager.addToRecents(serieData);
@@ -113,7 +113,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle("serie:comic-serie", async (_event, serieName: string) => {
+  ipcMain.handle('serie:comic-serie', async (_event, serieName: string) => {
     try {
       const data = await storageManager.selectComicData(serieName);
 
@@ -122,13 +122,13 @@ export default function seriesHandlers(ipcMain: IpcMain) {
             data.chapters.map(async (chapter) => {
               const encodedCover = chapter.coverPath
                 ? await imageManager.encodeImageToBase64(chapter.coverPath)
-                : "";
+                : '';
 
               return {
                 ...chapter,
                 coverPath: encodedCover,
               };
-            })
+            }),
           )
         : [];
 
@@ -137,9 +137,9 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         chapters: updatedChapters,
       };
 
-      return { success: true, data: processedData, error: "" };
+      return { success: true, data: processedData, error: '' };
     } catch (error) {
-      console.error("Erro ao buscar dados da series:", error);
+      console.error('Erro ao buscar dados da series:', error);
       throw error;
     }
   });

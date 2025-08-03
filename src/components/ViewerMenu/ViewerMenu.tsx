@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { data, useNavigate, useParams } from "react-router-dom";
-import { visualizerProps } from "../../types/components.interfaces";
-import { useSerieStore } from "../../store/seriesStore";
-import "./ViewerMenu.scss";
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { data, useNavigate, useParams } from 'react-router-dom';
+import { visualizerProps } from '../../types/components.interfaces';
+import { useSerieStore } from '../../store/seriesStore';
+import './ViewerMenu.scss';
 import {
   House,
   ChevronsLeft,
@@ -12,7 +12,7 @@ import {
   ZoomOut,
   ZoomIn,
   Book,
-} from "lucide-react";
+} from 'lucide-react';
 
 export default function ViewerMenu({
   setScale,
@@ -34,7 +34,7 @@ export default function ViewerMenu({
   }>();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
-  const chapter_name = decodeURIComponent(rawChapterName ?? "");
+  const chapter_name = decodeURIComponent(rawChapterName ?? '');
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen((prev) => {
@@ -71,7 +71,7 @@ export default function ViewerMenu({
   const jumpToNext = useCallback(async () => {
     await window.electronAPI.download.readingDownload(
       serie_name!,
-      Number(chapter_id)
+      Number(chapter_id),
     );
     nextChapter();
   }, [serie_name, chapter_id, nextChapter]);
@@ -84,26 +84,28 @@ export default function ViewerMenu({
     await window.electronAPI.chapters.saveLastRead(
       serie_name!,
       Number(chapter_id),
-      currentPage
+      currentPage,
     );
 
     await window.electronAPI.series.recentSerie(dataPath!);
 
     resetStates();
-    navigate("/");
+    navigate('/');
   }, [serie_name, chapter_id, currentPage, navigate]);
 
   const seriePage = useCallback(async () => {
     await window.electronAPI.chapters.saveLastRead(
       serie_name!,
       Number(chapter_id),
-      currentPage
+      currentPage,
     );
 
     const toSeriePage = await window.electronAPI.userAction.returnPage(
       serie_name!,
-      dataPath!
+      dataPath!,
     );
+
+    await window.electronAPI.series.recentSerie(dataPath!);
 
     const seriePage = toSeriePage.data;
 
@@ -112,7 +114,7 @@ export default function ViewerMenu({
 
   return (
     <article>
-      <section className={`viewer-menu ${isMenuOpen ? "open" : "closed"}`}>
+      <section className={`viewer-menu ${isMenuOpen ? 'open' : 'closed'}`}>
         <button className="hideMenuBtn" onClick={toggleMenu}>
           {isMenuOpen ? <ChevronLeft /> : <ChevronRight />}
         </button>

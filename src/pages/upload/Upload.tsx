@@ -1,11 +1,11 @@
-import { useState, useRef, useMemo, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useForm, SubmitHandler } from "react-hook-form";
-import { ImagePlus, Tag } from "lucide-react";
-import { Radius } from "lucide-react";
+import { useState, useRef, useMemo, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import { ImagePlus, Tag } from 'lucide-react';
+import { Radius } from 'lucide-react';
 
-import { SerieData, SerieForm } from "../../types/series.interfaces";
-import "./Upload.scss";
+import { SerieData, SerieForm } from '../../types/series.interfaces';
+import './Upload.scss';
 
 export default function Upload() {
   const location = useLocation();
@@ -16,7 +16,7 @@ export default function Upload() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
 
-  const [imageSrc, setImageSrc] = useState<string>("");
+  const [imageSrc, setImageSrc] = useState<string>('');
   const coverRef = useRef<HTMLInputElement | null>(null);
 
   const [tags, setTags] = useState<string[]>([]);
@@ -47,14 +47,14 @@ export default function Upload() {
 
     return {
       name: newSeries[currentIndex].name,
-      genre: "",
-      author: "",
-      cover_path: "",
-      language: "",
-      literatureForm: "",
-      privacy: "",
-      autoBackup: "",
-      readingStatus: "",
+      genre: '',
+      author: '',
+      cover_path: '',
+      language: '',
+      literatureForm: '',
+      privacy: '',
+      autoBackup: '',
+      readingStatus: '',
       tags: [], // tags começam vazias
       collections: serie.collections,
       sanitizedName: serie.sanitizedName,
@@ -69,7 +69,7 @@ export default function Upload() {
   useEffect(() => {
     if (emptyForm) {
       reset(emptyForm);
-      setImageSrc("");
+      setImageSrc('');
 
       setTags(emptyForm.tags || []);
     }
@@ -87,22 +87,22 @@ export default function Upload() {
     reader.readAsDataURL(file);
 
     const imagePath = await window.electronAPI.webUtilities.getPathForFile(
-      file
+      file,
     );
 
-    setValue("cover_path", imagePath, { shouldValidate: true });
+    setValue('cover_path', imagePath, { shouldValidate: true });
   };
 
   const addTagsToForm = (updatedTags: string[]) => {
-    setValue("tags", updatedTags, { shouldValidate: true });
+    setValue('tags', updatedTags, { shouldValidate: true });
   };
 
   const handleTagInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const tagArray = value
-      .split(",")
+      .split(',')
       .map((tag) => tag.trim())
-      .filter((tag) => tag !== "");
+      .filter((tag) => tag !== '');
 
     setTags(tagArray);
 
@@ -135,10 +135,10 @@ export default function Upload() {
 
     if (response.success) {
       setIsLoading(false);
-      navigate("/");
+      navigate('/');
+    } else {
+      setIsLoading(false);
     }
-
-    return;
   };
 
   // 14. Navegação entre índices (anterior/próximo)
@@ -213,8 +213,8 @@ export default function Upload() {
                 id="name"
                 type="text"
                 placeholder="Nome da série"
-                {...register("name", {
-                  required: "A Série deve ter um nome",
+                {...register('name', {
+                  required: 'A Série deve ter um nome',
                 })}
               />
               {errors.name && <p className="error">{errors.name.message}</p>}
@@ -223,8 +223,8 @@ export default function Upload() {
                 id="genre"
                 type="text"
                 placeholder="Gênero"
-                {...register("genre", {
-                  required: "Diga o gênero literário",
+                {...register('genre', {
+                  required: 'Diga o gênero literário',
                 })}
               />
               {errors.genre && <p className="error">{errors.genre.message}</p>}
@@ -233,15 +233,15 @@ export default function Upload() {
                 id="author"
                 type="text"
                 placeholder="Autor"
-                {...register("author")}
+                {...register('author')}
               />
 
               <input
                 id="language"
                 type="text"
                 placeholder="Idioma original"
-                {...register("language", {
-                  required: "Em qual linguagem a série está?",
+                {...register('language', {
+                  required: 'Em qual linguagem a série está?',
                 })}
               />
               {errors.language && (
@@ -257,8 +257,8 @@ export default function Upload() {
                   type="radio"
                   value="Manga"
                   id="Manga"
-                  {...register("literatureForm", {
-                    required: "Selecione a forma de literatura",
+                  {...register('literatureForm', {
+                    required: 'Selecione a forma de literatura',
                   })}
                 />
                 <label htmlFor="Manga">Manga</label>
@@ -267,7 +267,7 @@ export default function Upload() {
                   type="radio"
                   value="Quadrinho"
                   id="Quadrinho"
-                  {...register("literatureForm")}
+                  {...register('literatureForm')}
                 />
                 <label htmlFor="Quadrinho">Quadrinho</label>
 
@@ -275,7 +275,7 @@ export default function Upload() {
                   type="radio"
                   value="Livro"
                   id="Livro"
-                  {...register("literatureForm")}
+                  {...register('literatureForm')}
                 />
                 <label htmlFor="Livro">Livro</label>
               </div>
@@ -292,8 +292,8 @@ export default function Upload() {
                   type="radio"
                   value="Sim"
                   id="SimAutoBackup"
-                  {...register("autoBackup", {
-                    required: "Escolha Sim ou Não",
+                  {...register('autoBackup', {
+                    required: 'Escolha Sim ou Não',
                   })}
                 />
                 <label htmlFor="SimAutoBackup">Sim</label>
@@ -302,7 +302,7 @@ export default function Upload() {
                   type="radio"
                   value="Não"
                   id="NaoAutoBackup"
-                  {...register("autoBackup")}
+                  {...register('autoBackup')}
                 />
                 <label htmlFor="NaoAutoBackup">Não</label>
               </div>
@@ -319,8 +319,8 @@ export default function Upload() {
                   type="radio"
                   value="Pública"
                   id="Privacypublic"
-                  {...register("privacy", {
-                    required: "Escolha Pública ou Privada",
+                  {...register('privacy', {
+                    required: 'Escolha Pública ou Privada',
                   })}
                 />
                 <label htmlFor="Privacypublic">Pública</label>
@@ -329,7 +329,7 @@ export default function Upload() {
                   type="radio"
                   value="Privada"
                   id="Privacyprivate"
-                  {...register("privacy")}
+                  {...register('privacy')}
                 />
                 <label htmlFor="Privacyprivate">Privada</label>
               </div>
@@ -346,8 +346,8 @@ export default function Upload() {
                   type="radio"
                   value="Em andamento"
                   id="StatusEmAndamento"
-                  {...register("readingStatus", {
-                    required: "Selecione um status",
+                  {...register('readingStatus', {
+                    required: 'Selecione um status',
                   })}
                 />
                 <label htmlFor="StatusEmAndamento">Em andamento</label>
@@ -356,7 +356,7 @@ export default function Upload() {
                   type="radio"
                   value="Completo"
                   id="StatusCompleto"
-                  {...register("readingStatus")}
+                  {...register('readingStatus')}
                 />
                 <label htmlFor="StatusCompleto">Completo</label>
 
@@ -364,7 +364,7 @@ export default function Upload() {
                   type="radio"
                   value="Pendente"
                   id="StatusPendente"
-                  {...register("readingStatus")}
+                  {...register('readingStatus')}
                 />
                 <label htmlFor="StatusPendente">Pendente</label>
               </div>
@@ -382,7 +382,7 @@ export default function Upload() {
                   placeholder="Digite tags separadas por vírgula"
                   onChange={handleTagInput}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
+                    if (e.key === 'Enter') {
                       e.preventDefault();
                       flushTags();
                     }

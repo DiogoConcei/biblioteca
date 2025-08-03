@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 import {
   Collection,
   SerieCollectionInfo,
-} from "../types/collections.interfaces";
-import { Literatures } from "../types/series.interfaces";
+} from '../types/collections.interfaces';
+import { Literatures } from '../types/series.interfaces';
 
 export default function useCollection() {
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -17,10 +17,10 @@ export default function useCollection() {
       if (response.success && response.data) {
         setCollections(response.data);
         setFavorites(
-          response.data.find((coll: Collection) => coll.name === "Favoritas")
+          response.data.find((coll: Collection) => coll.name === 'Favoritas'),
         );
         setRecents(
-          response.data.find((coll: Collection) => coll.name === "Recentes")
+          response.data.find((coll: Collection) => coll.name === 'Recentes'),
         );
       } else {
         console.log(response.error);
@@ -29,11 +29,11 @@ export default function useCollection() {
 
     fetchCollection();
 
-    window.electronAPI.on("update-rating", () => {
+    window.electronAPI.on('update-rating', () => {
       fetchCollection();
     });
     return () => {
-      window.electronAPI.on("update-rating", () => {
+      window.electronAPI.on('update-rating', () => {
         fetchCollection();
       });
     };
@@ -41,11 +41,11 @@ export default function useCollection() {
 
   const updateFav = async (
     serie: Literatures,
-    isFav: boolean
+    isFav: boolean,
   ): Promise<boolean> => {
     try {
       const response = await window.electronAPI.series.favoriteSerie(
-        serie.dataPath
+        serie.dataPath,
       );
       if (!response.success) return false;
 
@@ -59,8 +59,8 @@ export default function useCollection() {
         archivesPath: serie.archivesPath,
         totalChapters: serie.totalChapters,
         status: serie.metadata.status,
-        recommendedBy: serie.metadata.recommendedBy ?? "",
-        originalOwner: serie.metadata.originalOwner ?? "",
+        recommendedBy: serie.metadata.recommendedBy ?? '',
+        originalOwner: serie.metadata.originalOwner ?? '',
         rating: serie.metadata.rating ?? 0,
         addAt: dataAtual,
       };
@@ -82,7 +82,7 @@ export default function useCollection() {
     } catch (error) {
       console.error(
         `Erro ao atualizar favorito da série "${serie.name}":`,
-        error
+        error,
       );
       return false;
     }
@@ -91,22 +91,16 @@ export default function useCollection() {
   const addToCollection = async (
     _e: React.MouseEvent<HTMLButtonElement>,
     collectionName: string,
-    dataPath: string
+    dataPath: string,
   ) => {
     try {
       await window.electronAPI.series.serieToCollection(dataPath);
     } catch (error) {
       console.error(
         `Erro ao adicionar série à coleção "${collectionName}":`,
-        error
+        error,
       );
     }
-  };
-
-  const orderRecents = () => {
-    const recentRead = collections.map((teste) => {
-      console.log(teste);
-    });
   };
 
   return {

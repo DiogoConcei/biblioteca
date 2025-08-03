@@ -61,6 +61,11 @@ export default abstract class FileSystem {
 
   protected readonly comicsData: string = path.join(this.jsonFolder, 'Comics');
 
+  protected readonly childSeriesData: string = path.join(
+    this.jsonFolder,
+    'childSeries',
+  );
+
   protected readonly mangasData: string = path.join(this.jsonFolder, 'Mangas');
 
   protected readonly configFilePath: string = path.join(

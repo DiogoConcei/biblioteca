@@ -1,18 +1,18 @@
-import "./Home.scss";
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Play } from "lucide-react";
+import './Home.scss';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Play } from 'lucide-react';
 
-import { viewData } from "../../types/series.interfaces";
+import { viewData } from '../../types/series.interfaces';
 
-import SearchBar from "../../components/SearchBar/SearchBar";
-import { useSerieStore } from "../../store/seriesStore";
+import SearchBar from '../../components/SearchBar/SearchBar';
+import { useSerieStore } from '../../store/seriesStore';
 
 export default function Home() {
   const resetStates = useSerieStore((state) => state.resetStates);
   const [series, setSeries] = useState<viewData[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [searchInput, setSearchInput] = useState<string>("");
+  const [searchInput, setSearchInput] = useState<string>('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,20 +22,20 @@ export default function Home() {
         if (response.success && response.data) {
           setSeries(response.data);
         } else {
-          setError("Nenhuma série encontrada.");
+          setError('Nenhuma série encontrada.');
         }
       } catch (err) {
-        console.error("Erro ao buscar séries:", err);
-        setError("Erro ao buscar séries. Tente novamente.");
+        console.error('Erro ao buscar séries:', err);
+        setError('Erro ao buscar séries. Tente novamente.');
       }
     }
 
     getSeries();
-  });
+  }, []);
 
   const lastChapter = async (
     e: React.MouseEvent<HTMLDivElement | SVGElement>,
-    dataPath: string
+    dataPath: string,
   ) => {
     e.preventDefault();
     const response = await window.electronAPI.chapters.acessLastRead(dataPath);
@@ -45,7 +45,7 @@ export default function Home() {
     if (lastChapterUrl) {
       navigate(lastChapterUrl);
     } else {
-      setError("URL do último capítulo não encontrada.");
+      setError('URL do último capítulo não encontrada.');
     }
   };
 
@@ -58,11 +58,11 @@ export default function Home() {
     const nomeMinusculo = serie.name.toLowerCase();
     const termoMinusculo = searchInput.toLowerCase();
 
-    const normalizedSerieName = nomeMinusculo.replace(/\s+/g, "");
-    const normalizedSearchTerm = termoMinusculo.replace(/\s+/g, "");
+    const normalizedSerieName = nomeMinusculo.replace(/\s+/g, '');
+    const normalizedSearchTerm = termoMinusculo.replace(/\s+/g, '');
 
     return (
-      termoMinusculo === "" ||
+      termoMinusculo === '' ||
       normalizedSerieName.includes(normalizedSearchTerm)
     );
   });
@@ -84,9 +84,9 @@ export default function Home() {
     try {
       const response = await window.electronAPI.upload.processSerie(filePaths);
       const serieData = response.data;
-      navigate("/local-upload/serie", { state: { serieData } });
+      navigate('/local-upload/serie', { state: { serieData } });
     } catch (error) {
-      console.error("Erro ao carregar arquivos", error);
+      console.error('Erro ao carregar arquivos', error);
       throw error;
     }
   };
