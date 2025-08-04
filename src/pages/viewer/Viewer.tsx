@@ -1,14 +1,15 @@
-import { useChapterReturn } from "../../types/customHooks.interfaces";
-import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import useChapter from "../../hooks/useChapter";
-import useNavigation from "../../hooks/useNavigation";
-import useDrag from "../../hooks/useDrag";
-import ViewerMenu from "../../components/ViewerMenu/ViewerMenu";
-import ErrorScreen from "../../components/ErrorScreen/ErrorScreen";
-import PageControl from "../../components/PageControl/PageControl";
-import { LoaderCircle, Radius } from "lucide-react";
-import "./Viewer.scss";
+import { useChapterReturn } from '../../types/customHooks.interfaces';
+import { useEffect, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import useChapter from '../../hooks/useChapter';
+import useNavigation from '../../hooks/useNavigation';
+import useDrag from '../../hooks/useDrag';
+import ViewerMenu from '../../components/ViewerMenu/ViewerMenu';
+import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
+import Loading from '../../components/Loading/Loading';
+import PageControl from '../../components/PageControl/PageControl';
+import { LoaderCircle } from 'lucide-react';
+import './Viewer.scss';
 
 export default function Viewer() {
   const {
@@ -23,7 +24,7 @@ export default function Viewer() {
     page: string;
   }>();
 
-  const serie_name = decodeURIComponent(rawSerieName ?? "");
+  const serie_name = decodeURIComponent(rawSerieName ?? '');
 
   const [scale, setScale] = useState<number>(1);
   const lastCall = useRef<number>(0);
@@ -43,12 +44,12 @@ export default function Viewer() {
     const handleKey = (event: KeyboardEvent) => {
       const now = Date.now();
 
-      if (event.key === "ArrowLeft") {
+      if (event.key === 'ArrowLeft') {
         chapterNavigation.prevPage();
         lastCall.current = now;
       }
 
-      if (event.key === "ArrowRight") {
+      if (event.key === 'ArrowRight') {
         if (
           now - lastCall.current < debounceTime &&
           chapter.currentPage === chapter.quantityPages
@@ -61,17 +62,13 @@ export default function Viewer() {
       }
     };
 
-    window.addEventListener("keydown", handleKey);
+    window.addEventListener('keydown', handleKey);
 
-    return () => window.removeEventListener("keydown", handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
   }, [chapterNavigation]);
 
   if (chapter.isLoading || !chapter.pages || chapter.isLoading) {
-    return (
-      <div className="loadingWrapper">
-        <Radius className="spinner" />
-      </div>
-    );
+    <Loading />;
   }
 
   if (chapter.error) {

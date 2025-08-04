@@ -1,11 +1,11 @@
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
-import { useSerieStore } from "../store/seriesStore";
+import { useSerieStore } from '../store/seriesStore';
 import {
   Literatures,
   LiteraturesAttributes,
   LiteratureChapterAttributes,
-} from "../types/series.interfaces";
+} from '../types/series.interfaces';
 
 interface UseSerieResult {
   serie: Literatures | null;
@@ -13,13 +13,13 @@ interface UseSerieResult {
   updateChapter: (
     id: number,
     path: string,
-    newValue: LiteratureChapterAttributes
+    newValue: LiteratureChapterAttributes,
   ) => void;
 }
 
 export default function useSerie(
   serieName?: string,
-  literatureForm?: string
+  literatureForm?: string,
 ): UseSerieResult {
   const serie = useSerieStore((state) => state.serie) as Literatures | null;
   const setError = useSerieStore((state) => state.setError);
@@ -37,7 +37,7 @@ export default function useSerie(
       if (!isActive) return;
 
       if (!response) {
-        setError("Série não encontrada ou erro ao buscar série.");
+        setError('Série não encontrada ou erro ao buscar série.');
         return;
       }
 
@@ -53,12 +53,12 @@ export default function useSerie(
       if (!current) return {};
 
       const updated = structuredClone(current);
-      const keys = path.split(".");
+      const keys = path.split('.');
 
       let cursor: unknown = updated;
 
       for (let i = 0; i < keys.length - 1; i++) {
-        if (typeof cursor !== "object" || cursor === null) return {};
+        if (typeof cursor !== 'object' || cursor === null) return {};
 
         const key = keys[i];
 
@@ -67,7 +67,7 @@ export default function useSerie(
         cursor = (cursor as Record<string, unknown>)[key];
       }
 
-      if (typeof cursor !== "object" || cursor === null) return {};
+      if (typeof cursor !== 'object' || cursor === null) return {};
 
       const lastKey = keys[keys.length - 1];
       if (!(lastKey in cursor)) return {};
@@ -77,9 +77,9 @@ export default function useSerie(
       const currentValue = (cursor as Record<string, unknown>)[lastKey];
 
       const isPrimitive =
-        typeof currentValue === "string" ||
-        typeof currentValue === "number" ||
-        typeof currentValue === "boolean";
+        typeof currentValue === 'string' ||
+        typeof currentValue === 'number' ||
+        typeof currentValue === 'boolean';
 
       if (!isPrimitive) return {};
 
@@ -92,7 +92,7 @@ export default function useSerie(
   function updateChapter(
     id: number,
     path: string,
-    newValue: LiteratureChapterAttributes
+    newValue: LiteratureChapterAttributes,
   ) {
     useSerieStore.setState((state) => {
       const current = state.serie;
@@ -108,14 +108,14 @@ export default function useSerie(
       const chapter = updated.chapters[index];
       if (!chapter) return {};
 
-      const keys = path.split(".");
+      const keys = path.split('.');
 
       let cursor = chapter as unknown as Record<string, unknown>;
 
       for (let i = 0; i < keys.length - 1; i++) {
         const key = keys[i];
         const next = cursor[key];
-        if (typeof next !== "object" || next === null) return {};
+        if (typeof next !== 'object' || next === null) return {};
         cursor = next as Record<string, unknown>;
       }
 
@@ -123,9 +123,9 @@ export default function useSerie(
       const currentValue = cursor[lastKey];
 
       const isPrimitive =
-        typeof currentValue === "string" ||
-        typeof currentValue === "number" ||
-        typeof currentValue === "boolean";
+        typeof currentValue === 'string' ||
+        typeof currentValue === 'number' ||
+        typeof currentValue === 'boolean';
 
       if (!isPrimitive) return {};
 

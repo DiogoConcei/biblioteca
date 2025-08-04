@@ -1,18 +1,18 @@
 import path from 'path';
 import fs from 'fs-extra';
 
+import StorageManager from './StorageManager';
 import FileSystem from './abstract/FileSystem.ts';
-// eslint-disable-next-line import/order
 import { Collection } from '../../src/types/collections.interfaces.ts';
 import { Literatures } from '../../src/types/series.interfaces.ts';
+import { childSerie } from '../types/comic.interfaces.ts';
 
-// import StorageManager from './StorageManager';
-// import jsonfile from "jsonfile";
+// import jsonfile from 'jsonfile';
 // import FileManager from './FileManager';
 // import ImageManager from "./ImageManager";
 
 export default class ValidationManager extends FileSystem {
-  // private readonly storageManager: StorageManager = new StorageManager();
+  private readonly storageManager: StorageManager = new StorageManager();
   // private readonly fileManager: FileManager = new FileManager();
   // private readonly imageManager: ImageManager = new ImageManager();
 
@@ -137,6 +137,23 @@ export default class ValidationManager extends FileSystem {
       return false;
     } catch (e) {
       console.error(`Falha em checar extensão da imagem`);
+      throw e;
+    }
+  }
+
+  public async tieInCreated(dataPath: string): Promise<boolean> {
+    try {
+      const tieInData = (await this.storageManager.readSerieData(
+        dataPath,
+      )) as unknown as childSerie;
+
+      if (tieInData.metadata.isCreated) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      console.log(`Falha em verificar existência da TieIn`);
       throw e;
     }
   }

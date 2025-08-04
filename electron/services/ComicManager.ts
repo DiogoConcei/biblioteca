@@ -7,9 +7,13 @@ import StorageManager from './StorageManager';
 import CollectionsManager from './CollectionsManager';
 import fse from 'fs-extra';
 import path from 'path';
-import { ComicEdition } from '../types/comic.interfaces.ts';
 import { SerieForm } from '../../src/types/series.interfaces.ts';
-import { Comic, ComicTieIn, childSerie } from '../types/comic.interfaces.ts';
+import {
+  Comic,
+  ComicEdition,
+  ComicTieIn,
+  childSerie,
+} from '../types/comic.interfaces.ts';
 
 export default class ComicManager extends FileSystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -224,6 +228,7 @@ export default class ComicManager extends FileSystem {
   ): Promise<ComicTieIn> {
     try {
       return {
+        id: this.global_id + 1,
         parentId: this.global_id,
         childSerieName: path.basename(subPath),
         childSerieArchivesPath: path.join(
@@ -355,7 +360,7 @@ export default class ComicManager extends FileSystem {
     }
   }
 
-  public async createTieIn(tieIn: ComicTieIn): Promise<void> {
+  public async createTieIn(tieIn: ComicTieIn): Promise<string> {
     try {
       const dir = path.dirname(tieIn.childSerieDataPath);
 
@@ -369,6 +374,7 @@ export default class ComicManager extends FileSystem {
       await this.createTieCover(tieInData);
 
       await fse.writeJson(tieInData.dataPath, tieInData, { spaces: 2 });
+      return tieInData.coverImage;
     } catch (e) {
       console.error(`Erro ao criar Tie-In: ${e}`);
       throw e;
@@ -462,6 +468,7 @@ export default class ComicManager extends FileSystem {
       metadata: {
         lastDownload: 0,
         isFavorite: false,
+        isCreated: false,
       },
       createdAt: new Date().toISOString(),
       deletedAt: undefined,
@@ -470,20 +477,61 @@ export default class ComicManager extends FileSystem {
 
     return childSerieData;
   }
+
+  public async createTieInCovers(dataPath: string): Promise<void> {
+    if (await this.validationManager.tieInCreated(dataPath)) return;
+
+    const tieInData = (await this.storageManager.readSerieData(
+      dataPath,
+    )) as unknown as childSerie;
+    const tieChapters = tieInData.chapters;
+
+    const serieName = path.basename(dataPath, path.extname(dataPath));
+
+    if (!tieChapters) return;
+
+    await Promise.all(
+      tieChapters?.map(async (tieChap) => {
+        const chapterOut = path.join(
+          this.comicsImages,
+          serieName,
+          tieChap.name,
+        );
+
+        try {
+          await this.storageManager.extractCoverWith7zip(
+            tieChap.archivesPath,
+            chapterOut,
+          );
+          await this.imageManager.normalizeChapter(chapterOut);
+          tieChap.coverPath = await this.coverToComic(chapterOut);
+          tieChap.chapterPath = chapterOut;
+        } catch (e) {
+          console.log(
+            `Erro no capítulo ${tieChap.name} - (${tieChap.archivesPath})`,
+          );
+          throw e;
+        }
+      }),
+    );
+
+    tieInData.metadata.isCreated = true;
+    await fse.writeJson(tieInData.dataPath, tieInData, { spaces: 2 });
+  }
 }
 
-(async () => {
-  const storageManager = new StorageManager();
-  const fileManager = new FileManager();
-  const comicManager = new ComicManager();
+// (async () => {
+//   const storageManager = new StorageManager();
+//   const fileManager = new FileManager();
+//   const comicManager = new ComicManager();
 
-  const dataPath =
-    'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Comics\\Homem Aranha.json';
-  const comicData = (await storageManager.readSerieData(dataPath)) as Comic;
+//   const dataPath =
+//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Comics\\Homem Aranha.json';
+//   const comicData = (await storageManager.readSerieData(dataPath)) as Comic;
 
-  if (!comicData.childSeries) {
-    return;
-  }
+//   if (!comicData.childSeries) {
+//     return;
+//   }
 
-  await comicManager.createTieIn(comicData.childSeries[0] as ComicTieIn);
-})();
+//   await comicManager.createTieIn(comicData.childSeries[0] as ComicTieIn);
+// })();

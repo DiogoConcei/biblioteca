@@ -41,6 +41,7 @@ export interface ComicTieIn {
   childSerieArchivesPath: string;
   childSerieDataPath: string;
   childSerieCoverPath: string;
+  id: number;
   parentId?: number;
 }
 
@@ -61,6 +62,7 @@ export interface childSerie {
   metadata: {
     lastDownload: number;
     isFavorite: boolean;
+    isCreated: boolean;
   };
   createdAt: string;
   deletedAt?: string;

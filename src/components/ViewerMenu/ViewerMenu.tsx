@@ -23,6 +23,7 @@ export default function ViewerMenu({
   const resetStates = useSerieStore((state) => state.resetStates);
   const dataPath = useSerieStore((state) => state.serie?.dataPath);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const {
     serie_name,
     chapter_id,
@@ -32,6 +33,7 @@ export default function ViewerMenu({
     chapter_id: string;
     chapter_name: string;
   }>();
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
   const chapter_name = decodeURIComponent(rawChapterName ?? '');

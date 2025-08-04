@@ -200,18 +200,29 @@ export default class StorageManager extends FileSystem {
 
   public async selectComicData(serieName: string): Promise<Comic> {
     try {
-      const seriesData = await this.fileManager.foundFiles(this.comicsData);
-      const serieData = seriesData.find(
+      let seriesData = await this.fileManager.foundFiles(this.comicsData);
+      let seriePath = seriesData.find(
         (serie) => path.basename(serie, path.extname(serie)) === serieName,
       );
 
-      if (!serieData) {
-        throw new Error(`Nenhuma série encontrada com o nome: ${serieName}`);
+      if (!seriePath) {
+        const childSeriesData = await this.fileManager.foundFiles(
+          this.childSeriesData,
+        );
+        seriePath = childSeriesData.find(
+          (serie) => path.basename(serie, path.extname(serie)) === serieName,
+        );
       }
 
-      return await fse.readJson(serieData, { encoding: 'utf-8' });
+      if (!seriePath) {
+        throw new Error(
+          `Série "${serieName}" não encontrada em nenhuma fonte.`,
+        );
+      }
+
+      return await fse.readJson(seriePath, { encoding: 'utf-8' });
     } catch (e) {
-      console.error('Erro ao selecionar dados do Comic:', e);
+      console.error(`Erro ao selecionar dados do Comic "${serieName}":`, e);
       throw e;
     }
   }

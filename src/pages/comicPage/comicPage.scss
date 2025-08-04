@@ -1,4 +1,4 @@
-@use "../../styles/variables" as *;
+@use '../../styles/variables' as *;
 
 .comicGrid {
   display: grid;
@@ -10,6 +10,8 @@
 .comicCard {
   position: relative;
   overflow: hidden;
+  height: auto;
+  max-height: 450px;
   border-radius: 8px;
   cursor: pointer;
   background: linear-gradient(135deg, #8963ba33, #cd5c5c33);
@@ -18,12 +20,12 @@
   .cover {
     display: block;
     width: 100%;
-    height: auto;
+    height: 100%;
     object-fit: cover;
   }
 
   .comicCard.read .ribbon {
-    background: #cd5c5c; // indian red para lido
+    background: $indian-red;
   }
 
   &:hover {
@@ -51,7 +53,7 @@
 
     &::before,
     &::after {
-      content: "";
+      content: '';
       position: absolute;
       border: 8px solid transparent;
     }
@@ -112,6 +114,78 @@
   @keyframes spin {
     100% {
       transform: rotate(360deg);
+    }
+  }
+}
+
+.comicTieIn {
+  position: relative;
+  overflow: hidden;
+  height: auto;
+  max-height: 450px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #8963ba33, #cd5c5c33);
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  .cover {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+
+    .infoOverlay {
+      opacity: 1;
+      transform: translate(0);
+    }
+  }
+
+  .infoOverlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: $spacing-2;
+    background: linear-gradient(to top, #282c34cc, transparent);
+    color: $snow;
+    opacity: 0;
+    transform: translateY(100%);
+    transition: opacity 0.3s, transform 0.3s;
+
+    .title {
+      margin: 0 0 8px;
+      font-size: $font-lg;
+      font-weight: 600;
+      width: 200px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+  }
+
+  .ribbon {
+    position: absolute;
+    top: 32px;
+    right: -32px;
+    width: 145px;
+    background: $pacific-cyan;
+    color: $snow;
+    text-align: center;
+    font-size: $font-lg;
+    font-weight: bold;
+    transform: rotate(45deg);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      border: 8px solid transparent;
     }
   }
 }
