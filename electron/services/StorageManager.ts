@@ -2,7 +2,7 @@ import path from 'path';
 import fse from 'fs-extra';
 import { promisify } from 'util';
 import { exec } from 'child_process';
-import { Comic } from '../types/comic.interfaces';
+import { Comic, childSerie } from '../types/comic.interfaces';
 import { Manga } from '../types/manga.interfaces';
 import {
   Literatures,
@@ -33,7 +33,7 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  public async updateSerieData(data: Literatures): Promise<void> {
+  public async updateSerieData(data: Literatures | childSerie): Promise<void> {
     try {
       await fse.writeJson(data.dataPath, data, { spaces: 2 });
     } catch (error) {
@@ -45,7 +45,9 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  public async readSerieData(dataPath: string): Promise<Literatures> {
+  public async readSerieData(
+    dataPath: string,
+  ): Promise<Literatures | childSerie> {
     try {
       const serieData = await fse.readJson(dataPath, { encoding: 'utf-8' });
 
@@ -171,8 +173,35 @@ export default class StorageManager extends FileSystem {
     }
   }
 
+  public async selectTieInData(serieName: string): Promise<childSerie | null> {
+    try {
+      const seriesData = await this.fileManager.foundFiles(
+        this.childSeriesData,
+      );
+
+      const serieData = seriesData.find(
+        (serie) => path.basename(serie, path.extname(serie)) === serieName,
+      );
+
+      if (!serieData) {
+        throw new Error(
+          `Nenhuma série encontrada com o nome: ${path.basename(serieName)}`,
+        );
+      }
+
+      const data: childSerie = await fse.readJson(serieData, {
+        encoding: 'utf-8',
+      });
+
+      return data;
+    } catch (e) {
+      console.log(`Erro ao selecionar dados da TieIn: `, e);
+      return null;
+    }
+  }
+
   public async deleteSerieChapter(
-    serieData: Literatures,
+    serieData: Literatures | childSerie,
     chapter: LiteratureChapter,
     literatureForm: string,
   ) {

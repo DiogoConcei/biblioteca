@@ -324,6 +324,48 @@ export default class ComicManager extends FileSystem {
     }
   }
 
+  public async createTieInById(dataPath: string, chapter_id: number) {
+    const comicData = (await this.storageManager.readSerieData(
+      dataPath,
+    )) as unknown;
+    const serieData = comicData as childSerie;
+
+    if (!serieData.chapters) {
+      throw new Error('Chapters data is undefined.');
+    }
+    const chapterToProcess = serieData.chapters.find(
+      (chapter) => chapter.id === chapter_id,
+    );
+    if (!chapterToProcess) {
+      throw new Error(`Chapter with id ${chapter_id} not found.`);
+    }
+
+    const outputDir = path.join(
+      this.comicsImages,
+      serieData.name,
+      chapterToProcess.name,
+    );
+
+    try {
+      await this.storageManager.extractWith7zip(
+        chapterToProcess.archivesPath,
+        outputDir,
+      );
+
+      await this.imageManager.normalizeChapter(outputDir);
+      chapterToProcess.isDownload = true;
+      chapterToProcess.chapterPath = outputDir;
+      serieData.metadata.lastDownload = chapterToProcess.id;
+
+      await this.storageManager.updateSerieData(serieData);
+    } catch (e) {
+      console.error(
+        `Erro ao processar os capítulos em "${serieData.name}": ${e}`,
+      );
+      throw e;
+    }
+  }
+
   public async getComic(
     dataPath: string,
     chapter_id: number,
@@ -331,6 +373,41 @@ export default class ComicManager extends FileSystem {
     try {
       const data = await this.storageManager.readSerieData(dataPath);
       const comic = data as Comic;
+      const chaptersData: ComicEdition[] = comic.chapters as ComicEdition[];
+      const chapter = chaptersData.find((chap) => chap.id === chapter_id);
+
+      if (!chapter) {
+        throw new Error('Capítulo não encontrado');
+      }
+
+      const chapterDirents = await fse.readdir(chapter.chapterPath, {
+        withFileTypes: true,
+      });
+
+      const imageFiles = chapterDirents
+        .filter(
+          (dirent) =>
+            dirent.isFile() && /\.(jpeg|png|webp|tiff|jpg)$/i.test(dirent.name),
+        )
+        .map((dirent) => path.join(chapter.chapterPath, dirent.name));
+
+      const processedImages = await this.imageManager.encodeImageToBase64(
+        imageFiles,
+      );
+
+      return processedImages;
+    } catch (e) {
+      console.error('Não foi possível encontrar a edição do quadrinho');
+      throw e;
+    }
+  }
+  public async getTieIn(
+    dataPath: string,
+    chapter_id: number,
+  ): Promise<string[] | string> {
+    try {
+      const data = await this.storageManager.readSerieData(dataPath);
+      const comic = data as childSerie;
       const chaptersData: ComicEdition[] = comic.chapters as ComicEdition[];
       const chapter = chaptersData.find((chap) => chap.id === chapter_id);
 

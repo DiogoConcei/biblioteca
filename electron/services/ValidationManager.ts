@@ -81,7 +81,7 @@ export default class ValidationManager extends FileSystem {
   // }
 
   public async checkDownload(
-    serieData: Literatures,
+    serieData: Literatures | childSerie,
     chapterId: number,
   ): Promise<boolean> {
     try {

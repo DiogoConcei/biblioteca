@@ -214,7 +214,12 @@ export default class FileManager extends FileSystem {
 
   public async getDataPath(serieName: string): Promise<string> {
     try {
-      const directories = [this.booksData, this.comicsData, this.mangasData];
+      const directories = [
+        this.booksData,
+        this.comicsData,
+        this.mangasData,
+        this.childSeriesData,
+      ];
 
       for (const dir of directories) {
         const items = await fse.readdir(dir, { withFileTypes: true });

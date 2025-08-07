@@ -53,6 +53,7 @@ export interface childSerie {
   chaptersPath: string;
   dataPath: string;
   coverImage: string;
+  totalChapters: number;
   literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
   chapters?: ComicEdition[];
   readingData: {

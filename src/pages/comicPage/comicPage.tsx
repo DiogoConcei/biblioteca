@@ -1,71 +1,78 @@
-import { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Comic, ComicTieIn } from '../../../electron/types/comic.interfaces';
 import useSerie from '../../hooks/useSerie';
 import { useSerieStore } from '../../store/seriesStore';
 import Loading from '../../components/Loading/Loading';
 import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
-import useCollection from '../../hooks/useCollection';
 import useAction from '../../hooks/useAction';
 import useDownload from '../../hooks/useDownload';
 import './ComicPage.scss';
-import { useNavigate } from 'react-router-dom';
-
 import { ArrowDownToLine, ArrowDownFromLine, LoaderCircle } from 'lucide-react';
 
 type DownloadStatus = 'not_downloaded' | 'downloading' | 'downloaded';
 
 export default function ComicPage() {
-  const { comic_name } = useParams<{ comic_name: string }>();
-  const [downloaded, setDownloaded] = useState<boolean>(false);
+  const { comic_name: rawChapterName } = useParams<{ comic_name: string }>();
+  const navigate = useNavigate();
+
+  const [error, setError] = useState<string | null>(null);
   const [downloadStatus, setDownloadStatus] = useState<
     Record<number, DownloadStatus>
   >({});
-  const resetStates = useSerieStore((state) => state.resetStates);
 
-  const [error, setError] = useState<string | null>(null);
+  const comic_name = decodeURIComponent(rawChapterName ?? '');
 
-  const { downloadIndividual } = useDownload({
-    setError,
-    setDownloaded,
-    setDownloadStatus,
-  });
-  const navigate = useNavigate();
-  const { serie: rawSerie, updateChapter } = useSerie(comic_name!, 'Quadrinho');
+  if (!comic_name) {
+    return (
+      <ErrorScreen
+        error="Capítulo não especificado."
+        serieName="Desconhecido"
+      />
+    );
+  }
+
+  const { serie: rawSerie, updateChapter } = useSerie(comic_name, 'Quadrinho');
   const serie = rawSerie as Comic;
 
   const loading = useSerieStore((state) => state.loading);
-  const { favorites } = useCollection();
 
+  const { downloadIndividual } = useDownload({ setError, setDownloadStatus });
   const { openChapter } = useAction(serie?.dataPath || '');
 
-  const orderFav = useMemo(() => {
-    return favorites
-      ? [...favorites.series].sort((a, b) => b.rating - a.rating)
-      : [];
-  }, [favorites]);
+  // const { favorites } = useCollection();
+  // const orderedFavorites = useMemo(() => {
+  //   return favorites
+  //     ? [...favorites.series].sort((a, b) => b.rating - a.rating)
+  //     : [];
+  // }, [favorites]);
 
   const openTieIn = async (tieIn: ComicTieIn) => {
-    const response = await window.electronAPI.series.getTieIn(
+    const response = await window.electronAPI.series.createTieIn(
       tieIn.childSerieDataPath,
     );
 
-    if (!response.success) console.log(response.error);
-    console.log(tieIn.childSerieName);
-    // navigate(`${serie.literatureForm}/${tieIn.childSerieName}/${tieIn.id}`);
+    if (!response.success) {
+      console.error(response.error);
+      return;
+    }
+
+    const url = response.data;
+
+    navigate(url!);
   };
 
   if (error) {
-    return <ErrorScreen error={error} serieName={comic_name!} />;
+    return <ErrorScreen error={error} serieName={comic_name} />;
   }
 
-  if (loading || !serie) {
+  if (loading || !serie || !serie.chapters) {
     return <Loading />;
   }
 
   return (
     <section className="comicGrid">
-      {serie.chapters!.map((edition) => (
+      {serie.chapters.map((edition) => (
         <div
           key={edition.id}
           className={`comicCard ${edition.isRead ? 'read' : ''}`}
@@ -82,15 +89,16 @@ export default function ComicPage() {
             <p className="title">{edition.name}</p>
             <button
               className="downloadButton"
-              onClick={(event: React.MouseEvent<HTMLButtonElement>) =>
+              onClick={(event) => {
+                event.stopPropagation();
                 downloadIndividual(
                   serie.dataPath,
                   edition.id,
                   edition,
                   updateChapter,
                   event,
-                )
-              }
+                );
+              }}
             >
               {downloadStatus[edition.id] === 'downloading' ? (
                 <LoaderCircle
@@ -108,8 +116,13 @@ export default function ComicPage() {
           </div>
         </div>
       ))}
-      {serie.childSeries?.map((tieIn, idx) => (
-        <div key={idx} className="comicTieIn" onClick={(e) => openTieIn(tieIn)}>
+
+      {serie.childSeries?.map((tieIn) => (
+        <div
+          key={tieIn.id}
+          className="comicTieIn"
+          onClick={() => openTieIn(tieIn)}
+        >
           <img
             className="cover"
             src={`data:image/webp;base64,${tieIn.childSerieCoverPath}`}

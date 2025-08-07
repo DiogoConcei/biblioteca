@@ -1,13 +1,13 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef } from 'react';
 
 import {
   LiteratureChapter,
   LiteratureChapterAttributes,
-} from "../types/series.interfaces";
+} from '../types/series.interfaces';
 import {
   downloadChapter,
   useDownloadParams,
-} from "../types/customHooks.interfaces";
+} from '../types/customHooks.interfaces';
 
 export default function useDownload({
   setError,
@@ -25,28 +25,28 @@ export default function useDownload({
         setDownloaded?.(true);
         setDownloadStatus?.((prev) => ({
           ...prev,
-          [chapterId]: "downloading",
+          [chapterId]: 'downloading',
         }));
 
         await window.electronAPI.download.readingDownload(serieName, chapterId);
 
         setDownloadStatus?.((prev) => ({
           ...prev,
-          [chapterId]: "downloaded",
+          [chapterId]: 'downloaded',
         }));
       } catch {
-        setError("Falha em baixar o próximo capítulo");
+        setError('Falha em baixar o próximo capítulo');
 
         setDownloadStatus?.((prev) => ({
           ...prev,
-          [chapterId]: "not_downloaded",
+          [chapterId]: 'not_downloaded',
         }));
       } finally {
         setDownloaded?.(false);
         isDownloading.current = false;
       }
     },
-    [setError, setDownloaded, setDownloadStatus]
+    [setError, setDownloaded, setDownloadStatus],
   );
 
   const downloadMultipleChapters = useCallback(
@@ -54,21 +54,21 @@ export default function useDownload({
       try {
         const response = await window.electronAPI.download.multipleDownload(
           dataPath,
-          quantity
+          quantity,
         );
 
         if (!response) {
-          setError("Falha ao baixar capítulos");
+          setError('Falha ao baixar capítulos');
           return response;
         }
 
         return response;
       } catch {
-        setError("Falha ao executar download");
+        setError('Falha ao executar download');
         return false;
       }
     },
-    [setError]
+    [setError],
   );
 
   const downloadIndividual = useCallback(
@@ -79,9 +79,9 @@ export default function useDownload({
       updateChapter: (
         index: number,
         path: string,
-        newValue: LiteratureChapterAttributes
+        newValue: LiteratureChapterAttributes,
       ) => void,
-      event?: React.MouseEvent<HTMLButtonElement>
+      event?: React.MouseEvent<HTMLButtonElement>,
     ) => {
       event?.stopPropagation();
 
@@ -91,48 +91,48 @@ export default function useDownload({
         try {
           const success = await window.electronAPI.download.singleRemove(
             dataPath,
-            chapter.id
+            chapter.id,
           );
 
           if (!success) {
-            setError("Falha ao deletar capítulo");
+            setError('Falha ao deletar capítulo');
             return false;
           }
 
-          updateChapter(id, "isDownload", false);
+          updateChapter(id, 'isDownload', false);
 
           setDownloadStatus?.((prev) => ({
             ...prev,
-            [chapter.id]: "not_downloaded",
+            [chapter.id]: 'not_downloaded',
           }));
 
           return true;
         } catch {
-          setError("Erro ao tentar deletar capítulo");
+          setError('Erro ao tentar deletar capítulo');
           return false;
         }
       }
 
       setDownloadStatus?.((prev) => ({
         ...prev,
-        [chapter.id]: "downloading",
+        [chapter.id]: 'downloading',
       }));
 
-      updateChapter(id, "isDownload", true);
+      updateChapter(id, 'isDownload', true);
 
       try {
         const response = await window.electronAPI.download.singleDownload(
           dataPath,
-          chapter.id
+          chapter.id,
         );
 
         if (!response) {
-          setError("Falha ao baixar capítulo");
-          updateChapter(id, "isDownload", false);
+          setError('Falha ao baixar capítulo');
+          updateChapter(id, 'isDownload', false);
 
           setDownloadStatus?.((prev) => ({
             ...prev,
-            [chapter.id]: "not_downloaded",
+            [chapter.id]: 'not_downloaded',
           }));
 
           return false;
@@ -140,23 +140,23 @@ export default function useDownload({
 
         setDownloadStatus?.((prev) => ({
           ...prev,
-          [chapter.id]: "downloaded",
+          [chapter.id]: 'downloaded',
         }));
 
         return true;
       } catch {
-        setError("Erro ao tentar baixar capítulo");
-        updateChapter(id, "isDownload", false);
+        setError('Erro ao tentar baixar capítulo');
+        updateChapter(id, 'isDownload', false);
 
         setDownloadStatus?.((prev) => ({
           ...prev,
-          [chapter.id]: "not_downloaded",
+          [chapter.id]: 'not_downloaded',
         }));
 
         return false;
       }
     },
-    [setError, setDownloadStatus]
+    [setError, setDownloadStatus],
   );
 
   return { downloadInReading, downloadMultipleChapters, downloadIndividual };

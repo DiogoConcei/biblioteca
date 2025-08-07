@@ -1,14 +1,15 @@
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import {
   LiteratureChapter,
   LiteratureChapterAttributes,
   Literatures,
-} from "../types/series.interfaces";
-import useSerie from "./useSerie";
-import useDownload from "./useDownload";
+} from '../types/series.interfaces';
+import useSerie from './useSerie';
+import useDownload from './useDownload';
+import { childSerie } from 'electron/types/comic.interfaces';
 
-type DownloadStatus = "not_downloaded" | "downloading" | "downloaded";
+type DownloadStatus = 'not_downloaded' | 'downloading' | 'downloaded';
 
 export default function useAction(dataPath: string) {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function useAction(dataPath: string) {
     try {
       await window.electronAPI.series.ratingSerie(dataPath, ratingIndex);
     } catch (error) {
-      console.error("Erro ao atualizar o rating:", error);
+      console.error('Erro ao atualizar o rating:', error);
       throw error;
     }
   }
@@ -31,28 +32,28 @@ export default function useAction(dataPath: string) {
     updateChapter: (
       index: number,
       path: string,
-      newValue: LiteratureChapterAttributes
-    ) => void
+      newValue: LiteratureChapterAttributes,
+    ) => void,
   ) {
     e.stopPropagation();
 
     const originalIsRead = chapter.isRead;
 
-    updateChapter(id, "isRead", !originalIsRead);
+    updateChapter(id, 'isRead', !originalIsRead);
 
     try {
       const response = await window.electronAPI.userAction.markRead(
         dataPath,
         chapter.id,
-        !originalIsRead
+        !originalIsRead,
       );
 
       if (!response.success) {
-        updateChapter(id, "isRead", originalIsRead);
+        updateChapter(id, 'isRead', originalIsRead);
       }
     } catch (e) {
-      updateChapter(id, "isRead", originalIsRead);
-      console.error("Falha em realizar ação");
+      updateChapter(id, 'isRead', originalIsRead);
+      console.error('Falha em realizar ação');
     }
   }
 
@@ -64,16 +65,16 @@ export default function useAction(dataPath: string) {
       updateChapter: (
         index: number,
         path: string,
-        newValue: LiteratureChapterAttributes
-      ) => void
+        newValue: LiteratureChapterAttributes,
+      ) => void,
     ): void;
   }
 
   async function openChapter(
     e: React.MouseEvent<HTMLDivElement>,
-    serie: Literatures,
+    serie: Literatures | childSerie,
     edition: LiteratureChapter,
-    downloadIndividual: DownloadIndividualFn
+    downloadIndividual: DownloadIndividualFn,
   ): Promise<void> {
     e.stopPropagation();
     const { name: serieName, id: serieId } = serie;
@@ -81,16 +82,17 @@ export default function useAction(dataPath: string) {
 
     const safeOpen: boolean = await window.electronAPI.download.checkDownload(
       serieName,
-      chapterId
+      chapterId,
     );
 
     if (safeOpen) {
       navigate(
         `/${encodeURIComponent(serieName)}/${serieId}/${encodeURIComponent(
-          chapterName
-        )}/${chapterId}/${page.lastPageRead}/${isRead}`
+          chapterName,
+        )}/${chapterId}/${page.lastPageRead}/${isRead}`,
       );
     } else {
+      console.log(edition);
       downloadIndividual(serie.dataPath, edition.id, edition, updateChapter);
     }
   }

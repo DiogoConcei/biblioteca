@@ -5,6 +5,7 @@ import MangaManager from '../services/MangaManager';
 import StorageManager from '../services/StorageManager';
 import ComicManager from '../services/ComicManager';
 import UserManager from '../services/UserManager.ts';
+import { Literatures } from '../../src/types/series.interfaces.ts';
 
 export default function chaptersHandlers(ipcMain: IpcMain) {
   const fileManager = new FileManager();
@@ -29,32 +30,33 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
   ipcMain.handle(
     'chapter:get-single',
     async (_event, serieName: string, chapter_id: number) => {
-      console.log(serieName);
+      try {
+        const dataPath = await fileManager.getDataPath(serieName);
 
-      // try {
-      //   const dataPath = await fileManager.getDataPath(serieName);
+        if (!dataPath) {
+          throw new Error(`dataPath is undefined for serieName: ${serieName}`);
+        }
 
-      //   if (!dataPath) {
-      //     throw new Error(`dataPath is undefined for serieName: ${serieName}`);
-      //   }
+        const LiteratureForm = fileManager.foundLiteratureForm(dataPath);
+        let chapterData: string[] | string = '';
 
-      //   const LiteratureForm = fileManager.foundLiteratureForm(dataPath);
-      //   let chapterData: string[] | string = '';
+        switch (LiteratureForm) {
+          case 'Mangas':
+            chapterData = await mangaManager.getChapter(dataPath, chapter_id);
+          case 'Comics':
+            chapterData = await comicManager.getComic(dataPath, chapter_id);
+          case 'ChildSeries':
+            chapterData = await comicManager.getTieIn(dataPath, chapter_id);
 
-      //   switch (LiteratureForm) {
-      //     case 'Mangas':
-      //       chapterData = await mangaManager.getChapter(dataPath, chapter_id);
-      //     case 'Comics':
-      //       chapterData = await comicManager.getComic(dataPath, chapter_id);
-      //     default:
-      //       break;
-      //   }
+          default:
+            break;
+        }
 
-      //   return { success: true, data: chapterData };
-      // } catch (e) {
-      //   console.error(`Erro ao recuperar o capitulo: ${e}`);
-      //   return { success: false, error: String(e) };
-      // }
+        return { success: true, data: chapterData };
+      } catch (e) {
+        console.error(`Erro ao recuperar o capitulo: ${e}`);
+        return { success: false, error: String(e) };
+      }
     },
   );
 
@@ -68,7 +70,9 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
     ) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
-        const serieData = await storageManager.readSerieData(dataPath!);
+        const serieData = (await storageManager.readSerieData(
+          dataPath!,
+        )) as Literatures;
         const chapter = serieData.chapters?.find((c) => c.id === chapter_id);
 
         if (chapter && !chapter.isRead) {

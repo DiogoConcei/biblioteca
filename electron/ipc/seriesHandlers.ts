@@ -6,6 +6,7 @@ import ImageManager from '../services/ImageManager.ts';
 import UserManager from '../services/UserManager.ts';
 import { getMainWindow } from '../main.ts';
 import ComicManager from '../services/ComicManager.ts';
+import { childSerie } from '../types/comic.interfaces.ts';
 
 export default function seriesHandlers(ipcMain: IpcMain) {
   const storageManager = new StorageManager();
@@ -60,9 +61,10 @@ export default function seriesHandlers(ipcMain: IpcMain) {
       const updatedChapters = data.chapters
         ? await Promise.all(
             data.chapters.map(async (chapter) => {
-              const encodedCover = chapter.coverPath
-                ? await imageManager.encodeImageToBase64(chapter.coverPath)
-                : '';
+              const encodedCover =
+                typeof chapter.coverPath === 'string'
+                  ? await imageManager.encodeImageToBase64(chapter.coverPath)
+                  : '';
 
               return {
                 ...chapter,
@@ -99,6 +101,37 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     } catch (error) {
       console.error('Erro ao buscar dados da series:', error);
       throw error;
+    }
+  });
+
+  ipcMain.handle('serie:get-TieIn', async (_event, serieName: string) => {
+    try {
+      const data = await storageManager.selectTieInData(serieName);
+
+      if (!data) throw new Error('Data nao encontrada no Handle');
+
+      const updatedChapters = data.chapters
+        ? await Promise.all(
+            data.chapters.map(async (chapter) => {
+              const encodedCover = await imageManager.encodeImageToBase64(
+                chapter.coverPath!,
+              );
+              return {
+                ...chapter,
+                coverPath: encodedCover,
+              };
+            }),
+          )
+        : [];
+
+      const processedData = {
+        ...data,
+        chapters: updatedChapters,
+      };
+
+      return { success: true, data: processedData, error: '' };
+    } catch (e) {
+      return { success: false, data: null, error: e };
     }
   });
 
@@ -163,11 +196,19 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle('serie:tieIn', async (_event, dataPath: string) => {
+  ipcMain.handle('serie:create-TieIn', async (_event, dataPath: string) => {
     try {
+      const rawSerie = (await storageManager.readSerieData(
+        dataPath,
+      )) as unknown;
+      const serieData = rawSerie as childSerie;
       const comicManager = new ComicManager();
       await comicManager.createTieInCovers(dataPath);
-      return { success: true, error: '' };
+      return {
+        success: true,
+        data: `/TieIn/${encodeURI(serieData.name)}`,
+        error: '',
+      };
     } catch (e) {
       console.log(`Falha em criar as capas da Tie-In`);
       return { success: true, error: 'deu mole ' };
