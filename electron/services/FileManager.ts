@@ -213,28 +213,27 @@ export default class FileManager extends FileSystem {
   }
 
   public async getDataPath(serieName: string): Promise<string> {
+    const directories = [
+      this.booksData,
+      this.comicsData,
+      this.mangasData,
+      this.childSeriesData,
+    ];
+
     try {
-      const directories = [
-        this.booksData,
-        this.comicsData,
-        this.mangasData,
-        this.childSeriesData,
-      ];
+      const allPaths = (
+        await Promise.all(
+          directories.map(async (dir) => {
+            const items = await fse.readdir(dir, { withFileTypes: true });
+            return items.map((item) => path.join(dir, item.name));
+          }),
+        )
+      ).flat();
 
-      for (const dir of directories) {
-        const items = await fse.readdir(dir, { withFileTypes: true });
-        const foundPath = items
-          .map((item) => path.join(dir, item.name))
-          .find(
-            (contentPath) =>
-              path.basename(contentPath, path.extname(contentPath)) ===
-              serieName,
-          );
-
-        if (foundPath) return foundPath;
-      }
-
-      return '';
+      return (
+        allPaths.find((p) => path.basename(p, path.extname(p)) === serieName) ||
+        ''
+      );
     } catch (e) {
       console.error(`Erro ao obter série: ${e}`);
       throw e;

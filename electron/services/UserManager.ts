@@ -1,11 +1,11 @@
-import FileSystem from "./abstract/FileSystem";
-import CollectionsManager from "./CollectionsManager";
-import StorageManager from "./StorageManager";
+import FileSystem from './abstract/FileSystem';
+import CollectionsManager from './CollectionsManager';
+import StorageManager from './StorageManager';
 import {
   SerieCollectionInfo,
   Collection,
-} from "../../src/types/collections.interfaces";
-import { Literatures } from "../../src/types/series.interfaces";
+} from '../../src/types/collections.interfaces';
+import { Literatures } from '../../src/types/auxiliar.interfaces';
 
 export default class UserManager extends FileSystem {
   private readonly collectionsManager: CollectionsManager =
@@ -45,11 +45,11 @@ export default class UserManager extends FileSystem {
       const response = await this.collectionsManager.getCollections();
 
       if (!response.success || !response.data) {
-        throw new Error("Não foi possível carregar as coleções do usuário.");
+        throw new Error('Não foi possível carregar as coleções do usuário.');
       }
 
       const collections = response.data;
-      const recCollection = collections.find((col) => col.name === "Recentes");
+      const recCollection = collections.find((col) => col.name === 'Recentes');
 
       if (!recCollection) {
         throw new Error('Coleção "Recentes" não encontrada.');
@@ -81,8 +81,8 @@ export default class UserManager extends FileSystem {
         archivesPath,
         totalChapters,
         status,
-        recommendedBy: recommendedBy ?? "",
-        originalOwner: originalOwner ?? "",
+        recommendedBy: recommendedBy ?? '',
+        originalOwner: originalOwner ?? '',
         rating,
         addAt: dataAtual,
       };
@@ -101,13 +101,13 @@ export default class UserManager extends FileSystem {
 
       await this.collectionsManager.updateRecCollection(
         collections,
-        this.appCollections
+        this.appCollections,
       );
       await this.storageManager.updateSerieData(serieData);
 
       return serieData;
     } catch (err) {
-      console.error("Erro ao atualizar favoritação de série:", err);
+      console.error('Erro ao atualizar favoritação de série:', err);
       throw err;
     }
   }
@@ -116,11 +116,11 @@ export default class UserManager extends FileSystem {
     try {
       const response = await this.collectionsManager.getCollections();
       if (!response.success || !response.data) {
-        throw new Error("Não foi possível carregar as coleções do usuário.");
+        throw new Error('Não foi possível carregar as coleções do usuário.');
       }
 
       const collections = response.data;
-      const favCollection = collections.find((col) => col.name === "Favoritas");
+      const favCollection = collections.find((col) => col.name === 'Favoritas');
       if (!favCollection) {
         throw new Error('Coleção "Favoritas" não encontrada.');
       }
@@ -151,8 +151,8 @@ export default class UserManager extends FileSystem {
         archivesPath,
         totalChapters,
         status,
-        recommendedBy: recommendedBy ?? "",
-        originalOwner: originalOwner ?? "",
+        recommendedBy: recommendedBy ?? '',
+        originalOwner: originalOwner ?? '',
         rating,
         addAt: dataAtual,
       };
@@ -171,13 +171,13 @@ export default class UserManager extends FileSystem {
 
       await this.collectionsManager.updateFavCollection(
         collections,
-        this.appCollections
+        this.appCollections,
       );
       await this.storageManager.updateSerieData(serieData);
 
       return serieData;
     } catch (err) {
-      console.error("Erro ao atualizar favoritação de série:", err);
+      console.error('Erro ao atualizar favoritação de série:', err);
       throw err;
     }
   }
@@ -185,13 +185,13 @@ export default class UserManager extends FileSystem {
   public async markChapterRead(
     dataPath: string,
     chapter_id: number,
-    isRead: boolean
+    isRead: boolean,
   ): Promise<void> {
     try {
       const serieData = await this.storageManager.readSerieData(dataPath);
 
       if (!serieData.chapters || serieData.chapters.length === 0) {
-        console.warn("Série sem capítulos ao tentar marcar leitura.");
+        console.warn('Série sem capítulos ao tentar marcar leitura.');
         return;
       }
 
@@ -209,13 +209,13 @@ export default class UserManager extends FileSystem {
           if (serieData.chaptersRead < serieData.totalChapters) {
             serieData.chaptersRead += 1;
           } else {
-            console.warn("chaptersRead já está no máximo permitido.");
+            console.warn('chaptersRead já está no máximo permitido.');
           }
         } else {
           if (serieData.chaptersRead > 0) {
             serieData.chaptersRead -= 1;
           } else {
-            console.warn("chaptersRead já está no mínimo permitido.");
+            console.warn('chaptersRead já está no mínimo permitido.');
           }
         }
       }

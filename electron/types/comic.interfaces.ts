@@ -36,16 +36,7 @@ export interface Comic {
   comments: string[];
 }
 
-export interface ComicTieIn {
-  childSerieName: string;
-  childSerieArchivesPath: string;
-  childSerieDataPath: string;
-  childSerieCoverPath: string;
-  id: number;
-  parentId?: number;
-}
-
-export interface childSerie {
+export interface TieIn {
   id: number;
   name: string;
   sanitizedName: string;
@@ -68,6 +59,16 @@ export interface childSerie {
   createdAt: string;
   deletedAt?: string;
   comments: string[];
+}
+
+export interface ComicTieIn {
+  childSerieName: string;
+  childSerieArchivesPath: string;
+  childSerieDataPath: string;
+  compiledComic: boolean;
+  childSerieCoverPath: string;
+  id: number;
+  parentId?: number;
 }
 
 export interface ComicEdition {

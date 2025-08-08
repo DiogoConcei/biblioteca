@@ -1,13 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+
 import {
   LiteratureChapter,
   LiteratureChapterAttributes,
   Literatures,
-} from '../types/series.interfaces';
+} from '../types/auxiliar.interfaces';
 import useSerie from './useSerie';
-import useDownload from './useDownload';
-import { childSerie } from 'electron/types/comic.interfaces';
+import { TieIn } from 'electron/types/comic.interfaces';
 
 type DownloadStatus = 'not_downloaded' | 'downloading' | 'downloaded';
 
@@ -72,7 +72,7 @@ export default function useAction(dataPath: string) {
 
   async function openChapter(
     e: React.MouseEvent<HTMLDivElement>,
-    serie: Literatures | childSerie,
+    serie: Literatures | TieIn,
     edition: LiteratureChapter,
     downloadIndividual: DownloadIndividualFn,
   ): Promise<void> {
@@ -92,7 +92,6 @@ export default function useAction(dataPath: string) {
         )}/${chapterId}/${page.lastPageRead}/${isRead}`,
       );
     } else {
-      console.log(edition);
       downloadIndividual(serie.dataPath, edition.id, edition, updateChapter);
     }
   }

@@ -4,7 +4,7 @@ import {
   Collection,
   SerieCollectionInfo,
 } from '../types/collections.interfaces';
-import { Literatures } from '../types/series.interfaces';
+import { Literatures } from '../types/auxiliar.interfaces';
 
 export default function useCollection() {
   const [collections, setCollections] = useState<Collection[]>([]);

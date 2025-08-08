@@ -30,7 +30,6 @@ export default function downloadHandlers(ipcMain: IpcMain) {
     'download:single',
     async (_event, dataPath: string, chapter_id: number) => {
       const literatureForm = fileManager.foundLiteratureForm(dataPath);
-      console.log(literatureForm);
 
       try {
         if (literatureForm === 'Mangas') {
@@ -61,11 +60,7 @@ export default function downloadHandlers(ipcMain: IpcMain) {
       }
 
       try {
-        await storageManager.deleteSerieChapter(
-          serieData,
-          chapter,
-          literatureForm,
-        );
+        await storageManager.deleteSerieChapter(serieData, chapter);
         return true;
       } catch (e) {
         console.error('Erro ao deletar capítulo:', e);

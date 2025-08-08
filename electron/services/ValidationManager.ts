@@ -4,8 +4,8 @@ import fs from 'fs-extra';
 import StorageManager from './StorageManager';
 import FileSystem from './abstract/FileSystem.ts';
 import { Collection } from '../../src/types/collections.interfaces.ts';
-import { Literatures } from '../../src/types/series.interfaces.ts';
-import { childSerie } from '../types/comic.interfaces.ts';
+import { Literatures } from '../../src/types/auxiliar.interfaces.ts';
+import { TieIn } from '../types/comic.interfaces.ts';
 
 // import jsonfile from 'jsonfile';
 // import FileManager from './FileManager';
@@ -81,7 +81,7 @@ export default class ValidationManager extends FileSystem {
   // }
 
   public async checkDownload(
-    serieData: Literatures | childSerie,
+    serieData: Literatures | TieIn,
     chapterId: number,
   ): Promise<boolean> {
     try {
@@ -145,7 +145,7 @@ export default class ValidationManager extends FileSystem {
     try {
       const tieInData = (await this.storageManager.readSerieData(
         dataPath,
-      )) as unknown as childSerie;
+      )) as unknown as TieIn;
 
       if (tieInData.metadata.isCreated) {
         return true;

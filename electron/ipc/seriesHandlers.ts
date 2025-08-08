@@ -6,7 +6,7 @@ import ImageManager from '../services/ImageManager.ts';
 import UserManager from '../services/UserManager.ts';
 import { getMainWindow } from '../main.ts';
 import ComicManager from '../services/ComicManager.ts';
-import { childSerie } from '../types/comic.interfaces.ts';
+import { ComicTieIn } from '../types/comic.interfaces.ts';
 
 export default function seriesHandlers(ipcMain: IpcMain) {
   const storageManager = new StorageManager();
@@ -201,12 +201,12 @@ export default function seriesHandlers(ipcMain: IpcMain) {
       const rawSerie = (await storageManager.readSerieData(
         dataPath,
       )) as unknown;
-      const serieData = rawSerie as childSerie;
+      const serieData = rawSerie as ComicTieIn;
       const comicManager = new ComicManager();
       await comicManager.createTieInCovers(dataPath);
       return {
         success: true,
-        data: `/TieIn/${encodeURI(serieData.name)}`,
+        data: `/TieIn/${encodeURI(serieData.childSerieName)}`,
         error: '',
       };
     } catch (e) {
