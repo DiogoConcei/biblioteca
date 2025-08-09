@@ -36,7 +36,7 @@ export default function downloadHandlers(ipcMain: IpcMain) {
           await mangaManager.createEditionById(dataPath, chapter_id);
         } else if (literatureForm === 'Comics') {
           await comicManager.createEditionById(dataPath, chapter_id);
-        } else if (literatureForm === 'ChildSeries') {
+        } else if (literatureForm === 'childSeries') {
           await comicManager.createTieInById(dataPath, chapter_id);
         }
 
@@ -51,7 +51,6 @@ export default function downloadHandlers(ipcMain: IpcMain) {
   ipcMain.handle(
     'download:delete',
     async (_event, dataPath: string, chapter_id: number) => {
-      const literatureForm = fileManager.foundLiteratureForm(dataPath);
       const serieData = await storageManager.readSerieData(dataPath);
       const chapter = serieData.chapters?.find((ch) => ch.id === chapter_id);
 

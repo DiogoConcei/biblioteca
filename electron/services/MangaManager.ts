@@ -317,3 +317,31 @@ export default class MangaManager extends FileSystem {
     }
   }
 }
+
+// (async () => {
+//   const fileManager = new FileManager();
+//   const storageManager = new StorageManager();
+//   const mangaManager = new MangaManager();
+//   const archivesPath = 'C:\\Users\\diogo\\OneDrive\\Desktop\\Black Clover';
+
+//   const dinastiaM: SerieForm = {
+//     name: 'Black Clover',
+//     genre: 'Magos',
+//     author: 'Desconhecido',
+//     language: 'Português',
+//     cover_path: 'C:\\Users\\diogo\\Downloads\\Imagens\\cover.jpg',
+//     literatureForm: 'Manga',
+//     collections: ['Marvel', 'Universo 616'],
+//     tags: ['Marvel', 'super-heróis'],
+//     privacy: 'Publica',
+//     autoBackup: 'Sim',
+//     readingStatus: 'Completo',
+//     sanitizedName: fileManager.sanitizeFilename('Black clover'),
+//     chaptersPath: '/series/dinastia-m/capitulos',
+//     createdAt: '2025-08-08T16:00:00Z',
+//     oldPath: archivesPath,
+//     deletedAt: '',
+//   };
+
+//   await mangaManager.createMangaSerie(dinastiaM);
+// })();

@@ -258,4 +258,33 @@ export default class StorageManager extends FileSystem {
       throw e;
     }
   }
+
+  public async fixComicDir(
+    brokenPath: string,
+    correctPath: string,
+  ): Promise<void> {
+    try {
+      const entries = await fse.readdir(brokenPath, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const src = path.join(brokenPath, entry.name);
+        const dest = path.join(correctPath, entry.name);
+
+        if (await fse.pathExists(dest)) {
+          await fse.remove(dest);
+        }
+
+        await fse.move(src, dest, { overwrite: true });
+      }
+
+      await fse.remove(brokenPath);
+    } catch (error) {
+      console.error(
+        `[fixComicDir] Falha ao corrigir "${brokenPath}" → "${correctPath}"`,
+        `[fixComicDir] Falha ao corrigir "${brokenPath}" → "${correctPath}"`,
+        error,
+      );
+      throw error;
+    }
+  }
 }

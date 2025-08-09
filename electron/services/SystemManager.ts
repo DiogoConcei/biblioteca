@@ -84,7 +84,7 @@ export default class SystemManager extends FileSystem {
   }
 }
 
-(async () => {
-  const systemManager = new SystemManager();
-  console.log(await systemManager.getMangaId());
-})();
+// (async () => {
+//   const systemManager = new SystemManager();
+//   console.log(await systemManager.getMangaId());
+// })();

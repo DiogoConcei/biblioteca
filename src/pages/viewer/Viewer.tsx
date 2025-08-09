@@ -68,7 +68,7 @@ export default function Viewer() {
   }, [chapterNavigation]);
 
   if (chapter.isLoading || !chapter.pages || chapter.isLoading) {
-    <Loading />;
+    return <Loading />;
   }
 
   if (chapter.error) {

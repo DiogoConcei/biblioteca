@@ -1,4 +1,4 @@
-import { childSerie } from 'electron/types/comic.interfaces';
+import { TieIn } from 'electron/types/comic.interfaces';
 import { DownloadStatus } from '../../types/auxiliar.interfaces';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -10,7 +10,7 @@ import ErrorScreen from '../ErrorScreen/ErrorScreen';
 import Loading from '../Loading/Loading';
 
 export default function TieInPage() {
-  const [tieIn, setTieIn] = useState<childSerie | null>(null);
+  const [tieIn, setTieIn] = useState<TieIn | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [downloadStatus, setDownloadStatus] = useState<

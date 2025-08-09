@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { Literatures, Response } from '../types/series.interfaces';
+import { Literatures, Response } from '../types/auxiliar.interfaces';
 
 interface SeriesState {
   serie: Literatures | null;
@@ -13,6 +13,7 @@ interface SeriesState {
     literatureForm: string,
   ) => Promise<Literatures | null>;
   setError: (error: string | null) => void;
+  setLoading: (value: boolean) => void;
 
   resetStates: () => void;
 }
@@ -21,6 +22,7 @@ export const useSerieStore = create<SeriesState>((set) => ({
   serie: null,
   error: null,
   loading: true,
+  setLoading: (value: boolean) => ({ loading: value }),
 
   setError: (error: string | null) => set({ error, loading: false }),
   resetStates: () => set({ serie: null, error: null, loading: false }),

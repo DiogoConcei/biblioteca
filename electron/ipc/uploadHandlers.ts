@@ -1,5 +1,6 @@
 import { IpcMain } from 'electron';
-import { SerieData, Response, SerieForm } from '../../src/types/series.interfaces.ts';
+import { SerieData, SerieForm } from '../../src/types/series.interfaces.ts';
+import { Response } from '../../src/types/auxiliar.interfaces.ts';
 import MangaManager from '../services/MangaManager.ts';
 import StorageManager from '../services/StorageManager.ts';
 import ComicManager from '../services/ComicManager.ts';
@@ -15,17 +16,23 @@ export default function uploadHandlers(ipcMain: IpcMain) {
     'upload:process-data',
     async (_event, filePaths: unknown): Promise<Response<SerieData[]>> => {
       if (!Array.isArray(filePaths) || filePaths.length === 0) {
-        return { success: false, error: 'Nenhum arquivo foi selecionado para upload.' };
+        return {
+          success: false,
+          error: 'Nenhum arquivo foi selecionado para upload.',
+        };
       }
 
       const paths = filePaths.filter((p): p is string => typeof p === 'string');
       if (!paths.length) {
-        return { success: false, error: 'Os caminhos de arquivos estão inválidos.' };
+        return {
+          success: false,
+          error: 'Os caminhos de arquivos estão inválidos.',
+        };
       }
 
       try {
         const processed = await Promise.all(
-          paths.map(seriePath => storageManager.preProcessData(seriePath)),
+          paths.map((seriePath) => storageManager.preProcessedData(seriePath)),
         );
         return { success: true, data: processed };
       } catch (err) {

@@ -1,14 +1,12 @@
 import { ipcRenderer, contextBridge, webUtils } from 'electron';
-
 import {
-  SerieData,
-  SerieForm,
-  viewData,
   Response,
+  viewData,
   Literatures,
-} from '../src/types/series.interfaces.ts';
+} from '../src/types/auxiliar.interfaces.ts';
+import { SerieData, SerieForm } from '../src/types/series.interfaces.ts';
 import { Collection } from '../src/types/collections.interfaces.ts';
-import { childSerie } from './types/comic.interfaces.ts';
+import { ComicTieIn, TieIn } from './types/comic.interfaces.ts';
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -53,7 +51,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   series: {
     getSeries: async (): Promise<Response<viewData[]>> =>
       ipcRenderer.invoke('serie:get-all'),
-    getTieIn: async (serieName: string): Promise<Response<childSerie | null>> =>
+    getTieIn: async (serieName: string): Promise<Response<TieIn | null>> =>
       ipcRenderer.invoke('serie:get-TieIn', serieName),
     getManga: async (
       serieName: string,
@@ -63,8 +61,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
       serieName: string,
     ): Promise<Response<Literatures | null>> =>
       ipcRenderer.invoke('serie:comic-serie', serieName),
-    createTieIn: async (dataPath: string): Promise<Response<string | null>> =>
-      ipcRenderer.invoke('serie:create-TieIn', dataPath),
+    createTieIn: async (
+      childSerie: ComicTieIn,
+    ): Promise<Response<string | null>> =>
+      ipcRenderer.invoke('serie:create-TieIn', childSerie),
     serieToCollection: async (dataPath: string): Promise<Response<void>> =>
       ipcRenderer.invoke('serie:add-to-collection', dataPath),
     ratingSerie: (

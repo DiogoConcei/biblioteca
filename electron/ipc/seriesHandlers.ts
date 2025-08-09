@@ -196,22 +196,22 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle('serie:create-TieIn', async (_event, dataPath: string) => {
-    try {
-      const rawSerie = (await storageManager.readSerieData(
-        dataPath,
-      )) as unknown;
-      const serieData = rawSerie as ComicTieIn;
-      const comicManager = new ComicManager();
-      await comicManager.createTieInCovers(dataPath);
-      return {
-        success: true,
-        data: `/TieIn/${encodeURI(serieData.childSerieName)}`,
-        error: '',
-      };
-    } catch (e) {
-      console.log(`Falha em criar as capas da Tie-In`);
-      return { success: true, error: 'deu mole ' };
-    }
-  });
+  ipcMain.handle(
+    'serie:create-TieIn',
+    async (_event, childSerie: ComicTieIn) => {
+      try {
+        const comicManager = new ComicManager();
+        await comicManager.createTieIn(childSerie);
+
+        return {
+          success: true,
+          data: `/TieIn/${encodeURI(childSerie.childSerieName)}`,
+          error: '',
+        };
+      } catch (e) {
+        console.log(`Falha em criar as capas da Tie-In`);
+        return { success: true, error: 'deu mole ' };
+      }
+    },
+  );
 }

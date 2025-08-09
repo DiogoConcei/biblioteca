@@ -3,7 +3,7 @@ import { useCallback, useRef } from 'react';
 import {
   LiteratureChapter,
   LiteratureChapterAttributes,
-} from '../types/series.interfaces';
+} from '../types/auxiliar.interfaces';
 import {
   downloadChapter,
   useDownloadParams,

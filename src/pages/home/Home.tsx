@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Play } from 'lucide-react';
 
-import { viewData } from '../../types/series.interfaces';
+import { viewData } from '../../types/auxiliar.interfaces';
 
 import SearchBar from '../../components/SearchBar/SearchBar';
 import { useSerieStore } from '../../store/seriesStore';

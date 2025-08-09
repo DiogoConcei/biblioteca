@@ -36,6 +36,7 @@ export default function ComicPage() {
   const serie = rawSerie as Comic;
 
   const loading = useSerieStore((state) => state.loading);
+  const setLoading = useSerieStore((state) => state.setLoading);
 
   const { downloadIndividual } = useDownload({ setError, setDownloadStatus });
   const { openChapter } = useAction(serie?.dataPath || '');
@@ -48,9 +49,8 @@ export default function ComicPage() {
   // }, [favorites]);
 
   const openTieIn = async (tieIn: ComicTieIn) => {
-    const response = await window.electronAPI.series.createTieIn(
-      tieIn.childSerieDataPath,
-    );
+    setLoading(true);
+    const response = await window.electronAPI.series.createTieIn(tieIn);
 
     if (!response.success) {
       console.error(response.error);
@@ -59,6 +59,7 @@ export default function ComicPage() {
 
     const url = response.data;
 
+    setLoading(false);
     navigate(url!);
   };
 
