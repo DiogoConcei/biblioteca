@@ -21,7 +21,7 @@ export default function ViewerMenu({
   currentPage,
 }: visualizerProps) {
   const resetStates = useSerieStore((state) => state.resetStates);
-  const dataPath = useSerieStore((state) => state.serie?.dataPath);
+  const serie = useSerieStore((state) => state.serie);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const {
@@ -89,7 +89,7 @@ export default function ViewerMenu({
       currentPage,
     );
 
-    await window.electronAPI.series.recentSerie(dataPath!);
+    await window.electronAPI.series.recentSerie(serie?.dataPath!, serie_name!);
 
     resetStates();
     navigate('/');
@@ -104,10 +104,10 @@ export default function ViewerMenu({
 
     const toSeriePage = await window.electronAPI.userAction.returnPage(
       serie_name!,
-      dataPath!,
+      serie?.dataPath!,
     );
 
-    await window.electronAPI.series.recentSerie(dataPath!);
+    await window.electronAPI.series.recentSerie(serie?.dataPath!, serie_name!);
 
     const seriePage = toSeriePage.data;
 

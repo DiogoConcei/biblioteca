@@ -2,16 +2,19 @@ import { IpcMain } from 'electron';
 
 import StorageManager from '../services/StorageManager.ts';
 import CollectionsManager from '../services/CollectionsManager';
+import FileManager from '../services/FileManager.ts';
 import ImageManager from '../services/ImageManager.ts';
 import UserManager from '../services/UserManager.ts';
 import { getMainWindow } from '../main.ts';
 import ComicManager from '../services/ComicManager.ts';
-import { ComicTieIn } from '../types/comic.interfaces.ts';
+import { ComicTieIn, TieIn } from '../types/comic.interfaces.ts';
 
 export default function seriesHandlers(ipcMain: IpcMain) {
+  const comicManager = new ComicManager();
   const storageManager = new StorageManager();
   const imageManager = new ImageManager();
   const userManager = new UserManager();
+  const fileManager = new FileManager();
   const collectionManager = new CollectionsManager();
 
   ipcMain.handle('serie:get-all', async () => {
@@ -185,23 +188,34 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle('serie:recent-read', async (_event, dataPath: string) => {
-    try {
-      const serieData = await storageManager.readSerieData(dataPath);
-      await userManager.addToRecents(serieData);
-      return { success: true };
-    } catch (e) {
-      console.error(`Erro em favoritar serie: ${e}`);
-      return { success: false, error: String(e) };
-    }
-  });
+  ipcMain.handle(
+    'serie:recent-read',
+    async (_event, dataPath: string, serie_name: string) => {
+      try {
+        const dPath = serie_name
+          ? await fileManager.getDataPath(serie_name)
+          : dataPath;
+        const serieData = await storageManager.readSerieData(dPath);
+        await userManager.addToRecents(serieData);
+        return { success: true };
+      } catch (e) {
+        console.error(`Erro em adicionar em recentes: ${e}`);
+        return { success: false, error: String(e) };
+      }
+    },
+  );
 
   ipcMain.handle(
     'serie:create-TieIn',
     async (_event, childSerie: ComicTieIn) => {
       try {
-        const comicManager = new ComicManager();
-        await comicManager.createTieIn(childSerie);
+        const data = (await storageManager.readSerieData(
+          childSerie.childSerieDataPath,
+        )) as unknown;
+        const processedData = data as TieIn;
+
+        if (!processedData.metadata.isCreated)
+          await comicManager.createTieIn(childSerie);
 
         return {
           success: true,

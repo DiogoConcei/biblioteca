@@ -39,7 +39,7 @@ export default function Viewer() {
   const chapterNavigation = useNavigation(chapter);
 
   useEffect(() => {
-    const debounceTime = 1000; // 1 second debounce time
+    const debounceTime = 500; // 1/2 second debounce time
 
     const handleKey = (event: KeyboardEvent) => {
       const now = Date.now();

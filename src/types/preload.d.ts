@@ -51,7 +51,10 @@ declare global {
         ) => Promise<Response<string | null>>;
         serieToCollection: (dataPath: string) => Promise<Response<void>>;
         favoriteSerie: (dataPath: string) => Promise<Response<void>>;
-        recentSerie: (dataPath: string) => Promise<Response<void>>;
+        recentSerie: (
+          dataPath: string,
+          serie_name: string,
+        ) => Promise<Response<void>>;
         ratingSerie: (
           dataPath: string,
           userRating: number,

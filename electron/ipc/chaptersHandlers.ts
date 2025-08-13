@@ -70,6 +70,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
     ) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
+
         const serieData = (await storageManager.readSerieData(
           dataPath!,
         )) as Literatures;

@@ -74,8 +74,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('serie:rating', dataPath, userRating),
     favoriteSerie: (dataPath: string): Promise<Response<void>> =>
       ipcRenderer.invoke('serie:favorite', dataPath),
-    recentSerie: (dataPath: string): Promise<Response<void>> =>
-      ipcRenderer.invoke('serie:recent-read', dataPath),
+    recentSerie: (
+      dataPath: string,
+      serie_name: string,
+    ): Promise<Response<void>> =>
+      ipcRenderer.invoke('serie:recent-read', dataPath, serie_name),
   },
 
   chapters: {

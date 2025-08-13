@@ -37,19 +37,21 @@ export default function ComicPage() {
 
   const loading = useSerieStore((state) => state.loading);
   const setLoading = useSerieStore((state) => state.setLoading);
+  const resetStates = useSerieStore((state) => state.resetStates);
 
   const { downloadIndividual } = useDownload({ setError, setDownloadStatus });
   const { openChapter } = useAction(serie?.dataPath || '');
 
   // const { favorites } = useCollection();
   // const orderedFavorites = useMemo(() => {
-  //   return favorites
-  //     ? [...favorites.series].sort((a, b) => b.rating - a.rating)
-  //     : [];
+  // return favorites
+  // ? [...favorites.series].sort((a, b) => b.rating - a.rating)
+  // : [];
   // }, [favorites]);
 
   const openTieIn = async (tieIn: ComicTieIn) => {
     setLoading(true);
+
     const response = await window.electronAPI.series.createTieIn(tieIn);
 
     if (!response.success) {
@@ -57,6 +59,7 @@ export default function ComicPage() {
       return;
     }
 
+    resetStates();
     const url = response.data;
 
     setLoading(false);
@@ -117,24 +120,25 @@ export default function ComicPage() {
           </div>
         </div>
       ))}
-
-      {serie.childSeries?.map((tieIn) => (
-        <div
-          key={tieIn.id}
-          className="comicTieIn"
-          onClick={() => openTieIn(tieIn)}
-        >
-          <img
-            className="cover"
-            src={`data:image/webp;base64,${tieIn.childSerieCoverPath}`}
-            alt={tieIn.childSerieName}
-          />
-          <div className="ribbon">Tie In</div>
-          <div className="infoOverlay">
-            <p className="title">{tieIn.childSerieName}</p>
+      {serie.childSeries
+        ?.filter((tieIn) => tieIn.compiledComic === true)
+        .map((tieIn) => (
+          <div
+            key={tieIn.id}
+            className="comicTieIn"
+            onClick={() => openTieIn(tieIn)}
+          >
+            <img
+              className="cover"
+              src={`data:image/webp;base64,${tieIn.childSerieCoverPath}`}
+              alt={tieIn.childSerieName}
+            />
+            <div className="ribbon">Tie In</div>
+            <div className="infoOverlay">
+              <p className="title">{tieIn.childSerieName}</p>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
     </section>
   );
 }

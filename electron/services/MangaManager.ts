@@ -12,7 +12,7 @@ import { SerieForm } from '../../src/types/series.interfaces.ts';
 import { Manga, MangaChapter } from '../types/manga.interfaces.ts';
 
 export default class MangaManager extends FileSystem {
-  private global_id: number = 0;
+  private global_id: number;
   private readonly systemManager: SystemManager = new SystemManager();
   private readonly validationManager: ValidationManager =
     new ValidationManager();
@@ -54,7 +54,8 @@ export default class MangaManager extends FileSystem {
 
   public async createMangaData(serie: SerieForm): Promise<Manga> {
     try {
-      this.global_id = (await this.systemManager.getMangaId()) + 1;
+      let currentId = await this.systemManager.getMangaId();
+      this.global_id = currentId + 1;
       const totalChapters = (
         await fse.readdir(serie.oldPath, { withFileTypes: true })
       ).length;

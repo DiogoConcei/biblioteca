@@ -33,38 +33,40 @@ export default class ComicManager extends FileSystem {
 
   public async createComicSerie(serie: SerieForm): Promise<void> {
     const comicData = await this.createComicData(serie);
-    comicData.chapters = await this.createEditionData(serie);
 
-    // Mudar o fluxo , está acessando muito cedo
-    // if (comicData.childSeries?.length) {
-    //   await Promise.all(
-    //     comicData.childSeries.map((childSerie) =>
-    //       this.createChildCovers(childSerie),
-    //     ),
-    //   );
-    // }
+    if (!comicData.childSeries) return;
+
+    comicData.chapters = await this.createEditionData(serie);
 
     if (comicData.chapters.length === 0)
       comicData.metadata.compiledComic = true;
     else await this.createCovers(serie, comicData);
 
-    // console.log(comicData);
+    if (await this.validationManager.isDinamicImage(comicData.coverImage)) {
+      const comicCover = await this.imageManager.normalizeImage(
+        comicData.coverImage,
+        this.showcaseImages,
+      );
+      await fse.remove(comicData.coverImage);
+      comicData.coverImage = comicCover;
+    }
 
-    // if (await this.validationManager.isDinamicImage(comicData.coverImage)) {
-    //   const comicCover = await this.imageManager.normalizeImage(
-    //     comicData.coverImage,
-    //     this.showcaseImages,
-    //   );
-    //   await fse.remove(comicData.coverImage);
-    //   comicData.coverImage = comicCover;
-    // }
+    const normalizedMangaData =
+      this.storageManager.createNormalizedData(comicData);
+    await this.collectionsManager.serieToCollection(normalizedMangaData);
 
-    // const normalizedMangaData =
-    // this.storageManager.createNormalizedData(comicData);
-    // await this.collectionsManager.serieToCollection(normalizedMangaData);
-    // await this.storageManager.writeSerieData(comicData);
-    // await this.systemManager.setMangaId(this.global_id);
+    if (comicData.childSeries?.length) {
+      await Promise.all(
+        comicData.childSeries.map((childSerie) =>
+          this.createChildCovers(childSerie),
+        ),
+      );
+    }
+
     // await this.fileManager.localUpload(serie.oldPath, comicData.archivesPath);
+
+    await this.systemManager.setMangaId(this.global_id);
+    await this.storageManager.writeSerieData(comicData);
   }
 
   public async createComicData(serie: SerieForm): Promise<Comic> {
@@ -73,12 +75,16 @@ export default class ComicManager extends FileSystem {
       this.searchDirectories(serie.oldPath),
     ]);
 
+    this.global_id = nextId;
+
+    const rightPath = path.join(path.dirname(serie.oldPath), serie.name);
+
     const [comics, childSeries] = await Promise.all([
       this.searchComics([serie.oldPath, ...subDir]),
       subDir.length
         ? Promise.all(
             subDir.map((sd, idx) =>
-              this.createChildSeries(serie.name, sd, idx, nextId),
+              this.createChildSeries(rightPath, sd, idx, nextId),
             ),
           )
         : Promise.resolve([]),
@@ -244,7 +250,7 @@ export default class ComicManager extends FileSystem {
   }
 
   public async createChildSeries(
-    serieName: string,
+    rightPath: string,
     subPath: string,
     idx: number,
     parentId: number,
@@ -255,18 +261,21 @@ export default class ComicManager extends FileSystem {
       .filter((e) => e.isFile() && /\.(cbz|cbr|zip|rar)$/i.test(e.name))
       .map((e) => path.join(subPath, e.name));
 
-    const subSerie = path.basename(path.dirname(chapters[0]));
-    console.log(path.join(this.userLibrary, serieName, subSerie));
+    const parts = subPath.split(path.sep);
+
+    const index = parts.indexOf('user library');
+    const baseAntigo = parts.slice(0, index + 2).join(path.sep);
+    const rightDir = subPath.replace(baseAntigo, rightPath);
 
     return {
       id: idx,
       parentId,
-      childSerieName: path.basename(subPath),
+      childSerieName: path.basename(subPath).replace('#', ''),
       compiledComic: chapters.length > 0,
-      childSerieArchivesPath: path.join(this.userLibrary, serieName, subSerie),
+      childSerieArchivesPath: rightDir,
       childSerieDataPath: path.join(
         this.childSeriesData,
-        `${path.basename(subPath)}.json`,
+        `${path.basename(subPath).replace('#', '')}.json`,
       ),
       childSerieCoverPath: '',
     };
@@ -278,7 +287,6 @@ export default class ComicManager extends FileSystem {
       const directories: string[] = [];
       const dirEntries = entries.filter((e) => e.isDirectory());
       const dirPaths = dirEntries.map((e) => path.join(oldPath, e.name));
-
       const subDirsArrays = await Promise.all(
         dirPaths.map((dir) => this.searchDirectories(dir)),
       );
@@ -313,19 +321,16 @@ export default class ComicManager extends FileSystem {
     const archivesPath = childSeries.childSerieArchivesPath;
 
     const entries = await fse.readdir(archivesPath, { withFileTypes: true });
-
     const firstChapterEntry = entries.find(
       (e) => e.isFile() && /\.(cbz|cbr|zip|rar)$/i.test(e.name),
     );
     if (!firstChapterEntry) return;
-
     const firstChapter = path.join(archivesPath, firstChapterEntry.name);
     const serieName = path.basename(path.dirname(firstChapter));
     const chapName = path.basename(firstChapter, path.extname(firstChapter));
     const chapterOut = path.join(this.comicsImages, serieName, chapName);
     await this.storageManager.extractCoverWith7zip(firstChapter, chapterOut);
     await this.imageManager.normalizeChapter(chapterOut);
-
     childSeries.childSerieCoverPath = await this.coverToComic(chapterOut);
   }
 
@@ -653,34 +658,35 @@ export default class ComicManager extends FileSystem {
   }
 }
 
-(async () => {
-  const fileManager = new FileManager();
-  const storageManager = new StorageManager();
-  const comicManager = new ComicManager();
-  const archivesPath = 'C:\\Users\\diogo\\OneDrive\\Desktop\\Cavaleiro Branco';
-  const name = 'Batman - Cavaleiro Branco';
+// (async () => {
+//   const fileManager = new FileManager();
+//   const storageManager = new StorageManager();
+//   const comicManager = new ComicManager();
+//   const archivesPath =
+//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\user library\\Cronologia Novos 52 - Parte 1';
+//   const name = 'Cronologia Novos 52 - Parte 1';
 
-  const dinastiaM: SerieForm = {
-    name: name,
-    genre: 'Super-heróis',
-    author: 'Sean Murphy',
-    language: 'Português',
-    cover_path: 'C:\\Users\\diogo\\Downloads\\Imagens\\White.png',
-    literatureForm: 'Quadrinho',
-    collections: ['DC', 'Black Label'],
-    tags: ['DC'],
-    privacy: 'Publica',
-    autoBackup: 'Sim',
-    readingStatus: 'Completo',
-    sanitizedName: fileManager.sanitizeFilename(name),
-    chaptersPath: '',
-    createdAt: '2025-08-08T16:00:00Z',
-    oldPath: archivesPath,
-    deletedAt: '',
-  };
+//   const dinastiaM: SerieForm = {
+//     name: name,
+//     genre: 'Super-heróis',
+//     author: 'Multiplos',
+//     language: 'Português',
+//     cover_path: 'C:\\Users\\diogo\\Downloads\\Imagens\\321.jpg',
+//     literatureForm: 'Quadrinho',
+//     collections: ['DC'],
+//     tags: ['DC'],
+//     privacy: 'Publica',
+//     autoBackup: 'Sim',
+//     readingStatus: 'Completo',
+//     sanitizedName: fileManager.sanitizeFilename(name),
+//     chaptersPath: '',
+//     createdAt: '2025-08-08T16:00:00Z',
+//     oldPath: archivesPath,
+//     deletedAt: '',
+//   };
 
-  await comicManager.createComicSerie(dinastiaM);
-})();
+//   await comicManager.createComicSerie(dinastiaM);
+// })();
 
 // if (!serieData.childSeries) return;
 

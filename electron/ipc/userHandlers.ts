@@ -1,30 +1,44 @@
-import { IpcMain } from "electron";
-
-import StorageManager from "../services/StorageManager";
-import FileManager from "../services/FileManager";
+import { IpcMain } from 'electron';
+import StorageManager from '../services/StorageManager';
+import FileManager from '../services/FileManager';
 
 export default function userHandlers(ipcMain: IpcMain) {
   const storageManager = new StorageManager();
   const fileManager = new FileManager();
 
   ipcMain.handle(
-    "chapter:return-page",
+    'chapter:return-page',
     async (_event, dataPath: string, serieName?: string) => {
       try {
         const sDPath = serieName
           ? await fileManager.getDataPath(serieName)
           : dataPath;
 
-        const serieData = await storageManager.readSerieData(sDPath);
-        const serieLink = `/${serieData.literatureForm}/${serieData.name}/${serieData.id}`;
+        const literatureForm = await fileManager.foundLiteratureForm(sDPath);
 
-        return { success: true, data: serieLink };
+        const serieData = await storageManager.readSerieData(sDPath);
+
+        let serieLink;
+
+        switch (literatureForm) {
+          case 'Comics':
+            serieLink = `/${serieData.literatureForm}/${serieData.name}/${serieData.id}`;
+          case 'Mangas':
+            serieLink = `/${serieData.literatureForm}/${serieData.name}/${serieData.id}`;
+            return { success: true, data: serieLink };
+          case 'childSeries':
+            serieLink = `/TieIn/${encodeURI(serieData.name)}`;
+            return { success: true, data: serieLink };
+
+          default:
+            break;
+        }
       } catch (e) {
         console.error(
-          `Falha em criar url de retorno para pagina individual: ${e}`
+          `Falha em criar url de retorno para pagina individual: ${e}`,
         );
         return { success: false, error: String(e) };
       }
-    }
+    },
   );
 }

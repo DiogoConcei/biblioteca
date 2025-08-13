@@ -50,13 +50,11 @@ export interface viewData {
 }
 
 export interface AppConfig {
-  config: {
-    settings: {
-      reading_mode: 'single_page' | 'double_page' | 'vertical_scroll';
-      zoom: 'fit_width' | 'fit_height' | 'original_size';
-      ligth_mode: boolean;
-      full_screen: boolean;
-    };
+  settings: {
+    reading_mode: 'single_page' | 'double_page' | 'vertical_scroll';
+    zoom: 'fit_width' | 'fit_height' | 'original_size';
+    ligth_mode: boolean;
+    full_screen: boolean;
   };
   metadata: {
     global_id: number;

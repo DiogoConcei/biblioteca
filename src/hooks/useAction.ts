@@ -77,6 +77,7 @@ export default function useAction(dataPath: string) {
     downloadIndividual: DownloadIndividualFn,
   ): Promise<void> {
     e.stopPropagation();
+
     const { name: serieName, id: serieId } = serie;
     const { name: chapterName, id: chapterId, page, isRead } = edition;
 

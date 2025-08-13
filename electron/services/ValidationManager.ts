@@ -1,20 +1,20 @@
 import path from 'path';
-import fs from 'fs-extra';
+import fse from 'fs-extra';
 
 import StorageManager from './StorageManager';
 import FileSystem from './abstract/FileSystem.ts';
 import { Collection } from '../../src/types/collections.interfaces.ts';
 import { Literatures } from '../../src/types/auxiliar.interfaces.ts';
-import { TieIn } from '../types/comic.interfaces.ts';
+import { Comic, TieIn } from '../types/comic.interfaces.ts';
 
-// import jsonfile from 'jsonfile';
-// import FileManager from './FileManager';
-// import ImageManager from "./ImageManager";
+import FileManager from './FileManager';
+import ImageManager from './ImageManager';
+import { Manga } from '../types/manga.interfaces.ts';
 
 export default class ValidationManager extends FileSystem {
   private readonly storageManager: StorageManager = new StorageManager();
-  // private readonly fileManager: FileManager = new FileManager();
-  // private readonly imageManager: ImageManager = new ImageManager();
+  private readonly fileManager: FileManager = new FileManager();
+  private readonly imageManager: ImageManager = new ImageManager();
 
   constructor() {
     super();
@@ -22,7 +22,7 @@ export default class ValidationManager extends FileSystem {
 
   public async serieExist(file: string): Promise<boolean> {
     const newSerieName = path.basename(file).toLocaleLowerCase();
-    const seriesDir = await fs.readdir(this.userLibrary, {
+    const seriesDir = await fse.readdir(this.userLibrary, {
       withFileTypes: true,
     });
     const seriesName = seriesDir.map((seriesDir) =>
@@ -43,7 +43,7 @@ export default class ValidationManager extends FileSystem {
       let collections: Collection[] = [];
 
       try {
-        const data = await fs.readFile(this.appCollections, 'utf-8');
+        const data = await fse.readFile(this.appCollections, 'utf-8');
         collections = JSON.parse(data);
         collections = Array.isArray(collections) ? collections : [];
       } catch (readError) {
@@ -108,14 +108,14 @@ export default class ValidationManager extends FileSystem {
 
       const dinamicDir = path.join(this.imagesFolder, 'dinamic images');
       const content = (
-        await fs.readdir(dinamicDir, { withFileTypes: true })
+        await fse.readdir(dinamicDir, { withFileTypes: true })
       ).map((contentPath) => path.join(dinamicDir, contentPath.name));
       const findImage = content.find(
         (contentPath) =>
           path.basename(contentPath) === path.basename(imagePath),
       );
 
-      if (findImage && fs.existsSync(findImage)) {
+      if (findImage && fse.existsSync(findImage)) {
         return false;
       }
 
@@ -158,3 +158,37 @@ export default class ValidationManager extends FileSystem {
     }
   }
 }
+
+// (async () => {
+//   const serieName = 'Batman - Cavaleiro Branco';
+//   const chapterId = 1;
+//   const fileManager = new FileManager();
+//   const storageManager = new StorageManager();
+//   const validationManager = new ValidationManager();
+//   const dataPath = await fileManager.getDataPath(serieName);
+
+//   const LiteratureForm = await fileManager.foundLiteratureForm(dataPath);
+//   console.log(LiteratureForm);
+
+//   function isTieIn(data: Literatures | TieIn): data is TieIn {
+//     return (data as TieIn).metadata.isCreated !== undefined;
+//   }
+
+//   function isManga(data: Literatures | TieIn): data is Manga {
+//     return (data as Manga).literatureForm !== undefined;
+//   }
+
+//   const serieData = await storageManager.readSerieData(dataPath);
+
+//   if (isTieIn(serieData)) {
+//     console.log(await validationManager.checkDownload(serieData, chapterId));
+//   } else if (isManga(serieData)) {
+//     console.log(await validationManager.checkDownload(serieData, chapterId));
+//   } else {
+//     console.log(await validationManager.checkDownload(serieData, chapterId));
+//   }
+
+//   // if (!serieData?.chapters) {
+//   //   throw new Error('Erro ao recuperar os dados da série.');
+//   // }
+// })();

@@ -57,9 +57,8 @@ export default class StorageManager extends FileSystem {
       }
 
       return serieData;
-    } catch (error) {
-      console.error(`[readSerieData] Falha ao ler: ${dataPath}`, error);
-      throw error;
+    } catch (e) {
+      throw e;
     }
   }
 
@@ -159,7 +158,7 @@ export default class StorageManager extends FileSystem {
 
       return fse.readJson(serieDataPath, { encoding: 'utf-8' });
     } catch (e) {
-      console.error('Erro ao selecionar dados do Manga:', e);
+      console.error('Erro ao selecionar dados do Quadrinho:', e);
       throw e;
     }
   }
@@ -180,7 +179,7 @@ export default class StorageManager extends FileSystem {
 
       return fse.readJson(serieDataPath, { encoding: 'utf-8' });
     } catch (e) {
-      console.error('Erro ao selecionar dados do Manga:', e);
+      console.error('Erro ao selecionar dados da TieIn:', e);
       throw e;
     }
   }

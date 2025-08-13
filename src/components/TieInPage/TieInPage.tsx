@@ -5,45 +5,31 @@ import { useParams } from 'react-router-dom';
 import { ArrowDownToLine, ArrowDownFromLine, LoaderCircle } from 'lucide-react';
 import useAction from '../../hooks/useAction';
 import useDownload from '../../hooks/useDownload';
+import { useSerieStore } from '../../store/seriesStore';
 import useSerie from '../../hooks/useSerie';
 import ErrorScreen from '../ErrorScreen/ErrorScreen';
 import Loading from '../Loading/Loading';
 
 export default function TieInPage() {
-  const [tieIn, setTieIn] = useState<TieIn | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const { tiein_name: rawChapterName } = useParams<{ tiein_name: string }>();
+  const tiein_name = decodeURIComponent(rawChapterName!);
+
+  const { serie: rawSerie, updateChapter } = useSerie(
+    tiein_name,
+    'childSeries',
+  );
+  const serie = rawSerie as TieIn;
+
+  const isLoading = useSerieStore((state) => state.loading);
+  const error = useSerieStore((state) => state.error);
+  const setError = useSerieStore((state) => state.setError);
+
   const [downloadStatus, setDownloadStatus] = useState<
     Record<number, DownloadStatus>
   >({});
 
-  const { openChapter } = useAction(tieIn?.dataPath || '');
+  const { openChapter } = useAction(serie?.dataPath || '');
   const { downloadIndividual } = useDownload({ setError, setDownloadStatus });
-
-  const { tiein_name: rawChapterName } = useParams<{ tiein_name: string }>();
-  const tiein_name = decodeURIComponent(rawChapterName!);
-  const { updateChapter } = useSerie(tiein_name);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await window.electronAPI.series.getTieIn(tiein_name!);
-
-        if (!response.success || !response.data) {
-          setError('Falha ao carregar dados do tie-in.');
-          setTieIn(null);
-          return;
-        }
-
-        setTieIn(response.data);
-      } catch (e) {
-        setError('Erro na requisição');
-        setTieIn(null);
-      }
-    };
-
-    fetchData();
-  }, [tiein_name]);
 
   if (!tiein_name) {
     return (
@@ -58,17 +44,17 @@ export default function TieInPage() {
     return <ErrorScreen error={error} serieName={tiein_name} />;
   }
 
-  if (isLoading || !tieIn || !tieIn.chapters) {
+  if (isLoading || !serie || !serie.chapters) {
     return <Loading />;
   }
 
   return (
     <section className="comicGrid">
-      {tieIn.chapters!.map((edition) => (
+      {serie.chapters!.map((edition) => (
         <div
           key={edition.id}
           className={`comicCard ${edition.isRead ? 'read' : ''}`}
-          onClick={(e) => openChapter(e, tieIn, edition, downloadIndividual)}
+          onClick={(e) => openChapter(e, serie, edition, downloadIndividual)}
         >
           <div className="ribbon">{edition.isRead ? 'Lido' : 'Não Lido'}</div>
           <img
@@ -84,7 +70,7 @@ export default function TieInPage() {
               onClick={(event) => {
                 event.stopPropagation();
                 downloadIndividual(
-                  tieIn.dataPath,
+                  serie.dataPath,
                   edition.id,
                   edition,
                   updateChapter,

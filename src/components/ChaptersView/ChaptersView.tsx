@@ -1,10 +1,10 @@
-import usePagination from "../../hooks/usePagination";
-import useAction from "../../hooks/useAction";
-import useDownload from "../../hooks/useDownload";
-import { useSerieStore } from "../../store/seriesStore";
-import { useState } from "react";
-import { Manga } from "electron/types/manga.interfaces";
-import useSerie from "../../hooks/useSerie";
+import usePagination from '../../hooks/usePagination';
+import useAction from '../../hooks/useAction';
+import useDownload from '../../hooks/useDownload';
+import { useSerieStore } from '../../store/seriesStore';
+import { useState } from 'react';
+import { Manga } from 'electron/types/manga.interfaces';
+import useSerie from '../../hooks/useSerie';
 import {
   EyeOff,
   Eye,
@@ -13,18 +13,18 @@ import {
   ChevronLeft,
   ChevronRight,
   LoaderCircle,
-} from "lucide-react";
-import "./ChaptersView.scss";
+} from 'lucide-react';
+import './ChaptersView.scss';
 import {
   LiteratureChapter,
   LiteraturesAttributes,
   LiteratureChapterAttributes,
-} from "../../types/series.interfaces";
+} from '../../types/auxiliar.interfaces';
 
 interface ChaptersViewProps {
   updateSerie: (path: string, newValue: LiteraturesAttributes) => void;
 }
-type DownloadStatus = "not_downloaded" | "downloading" | "downloaded";
+type DownloadStatus = 'not_downloaded' | 'downloading' | 'downloaded';
 
 export default function ChaptersView({ updateSerie }: ChaptersViewProps) {
   const rawSerie = useSerieStore((state) => state.serie);
@@ -54,12 +54,12 @@ export default function ChaptersView({ updateSerie }: ChaptersViewProps) {
     updateChapter: (
       id: number,
       path: string,
-      newValue: LiteratureChapterAttributes
-    ) => void
+      newValue: LiteratureChapterAttributes,
+    ) => void,
   ) => {
     if (chapter.id !== 1) {
       const newValue = serie.chaptersRead + (chapter.isRead ? -1 : 1);
-      updateSerie("chaptersRead", newValue);
+      updateSerie('chaptersRead', newValue);
     }
 
     markAsRead(e, chapter, id, updateChapter);
@@ -75,7 +75,7 @@ export default function ChaptersView({ updateSerie }: ChaptersViewProps) {
             key={chapter.id}
             onClick={(e) => openChapter(e, serie, chapter, downloadIndividual)}
           >
-            <li className={`chapter ${chapter.isRead ? "read" : "unread"}`}>
+            <li className={`chapter ${chapter.isRead ? 'read' : 'unread'}`}>
               <span className="chapterName">{chapter.name}</span>
 
               <div className="actionButtons">
@@ -98,18 +98,18 @@ export default function ChaptersView({ updateSerie }: ChaptersViewProps) {
                       chapter.id,
                       chapter,
                       updateChapter,
-                      event
+                      event,
                     )
                   }
                 >
-                  {downloadStatus[chapter.id] === "downloading" ? (
+                  {downloadStatus[chapter.id] === 'downloading' ? (
                     <LoaderCircle
                       size={24}
                       strokeWidth={1}
                       className="animate-spin"
                     />
                   ) : chapter.isDownload ||
-                    downloadStatus[chapter.id] === "downloaded" ? (
+                    downloadStatus[chapter.id] === 'downloaded' ? (
                     <ArrowDownFromLine size={24} color="#000" strokeWidth={1} />
                   ) : (
                     <ArrowDownToLine
@@ -138,8 +138,8 @@ export default function ChaptersView({ updateSerie }: ChaptersViewProps) {
           <button
             key={pageNumber}
             onClick={() => handlePage(pageNumber)}
-            className={pageNumber === currentPage ? "active" : "disable"}
-            aria-current={pageNumber === currentPage ? "page" : undefined}
+            className={pageNumber === currentPage ? 'active' : 'disable'}
+            aria-current={pageNumber === currentPage ? 'page' : undefined}
           >
             {pageNumber}
           </button>

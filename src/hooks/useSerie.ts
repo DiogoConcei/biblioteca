@@ -5,10 +5,11 @@ import {
   Literatures,
   LiteraturesAttributes,
   LiteratureChapterAttributes,
-} from '../types/series.interfaces';
+} from '../types/auxiliar.interfaces';
+import { TieIn } from 'electron/types/comic.interfaces';
 
 interface UseSerieResult {
-  serie: Literatures | null;
+  serie: Literatures | TieIn | null;
   updateSerie: (path: string, newValue: LiteraturesAttributes) => void;
   updateChapter: (
     id: number,
@@ -28,12 +29,13 @@ export default function useSerie(
 
   useEffect(() => {
     let isActive = true;
-    async function getManga(name: string, typeL: string) {
+    async function getSerie(name: string, typeL: string) {
       if (!name) return;
 
       if (!typeL) return;
 
       const response = await fetchSerie(name, typeL);
+      console.log('Retorno da store: ', response);
       if (!isActive) return;
 
       if (!response) {
@@ -44,7 +46,7 @@ export default function useSerie(
       setSerie(response as Literatures);
     }
 
-    getManga(serieName!, literatureForm!);
+    getSerie(serieName!, literatureForm!);
   }, [fetchSerie, serieName, setError, setSerie]);
 
   function updateSerie(path: string, newValue: LiteraturesAttributes) {
