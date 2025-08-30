@@ -1,14 +1,14 @@
 import {
   useChapterReturn,
   useSimpleNavigationReturn,
-} from "../types/customHooks.interfaces";
-import useDownload from "./useDownload";
-import { useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { useSerieStore } from "../store/seriesStore";
+} from '../types/customHooks.interfaces';
+import useDownload from './useDownload';
+import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSerieStore } from '../store/seriesStore';
 
 export default function useNavigation(
-  chapter: useChapterReturn
+  chapter: useChapterReturn,
 ): useSimpleNavigationReturn {
   const serie = useSerieStore((state) => state.serie);
   const navigate = useNavigate();
@@ -36,22 +36,23 @@ export default function useNavigation(
       try {
         const response = await window.electronAPI.chapters.getNextChapter(
           chapter.serieName,
-          chapter.chapterId
+          chapter.chapterId,
         );
 
         const nextChapterUrl = response.data;
 
+        console.log(nextChapterUrl);
         await window.electronAPI.chapters.saveLastRead(
           chapter.serieName,
           chapter.chapterId,
-          chapter.currentPage
+          chapter.currentPage,
         );
 
         if (chapter.isNextDownloaded.current && nextChapterUrl) {
           navigate(nextChapterUrl);
         }
       } catch {
-        chapter.setError("Falha em exibir o proximo capitulo");
+        chapter.setError('Falha em exibir o proximo capitulo');
       }
     }
   }, [
@@ -77,21 +78,21 @@ export default function useNavigation(
       try {
         const response = await window.electronAPI.chapters.getPrevChapter(
           chapter.serieName,
-          Number(chapter.chapterId)
+          Number(chapter.chapterId),
         );
         const prevChapterUrl = response.data;
 
         await window.electronAPI.chapters.saveLastRead(
           chapter.serieName,
           chapter.chapterId,
-          chapter.currentPage
+          chapter.currentPage,
         );
 
         if (chapter.isPrevDownloaded && prevChapterUrl) {
           navigate(prevChapterUrl);
         }
       } catch {
-        chapter.setError("Falha em exibir o capitulo anterior");
+        chapter.setError('Falha em exibir o capitulo anterior');
       }
     }
   }, [
@@ -109,7 +110,7 @@ export default function useNavigation(
         await nextChapter();
       }
     } catch (error) {
-      chapter.setError("falha em localizar próxima a página");
+      chapter.setError('falha em localizar próxima a página');
     }
   }, [
     chapter.currentPage,
@@ -128,7 +129,7 @@ export default function useNavigation(
         await prevChapter();
       }
     } catch {
-      chapter.setError("Falha ao retroceder páginas");
+      chapter.setError('Falha ao retroceder páginas');
     }
   }, [chapter.currentPage, chapter.pages]);
 

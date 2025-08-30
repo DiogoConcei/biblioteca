@@ -199,9 +199,9 @@ export default class FileManager extends FileSystem {
 
       const contentArrays = await Promise.all(
         directories.map(async (dir) =>
-          (
-            await fse.readdir(dir, { withFileTypes: true })
-          ).map((item) => path.join(dir, item.name)),
+          (await fse.readdir(dir, { withFileTypes: true })).map((item) =>
+            path.join(dir, item.name),
+          ),
         ),
       );
 
@@ -247,6 +247,7 @@ export default class FileManager extends FileSystem {
     const zeroThenOneCandidates: string[] = [];
     const namedCoverCandidates: string[] = [];
     const fallbackCandidates: string[] = [];
+    const allWithNumbers: { name: string; num: number }[] = [];
 
     const coverKeywords = [
       'cover',
@@ -274,6 +275,8 @@ export default class FileManager extends FileSystem {
       if (!lastDigitsMatch) continue;
 
       const digits = lastDigitsMatch[1];
+      const numericValue = parseInt(digits, 10);
+      allWithNumbers.push({ name, num: numericValue });
 
       if (/^0+$/.test(digits)) {
         zerosOnlyCandidates.push(name);
@@ -298,6 +301,16 @@ export default class FileManager extends FileSystem {
 
     if (fallbackCandidates.length > 0) {
       return fallbackCandidates[0];
+    }
+
+    if (allWithNumbers.length > 0) {
+      const smallest = allWithNumbers.reduce((min, curr) =>
+        curr.num < min.num ? curr : min,
+      );
+      console.log(
+        `⚠️ Nenhum critério específico bateu, usando menor número como fallback: ${smallest.name} (número: ${smallest.num})`,
+      );
+      return smallest.name;
     }
 
     return null;

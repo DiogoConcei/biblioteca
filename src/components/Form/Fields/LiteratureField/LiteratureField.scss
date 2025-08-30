@@ -1,0 +1,39 @@
+@use '../../../../styles/variables' as *;
+
+.literature-info {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-flow: column nowrap;
+  width: 450px;
+
+  .form-radio {
+    display: flex;
+    justify-content: space-evenly;
+    gap: $spacing-2;
+    margin-top: $spacing-4;
+
+    input {
+      display: none;
+
+      &:checked + label {
+        background-color: $amethyst;
+        color: $snow;
+      }
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid $amethyst;
+      border-radius: $radius-md;
+      padding: $spacing-3;
+      cursor: pointer;
+      font-size: $font-lg;
+      color: $indian-red;
+      transition: all 0.3s ease;
+      background-color: transparent;
+    }
+  }
+}

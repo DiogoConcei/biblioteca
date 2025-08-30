@@ -55,7 +55,7 @@ export default function Upload() {
       privacy: '',
       autoBackup: '',
       readingStatus: '',
-      tags: [], // tags começam vazias
+      tags: [],
       collections: serie.collections,
       sanitizedName: serie.sanitizedName,
       archivesPath: serie.newPath,
@@ -86,47 +86,10 @@ export default function Upload() {
     };
     reader.readAsDataURL(file);
 
-    const imagePath = await window.electronAPI.webUtilities.getPathForFile(
-      file,
-    );
+    const imagePath =
+      await window.electronAPI.webUtilities.getPathForFile(file);
 
     setValue('cover_path', imagePath, { shouldValidate: true });
-  };
-
-  const addTagsToForm = (updatedTags: string[]) => {
-    setValue('tags', updatedTags, { shouldValidate: true });
-  };
-
-  const handleTagInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const tagArray = value
-      .split(',')
-      .map((tag) => tag.trim())
-      .filter((tag) => tag !== '');
-
-    setTags(tagArray);
-
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-    }
-    const timeoutId = window.setTimeout(() => {
-      addTagsToForm(tagArray);
-    }, 1000);
-    setTypingTimeout(timeoutId);
-  };
-
-  const flushTags = () => {
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-      setTypingTimeout(null);
-    }
-    addTagsToForm(tags);
-  };
-
-  const removeTag = (idx: number) => {
-    const novaLista = tags.filter((_, i) => i !== idx);
-    setTags(novaLista);
-    addTagsToForm(novaLista);
   };
 
   const onSubmit: SubmitHandler<SerieForm> = async (data: SerieForm) => {
@@ -141,7 +104,6 @@ export default function Upload() {
     }
   };
 
-  // 14. Navegação entre índices (anterior/próximo)
   const handlePrev = () => {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
@@ -171,7 +133,6 @@ export default function Upload() {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="form-view">
-          {/* ==== UPLOAD DE CAPA ==== */}
           <div className="image-upload">
             <span>Capa de exibição</span>
             <div
@@ -185,7 +146,7 @@ export default function Upload() {
                   className="cover-preview"
                 />
               ) : (
-                <span className="alert">
+                <span>
                   <ImagePlus color="#8963ba" />
                 </span>
               )}
@@ -205,9 +166,7 @@ export default function Upload() {
             )}
           </div>
 
-          {/* ==== FORMULÁRIO PRINCIPAL ==== */}
           <div className="form-container">
-            {/* ----- Campos de texto ----- */}
             <div className="text-info">
               <input
                 id="name"
@@ -239,7 +198,7 @@ export default function Upload() {
               <input
                 id="language"
                 type="text"
-                placeholder="Idioma original"
+                placeholder="Idioma"
                 {...register('language', {
                   required: 'Em qual linguagem a série está?',
                 })}
@@ -249,7 +208,6 @@ export default function Upload() {
               )}
             </div>
 
-            {/* ----- LiteratureForm (radio) ----- */}
             <div className="literature-info">
               <h2 className="form-subtitle">Forma de literatura:</h2>
               <div className="form-radio">
@@ -284,7 +242,6 @@ export default function Upload() {
               )}
             </div>
 
-            {/* ----- AutoBackup (radio) ----- */}
             <div className="backup-info">
               <h2 className="form-subtitle">Adicionar ao auto backup:</h2>
               <div className="backup-container">
@@ -311,7 +268,6 @@ export default function Upload() {
               )}
             </div>
 
-            {/* ----- Privacidade (radio) ----- */}
             <div className="privacy-info">
               <h2 className="form-subtitle">Privacidade:</h2>
               <div className="privacy-container">
@@ -338,7 +294,6 @@ export default function Upload() {
               )}
             </div>
 
-            {/* ----- Status de leitura (radio) ----- */}
             <div className="status-info">
               <h2 className="form-subtitle">Status de leitura:</h2>
               <div className="status-container">
@@ -372,49 +327,6 @@ export default function Upload() {
                 <p className="error">{errors.readingStatus.message}</p>
               )}
             </div>
-
-            {/* ----- Tags (campo customizado com debounce) ----- */}
-            <div className="tags-info">
-              <h2 className="form-subtitle">Tags:</h2>
-              <div className="tag-input">
-                <input
-                  type="text"
-                  placeholder="Digite tags separadas por vírgula"
-                  onChange={handleTagInput}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      flushTags();
-                    }
-                  }}
-                  onBlur={() => {
-                    flushTags();
-                  }}
-                />
-              </div>
-              <div className="form-tag-preview">
-                <h3 className="form-subtitle">Tags Inseridas:</h3>
-                <ul className="tag-list">
-                  {tags.map((tag, idx) => (
-                    <li key={idx}>
-                      <span>
-                        <Tag size={16} /> {tag}
-                        <button
-                          type="button"
-                          onClick={() => removeTag(idx)}
-                          className="remove-tag"
-                          aria-label={`Remover tag ${tag}`}
-                        >
-                          &times;
-                        </button>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* ----- Navegação e Submit ----- */}
             <div className="navigation-buttons">
               <button
                 type="button"

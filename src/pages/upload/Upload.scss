@@ -109,20 +109,6 @@
         justify-content: center;
         flex-flow: column nowrap;
         gap: $spacing-3;
-
-        input[type='text'] {
-          @include pattern-button;
-          font-size: $font-2xl;
-          color: $snow;
-          padding: $spacing-2;
-          border: 2px solid $amethyst;
-          border-radius: $radius-md;
-          width: 450px;
-
-          &::placeholder {
-            color: $indian-red;
-          }
-        }
       }
 
       .literature-info {

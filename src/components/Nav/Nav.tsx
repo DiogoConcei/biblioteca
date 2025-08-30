@@ -1,8 +1,8 @@
-import { useSerieStore } from "../../store/seriesStore";
-import { X, House, Square, Maximize2, Minus } from "lucide-react";
-import { Link } from "react-router-dom";
-import "./Nav.scss";
-import { useState } from "react";
+import { useSerieStore } from '../../store/seriesStore';
+import { X, House, Square, Maximize2, Minus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import './Nav.scss';
+import { useState } from 'react';
 
 export default function Nav() {
   const resetStates = useSerieStore((state) => state.resetStates);
@@ -23,7 +23,7 @@ export default function Nav() {
   };
 
   return (
-    <nav className={"TitleBar"}>
+    <nav className={'TitleBar'}>
       <ul className="NavBar">
         <li key="home">
           <Link to="/" className="link" onClick={resetStates}>
@@ -31,8 +31,8 @@ export default function Nav() {
           </Link>
         </li>
         <li>
-          <Link className="link" to="/teste" onClick={resetStates}>
-            Teste de componentes
+          <Link className="link" to="config/serie" onClick={resetStates}>
+            Editar Séries
           </Link>
         </li>
       </ul>

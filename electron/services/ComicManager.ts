@@ -15,6 +15,7 @@ import {
   ComicTieIn,
   TieIn,
 } from '../types/comic.interfaces';
+import { Literatures } from '../../src/types/auxiliar.interfaces';
 
 export default class ComicManager extends FileSystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -33,8 +34,6 @@ export default class ComicManager extends FileSystem {
 
   public async createComicSerie(serie: SerieForm): Promise<void> {
     const comicData = await this.createComicData(serie);
-
-    if (!comicData.childSeries) return;
 
     comicData.chapters = await this.createEditionData(serie);
 
@@ -63,7 +62,7 @@ export default class ComicManager extends FileSystem {
       );
     }
 
-    // await this.fileManager.localUpload(serie.oldPath, comicData.archivesPath);
+    await this.fileManager.localUpload(serie.oldPath, comicData.archivesPath);
 
     await this.systemManager.setMangaId(this.global_id);
     await this.storageManager.writeSerieData(comicData);
@@ -149,9 +148,8 @@ export default class ComicManager extends FileSystem {
       const chapters = await Promise.all(
         orderComics.map(async (orderPth, idx) => {
           const fileName = path.basename(orderPth, path.extname(orderPth));
-          const sanitizedName = await this.fileManager.sanitizeFilename(
-            fileName,
-          );
+          const sanitizedName =
+            await this.fileManager.sanitizeFilename(fileName);
           return {
             id: idx + 1,
             name: fileName.replace('#', ''),
@@ -255,6 +253,7 @@ export default class ComicManager extends FileSystem {
     idx: number,
     parentId: number,
   ): Promise<ComicTieIn> {
+    const basename = path.basename(rightPath);
     const entries = await fse.readdir(subPath, { withFileTypes: true });
 
     const chapters = entries
@@ -263,8 +262,8 @@ export default class ComicManager extends FileSystem {
 
     const parts = subPath.split(path.sep);
 
-    const index = parts.indexOf('user library');
-    const baseAntigo = parts.slice(0, index + 2).join(path.sep);
+    const index = parts.indexOf(basename);
+    const baseAntigo = parts.slice(0, index + 1).join(path.sep);
     const rightDir = subPath.replace(baseAntigo, rightPath);
 
     return {
@@ -324,6 +323,7 @@ export default class ComicManager extends FileSystem {
     const firstChapterEntry = entries.find(
       (e) => e.isFile() && /\.(cbz|cbr|zip|rar)$/i.test(e.name),
     );
+
     if (!firstChapterEntry) return;
     const firstChapter = path.join(archivesPath, firstChapterEntry.name);
     const serieName = path.basename(path.dirname(firstChapter));
@@ -603,9 +603,8 @@ export default class ComicManager extends FileSystem {
         throw new Error('Nenhuma imagem encontrada no capítulo.');
       }
 
-      const processedImages = await this.imageManager.encodeImageToBase64(
-        imageFiles,
-      );
+      const processedImages =
+        await this.imageManager.encodeImageToBase64(imageFiles);
 
       return processedImages;
     } catch (error) {
@@ -646,9 +645,8 @@ export default class ComicManager extends FileSystem {
         throw new Error('Nenhuma imagem encontrada no capítulo.');
       }
 
-      const processedImages = await this.imageManager.encodeImageToBase64(
-        imageFiles,
-      );
+      const processedImages =
+        await this.imageManager.encodeImageToBase64(imageFiles);
 
       return processedImages;
     } catch (error) {
@@ -663,15 +661,15 @@ export default class ComicManager extends FileSystem {
 //   const storageManager = new StorageManager();
 //   const comicManager = new ComicManager();
 //   const archivesPath =
-//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\user library\\Cronologia Novos 52 - Parte 1';
-//   const name = 'Cronologia Novos 52 - Parte 1';
+//     'C:\\Users\\diogo\\OneDrive\\Desktop\\3\\06 Tempos Modernos - Pré-Sindicato - I';
+//   const name = '06 Tempos Modernos - Pré-Sindicato - I';
 
 //   const dinastiaM: SerieForm = {
 //     name: name,
 //     genre: 'Super-heróis',
 //     author: 'Multiplos',
 //     language: 'Português',
-//     cover_path: 'C:\\Users\\diogo\\Downloads\\Imagens\\321.jpg',
+//     cover_path: 'C:\\Users\\diogo\\Downloads\\Imagens\\4.jpg',
 //     literatureForm: 'Quadrinho',
 //     collections: ['DC'],
 //     tags: ['DC'],
@@ -697,3 +695,25 @@ export default class ComicManager extends FileSystem {
 // console.log(await comicManager.getTieIn(tieIn.dataPath, 1));
 
 // await comicManager.createTieIn(serieData.childSeries[0]);
+
+// (async () => {
+//   const imageManager = new ImageManager();
+//   const storageManager = new StorageManager();
+//   const fileManager = new FileManager();
+//   const serieName = 'Black Clover';
+
+//   const dataResponse = await storageManager.getSerieData(serieName);
+
+//   if (!dataResponse.success) {
+//     throw new Error('Erro na requisição original');
+//   }
+
+//   const oldData: Literatures = dataResponse.data;
+
+//   const newData = {
+//     ...oldData,
+//     coverImage: await imageManager.encodeImageToBase64(oldData.coverImage),
+//   };
+
+//   console.log(newData.coverImage);
+// })();

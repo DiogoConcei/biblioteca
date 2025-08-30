@@ -1,7 +1,7 @@
-import "./ErrorScreen.scss";
-import { useNavigate } from "react-router-dom";
+import './ErrorScreen.scss';
+import { useNavigate } from 'react-router-dom';
 
-import { ErrorScreenProps } from "../../types/components.interfaces";
+import { ErrorScreenProps } from '../../types/components.interfaces';
 
 export default function ErrorScreen({ error, serieName }: ErrorScreenProps) {
   const navigate = useNavigate();
@@ -9,13 +9,13 @@ export default function ErrorScreen({ error, serieName }: ErrorScreenProps) {
   const goToSeriePage = async () => {
     try {
       const toSeriePage = await window.electronAPI.userAction.returnPage(
-        "",
-        serieName
+        '',
+        serieName,
       );
       const serieLink = toSeriePage.data;
 
       if (!serieLink) {
-        console.error("Erro ao obter o link da série");
+        console.error('Erro ao obter o link da série');
         return;
       }
 
@@ -26,7 +26,7 @@ export default function ErrorScreen({ error, serieName }: ErrorScreenProps) {
   };
 
   const goToHome = () => {
-    navigate("/");
+    navigate('/');
   };
 
   return (
@@ -46,11 +46,13 @@ export default function ErrorScreen({ error, serieName }: ErrorScreenProps) {
           </p>
         </div>
         <div className="secondaryInfo">
-          <p>
-            Por favor, retorne à página inicial da aplicação ou acesse a página
-            principal para continuar lendo mais capítulos de
-            <strong> {serieName} </strong>.
-          </p>
+          {serieName && (
+            <p>
+              Por favor, retorne à página inicial da aplicação ou acesse a
+              página principal para continuar lendo mais capítulos de
+              <strong> {serieName} </strong>.
+            </p>
+          )}
           <p>Agradecemos pela sua compreensão.</p>
         </div>
       </div>
@@ -58,9 +60,11 @@ export default function ErrorScreen({ error, serieName }: ErrorScreenProps) {
         <button onClick={goToHome} className="error-button">
           Página Inicial
         </button>
-        <button onClick={goToSeriePage} className="error-button">
-          Página dedicada a {serieName}
-        </button>
+        {serieName && (
+          <button onClick={goToSeriePage} className="error-button">
+            Página dedicada a {serieName}
+          </button>
+        )}
       </div>
     </div>
   );

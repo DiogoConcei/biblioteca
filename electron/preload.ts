@@ -1,6 +1,6 @@
 import { ipcRenderer, contextBridge, webUtils } from 'electron';
 import {
-  Response,
+  APIResponse,
   viewData,
   Literatures,
 } from '../src/types/auxiliar.interfaces.ts';
@@ -42,42 +42,46 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   upload: {
-    processSerie: (filePaths: string[]): Promise<Response<SerieData[]>> =>
+    processSerie: (filePaths: string[]): Promise<APIResponse<SerieData[]>> =>
       ipcRenderer.invoke('upload:process-data', filePaths),
-    uploadSerie: (serieData: SerieForm): Promise<Response<void>> =>
+    uploadSerie: (serieData: SerieForm): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('upload:process-serie', serieData),
   },
 
   series: {
-    getSeries: async (): Promise<Response<viewData[]>> =>
+    getSeries: async (): Promise<APIResponse<viewData[]>> =>
       ipcRenderer.invoke('serie:get-all'),
-    getTieIn: async (serieName: string): Promise<Response<TieIn | null>> =>
+    getTieIn: async (serieName: string): Promise<APIResponse<TieIn | null>> =>
       ipcRenderer.invoke('serie:get-TieIn', serieName),
     getManga: async (
       serieName: string,
-    ): Promise<Response<Literatures | null>> =>
+    ): Promise<APIResponse<Literatures | null>> =>
       ipcRenderer.invoke('serie:manga-serie', serieName),
     getComic: async (
       serieName: string,
-    ): Promise<Response<Literatures | null>> =>
+    ): Promise<APIResponse<Literatures | null>> =>
       ipcRenderer.invoke('serie:comic-serie', serieName),
+    getSerieData: async (
+      serieName: string,
+    ): Promise<APIResponse<Literatures | null>> =>
+      ipcRenderer.invoke('serie:edit-serie', serieName),
     createTieIn: async (
       childSerie: ComicTieIn,
-    ): Promise<Response<string | null>> =>
+    ): Promise<APIResponse<string | null>> =>
       ipcRenderer.invoke('serie:create-TieIn', childSerie),
-    serieToCollection: async (dataPath: string): Promise<Response<void>> =>
+    serieToCollection: async (dataPath: string): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('serie:add-to-collection', dataPath),
     ratingSerie: (
       dataPath: string,
       userRating: number,
-    ): Promise<Response<void>> =>
+    ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('serie:rating', dataPath, userRating),
-    favoriteSerie: (dataPath: string): Promise<Response<void>> =>
+    favoriteSerie: (dataPath: string): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('serie:favorite', dataPath),
     recentSerie: (
       dataPath: string,
       serie_name: string,
-    ): Promise<Response<void>> =>
+    ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('serie:recent-read', dataPath, serie_name),
   },
 
@@ -85,39 +89,41 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getChapter: async (
       serieName: string,
       chapter_id: number,
-    ): Promise<Response<string[]>> =>
+    ): Promise<APIResponse<string[]>> =>
       ipcRenderer.invoke('chapter:get-single', serieName, chapter_id),
     saveLastRead: async (
       serieName: string,
       chapter_id: number,
       page_number: number,
-    ): Promise<Response<void>> =>
+    ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke(
         'chapter:save-last-read',
         serieName,
         chapter_id,
         page_number,
       ),
-    acessLastRead: async (serieName: string): Promise<Response<string>> =>
+    acessLastRead: async (serieName: string): Promise<APIResponse<string>> =>
       ipcRenderer.invoke('chapter:acess-last-read', serieName),
     getNextChapter: async (
       serieName: string,
       chapter_id: number,
-    ): Promise<Response<string>> =>
+    ): Promise<APIResponse<string>> =>
       ipcRenderer.invoke('get-next-chapter', serieName, chapter_id),
     getPrevChapter: async (
       serieName: string,
       chapter_id: number,
-    ): Promise<Response<string>> =>
+    ): Promise<APIResponse<string>> =>
       ipcRenderer.invoke('get-prev-chapter', serieName, chapter_id),
   },
 
   collections: {
-    getCollections: async (): Promise<Response<Collection[]>> =>
+    getCollections: async (): Promise<APIResponse<Collection[]>> =>
       ipcRenderer.invoke('collection:get-all'),
-    createCollection: async (collectionName: string): Promise<Response<void>> =>
+    createCollection: async (
+      collectionName: string,
+    ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('collection:create', collectionName),
-    getFavSeries: async (): Promise<Response<Collection>> =>
+    getFavSeries: async (): Promise<APIResponse<Collection>> =>
       ipcRenderer.invoke('collection:get-all-fav'),
   },
 
@@ -126,12 +132,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
       dataPath: string,
       chapter_id: number,
       isRead: boolean,
-    ): Promise<Response<void>> =>
+    ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('chapter:mark-read', dataPath, chapter_id, isRead),
     returnPage: async (
       dataPath: string,
       serieName?: string,
-    ): Promise<Response<string>> =>
+    ): Promise<APIResponse<string>> =>
       ipcRenderer.invoke('chapter:return-page', serieName, dataPath),
   },
 

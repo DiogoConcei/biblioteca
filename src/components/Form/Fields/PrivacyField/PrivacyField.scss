@@ -1,0 +1,32 @@
+@use '../../../../styles/variables' as *;
+
+.privacy-info {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: $spacing-3;
+  width: 450px;
+
+  .privacy-container {
+    display: flex;
+    gap: $spacing-3;
+
+    input[type='radio'] {
+      display: none;
+
+      &:checked + label {
+        background-color: $amethyst;
+        color: $snow;
+      }
+    }
+
+    label {
+      font-size: $font-base;
+      color: $indian-red;
+      padding: $spacing-6;
+      border: 2px solid $amethyst;
+      border-radius: $radius-md;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+  }
+}

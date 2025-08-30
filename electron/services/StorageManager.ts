@@ -14,6 +14,7 @@ import {
   LiteratureChapter,
   NormalizedSerieData,
   viewData,
+  APIResponse,
 } from '../../src/types/auxiliar.interfaces';
 
 export default class StorageManager extends FileSystem {
@@ -108,6 +109,7 @@ export default class StorageManager extends FileSystem {
           const serie: Literatures = await fse.readJson(dataPath, {
             encoding: 'utf-8',
           });
+
           return {
             id: serie.id,
             name: serie.name,
@@ -202,18 +204,25 @@ export default class StorageManager extends FileSystem {
   }
 
   public async extractCoverWith7zip(inputFile: string, outputDir: string) {
+    console.log(`📂 Iniciando extração da capa`);
+    console.log(`   Arquivo de entrada: ${inputFile}`);
+    console.log(`   Diretório de saída: ${path.resolve(outputDir)}`);
+
     try {
       const tempDir = path.join(
         path.dirname(outputDir),
         `temp_${randomUUID()}`,
       );
+      console.log(`📁 Criado diretório temporário: ${tempDir}`);
 
       await fse.mkdir(tempDir, { recursive: true });
 
       const extractCmd = `"${this.SEVEN_ZIP_PATH}" x "${inputFile}" -o"${tempDir}" -y`;
+      console.log(`⚡ Executando comando: ${extractCmd}`);
       await this.execAsync(extractCmd);
 
       const allFiles = await this.fileManager.getAllFilesRecursively(tempDir);
+      console.log(`🔎 Total de arquivos extraídos: ${allFiles.length}`);
 
       if (allFiles.length === 0) {
         throw new Error(
@@ -226,6 +235,9 @@ export default class StorageManager extends FileSystem {
       );
 
       if (!bestCandidate) {
+        console.log(
+          `🚨 Nenhum candidato válido encontrado para: ${path.basename(inputFile)}`,
+        );
         throw new Error('❌ Nenhuma imagem de capa válida encontrada.');
       }
 
@@ -235,9 +247,17 @@ export default class StorageManager extends FileSystem {
       const finalName = this.fileManager.sanitizeFilename(bestCandidate);
       const finalPath = path.join(outputDir, finalName);
 
-      await fse.mkdir(outputDir, { recursive: true });
+      await fse.emptyDir(outputDir);
+
+      console.log(`✅ Candidato escolhido: ${bestCandidate}`);
+      console.log(`➡️ Origem: ${realPath}`);
+      console.log(`➡️ Destino: ${finalPath}`);
+
       await fse.move(realPath, finalPath);
+
       await fse.remove(tempDir);
+      console.log(`🧹 Diretório temporário removido: ${tempDir}`);
+      console.log(`🎉 Extração concluída com sucesso!`);
     } catch (e) {
       console.error(`❌ Falha em descompactar cover:`, e);
       throw e;
@@ -284,6 +304,27 @@ export default class StorageManager extends FileSystem {
         error,
       );
       throw error;
+    }
+  }
+
+  public async getSerieData(
+    serieName: string,
+  ): Promise<APIResponse<Literatures>> {
+    try {
+      const allDataPath = await this.fileManager.getDataPaths();
+      const serie = allDataPath.find(
+        (pValue) => serieName === path.basename(pValue, path.extname(pValue)),
+      );
+
+      if (!serie)
+        return { success: false, data: null, error: 'serie não encontrada' };
+
+      const serieData = await this.readSerieData(serie);
+
+      return { success: true, data: serieData };
+    } catch (e) {
+      console.error(`Falha em econtrar a serie: ${serieName}`);
+      return { success: false, error: e };
     }
   }
 }

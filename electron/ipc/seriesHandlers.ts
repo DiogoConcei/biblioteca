@@ -1,13 +1,13 @@
 import { IpcMain } from 'electron';
-
 import StorageManager from '../services/StorageManager.ts';
 import CollectionsManager from '../services/CollectionsManager';
 import FileManager from '../services/FileManager.ts';
 import ImageManager from '../services/ImageManager.ts';
 import UserManager from '../services/UserManager.ts';
-import { getMainWindow } from '../main.ts';
 import ComicManager from '../services/ComicManager.ts';
 import { ComicTieIn, TieIn } from '../types/comic.interfaces.ts';
+import { getMainWindow } from '../main.ts';
+import { Literatures } from '../../src/types/auxiliar.interfaces.ts';
 
 export default function seriesHandlers(ipcMain: IpcMain) {
   const comicManager = new ComicManager();
@@ -141,9 +141,8 @@ export default function seriesHandlers(ipcMain: IpcMain) {
   ipcMain.handle('serie:addToCollection', async (_event, dataPath: string) => {
     try {
       const serieData = await storageManager.readSerieData(dataPath);
-      const normalizedData = await storageManager.createNormalizedData(
-        serieData,
-      );
+      const normalizedData =
+        await storageManager.createNormalizedData(serieData);
       const result = await collectionManager.serieToCollection(normalizedData);
       return { success: result };
     } catch (e) {
@@ -228,4 +227,25 @@ export default function seriesHandlers(ipcMain: IpcMain) {
       }
     },
   );
+
+  ipcMain.handle('serie:edit-serie', async (_event, serieName: string) => {
+    try {
+      const dataResponse = await storageManager.getSerieData(serieName);
+
+      if (!dataResponse.success) {
+        throw new Error('Erro na requisição original');
+      }
+
+      const oldData: Literatures = dataResponse.data;
+
+      const newData = {
+        ...oldData,
+        coverImage: await imageManager.encodeImageToBase64(oldData.coverImage),
+      };
+
+      return { success: true, data: newData };
+    } catch (e) {
+      console.error(`Falha em encontrar a serie: ${serieName}`);
+    }
+  });
 }

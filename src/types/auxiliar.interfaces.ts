@@ -1,6 +1,13 @@
 import { Manga, MangaChapter } from 'electron/types/manga.interfaces';
 import { Book, BookPage } from 'electron/types/book.interfaces';
 import { Comic, ComicEdition } from 'electron/types/comic.interfaces';
+import {
+  UseFormRegister,
+  FieldError,
+  Control,
+  FieldValues,
+} from 'react-hook-form';
+import { SerieEditForm } from './series.interfaces';
 
 export type LiteratureChapter = ComicEdition | BookPage | MangaChapter;
 
@@ -61,7 +68,7 @@ export interface AppConfig {
   };
 }
 
-export interface Response<T> {
+export interface APIResponse<T> {
   success: boolean;
   data?: T;
   error?: string;
@@ -70,3 +77,23 @@ export interface Response<T> {
 export type LiteratureForms = 'Manga' | 'Quadrinho';
 
 export type LiteratureChapterAttributes = string | number | boolean;
+
+export interface FormInputProps {
+  label: string;
+  name: string;
+  register: UseFormRegister<any>;
+  error?: FieldError;
+}
+
+export interface FormControllerProps<T extends FieldValues = FieldValues> {
+  control: Control<SerieEditForm>;
+  label?: string;
+}
+
+export interface FavoriteProps {
+  serie: Literatures;
+}
+
+export interface RatingProps {
+  serie: Literatures;
+}

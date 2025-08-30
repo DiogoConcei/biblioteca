@@ -132,7 +132,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
           }
         }
 
-        const url = `/${serieData.name}/${serieData.id}/${lastChapter.name}/${lastChapter.id}/${lastChapter.page.lastPageRead}/${lastChapter.isRead}`;
+        const url = `/${encodeURI(serieData.name)}/${serieData.id}/${encodeURI(lastChapter.name)}/${lastChapter.id}/${lastChapter.page.lastPageRead}/${lastChapter.isRead}`;
 
         return { success: true, data: url };
       } catch (e) {
@@ -161,6 +161,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         }
 
         const url = `/${serieData.name}/${serieData.id}/${nextChapter.name}/${nextChapter.id}/${nextChapter.page.lastPageRead}/${nextChapter.isRead}`;
+        console.log(url);
 
         return { success: true, data: url };
       } catch (e) {

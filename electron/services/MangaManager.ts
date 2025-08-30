@@ -62,7 +62,7 @@ export default class MangaManager extends FileSystem {
 
       return {
         id: this.global_id,
-        name: serie.name,
+        name: serie.name.replace('#', ''),
         sanitizedName: serie.sanitizedName,
         archivesPath: path.join(this.userLibrary, serie.name),
         chaptersPath: path.join(
@@ -221,9 +221,8 @@ export default class MangaManager extends FileSystem {
         )
         .map((dirent) => path.join(chapter.chapterPath, dirent.name));
 
-      const processedImages = await this.imageManager.encodeImageToBase64(
-        imageFiles,
-      );
+      const processedImages =
+        await this.imageManager.encodeImageToBase64(imageFiles);
 
       return processedImages;
     } catch (error) {

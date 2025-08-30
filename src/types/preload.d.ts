@@ -1,12 +1,10 @@
 export {};
 
 import { childSerie, ComicTieIn } from 'electron/types/comic.interfaces.js';
-import {
-  Literatures,
-  Response,
-  SerieData,
-  viewData,
-} from './series.interfaces.ts';
+
+import { Literatures, viewData, APIResponse } from './auxiliar.interfaces.js';
+import { SerieData } from './series.interfaces.ts';
+
 // import { Manga } from '../../electron/types/manga.interfaces.ts';
 // import { Comic } from '../../electron/types/comic.interfaces.ts';
 // import { Book } from '../../electron/types/book.interfaces.ts';
@@ -37,55 +35,72 @@ declare global {
       };
 
       upload: {
-        processSerie: (filePaths: string[]) => Promise<Response<SerieData[]>>;
-        uploadSerie: (serieData: SerieForm) => Promise<Response<SerieForm>>;
+        processSerie: (
+          filePaths: string[],
+        ) => Promise<APIResponse<SerieData[]>>;
+        uploadSerie: (
+          serieData: SerieForm,
+        ) => Promise<ResAPIResponseponse<SerieForm>>;
       };
 
       series: {
-        getSeries: () => Promise<Response<viewData[]>>;
-        getComic: (serieName: string) => Promise<Response<Literatures | null>>;
-        getManga: (serieName: string) => Promise<Response<Literatures | null>>;
-        getTieIn: (SerieName: string) => Promise<Response<childSerie | null>>;
+        getSeries: () => Promise<APIResponse<viewData[]>>;
+        getComic: (
+          serieName: string,
+        ) => Promise<APIResponse<Literatures | null>>;
+        getManga: (
+          serieName: string,
+        ) => Promise<APIResponse<Literatures | null>>;
+        getTieIn: (
+          SerieName: string,
+        ) => Promise<APIResponse<childSerie | null>>;
+        getSerieData: (
+          serieName: string,
+        ) => Promise<APIResponse<Literatures | null>>;
         createTieIn: (
           childSerie: ComicTieIn,
-        ) => Promise<Response<string | null>>;
-        serieToCollection: (dataPath: string) => Promise<Response<void>>;
-        favoriteSerie: (dataPath: string) => Promise<Response<void>>;
+        ) => Promise<APIResponse<string | null>>;
+        serieToCollection: (
+          dataPath: string,
+        ) => Promise<ResAPIResponseponse<void>>;
+        favoriteSerie: (dataPath: string) => Promise<RespAPIResponseonse<void>>;
         recentSerie: (
           dataPath: string,
           serie_name: string,
-        ) => Promise<Response<void>>;
+        ) => Promise<APIResponse<void>>;
         ratingSerie: (
           dataPath: string,
           userRating: number,
-        ) => Promise<Response<void>>;
+        ) => Promise<APIResponse<void>>;
       };
 
       chapters: {
         getChapter: (
           serieName: string,
           chapter_id: number,
-        ) => Promise<Response<string[]>>;
+        ) => Promise<APIResponse<string[]>>;
         saveLastRead: (
           serieName: string,
           chapter_id: number,
           page_number: number,
-        ) => Promise<Response<void>>;
-        acessLastRead: (serieName: string) => Promise<Response<string>>;
+        ) => Promise<APIResponse<void>>;
+        acessLastRead: (serieName: string) => Promise<APIResponse<string>>;
         getNextChapter: (
           serieName: string,
           chapter_id: number,
-        ) => Promise<Response<string>>;
+        ) => Promise<APIResponse<string>>;
         getPrevChapter: (
           serieName: string,
           chapter_id: number,
-        ) => Promise<Response<string>>;
+        ) => Promise<APIResponse<string>>;
       };
 
       collections: {
-        getCollections: () => Promise<Response<Collection[]>>;
-        createCollection: (collectionName: string) => Promise<Response<void>>;
-        getFavSeries: () => Promise<Response<Collection>>;
+        getCollections: () => Promise<APIResponse<Collection[]>>;
+        createCollection: (
+          collectionName: string,
+        ) => Promise<APIResponse<void>>;
+        getFavSeries: () => Promise<APIResponse<Collection>>;
       };
 
       userAction: {
@@ -93,11 +108,11 @@ declare global {
           dataPath: string,
           chapter_id: number,
           isRead: boolean,
-        ) => Promise<Response<void>>;
+        ) => Promise<APIResponse<void>>;
         returnPage: (
           dataPath: string,
           serieName?: string,
-        ) => Promise<Response<string>>;
+        ) => Promise<APIResponse<string>>;
       };
 
       download: {

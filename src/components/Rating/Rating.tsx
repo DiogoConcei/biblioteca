@@ -1,41 +1,36 @@
-import { StarOff, Star } from "lucide-react";
-import { useState } from "react";
+import { StarOff, Star } from 'lucide-react';
+import { useState } from 'react';
 
-import useAction from "../../hooks/useAction";
-import "./Rating.scss";
-import { Literatures } from "../../types/series.interfaces";
-import useCollection from "../../hooks/useCollection";
+import useAction from '../../hooks/useAction';
+import './Rating.scss';
+import useCollection from '../../hooks/useCollection';
+import { RatingProps } from '../../types/auxiliar.interfaces';
 
-interface RatingProps {
-  manga: Literatures;
-}
-
-export default function Rating({ manga }: RatingProps) {
+export default function Rating({ serie }: RatingProps) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const { ratingSerie } = useAction(manga.dataPath);
+  const { ratingSerie } = useAction(serie.dataPath);
   const { setFavorites } = useCollection();
 
-  // Não tão legal assim, mas ok por enquanto
   const [currentRating, setCurrentRating] = useState<number>(
-    manga.metadata.rating !== undefined ? manga.metadata.rating + 1 : 0
+    serie.metadata.rating !== undefined ? serie.metadata.rating + 1 : 0,
   );
 
   const starsRating = [
-    "1 - Péssimo",
-    "2 - Horrível",
-    "3 - Regular",
-    "4 - Bom",
-    "5 - Excelente",
+    '1 - Péssimo',
+    '2 - Horrível',
+    '3 - Regular',
+    '4 - Bom',
+    '5 - Excelente',
   ];
 
   const newRating = async (index: number) => {
-    ratingSerie(manga.dataPath, index);
+    ratingSerie(serie.dataPath, index);
 
     setFavorites((prev) => {
       if (!prev) return prev;
 
       const updatedSeries = prev.series.map((serie) => {
-        if (serie.name === manga.name) {
+        if (serie.name === serie.name) {
           return {
             ...serie,
             rating: index,

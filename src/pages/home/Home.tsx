@@ -2,39 +2,32 @@ import './Home.scss';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Play } from 'lucide-react';
-
-import { viewData } from '../../types/auxiliar.interfaces';
-
-import SearchBar from '../../components/SearchBar/SearchBar';
 import { useSerieStore } from '../../store/seriesStore';
+import Loading from '../../components/Loading/Loading';
+import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
+import SearchBar from '../../components/SearchBar/SearchBar';
 
 export default function Home() {
-  const resetStates = useSerieStore((state) => state.resetStates);
-  const [series, setSeries] = useState<viewData[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState<string>('');
+  const series = useSerieStore((state) => state.series);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    async function getSeries() {
-      try {
-        const response = await window.electronAPI.series.getSeries();
-        if (response.success && response.data) {
-          setSeries(response.data);
-        } else {
-          setError('Nenhuma série encontrada.');
-        }
-      } catch (err) {
-        console.error('Erro ao buscar séries:', err);
-        setError('Erro ao buscar séries. Tente novamente.');
-      }
-    }
+  const resetStates = useSerieStore((state) => state.resetStates);
 
-    getSeries();
+  const setError = useSerieStore((state) => state.setError);
+  const fetchAll = useSerieStore((state) => state.fetchSeries);
+  const error = useSerieStore((state) => state.error);
+  const loading = useSerieStore((state) => state.loading);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await fetchAll();
+    };
+    fetchData();
   }, []);
 
   const lastChapter = async (
-    e: React.MouseEvent<HTMLDivElement | SVGElement>,
+    e: React.MouseEvent<HTMLButtonElement | SVGElement>,
     dataPath: string,
   ) => {
     e.preventDefault();
@@ -54,7 +47,7 @@ export default function Home() {
     setSearchInput(event.target.value);
   };
 
-  const filteredSeries = series.filter((serie) => {
+  const filteredSeries = series?.filter((serie) => {
     const nomeMinusculo = serie.name.toLowerCase();
     const termoMinusculo = searchInput.toLowerCase();
 
@@ -92,7 +85,11 @@ export default function Home() {
   };
 
   if (error) {
-    return;
+    return <ErrorScreen error={error} />;
+  }
+
+  if (loading || !series) {
+    return <Loading />;
   }
 
   return (
@@ -101,7 +98,7 @@ export default function Home() {
 
       <div className="content">
         <div className="seriesContent">
-          {filteredSeries.map((serie) => (
+          {filteredSeries!.map((serie) => (
             <Link
               to={`${serie.literatureForm}/${serie.name}/${serie.id}`}
               onClick={resetStates}
@@ -113,12 +110,15 @@ export default function Home() {
                   src={`data:image;base64,${serie.coverImage}`}
                   alt={`Série: ${serie.name}`}
                 />
-                <figcaption>
-                  <Play
+                <div className="play-action">
+                  <button
                     className="playChapter"
+                    aria-label={`Excluir série ${serie.name}`}
                     onClick={(e) => lastChapter(e, serie.dataPath)}
-                  />
-                </figcaption>
+                  >
+                    <Play size={'24'} />
+                  </button>
+                </div>
               </figure>
               <div className="serie-info">
                 <p className="serie-name">{serie.name}</p>

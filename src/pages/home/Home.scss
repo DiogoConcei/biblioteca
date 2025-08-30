@@ -1,3 +1,5 @@
+@use '../../styles/variables' as *;
+
 .home {
   display: flex;
   flex-direction: column;
@@ -52,7 +54,7 @@
             display: block;
           }
 
-          figcaption {
+          .play-action {
             position: absolute;
             bottom: 8px;
             right: 8px;
@@ -60,11 +62,18 @@
           }
 
           .playChapter {
+            display: flex;
+            @include interactive-buttons;
             font-size: 24px;
             color: white;
             background: rgba(0, 0, 0, 0.5);
             border-radius: 50%;
-            padding: 5px;
+            padding: 2px;
+
+            &:hover {
+              background: $amethyst;
+              color: black;
+            }
           }
         }
 

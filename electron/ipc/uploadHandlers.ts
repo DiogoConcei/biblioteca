@@ -1,6 +1,6 @@
 import { IpcMain } from 'electron';
 import { SerieData, SerieForm } from '../../src/types/series.interfaces.ts';
-import { Response } from '../../src/types/auxiliar.interfaces.ts';
+import { APIResponse } from '../../src/types/auxiliar.interfaces.ts';
 import MangaManager from '../services/MangaManager.ts';
 import StorageManager from '../services/StorageManager.ts';
 import ComicManager from '../services/ComicManager.ts';
@@ -14,7 +14,7 @@ export default function uploadHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle(
     'upload:process-data',
-    async (_event, filePaths: unknown): Promise<Response<SerieData[]>> => {
+    async (_event, filePaths: unknown): Promise<APIResponse<SerieData[]>> => {
       if (!Array.isArray(filePaths) || filePaths.length === 0) {
         return {
           success: false,
@@ -23,6 +23,7 @@ export default function uploadHandlers(ipcMain: IpcMain) {
       }
 
       const paths = filePaths.filter((p): p is string => typeof p === 'string');
+
       if (!paths.length) {
         return {
           success: false,
@@ -43,7 +44,7 @@ export default function uploadHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle(
     'upload:process-serie',
-    async (_event, serieData: SerieForm): Promise<Response<null>> => {
+    async (_event, serieData: SerieForm): Promise<APIResponse<null>> => {
       if (typeof serieData !== 'object' || serieData === null) {
         return { success: false, error: 'Dados da série inválidos.' };
       }

@@ -1,14 +1,17 @@
 import { create } from 'zustand';
 
-import { Literatures, Response } from '../types/auxiliar.interfaces';
+import { Literatures, Response, viewData } from '../types/auxiliar.interfaces';
 import { TieIn } from 'electron/types/comic.interfaces';
 
 interface SeriesState {
+  series: viewData[] | null;
   serie: Literatures | null;
   error: string | null;
   loading: boolean;
 
   setSerie: (newSerie: Literatures | null) => void;
+  setSeries: (allSeries: viewData[] | null) => void;
+  fetchSeries: () => void;
   fetchSerie: (
     serieName: string,
     literatureForm: string,
@@ -20,51 +23,25 @@ interface SeriesState {
 }
 
 export const useSerieStore = create<SeriesState>((set) => ({
+  series: null,
   serie: null,
   error: null,
   loading: true,
+
   setLoading: (value: boolean) => ({ loading: value }),
 
   setError: (error: string | null) => set({ error, loading: false }),
   resetStates: () => set({ serie: null, error: null, loading: false }),
 
+  setSeries: (allSeries: viewData[] | null) => set({ series: allSeries }),
   setSerie: (newSerie: Literatures | null) => set({ serie: newSerie }),
 
-  fetchSerie: async (serieName: string, literatureForm: string) => {
+  fetchSeries: async () => {
     try {
-      console.log('[fetchSerie] Iniciando busca...');
-      console.log('[fetchSerie] Nome da série:', serieName);
-      console.log('[fetchSerie] Tipo de literatura:', literatureForm);
-
-      let response: Response<Literatures | TieIn | null>;
-
-      switch (literatureForm) {
-        case 'Manga':
-          console.log('[fetchSerie] Chamando getManga...');
-          response = await window.electronAPI.series.getManga(serieName);
-          break;
-        case 'Quadrinho':
-          console.log('[fetchSerie] Chamando getComic...');
-          response = await window.electronAPI.series.getComic(serieName);
-          break;
-        case 'childSeries':
-          console.log('[fetchSerie] Chamando getTieIn...');
-          response = await window.electronAPI.series.getTieIn(serieName);
-          break;
-        default:
-          console.warn('[fetchSerie] Tipo de literatura desconhecido');
-          response = {
-            success: false,
-            data: null,
-            error: 'Tipo de literatura desconhecido',
-          };
-          break;
-      }
-
-      console.log('[fetchSerie] Resposta recebida:', response);
+      const response: Response<viewData[]> =
+        await window.electronAPI.series.getSeries();
 
       if (!response) {
-        console.error('[fetchSerie] Resposta nula/indefinida');
         set({
           loading: false,
           error: 'Erro inesperado ao buscar série',
@@ -73,18 +50,8 @@ export const useSerieStore = create<SeriesState>((set) => ({
       }
 
       if (response.success && response.data) {
-        console.log('[fetchSerie] Busca bem-sucedida');
-        set({ loading: false });
-
-        if (literatureForm === 'childSeries') {
-          console.log('[fetchSerie] Retornando TieIn');
-          return response.data as TieIn;
-        } else {
-          console.log('[fetchSerie] Retornando Literatures');
-          return response.data as Literatures;
-        }
+        set({ loading: false, series: response.data });
       } else {
-        console.warn('[fetchSerie] Falha na busca:', response.error);
         set({
           loading: false,
           error: response.error ?? 'Erro inesperado ao buscar série',
@@ -92,7 +59,57 @@ export const useSerieStore = create<SeriesState>((set) => ({
         return null;
       }
     } catch (e) {
-      console.error('[fetchSerie] Erro no processo:', e);
+      console.log(`Erro em exibir todas as séries: ${e}`);
+    }
+  },
+
+  fetchSerie: async (serieName: string, literatureForm: string) => {
+    try {
+      let response: Response<Literatures | TieIn | null>;
+
+      switch (literatureForm) {
+        case 'Manga':
+          response = await window.electronAPI.series.getManga(serieName);
+          break;
+        case 'Quadrinho':
+          response = await window.electronAPI.series.getComic(serieName);
+          break;
+        case 'childSeries':
+          response = await window.electronAPI.series.getTieIn(serieName);
+          break;
+        default:
+          response = {
+            success: false,
+            data: null,
+            error: 'Tipo de literatura desconhecido',
+          };
+          break;
+      }
+
+      if (!response) {
+        set({
+          loading: false,
+          error: 'Erro inesperado ao buscar série',
+        });
+        return null;
+      }
+
+      if (response.success && response.data) {
+        set({ loading: false });
+
+        if (literatureForm === 'childSeries') {
+          return response.data as TieIn;
+        } else {
+          return response.data as Literatures;
+        }
+      } else {
+        set({
+          loading: false,
+          error: response.error ?? 'Erro inesperado ao buscar série',
+        });
+        return null;
+      }
+    } catch (e) {
       set({
         loading: false,
         error: 'Falha ao recuperar série. Tente novamente.',
