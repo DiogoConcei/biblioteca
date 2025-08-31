@@ -1,0 +1,75 @@
+@use '../../../../styles//variables' as *;
+
+.form-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-4;
+
+  .subtitle {
+    font-size: $font-lg;
+    color: $indian-red;
+  }
+
+  .form-collection {
+    display: flex;
+    flex-flow: row wrap;
+    border: 1px solid $amethyst;
+    overflow: hidden;
+    border-radius: $radius-md;
+    padding: $spacing-4;
+    width: 400px;
+    height: 250px;
+    gap: $spacing-10;
+
+    .collectionName {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: $spacing-3;
+      border: 2px solid $amethyst;
+      border-radius: $radius-md;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background-color: transparent;
+      color: $indian-red;
+    }
+
+    input[type='checkbox'] {
+      display: none;
+
+      &:checked + label {
+        background-color: $amethyst;
+        color: $snow;
+      }
+    }
+  }
+
+  .form-add-collection {
+    display: flex;
+    flex-flow: row nowrap;
+    gap: $spacing-3;
+
+    input[type='text'] {
+      display: flex;
+      border-radius: $radius-sm;
+      border: 1px solid $amethyst;
+      color: $snow;
+      background: $gunmetal;
+
+      &::placeholder {
+        color: $indian-red;
+        text-align: center;
+        font-size: $font-sm;
+      }
+    }
+
+    button {
+      color: $snow;
+      cursor: pointer;
+      padding: $spacing-3;
+      border-radius: $radius-md;
+      background: $indian-red;
+      border: 1px solid $indian-red;
+    }
+  }
+}

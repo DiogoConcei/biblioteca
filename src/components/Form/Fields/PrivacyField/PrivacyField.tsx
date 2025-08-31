@@ -1,12 +1,7 @@
 import { FormInputProps } from '../../../../types/auxiliar.interfaces';
 import './PrivacyField.scss';
 
-export default function PrivacyField({
-  register,
-  error,
-  name,
-  label,
-}: FormInputProps) {
+export default function PrivacyField({ register, error }: FormInputProps) {
   return (
     <div className="privacy-info">
       <h2 className="form-subtitle">Privacidade:</h2>

@@ -3,14 +3,15 @@ import { Download } from 'lucide-react';
 
 import useDownload from '../../hooks/useDownload';
 import useSerie from '../../hooks/useSerie';
+import ErrorScreen from '../ErrorScreen/ErrorScreen';
 import { downloadButtonProps } from '../../types/components.interfaces';
 
-import './DownloadButton.scss';
+import styles from './DownloadButton.module.scss';
+import { useSerieStore } from '../../store/seriesStore';
 
 export default function DownloadButton({ serie }: downloadButtonProps) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [error, setError] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const error = useSerieStore((state) => state.error);
+  const setError = useSerieStore((state) => state.setError);
   const [selectedQuantity, setSelectedQuantity] = useState<number>(0);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const { updateChapter } = useSerie(serie.name);
@@ -21,7 +22,7 @@ export default function DownloadButton({ serie }: downloadButtonProps) {
   const options = [1, 5, 10, 20, 25];
 
   const onToggle = () => {
-    setIsOpen(prevState => !prevState);
+    setIsOpen((prevState) => !prevState);
   };
 
   const onSelect = async (quantity: number) => {
@@ -54,18 +55,28 @@ export default function DownloadButton({ serie }: downloadButtonProps) {
     }
   };
 
+  if (error) {
+    return <ErrorScreen error={error} serieName="" />;
+  }
+
   return (
     <div>
-      <button className={`download ${isOpen ? 'open' : ''}`} onClick={onToggle}>
+      <button
+        className={`${styles.download} ${isOpen ? styles.open : ''}`}
+        onClick={onToggle}
+      >
         <Download />
         Download
       </button>
 
       {isOpen && (
-        <ul className="dropdown-list">
-          {options.map(quantity => (
-            <li key={quantity} className="dropdown-item">
-              <button className="dropdown-option" onClick={() => onSelect(quantity)}>
+        <ul className={styles['dropdown-list']}>
+          {options.map((quantity) => (
+            <li key={quantity} className={styles['dropdown-item']}>
+              <button
+                className={styles['dropdown-option']}
+                onClick={() => onSelect(quantity)}
+              >
                 {quantity}
               </button>
             </li>

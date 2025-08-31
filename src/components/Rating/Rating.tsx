@@ -1,10 +1,9 @@
 import { StarOff, Star } from 'lucide-react';
 import { useState } from 'react';
-
 import useAction from '../../hooks/useAction';
-import './Rating.scss';
 import useCollection from '../../hooks/useCollection';
 import { RatingProps } from '../../types/auxiliar.interfaces';
+import styles from './Rating.module.scss';
 
 export default function Rating({ serie }: RatingProps) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -57,16 +56,16 @@ export default function Rating({ serie }: RatingProps) {
 
   return (
     <div>
-      <button className="rating" onClick={onToggle}>
+      <button className={styles.rating} onClick={onToggle}>
         {currentRating > 0 ? <Star /> : <StarOff />}
       </button>
 
       {isOpen && (
-        <ul className="rating-list">
+        <ul className={styles['rating-list']}>
           {starsRating.map((quantity, index) => (
-            <li key={index} className="rating-item">
+            <li key={index} className={styles['rating-item']}>
               <button
-                className="rating-option"
+                className={styles['rating-option']}
                 onClick={async () => await newRating(index)}
               >
                 {quantity}

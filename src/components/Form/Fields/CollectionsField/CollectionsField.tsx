@@ -1,22 +1,34 @@
-import { Controller } from 'react-hook-form';
-import { FormControllerProps } from '../../../../types/auxiliar.interfaces';
+import { Controller, FieldValues } from 'react-hook-form';
 import { useState } from 'react';
-import './CollectionsField.scss';
+import { GenericControllerProps } from '../../../../types/auxiliar.interfaces';
+import styles from './CollectionsField.module.scss';
 
-export default function CollectionsField({ control }: FormControllerProps) {
+export default function CollectionsField<T extends FieldValues>({
+  control,
+  name,
+}: GenericControllerProps<T>) {
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
-  const [availableCollections, setAvailableCollections] = useState([]);
+  const [availableCollections, setAvailableCollections] = useState<string[]>(
+    [],
+  );
   const [newCollection, setNewCollection] = useState('');
 
   return (
     <Controller
-      name="metadata.collections"
+      name={name}
       control={control}
       render={({ field }) => {
+        const value = (field.value ?? []) as string[];
+
+        // Junta as coleções disponíveis com as que já estão no form, sem duplicatas
+        const allCollections = Array.from(
+          new Set([...availableCollections, ...value]),
+        );
+
         const handleCheckboxChange = (collection: string, checked: boolean) => {
           const updated = checked
-            ? [...field.value, collection]
-            : field.value.filter((c: string) => c !== collection);
+            ? [...value, collection]
+            : value.filter((c) => c !== collection);
           field.onChange(updated);
         };
 
@@ -26,7 +38,8 @@ export default function CollectionsField({ control }: FormControllerProps) {
             newCollection &&
             !availableCollections.includes(newCollection)
           ) {
-            field.onChange([...field.value, newCollection]);
+            const updatedCollections = [...value, newCollection];
+            field.onChange(updatedCollections);
             setAvailableCollections([...availableCollections, newCollection]);
             setNewCollection('');
           }
@@ -34,37 +47,40 @@ export default function CollectionsField({ control }: FormControllerProps) {
         };
 
         return (
-          <div className="form-collection-container">
-            <h2 className="form-subtitle">Incluir na coleção:</h2>
-            <div className="form-collection">
-              {availableCollections.map((collection, index) => (
+          <div className={styles['form-container']}>
+            <h2 className={styles.subtitle}>Incluir na coleção:</h2>
+
+            <div className={styles['form-collection']}>
+              {allCollections.map((collection, index) => (
                 <span key={index}>
                   <input
                     type="checkbox"
                     value={collection}
-                    checked={field.value.includes(collection)}
+                    checked={value.includes(collection)}
                     onChange={(e) =>
                       handleCheckboxChange(collection, e.target.checked)
                     }
                   />
-                  <label>{collection}</label>
+                  <label className={styles.collectionName}>{collection}</label>
                 </span>
               ))}
             </div>
 
-            {isCreatingCollection && (
-              <input
-                type="text"
-                value={newCollection}
-                placeholder="Digite o nome da nova coleção"
-                onChange={(e) => setNewCollection(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleButtonClick()}
-              />
-            )}
+            <div className={styles['form-add-collection']}>
+              {isCreatingCollection && (
+                <input
+                  type="text"
+                  value={newCollection}
+                  placeholder="Digite o nome da nova coleção"
+                  onChange={(e) => setNewCollection(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleButtonClick()}
+                />
+              )}
 
-            <button type="button" onClick={handleButtonClick}>
-              {isCreatingCollection ? 'Salvar Coleção' : 'Adicionar coleção'}
-            </button>
+              <button type="button" onClick={handleButtonClick}>
+                {isCreatingCollection ? 'Salvar Coleção' : 'Adicionar coleção'}
+              </button>
+            </div>
           </div>
         );
       }}

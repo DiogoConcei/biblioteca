@@ -1,8 +1,15 @@
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { ImagePlus, Tag } from 'lucide-react';
-import { Radius } from 'lucide-react';
+import ImageController from '../../components/Form/Fields/ImageController/ImageController';
+import TextInput from '../../components/Form/GenericInputs/TextInput/TextInput';
+import LiteratureField from '../../components/Form/Fields/LiteratureField/LiteratureField';
+import BackupField from '../../components/Form/Fields/BackupField/BackupField';
+import PrivacyField from '../../components/Form/Fields/PrivacyField/PrivacyField';
+import StatusField from '../../components/Form/Fields/StatusField/StatusField';
+import CollectionsField from '../../components/Form/Fields/CollectionsField/CollectionsField';
+import TagsField from '../../components/Form/Fields/TagsField/TagsField';
+import Loading from '../../components/Loading/Loading';
 
 import { SerieData, SerieForm } from '../../types/series.interfaces';
 import './Upload.scss';
@@ -16,24 +23,6 @@ export default function Upload() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
 
-  const [imageSrc, setImageSrc] = useState<string>('');
-  const coverRef = useRef<HTMLInputElement | null>(null);
-
-  const [tags, setTags] = useState<string[]>([]);
-  const [typingTimeout, setTypingTimeout] = useState<number | null>(null);
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    formState: { errors },
-  } = useForm<SerieForm>({
-    defaultValues: {
-      tags: [],
-    },
-  });
-
   useEffect(() => {
     if (location.state?.newSeries) {
       setNewSeries(location.state.newSeries as SerieData[]);
@@ -41,56 +30,33 @@ export default function Upload() {
     }
   }, [location.state?.newSeries]);
 
-  const emptyForm = useMemo<SerieForm | null>(() => {
-    if (!newSeries.length || !newSeries[currentIndex]) return null;
-    const serie = newSeries[currentIndex];
-
-    return {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    formState: { errors },
+  } = useForm<SerieForm>({
+    defaultValues: {
       name: newSeries[currentIndex].name,
+      sanitizedName: newSeries[currentIndex].sanitizedName,
       genre: '',
       author: '',
       cover_path: '',
       language: '',
-      literatureForm: '',
       privacy: '',
       autoBackup: '',
       readingStatus: '',
+      literatureForm: '',
       tags: [],
-      collections: serie.collections,
-      sanitizedName: serie.sanitizedName,
-      archivesPath: serie.newPath,
-      chaptersPath: serie.chaptersPath,
-      oldPath: serie.oldPath,
-      createdAt: serie.createdAt,
-      deletedAt: serie.deletedAt,
-    };
-  }, [newSeries, currentIndex]);
-
-  useEffect(() => {
-    if (emptyForm) {
-      reset(emptyForm);
-      setImageSrc('');
-
-      setTags(emptyForm.tags || []);
-    }
-  }, [emptyForm, reset]);
-
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImageSrc(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-
-    const imagePath =
-      await window.electronAPI.webUtilities.getPathForFile(file);
-
-    setValue('cover_path', imagePath, { shouldValidate: true });
-  };
+      collections: [],
+      archivesPath: newSeries[currentIndex].newPath,
+      chaptersPath: newSeries[currentIndex].chaptersPath,
+      oldPath: newSeries[currentIndex].oldPath,
+      createdAt: newSeries[currentIndex].createdAt,
+      deletedAt: newSeries[currentIndex].deletedAt,
+    },
+  });
 
   const onSubmit: SubmitHandler<SerieForm> = async (data: SerieForm) => {
     setIsLoading(true);
@@ -116,11 +82,7 @@ export default function Upload() {
   };
 
   if (isLoading) {
-    return (
-      <div className="loadingWrapper">
-        <Radius className="spinner" />
-      </div>
-    );
+    return <Loading />;
   }
 
   return (
@@ -135,198 +97,69 @@ export default function Upload() {
         <form onSubmit={handleSubmit(onSubmit)} className="form-view">
           <div className="image-upload">
             <span>Capa de exibição</span>
-            <div
-              className="image-container"
-              onClick={() => coverRef.current?.click()}
-            >
-              {imageSrc ? (
-                <img
-                  src={imageSrc}
-                  alt="Preview da capa"
-                  className="cover-preview"
-                />
-              ) : (
-                <span>
-                  <ImagePlus color="#8963ba" />
-                </span>
-              )}
-              <input
-                id="cover_path"
-                type="file"
-                accept="image/*"
-                className="file-input"
-                ref={(e) => {
-                  coverRef.current = e;
-                }}
-                onChange={handleImageChange}
-              />
-            </div>
-            {errors.cover_path && (
-              <p className="error">{errors.cover_path.message}</p>
-            )}
+
+            <ImageController control={control} name={'cover_path'} />
           </div>
 
           <div className="form-container">
             <div className="text-info">
-              <input
-                id="name"
-                type="text"
-                placeholder="Nome da série"
-                {...register('name', {
-                  required: 'A Série deve ter um nome',
-                })}
-              />
-              {errors.name && <p className="error">{errors.name.message}</p>}
+              {/* Label de nome da série */}
+              <TextInput name="name" register={register} error={errors.name} />
 
-              <input
-                id="genre"
-                type="text"
-                placeholder="Gênero"
-                {...register('genre', {
-                  required: 'Diga o gênero literário',
-                })}
-              />
-              {errors.genre && <p className="error">{errors.genre.message}</p>}
-
-              <input
-                id="author"
-                type="text"
-                placeholder="Autor"
-                {...register('author')}
+              {/* Label de genêro da série */}
+              <TextInput
+                name="genre"
+                register={register}
+                error={errors.genre}
               />
 
-              <input
-                id="language"
-                type="text"
-                placeholder="Idioma"
-                {...register('language', {
-                  required: 'Em qual linguagem a série está?',
-                })}
+              {/* Label de autor da série */}
+              <TextInput
+                name="author"
+                register={register}
+                error={errors.author}
               />
-              {errors.language && (
-                <p className="error">{errors.language.message}</p>
-              )}
+
+              {/* Label de idioma da série */}
+              <TextInput
+                name="language"
+                register={register}
+                error={errors.language}
+              />
             </div>
 
-            <div className="literature-info">
-              <h2 className="form-subtitle">Forma de literatura:</h2>
-              <div className="form-radio">
-                <input
-                  type="radio"
-                  value="Manga"
-                  id="Manga"
-                  {...register('literatureForm', {
-                    required: 'Selecione a forma de literatura',
-                  })}
-                />
-                <label htmlFor="Manga">Manga</label>
+            {/* Label de LiteratureForm da série */}
+            <LiteratureField
+              name="literatureForm"
+              register={register}
+              error={errors.literatureForm}
+            />
 
-                <input
-                  type="radio"
-                  value="Quadrinho"
-                  id="Quadrinho"
-                  {...register('literatureForm')}
-                />
-                <label htmlFor="Quadrinho">Quadrinho</label>
+            <TagsField control={control} name="tags" />
 
-                <input
-                  type="radio"
-                  value="Livro"
-                  id="Livro"
-                  {...register('literatureForm')}
-                />
-                <label htmlFor="Livro">Livro</label>
-              </div>
-              {errors.literatureForm && (
-                <p className="error">{errors.literatureForm.message}</p>
-              )}
-            </div>
+            {/* Label de autoBackup da série */}
+            <BackupField
+              name="autoBackup"
+              register={register}
+              error={errors.autoBackup}
+            />
 
-            <div className="backup-info">
-              <h2 className="form-subtitle">Adicionar ao auto backup:</h2>
-              <div className="backup-container">
-                <input
-                  type="radio"
-                  value="Sim"
-                  id="SimAutoBackup"
-                  {...register('autoBackup', {
-                    required: 'Escolha Sim ou Não',
-                  })}
-                />
-                <label htmlFor="SimAutoBackup">Sim</label>
+            {/* Label de Privacy da série */}
+            <PrivacyField
+              name="privacy"
+              register={register}
+              error={errors.privacy}
+            />
 
-                <input
-                  type="radio"
-                  value="Não"
-                  id="NaoAutoBackup"
-                  {...register('autoBackup')}
-                />
-                <label htmlFor="NaoAutoBackup">Não</label>
-              </div>
-              {errors.autoBackup && (
-                <p className="error">{errors.autoBackup.message}</p>
-              )}
-            </div>
+            {/* Label de Status da série */}
+            <StatusField
+              name="readingStatus"
+              register={register}
+              error={errors.readingStatus}
+            />
 
-            <div className="privacy-info">
-              <h2 className="form-subtitle">Privacidade:</h2>
-              <div className="privacy-container">
-                <input
-                  type="radio"
-                  value="Pública"
-                  id="Privacypublic"
-                  {...register('privacy', {
-                    required: 'Escolha Pública ou Privada',
-                  })}
-                />
-                <label htmlFor="Privacypublic">Pública</label>
+            <CollectionsField control={control} name="collections" />
 
-                <input
-                  type="radio"
-                  value="Privada"
-                  id="Privacyprivate"
-                  {...register('privacy')}
-                />
-                <label htmlFor="Privacyprivate">Privada</label>
-              </div>
-              {errors.privacy && (
-                <p className="error">{errors.privacy.message}</p>
-              )}
-            </div>
-
-            <div className="status-info">
-              <h2 className="form-subtitle">Status de leitura:</h2>
-              <div className="status-container">
-                <input
-                  type="radio"
-                  value="Em andamento"
-                  id="StatusEmAndamento"
-                  {...register('readingStatus', {
-                    required: 'Selecione um status',
-                  })}
-                />
-                <label htmlFor="StatusEmAndamento">Em andamento</label>
-
-                <input
-                  type="radio"
-                  value="Completo"
-                  id="StatusCompleto"
-                  {...register('readingStatus')}
-                />
-                <label htmlFor="StatusCompleto">Completo</label>
-
-                <input
-                  type="radio"
-                  value="Pendente"
-                  id="StatusPendente"
-                  {...register('readingStatus')}
-                />
-                <label htmlFor="StatusPendente">Pendente</label>
-              </div>
-              {errors.readingStatus && (
-                <p className="error">{errors.readingStatus.message}</p>
-              )}
-            </div>
             <div className="navigation-buttons">
               <button
                 type="button"
@@ -350,3 +183,13 @@ export default function Upload() {
     </article>
   );
 }
+
+// if (response.success && currentIndex < newSeries.length) {
+//     setIsLoading(false);
+//     navigate('/');
+//   }
+
+//   if (response.success) {
+//     setIsLoading(false);
+//     setCurrentIndex((prev) => prev + 1);
+//   }

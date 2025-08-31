@@ -26,3 +26,107 @@
     color: black;
   }
 }
+
+.serieCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  text-decoration: none;
+
+  .coverCard {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-flow: column nowrap;
+    width: 150px;
+
+    position: relative;
+    cursor: pointer;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    border-radius: 4px;
+
+    img {
+      width: auto;
+      height: 20vh;
+      object-fit: contain;
+      border-radius: 5px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      display: block;
+    }
+
+    .play-action {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      z-index: 10;
+    }
+
+    .playChapter {
+      display: flex;
+      @include interactive-buttons;
+      font-size: 24px;
+      color: white;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      padding: 2px;
+
+      &:hover {
+        background: $amethyst;
+        color: black;
+      }
+    }
+  }
+
+  .serie-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 8vw;
+    min-width: 120px;
+    gap: 0.7rem;
+    box-sizing: border-box;
+
+    .serie-name {
+      width: 100%;
+      padding: 0.5rem 0;
+      font-size: 1rem;
+      color: #8963ba;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-sizing: border-box;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 5px;
+      border-radius: 20px;
+      background-color: #eeeeee7d;
+      overflow: hidden;
+
+      .progress-bar-completed {
+        height: 100%;
+        background-color: #8963ba;
+        border-radius: 20px;
+        transition: width 0.3s ease;
+      }
+    }
+
+    .readsInfo {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      font-size: 0.9rem;
+      color: #8963ba;
+
+      p {
+        margin: 0;
+      }
+    }
+  }
+}

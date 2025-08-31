@@ -36,12 +36,7 @@ export default function SerieConfig() {
       <div className="content">
         <div className="seriesContent">
           {series!.map((serie) => (
-            <Link
-              to={`${serie.literatureForm}/${serie.name}/${serie.id}`}
-              onClick={resetStates}
-              key={serie.id}
-              className="serieLink"
-            >
+            <div className="serieCard" key={serie.id}>
               <figure className="coverCard">
                 <img
                   src={`data:image;base64,${serie.coverImage}`}
@@ -74,7 +69,7 @@ export default function SerieConfig() {
               <div className="serie-info">
                 <p className="serie-name">{serie.name}</p>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </div>

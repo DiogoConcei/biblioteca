@@ -1,12 +1,15 @@
 import { Tag } from 'lucide-react';
-import { Controller } from 'react-hook-form';
-import { FormControllerProps } from '../../../../types/auxiliar.interfaces';
+import { Controller, FieldValues } from 'react-hook-form';
+import { GenericControllerProps } from '../../../../types/auxiliar.interfaces';
 import './TagsField.scss';
 
-export default function TagsField({ control }: FormControllerProps) {
+export default function TagsField<T extends FieldValues>({
+  control,
+  name,
+}: GenericControllerProps<T>) {
   return (
     <Controller
-      name="tags"
+      name={name}
       control={control}
       render={({ field }) => (
         <div className="tags-info">

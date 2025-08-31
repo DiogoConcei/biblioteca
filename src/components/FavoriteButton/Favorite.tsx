@@ -2,11 +2,11 @@ import { Bookmark, BookmarkCheck } from 'lucide-react';
 import useCollection from '../../hooks/useCollection';
 import useSerie from '../../hooks/useSerie';
 import { FavoriteProps } from '../../types/auxiliar.interfaces';
-import './Favorite.scss';
+import styles from './Favorite.module.scss';
 
 export default function Favorite({ serie }: FavoriteProps) {
   const { updateFav } = useCollection();
-  const { updateSerie } = useSerie('', 'Manga');
+  const { updateSerie } = useSerie('', '');
 
   const favoriteSerie = async (isFav: boolean) => {
     const newFavoriteStatus = !isFav;
@@ -21,7 +21,7 @@ export default function Favorite({ serie }: FavoriteProps) {
 
   return (
     <button
-      className="favorite"
+      className={styles.favorite}
       onClick={() => favoriteSerie(serie.metadata.isFavorite)}
     >
       {serie.metadata.isFavorite ? <Bookmark /> : <BookmarkCheck />}

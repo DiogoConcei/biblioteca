@@ -6,6 +6,7 @@ import {
   FieldError,
   Control,
   FieldValues,
+  Path,
 } from 'react-hook-form';
 import { SerieEditForm } from './series.interfaces';
 
@@ -79,7 +80,6 @@ export type LiteratureForms = 'Manga' | 'Quadrinho';
 export type LiteratureChapterAttributes = string | number | boolean;
 
 export interface FormInputProps {
-  label: string;
   name: string;
   register: UseFormRegister<any>;
   error?: FieldError;
@@ -88,6 +88,11 @@ export interface FormInputProps {
 export interface FormControllerProps<T extends FieldValues = FieldValues> {
   control: Control<SerieEditForm>;
   label?: string;
+}
+
+export interface GenericControllerProps<T extends FieldValues = FieldValues> {
+  control: Control<T>;
+  name: Path<T>;
 }
 
 export interface FavoriteProps {

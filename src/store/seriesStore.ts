@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 
-import { Literatures, Response, viewData } from '../types/auxiliar.interfaces';
+import {
+  Literatures,
+  APIResponse,
+  viewData,
+} from '../types/auxiliar.interfaces';
 import { TieIn } from 'electron/types/comic.interfaces';
 
 interface SeriesState {
@@ -38,7 +42,7 @@ export const useSerieStore = create<SeriesState>((set) => ({
 
   fetchSeries: async () => {
     try {
-      const response: Response<viewData[]> =
+      const response: APIResponse<viewData[]> =
         await window.electronAPI.series.getSeries();
 
       if (!response) {
@@ -65,7 +69,7 @@ export const useSerieStore = create<SeriesState>((set) => ({
 
   fetchSerie: async (serieName: string, literatureForm: string) => {
     try {
-      let response: Response<Literatures | TieIn | null>;
+      let response: APIResponse<Literatures | TieIn | null>;
 
       switch (literatureForm) {
         case 'Manga':

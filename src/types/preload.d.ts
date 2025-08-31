@@ -5,12 +5,6 @@ import { childSerie, ComicTieIn } from 'electron/types/comic.interfaces.js';
 import { Literatures, viewData, APIResponse } from './auxiliar.interfaces.js';
 import { SerieData } from './series.interfaces.ts';
 
-// import { Manga } from '../../electron/types/manga.interfaces.ts';
-// import { Comic } from '../../electron/types/comic.interfaces.ts';
-// import { Book } from '../../electron/types/book.interfaces.ts';
-// import { Collections } from '../../electron/types/collections.interfaces.ts';
-// import { SeriesProcessor, SerieForm, Literatures } from './series.interfaces.ts';
-
 declare global {
   interface Window {
     electronAPI: {

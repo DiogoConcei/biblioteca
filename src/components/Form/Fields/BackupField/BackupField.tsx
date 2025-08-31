@@ -1,11 +1,7 @@
 import { FormInputProps } from '../../../../types/auxiliar.interfaces';
+import './BackupField.scss';
 
-export default function BackupField({
-  register,
-  error,
-  label,
-  name,
-}: FormInputProps) {
+export default function BackupField({ register, error }: FormInputProps) {
   return (
     <div className="backup-info">
       <h2 className="form-subtitle">Adicionar ao auto backup:</h2>

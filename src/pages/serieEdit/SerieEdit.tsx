@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
-import { ImagePlus } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import useSerie from '../../hooks/useSerie';
 import { useSerieStore } from '../../store/seriesStore';
 import TextInput from '../../components/Form/GenericInputs/TextInput/TextInput';
 import LiteratureField from '../../components/Form/Fields/LiteratureField/LiteratureField';
@@ -13,13 +13,15 @@ import BackupField from '../../components/Form/Fields/BackupField/BackupField';
 import TagsField from '../../components/Form/Fields/TagsField/TagsField';
 import Favorite from '../../components/FavoriteButton/Favorite';
 import Rating from '../../components/Rating/Rating';
+import ImageController from '../../components/Form/Fields/ImageController/ImageController';
 import CollectionsField from '../../components/Form/Fields/CollectionsField/CollectionsField';
+import DownloadButton from '../../components/DonwloadButton/DownloadButton';
 import {
   LiteratureChapter,
   Literatures,
 } from '../../types/auxiliar.interfaces';
 import { SerieEditForm } from '../../types/series.interfaces';
-import './SerieEdit.scss';
+import styles from './SerieEdit.module.scss';
 
 export default function SerieEdit() {
   const { serie_name: rawSerieName } = useParams<{ serie_name: string }>();
@@ -29,7 +31,7 @@ export default function SerieEdit() {
   const setError = useSerieStore((state) => state.setError);
 
   const [serie, setSerie] = useState<Literatures | null>(null);
-  const [preview, setPreview] = useState<string>();
+  const { updateSerie } = useSerie('', '');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -118,91 +120,33 @@ export default function SerieEdit() {
         <span className="series-title">
           <h1>Editando a série: {serie.name}</h1>
           <form onSubmit={handleSubmit(onSubmit)}>
-            <Controller
-              name="coverImage"
-              control={control}
-              rules={{ required: 'A capa é obrigatória' }}
-              render={({ field, fieldState }) => (
-                <div className="image-upload">
-                  <span>Capa</span>
-                  <div
-                    className="image-container"
-                    onClick={() =>
-                      document.getElementById('coverInput')?.click()
-                    }
-                  >
-                    {preview || field.value ? (
-                      <img
-                        src={preview || field.value}
-                        alt="Preview da capa"
-                        className="cover-preview"
-                      />
-                    ) : (
-                      <span className="alert">
-                        <ImagePlus color="#8963ba" />
-                      </span>
-                    )}
+            <div className={styles.header}>
+              <ImageController control={control} name="coverImage" />
 
-                    <input
-                      id="coverInput"
-                      type="file"
-                      accept="image/*"
-                      hidden
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
+              <div className={styles.actionButtons}>
+                <Favorite serie={serie} />
+                <DownloadButton serie={serie} updateSerie={updateSerie} />
+                <Rating serie={serie} />
+              </div>
+            </div>
 
-                        const reader = new FileReader();
-                        reader.onloadend = () =>
-                          setPreview(reader.result as string);
-                        reader.readAsDataURL(file);
+            {/* <TextInput name="name" register={register} error={errors.name} />
 
-                        const path =
-                          await window.electronAPI.webUtilities.getPathForFile(
-                            file,
-                          );
-                        field.onChange(path);
-                      }}
-                    />
-                  </div>
-
-                  {fieldState.error && (
-                    <p className="error">{fieldState.error.message}</p>
-                  )}
-                </div>
-              )}
-            />
+            <TextInput name="genre" register={register} error={errors.genre} />
 
             <TextInput
-              label="name"
-              name="name"
-              register={register}
-              error={errors.name}
-            />
-
-            <TextInput
-              label="Genero"
-              name="genre"
-              register={register}
-              error={errors.genre}
-            />
-
-            <TextInput
-              label="Autor"
               name="author"
               register={register}
               error={errors.author}
             />
 
             <TextInput
-              label="Idioma"
               name="language"
               register={register}
               error={errors.language}
             />
 
             <TextInput
-              label="Quantidade de capítulos lidos"
               name="chaptersRead"
               register={register}
               error={errors.chaptersRead}
@@ -211,19 +155,16 @@ export default function SerieEdit() {
             <LiteratureField
               register={register}
               error={errors.literatureForm}
-              label=""
               name=""
             />
 
             <StatusField
-              label=""
               name=""
               register={register}
               error={errors.metadata?.status}
             />
 
             <PrivacyField
-              label=""
               name=""
               register={register}
               error={errors.metadata?.privacy}
@@ -232,30 +173,14 @@ export default function SerieEdit() {
             <BackupField
               register={register}
               error={errors.metadata?.autoBackup}
-              label=""
               name=""
             />
 
-            <TagsField control={control} />
+            <TagsField control={control} name={'tags'} />
 
-            <Favorite serie={serie} />
+                        <CollectionsField control={control} name={'metadata.collections'} />
 
-            <Rating serie={serie} />
-
-            <CollectionsField control={control} />
-
-            {/* 
-            <Controller
-              name="comments"
-              defaultValue={serie.comments}
-              control={control}
-              render={({ field, fieldState }) => (
-                <label>
-                  Comentários
-                  <input type="text" {...field} />
-                </label>
-              )}
-            /> */}
+             */}
           </form>
         </span>
       </section>

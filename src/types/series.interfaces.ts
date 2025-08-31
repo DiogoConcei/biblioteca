@@ -28,8 +28,9 @@ export interface SerieForm {
   readingStatus: 'Em andamento' | 'Completo' | 'Pendente' | '';
   sanitizedName: string;
   chaptersPath: string;
-  createdAt: string;
   oldPath: string;
+  archivesPath: string;
+  createdAt: string;
   deletedAt: string;
 }
 
