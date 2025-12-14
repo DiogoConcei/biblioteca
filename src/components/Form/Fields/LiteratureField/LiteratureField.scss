@@ -7,6 +7,11 @@
   flex-flow: column nowrap;
   width: 450px;
 
+  .form-subtitle {
+    font-size: $font-lg;
+    color: $indian-red;
+  }
+
   .form-radio {
     display: flex;
     justify-content: space-evenly;
@@ -28,7 +33,7 @@
       justify-content: center;
       border: 2px solid $amethyst;
       border-radius: $radius-md;
-      padding: $spacing-3;
+      padding: $spacing-2;
       cursor: pointer;
       font-size: $font-lg;
       color: $indian-red;

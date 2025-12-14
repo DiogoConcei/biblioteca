@@ -12,7 +12,7 @@ import { SerieForm } from '../../src/types/series.interfaces.ts';
 import { Manga, MangaChapter } from '../types/manga.interfaces.ts';
 
 export default class MangaManager extends FileSystem {
-  private global_id: number;
+  private global_id: number = 0;
   private readonly systemManager: SystemManager = new SystemManager();
   private readonly validationManager: ValidationManager =
     new ValidationManager();
@@ -125,6 +125,7 @@ export default class MangaManager extends FileSystem {
 
           return {
             id: index + 1,
+            serieName: serieName,
             name: name,
             sanitizedName: sanitizedName,
             archivesPath: path.join(
@@ -135,7 +136,10 @@ export default class MangaManager extends FileSystem {
             chapterPath: '',
             createdAt: createdAt,
             isRead: false,
-            isDownload: false,
+            isDownloaded: 'not_downloaded' as
+              | 'not_downloaded'
+              | 'downloading'
+              | 'downloaded',
             page: {
               lastPageRead: 0,
               favoritePage: 0,
@@ -226,7 +230,7 @@ export default class MangaManager extends FileSystem {
 
       return processedImages;
     } catch (error) {
-      console.error(`Erro ao obter conteúdo do capítulo: ${error.message}`);
+      console.error(`Erro ao obter conteúdo do capítulo: ${error}`);
       throw error;
     }
   }
@@ -262,7 +266,7 @@ export default class MangaManager extends FileSystem {
         );
 
         await this.imageManager.normalizeChapter(outputDir);
-        chapter.isDownload = true;
+        chapter.isDownloaded = 'downloaded';
         chapter.chapterPath = outputDir;
         mangaData.metadata.lastDownload = chapter.id;
 
@@ -304,7 +308,7 @@ export default class MangaManager extends FileSystem {
       );
 
       await this.imageManager.normalizeChapter(outputDir);
-      chapterToProcess.isDownload = true;
+      chapterToProcess.isDownloaded = 'downloaded';
       chapterToProcess.chapterPath = outputDir;
       mangaData.metadata.lastDownload = chapterToProcess.id;
 
@@ -322,26 +326,33 @@ export default class MangaManager extends FileSystem {
 //   const fileManager = new FileManager();
 //   const storageManager = new StorageManager();
 //   const mangaManager = new MangaManager();
-//   const archivesPath = 'C:\\Users\\diogo\\OneDrive\\Desktop\\Black Clover';
 
-//   const dinastiaM: SerieForm = {
-//     name: 'Black Clover',
-//     genre: 'Magos',
-//     author: 'Desconhecido',
-//     language: 'Português',
-//     cover_path: 'C:\\Users\\diogo\\Downloads\\Imagens\\cover.jpg',
-//     literatureForm: 'Manga',
-//     collections: ['Marvel', 'Universo 616'],
-//     tags: ['Marvel', 'super-heróis'],
-//     privacy: 'Publica',
-//     autoBackup: 'Sim',
-//     readingStatus: 'Completo',
-//     sanitizedName: fileManager.sanitizeFilename('Black clover'),
-//     chaptersPath: '/series/dinastia-m/capitulos',
-//     createdAt: '2025-08-08T16:00:00Z',
-//     oldPath: archivesPath,
-//     deletedAt: '',
-//   };
+//   await mangaManager.createEditionById(
+//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Mangas\\Fullmetal Alchemist.json',
+//     1,
+//   );
 
-//   await mangaManager.createMangaSerie(dinastiaM);
+//   // const archivesPath = 'C:\\Users\\diogo\\Desktop\\Dragon Ball';
+
+//   // const dinastiaM: SerieForm = {
+//   //   name: 'Dragon Ball',
+//   //   genre: 'Luta',
+//   //   author: 'Akira Toriyama',
+//   //   language: 'Português',
+//   //   cover_path: 'C:\\Users\\diogo\\Downloads\\Imagens\\Cover1.jpg',
+//   //   literatureForm: 'Manga',
+//   //   collections: ['Anime'],
+//   //   tags: ['Shonen'],
+//   //   privacy: 'Publica',
+//   //   autoBackup: 'Sim',
+//   //   readingStatus: 'Completo',
+//   //   sanitizedName: fileManager.sanitizeFilename('Dragon Ball'),
+//   //   chaptersPath: '',
+//   //   archivesPath: archivesPath,
+//   //   createdAt: '2025-08-08T16:00:00Z',
+//   //   oldPath: archivesPath,
+//   //   deletedAt: '',
+//   // };
+
+//   // await mangaManager.createMangaSerie(dinastiaM);
 // })();

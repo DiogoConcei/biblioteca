@@ -1,64 +1,26 @@
-import './Home.scss';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Play } from 'lucide-react';
-import { useSerieStore } from '../../store/seriesStore';
+import useUIStore from '../../store/useUIStore';
+import useSerieStore from '../../store/useSerieStore';
+import useAllSeries from '../../hooks/useAllSeries';
 import Loading from '../../components/Loading/Loading';
 import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
 import SearchBar from '../../components/SearchBar/SearchBar';
+import { Play } from 'lucide-react';
+import styles from './Home.module.scss';
+import { viewData } from '../../types/auxiliar.interfaces';
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState<string>('');
-  const series = useSerieStore((state) => state.series);
+  const setError = useUIStore((state) => state.setError);
+  const serie = useSerieStore((state) => state.serie);
+  const setSerie = useSerieStore((state) => state.setSerie);
+
+  const loading = useUIStore((state) => state.loading);
+  const error = useUIStore((state) => state.error);
+  const clearSerie = useSerieStore((state) => state.clearSerie);
+  const series = useAllSeries();
   const navigate = useNavigate();
-
-  const resetStates = useSerieStore((state) => state.resetStates);
-
-  const setError = useSerieStore((state) => state.setError);
-  const fetchAll = useSerieStore((state) => state.fetchSeries);
-  const error = useSerieStore((state) => state.error);
-  const loading = useSerieStore((state) => state.loading);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      await fetchAll();
-    };
-    fetchData();
-  }, []);
-
-  const lastChapter = async (
-    e: React.MouseEvent<HTMLButtonElement | SVGElement>,
-    dataPath: string,
-  ) => {
-    e.preventDefault();
-    const response = await window.electronAPI.chapters.acessLastRead(dataPath);
-
-    const lastChapterUrl = response.data;
-
-    if (lastChapterUrl) {
-      navigate(lastChapterUrl);
-    } else {
-      setError('URL do último capítulo não encontrada.');
-    }
-  };
-
-  const searchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    event.preventDefault();
-    setSearchInput(event.target.value);
-  };
-
-  const filteredSeries = series?.filter((serie) => {
-    const nomeMinusculo = serie.name.toLowerCase();
-    const termoMinusculo = searchInput.toLowerCase();
-
-    const normalizedSerieName = nomeMinusculo.replace(/\s+/g, '');
-    const normalizedSearchTerm = termoMinusculo.replace(/\s+/g, '');
-
-    return (
-      termoMinusculo === '' ||
-      normalizedSerieName.includes(normalizedSearchTerm)
-    );
-  });
 
   const handleDrag = (event: React.DragEvent<HTMLDivElement>) => {
     event.stopPropagation();
@@ -84,6 +46,48 @@ export default function Home() {
     }
   };
 
+  const searchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    setSearchInput(event.target.value);
+  };
+
+  const filteredSeries = series?.filter((serie) => {
+    const nomeMinusculo = serie.name.toLowerCase();
+    const termoMinusculo = searchInput.toLowerCase();
+
+    const normalizedSerieName = nomeMinusculo.replace(/\s+/g, '');
+    const normalizedSearchTerm = termoMinusculo.replace(/\s+/g, '');
+
+    return (
+      termoMinusculo === '' ||
+      normalizedSerieName.includes(normalizedSearchTerm)
+    );
+  });
+
+  const lastChapter = async (
+    e: React.MouseEvent<HTMLButtonElement | SVGElement>,
+    serie: viewData,
+  ) => {
+    e.preventDefault();
+
+    const response = await window.electronAPI.chapters.acessLastRead(
+      serie.dataPath,
+    );
+
+    if (!response.success || !response.data)
+      return setError(`${response.error}`);
+
+    const lastChapterUrl = response.data[0];
+    const serieData = response.data[1];
+    setSerie(serieData);
+
+    if (lastChapterUrl) {
+      navigate(lastChapterUrl);
+    } else {
+      setError('URL do último capítulo não encontrada.');
+    }
+  };
+
   if (error) {
     return <ErrorScreen error={error} />;
   }
@@ -93,38 +97,42 @@ export default function Home() {
   }
 
   return (
-    <section className="home" onDragOver={handleDrag} onDrop={handleDrop}>
+    <section
+      className={styles.home}
+      onDragOver={handleDrag}
+      onDrop={handleDrop}
+    >
       <SearchBar searchInput={searchInput} onSearchChange={searchChange} />
 
-      <div className="content">
-        <div className="seriesContent">
+      <div className={styles.content}>
+        <div className={styles.seriesContent}>
           {filteredSeries!.map((serie) => (
             <Link
               to={`${serie.literatureForm}/${serie.name}/${serie.id}`}
-              onClick={resetStates}
+              onClick={clearSerie}
               key={serie.id}
-              className="serieLink"
+              className={styles.serieLink}
             >
-              <figure className="coverCard">
+              <figure className={styles.coverCard}>
                 <img
                   src={`data:image;base64,${serie.coverImage}`}
                   alt={`Série: ${serie.name}`}
                 />
-                <div className="play-action">
+                <div className={styles['play-action']}>
                   <button
-                    className="playChapter"
+                    className={styles.playChapter}
                     aria-label={`Excluir série ${serie.name}`}
-                    onClick={(e) => lastChapter(e, serie.dataPath)}
+                    onClick={(e) => lastChapter(e, serie)}
                   >
                     <Play size={'24'} />
                   </button>
                 </div>
               </figure>
-              <div className="serie-info">
-                <p className="serie-name">{serie.name}</p>
-                <div className="progress-bar">
+              <div className={styles['serie-info']}>
+                <p className={styles['serie-name']}>{serie.name}</p>
+                <div className={styles['progress-bar']}>
                   <div
-                    className="progress-bar-completed"
+                    className={styles['progress-bar-completed']}
                     style={{
                       width: `${
                         (serie.chaptersRead / serie.totalChapters) * 100
@@ -132,7 +140,7 @@ export default function Home() {
                     }}
                   ></div>
                 </div>
-                <span className="readsInfo">
+                <span className={styles.readsInfo}>
                   <p>{serie.chaptersRead}</p>
                   <p>{serie.totalChapters}</p>
                 </span>

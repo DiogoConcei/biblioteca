@@ -4,6 +4,10 @@ import { registerHandlers } from './ipc';
 import path from 'path';
 import fse from 'fs-extra';
 
+declare global {
+  var storageFolder: string;
+}
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 process.env.APP_ROOT = path.join(__dirname, '..');
@@ -52,6 +56,7 @@ async function ensureAppFolders() {
     fse.mkdirp(path.join(jsonFolder, 'books')),
     fse.mkdirp(path.join(jsonFolder, 'comics')),
     fse.mkdirp(path.join(jsonFolder, 'mangas')),
+    fse.mkdirp(path.join(jsonFolder, 'childSeries')),
     fse.mkdirp(path.join(imagesFolder, 'book')),
     fse.mkdirp(path.join(imagesFolder, 'comic')),
     fse.mkdirp(path.join(imagesFolder, 'manga')),

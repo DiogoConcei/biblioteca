@@ -1,163 +1,91 @@
-import { useCallback, useRef } from 'react';
+import { LiteratureChapter } from '../types/auxiliar.interfaces';
+import useSerieStore from '../store/useSerieStore';
+import useUIStore from '../store/useUIStore';
 
-import {
-  LiteratureChapter,
-  LiteratureChapterAttributes,
-} from '../types/auxiliar.interfaces';
-import {
-  downloadChapter,
-  useDownloadParams,
-} from '../types/customHooks.interfaces';
+export default function useDownload() {
+  const dataPath = useSerieStore((state) => state.serie?.dataPath);
+  const chapters = useSerieStore((state) => state.chapters);
+  const updateChapter = useSerieStore((state) => state.updateChapter);
+  const setError = useUIStore((state) => state.setError);
 
-export default function useDownload({
-  setError,
-  setDownloaded,
-  setDownloadStatus,
-}: useDownloadParams) {
-  const isDownloading = useRef(false);
+  const downloadInReading = async (readingChapter: LiteratureChapter) => {
+    if (
+      readingChapter.isDownloaded === 'downloaded' ||
+      readingChapter.isDownloaded === 'downloading'
+    )
+      return;
 
-  const downloadInReading = useCallback(
-    async ({ serieName, chapterId, alreadyDownloaded }: downloadChapter) => {
-      if (alreadyDownloaded.current || isDownloading.current) return;
+    updateChapter(readingChapter.id, 'isDownloaded', 'downloading');
 
-      isDownloading.current = true;
-      try {
-        setDownloaded?.(true);
-        setDownloadStatus?.((prev) => ({
-          ...prev,
-          [chapterId]: 'downloading',
-        }));
+    try {
+      await window.electronAPI.download.readingDownload(
+        readingChapter.serieName,
+        readingChapter.id,
+      );
 
-        await window.electronAPI.download.readingDownload(serieName, chapterId);
+      updateChapter(readingChapter.id, 'isDownloaded', 'downloaded');
+    } catch {
+      setError('Falha ao baixar o capítulo');
 
-        setDownloadStatus?.((prev) => ({
-          ...prev,
-          [chapterId]: 'downloaded',
-        }));
-      } catch {
-        setError('Falha em baixar o próximo capítulo');
+      updateChapter(readingChapter.id, 'isDownloaded', 'not_downloaded');
+    }
+  };
 
-        setDownloadStatus?.((prev) => ({
-          ...prev,
-          [chapterId]: 'not_downloaded',
-        }));
-      } finally {
-        setDownloaded?.(false);
-        isDownloading.current = false;
-      }
-    },
-    [setError, setDownloaded, setDownloadStatus],
-  );
+  const downloadIndividual = async (
+    selectedChapter: LiteratureChapter,
+    e: React.MouseEvent,
+  ) => {
+    e.stopPropagation();
 
-  const downloadMultipleChapters = useCallback(
-    async (dataPath: string, quantity: number) => {
-      try {
-        const response = await window.electronAPI.download.multipleDownload(
-          dataPath,
-          quantity,
-        );
+    if (selectedChapter.isDownloaded === 'downloaded') {
+      updateChapter(selectedChapter.id, 'isDownloaded', 'downloading');
+      const success = await window.electronAPI.download.singleRemove(
+        dataPath!,
+        selectedChapter.id,
+      );
 
-        if (!response) {
-          setError('Falha ao baixar capítulos');
-          return response;
-        }
-
-        return response;
-      } catch {
-        setError('Falha ao executar download');
-        return false;
-      }
-    },
-    [setError],
-  );
-
-  const downloadIndividual = useCallback(
-    async (
-      dataPath: string,
-      id: number,
-      chapter: LiteratureChapter,
-      updateChapter: (
-        index: number,
-        path: string,
-        newValue: LiteratureChapterAttributes,
-      ) => void,
-      event?: React.MouseEvent<HTMLButtonElement>,
-    ) => {
-      event?.stopPropagation();
-
-      const originalIsDownload = chapter.isDownload;
-
-      if (originalIsDownload) {
-        try {
-          const success = await window.electronAPI.download.singleRemove(
-            dataPath,
-            chapter.id,
-          );
-
-          if (!success) {
-            setError('Falha ao deletar capítulo');
-            return false;
-          }
-
-          updateChapter(id, 'isDownload', false);
-
-          setDownloadStatus?.((prev) => ({
-            ...prev,
-            [chapter.id]: 'not_downloaded',
-          }));
-
-          return true;
-        } catch {
-          setError('Erro ao tentar deletar capítulo');
-          return false;
-        }
+      if (!success) {
+        setError('Falha ao remover o capítulo');
+        updateChapter(selectedChapter.id, 'isDownloaded', 'downloaded');
+        return;
       }
 
-      setDownloadStatus?.((prev) => ({
-        ...prev,
-        [chapter.id]: 'downloading',
-      }));
+      updateChapter(selectedChapter.id, 'isDownloaded', 'not_downloaded');
+    } else {
+      updateChapter(selectedChapter.id, 'isDownloaded', 'downloading');
 
-      updateChapter(id, 'isDownload', true);
+      const success = await window.electronAPI.download.singleDownload(
+        dataPath!,
+        selectedChapter.id,
+      );
 
-      try {
-        const response = await window.electronAPI.download.singleDownload(
-          dataPath,
-          chapter.id,
-        );
-
-        if (!response) {
-          setError('Falha ao baixar capítulo');
-          updateChapter(id, 'isDownload', false);
-
-          setDownloadStatus?.((prev) => ({
-            ...prev,
-            [chapter.id]: 'not_downloaded',
-          }));
-
-          return false;
-        }
-
-        setDownloadStatus?.((prev) => ({
-          ...prev,
-          [chapter.id]: 'downloaded',
-        }));
-
-        return true;
-      } catch {
-        setError('Erro ao tentar baixar capítulo');
-        updateChapter(id, 'isDownload', false);
-
-        setDownloadStatus?.((prev) => ({
-          ...prev,
-          [chapter.id]: 'not_downloaded',
-        }));
-
-        return false;
+      if (!success) {
+        setError('Falha ao baixar capítulo');
+        updateChapter(selectedChapter.id, 'isDownloaded', 'not_downloaded');
+        return;
       }
-    },
-    [setError, setDownloadStatus],
-  );
 
-  return { downloadInReading, downloadMultipleChapters, downloadIndividual };
+      updateChapter(selectedChapter.id, 'isDownloaded', 'downloaded');
+    }
+  };
+
+  const downloadMultipleChapters = async (quantity: number) => {
+    try {
+      const response = await window.electronAPI.download.multipleDownload(
+        dataPath!,
+        quantity,
+      );
+
+      if (!response) {
+        setError('Falha ao baixar capítulos');
+      }
+
+      return response;
+    } catch {
+      setError('Falha ao baixar multiplos capítulos');
+      return false;
+    }
+  };
+
+  return { downloadInReading, downloadIndividual, downloadMultipleChapters };
 }

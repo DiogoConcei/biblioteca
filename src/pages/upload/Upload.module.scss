@@ -11,17 +11,12 @@
     color: $indian-red;
   }
 
-  .form-subtitle {
-    font-size: $font-lg;
-    color: $indian-red;
-  }
-
   .form-view {
     display: flex;
     flex-flow: row nowrap;
-    align-items: center;
+    align-items: start;
     justify-content: center;
-    gap: $spacing-6;
+    gap: $spacing-10;
     padding: $spacing-6;
 
     .form-container {

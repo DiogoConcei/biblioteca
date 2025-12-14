@@ -4,13 +4,11 @@ import { APIResponse } from '../../src/types/auxiliar.interfaces.ts';
 import MangaManager from '../services/MangaManager.ts';
 import StorageManager from '../services/StorageManager.ts';
 import ComicManager from '../services/ComicManager.ts';
-import BookManager from '../services/BookManager.ts';
 
 export default function uploadHandlers(ipcMain: IpcMain) {
   const storageManager = new StorageManager();
   const comicManager = new ComicManager();
   const mangaManager = new MangaManager();
-  const bookManager = new BookManager();
 
   ipcMain.handle(
     'upload:process-data',
@@ -56,9 +54,6 @@ export default function uploadHandlers(ipcMain: IpcMain) {
             break;
           case 'Quadrinho':
             await comicManager.createComicSerie(serieData);
-            break;
-          case 'Livro':
-            await bookManager.createBook(serieData);
             break;
           default:
             throw new Error('Tipo de literatura inválido');

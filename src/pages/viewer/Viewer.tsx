@@ -1,6 +1,4 @@
-import { useChapterReturn } from '../../types/customHooks.interfaces';
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import useChapter from '../../hooks/useChapter';
 import useNavigation from '../../hooks/useNavigation';
 import useDrag from '../../hooks/useDrag';
@@ -9,34 +7,33 @@ import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
 import Loading from '../../components/Loading/Loading';
 import PageControl from '../../components/PageControl/PageControl';
 import { LoaderCircle } from 'lucide-react';
+import { ChapterView } from '../../types/auxiliar.interfaces';
+import useUIStore from '../../store/useUIStore';
+import { useParams } from 'react-router-dom';
 import './Viewer.scss';
 
 export default function Viewer() {
   const {
     serie_name: rawSerieName,
-    chapter_name: rawChapterName,
     chapter_id,
-    page,
+    LiteratureForm,
   } = useParams<{
     serie_name: string;
-    chapter_name: string;
     chapter_id: string;
-    page: string;
+    LiteratureForm: string;
   }>();
+  const decode_serie_name = decodeURIComponent(rawSerieName ?? '');
 
-  const serie_name = decodeURIComponent(rawSerieName ?? '');
-
-  const [scale, setScale] = useState<number>(1);
-  const lastCall = useRef<number>(0);
-
-  const chapter: useChapterReturn = useChapter({
-    serieName: serie_name!,
-    chapterId: Number(chapter_id)!,
-    page: Number(page)!,
-  });
+  const chapter: ChapterView = useChapter(
+    decode_serie_name,
+    Number(chapter_id),
+  );
 
   const { position, elementRef } = useDrag(chapter);
   const chapterNavigation = useNavigation(chapter);
+  const [scale, setScale] = useState<number>(1);
+  const lastCall = useRef<number>(0);
+  const error = useUIStore((state) => state.error);
 
   useEffect(() => {
     const debounceTime = 500; // 1/2 second debounce time
@@ -67,12 +64,12 @@ export default function Viewer() {
     return () => window.removeEventListener('keydown', handleKey);
   }, [chapterNavigation]);
 
-  if (chapter.isLoading || !chapter.pages || chapter.isLoading) {
+  if (!chapter.pages || !chapter.quantityPages) {
     return <Loading />;
   }
 
-  if (chapter.error) {
-    return <ErrorScreen error={chapter.error} serieName={chapter.serieName} />;
+  if (error) {
+    return <ErrorScreen error={error} serieName={chapter.serieName} />;
   }
 
   return (
@@ -94,7 +91,7 @@ export default function Viewer() {
           src={`data:image;base64,${chapter.pages[chapter.currentPage]}`}
           alt="pagina do capitulo"
         />
-        {chapter.downloaded && <LoaderCircle className="spinner" />}
+        {chapter.isLoading && <LoaderCircle className="spinner" />}
       </div>
       <div className="pageControlWrapper">
         <PageControl

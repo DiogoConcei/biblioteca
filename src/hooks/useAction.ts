@@ -1,85 +1,70 @@
+import useUIStore from '../store/useUIStore';
+import useSerieStore from '../store/useSerieStore';
+import { TieIn, ComicTieIn } from 'electron/types/comic.interfaces';
+import { LiteratureChapter, Literatures } from '../types/auxiliar.interfaces';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import useDownload from './useDownload';
 
-import {
-  LiteratureChapter,
-  LiteratureChapterAttributes,
-  Literatures,
-} from '../types/auxiliar.interfaces';
-import useSerie from './useSerie';
-import { TieIn } from 'electron/types/comic.interfaces';
-
-type DownloadStatus = 'not_downloaded' | 'downloading' | 'downloaded';
-
-export default function useAction(dataPath: string) {
+export default function useAction() {
+  const serie = useSerieStore((state) => state.serie) as Literatures | TieIn;
+  const clearSerie = useSerieStore((state) => state.clearSerie);
+  const chapters = useSerieStore((state) => state.chapters);
+  const dataPath = useSerieStore((state) => state.serie?.dataPath || '');
+  const updateChapter = useSerieStore((state) => state.updateChapter);
+  const updateSerie = useSerieStore((state) => state.updateSerie);
+  const setLoading = useUIStore((state) => state.setLoading);
+  const setError = useUIStore((state) => state.setError);
+  const { downloadIndividual } = useDownload();
   const navigate = useNavigate();
-  const { updateChapter } = useSerie();
-  const [error, setError] = useState<string | null>(null);
 
-  async function ratingSerie(dataPath: string, ratingIndex: number) {
+  async function ratingSerie(rating: number) {
     try {
-      await window.electronAPI.series.ratingSerie(dataPath, ratingIndex);
-    } catch (error) {
-      console.error('Erro ao atualizar o rating:', error);
-      throw error;
+      await window.electronAPI.series.ratingSerie(dataPath, rating);
+    } catch (e) {
+      setError('Falha em avaliar a série.');
     }
   }
 
   async function markAsRead(
-    e: React.MouseEvent<HTMLElement>,
-    chapter: LiteratureChapter,
-    id: number,
-    updateChapter: (
-      index: number,
-      path: string,
-      newValue: LiteratureChapterAttributes,
-    ) => void,
+    e: React.MouseEvent,
+    selectedChapter: LiteratureChapter,
   ) {
     e.stopPropagation();
 
-    const originalIsRead = chapter.isRead;
+    const originalRead = selectedChapter.isRead;
 
-    updateChapter(id, 'isRead', !originalIsRead);
+    if (selectedChapter.id !== 1 && serie) {
+      const newValue = serie.chaptersRead + (selectedChapter.isRead ? -1 : 1);
+      updateSerie('chaptersRead', newValue);
+      updateSerie('readingData.lastChapterId', selectedChapter.id);
+    }
+
+    updateChapter(selectedChapter.id, 'isRead', !originalRead);
 
     try {
       const response = await window.electronAPI.userAction.markRead(
         dataPath,
-        chapter.id,
-        !originalIsRead,
+        selectedChapter.id,
+        !originalRead,
       );
 
       if (!response.success) {
-        updateChapter(id, 'isRead', originalIsRead);
+        updateChapter(selectedChapter.id, 'isRead', originalRead);
       }
     } catch (e) {
-      updateChapter(id, 'isRead', originalIsRead);
+      updateChapter(selectedChapter.id, 'isRead', originalRead);
       console.error('Falha em realizar ação');
     }
   }
 
-  interface DownloadIndividualFn {
-    (
-      dataPath: string,
-      chapterId: number,
-      edition: LiteratureChapter,
-      updateChapter: (
-        index: number,
-        path: string,
-        newValue: LiteratureChapterAttributes,
-      ) => void,
-    ): void;
-  }
-
   async function openChapter(
-    e: React.MouseEvent<HTMLDivElement>,
-    serie: Literatures | TieIn,
-    edition: LiteratureChapter,
-    downloadIndividual: DownloadIndividualFn,
-  ): Promise<void> {
+    e: React.MouseEvent,
+    selectedChapter: LiteratureChapter,
+  ) {
     e.stopPropagation();
 
     const { name: serieName, id: serieId } = serie;
-    const { name: chapterName, id: chapterId, page, isRead } = edition;
+    const { name: chapterName, id: chapterId, page, isRead } = selectedChapter;
 
     const safeOpen: boolean = await window.electronAPI.download.checkDownload(
       serieName,
@@ -90,12 +75,29 @@ export default function useAction(dataPath: string) {
       navigate(
         `/${encodeURIComponent(serieName)}/${serieId}/${encodeURIComponent(
           chapterName,
-        )}/${chapterId}/${page.lastPageRead}/${isRead}`,
+        )}/${chapterId}/${page}/${isRead}`,
       );
     } else {
-      downloadIndividual(serie.dataPath, edition.id, edition, updateChapter);
+      downloadIndividual(selectedChapter, e);
     }
   }
 
-  return { ratingSerie, markAsRead, openChapter };
+  const openTieIn = async (tieIn: ComicTieIn) => {
+    setLoading(true);
+
+    const response = await window.electronAPI.series.createTieIn(tieIn);
+
+    if (!response.success) {
+      console.error(response.error);
+      return;
+    }
+
+    clearSerie();
+    const url = response.data;
+
+    setLoading(false);
+    navigate(url!);
+  };
+
+  return { ratingSerie, markAsRead, openChapter, openTieIn };
 }

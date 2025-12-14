@@ -1,137 +1,116 @@
-import {
-  useChapterReturn,
-  useSimpleNavigationReturn,
-} from '../types/customHooks.interfaces';
+import useUIStore from '../store/useUIStore';
+import useSerieStore from '../store/useSerieStore';
+import { ChapterView } from '../types/auxiliar.interfaces';
 import useDownload from './useDownload';
-import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSerieStore } from '../store/seriesStore';
 
-export default function useNavigation(
-  chapter: useChapterReturn,
-): useSimpleNavigationReturn {
-  const serie = useSerieStore((state) => state.serie);
+export default function useNavigation(currentChapter: ChapterView) {
+  const chapters = useSerieStore((state) => state.chapters);
+  const setError = useUIStore((state) => state.setError);
+  const { downloadInReading } = useDownload();
   const navigate = useNavigate();
 
-  const { downloadInReading } = useDownload({
-    setError: chapter.setError,
-    setDownloaded: chapter.setDownloaded,
-  });
-
-  const nextChapter = useCallback(async () => {
-    const nextChapterId = chapter.chapterId + 1;
-
-    if (nextChapterId >= serie?.totalChapters!) return;
-
-    if (!chapter.isNextDownloaded.current) {
-      await downloadInReading({
-        serieName: chapter.serieName,
-        chapterId: chapter.chapterId + 1,
-        alreadyDownloaded: chapter.isNextDownloaded,
-      });
-      chapter.markNextDownloaded();
-    }
-
-    if (!chapter.error) {
-      try {
-        const response = await window.electronAPI.chapters.getNextChapter(
-          chapter.serieName,
-          chapter.chapterId,
-        );
-
-        const nextChapterUrl = response.data;
-
-        console.log(nextChapterUrl);
-        await window.electronAPI.chapters.saveLastRead(
-          chapter.serieName,
-          chapter.chapterId,
-          chapter.currentPage,
-        );
-
-        if (chapter.isNextDownloaded.current && nextChapterUrl) {
-          navigate(nextChapterUrl);
-        }
-      } catch {
-        chapter.setError('Falha em exibir o proximo capitulo');
-      }
-    }
-  }, [
-    chapter.chapterId,
-    chapter.currentPage,
-    chapter.isNextDownloaded,
-    chapter.isPrevDownloaded,
-  ]);
-
-  const prevChapter = useCallback(async () => {
-    if (chapter.chapterId <= 1) return;
-
-    if (!chapter.isNextDownloaded.current) {
-      await downloadInReading({
-        serieName: chapter.serieName,
-        chapterId: chapter.chapterId - 1,
-        alreadyDownloaded: chapter.isPrevDownloaded,
-      });
-      chapter.markPrevDownloaded();
-    }
-
-    if (!chapter.error) {
-      try {
-        const response = await window.electronAPI.chapters.getPrevChapter(
-          chapter.serieName,
-          Number(chapter.chapterId),
-        );
-        const prevChapterUrl = response.data;
-
-        await window.electronAPI.chapters.saveLastRead(
-          chapter.serieName,
-          chapter.chapterId,
-          chapter.currentPage,
-        );
-
-        if (chapter.isPrevDownloaded && prevChapterUrl) {
-          navigate(prevChapterUrl);
-        }
-      } catch {
-        chapter.setError('Falha em exibir o capitulo anterior');
-      }
-    }
-  }, [
-    chapter.chapterId,
-    chapter.currentPage,
-    chapter.isNextDownloaded,
-    chapter.isPrevDownloaded,
-  ]);
-
-  const nextPage = useCallback(async () => {
+  const nextPage = async () => {
     try {
-      if (chapter.currentPage < chapter.quantityPages) {
-        chapter.setCurrentPage((prev) => prev + 1);
+      if (currentChapter.currentPage < currentChapter.quantityPages - 1) {
+        currentChapter.setCurrentPage(currentChapter.currentPage + 1);
       } else {
         await nextChapter();
       }
-    } catch (error) {
-      chapter.setError('falha em localizar próxima a página');
+    } catch (e) {
+      setError('Erro ao navegar para a próxima página.');
     }
-  }, [
-    chapter.currentPage,
-    chapter.pages,
-    chapter.isNextDownloaded,
-    chapter.isPrevDownloaded,
-    ,
-    nextChapter,
-  ]);
+  };
 
-  const prevPage = useCallback(async () => {
+  const prevPage = async () => {
     try {
-      if (chapter.currentPage > 0) {
-        chapter.setCurrentPage(chapter.currentPage - 1);
+      if (currentChapter.currentPage > 0) {
+        currentChapter.setCurrentPage(currentChapter.currentPage - 1);
       } else {
         await prevChapter();
       }
-    } catch {
-      chapter.setError('Falha ao retroceder páginas');
+    } catch (e) {
+      setError('Erro ao navegar para a página anterior.');
     }
-  }, [chapter.currentPage, chapter.pages]);
+  };
 
-  return { nextChapter, nextPage, prevChapter, prevPage };
+  const nextChapter = async () => {
+    if (currentChapter.isLoading) return;
+
+    console.log('Passou aqui');
+
+    currentChapter.setIsLoading(true);
+
+    const nextChapterId = currentChapter.id + 1;
+
+    if (nextChapterId > chapters.length) {
+      currentChapter.setIsLoading(false);
+      return;
+    }
+
+    try {
+      const nextChapter =
+        chapters.find((ch) => ch.id === nextChapterId) || chapters[0];
+
+      if (nextChapter.isDownloaded === 'not_downloaded') {
+        await downloadInReading(nextChapter);
+      }
+
+      const response = await window.electronAPI.chapters.getNextChapter(
+        nextChapter.serieName,
+        nextChapter.id,
+      );
+
+      const nextChapterUrl = response.data;
+
+      await window.electronAPI.chapters.saveLastRead(
+        currentChapter.serieName,
+        currentChapter.id,
+        currentChapter.currentPage,
+      );
+
+      if (nextChapter.isDownloaded === 'downloaded' && nextChapterUrl) {
+        navigate(nextChapterUrl);
+      }
+    } catch (e) {
+      setError('Falha ao solicitar o próximo capítulo.');
+    } finally {
+      currentChapter.setIsLoading(false);
+    }
+  };
+
+  const prevChapter = async () => {
+    if (currentChapter.isLoading) return;
+
+    const prevChapterId = currentChapter.id - 1;
+
+    if (prevChapterId < 1) return;
+    try {
+      const prevChapter =
+        chapters.find((ch) => ch.id === prevChapterId) || chapters[0];
+
+      if (prevChapter.isDownloaded === 'not_downloaded') {
+        await downloadInReading(prevChapter);
+        console.log('caiu aqui no prev');
+      }
+
+      const response = await window.electronAPI.chapters.getPrevChapter(
+        prevChapter.serieName,
+        prevChapter.id,
+      );
+      const prevChapterUrl = response.data;
+      await window.electronAPI.chapters.saveLastRead(
+        currentChapter.serieName,
+        currentChapter.id,
+        currentChapter.currentPage,
+      );
+      if (prevChapter.isDownloaded === 'downloaded' && prevChapterUrl) {
+        navigate(prevChapterUrl);
+      }
+    } catch (e) {
+      setError('Falha ao solicitar o próximo capítulo.');
+    }
+  };
+
+  return { nextPage, prevPage, nextChapter, prevChapter };
 }

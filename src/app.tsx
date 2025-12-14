@@ -9,17 +9,19 @@ import MangaPage from './pages/mangaPage/MangaPage';
 import ComicPage from './pages/comicPage/comicPage';
 import TieInPage from './components/TieInPage/TieInPage';
 import Viewer from './pages/viewer/Viewer';
-import SerieConfig from './pages/serieConfig/serieConfig';
-import SerieEdit from './pages/serieEdit/SerieEdit';
+// import ErrorBoundary from './providers/ErrorBoundary';
+// import SerieConfig from './pages/serieConfig/serieConfig';
+// import SerieEdit from './pages/serieEdit/SerieEdit';
 
 const App = () => {
   return (
+    // <ErrorBoundary>
     <HashRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
-          <Route path="config/serie" element={<SerieConfig />} />
-          <Route path="edit/serie/:serie_name" element={<SerieEdit />} />
+          {/* <Route path="config/serie" element={<SerieConfig />} /> */}
+          {/* <Route path="edit/serie/:serie_name" element={<SerieEdit />} /> */}
           <Route path="local-upload/serie" element={<Upload />} />
           <Route path="Manga/:manga_name/:manga_id" element={<MangaPage />} />
           <Route
@@ -34,6 +36,7 @@ const App = () => {
         />
       </Routes>
     </HashRouter>
+    // </ErrorBoundary>
   );
 };
 

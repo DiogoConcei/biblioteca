@@ -38,13 +38,14 @@ export interface Manga {
 
 export interface MangaChapter {
   id: number;
+  serieName: string;
   name: string;
   sanitizedName: string;
   archivesPath: string;
   chapterPath: string;
   createdAt: string;
   isRead: boolean;
-  isDownload: boolean;
+  isDownloaded: 'not_downloaded' | 'downloading' | 'downloaded';
   page: {
     lastPageRead: number;
     favoritePage: number;

@@ -1,11 +1,11 @@
-import { useSerieStore } from '../../store/seriesStore';
+import useSerieStore from '../../store/useSerieStore';
 import { X, House, Square, Maximize2, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import './Nav.scss';
 import { useState } from 'react';
+import './Nav.scss';
 
 export default function Nav() {
-  const resetStates = useSerieStore((state) => state.resetStates);
+  const resetStates = useSerieStore((state) => state.clearSerie);
 
   const [isFull, setIsFull] = useState<boolean>();
 

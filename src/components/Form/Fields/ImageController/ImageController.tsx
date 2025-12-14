@@ -31,7 +31,7 @@ export default function ImageController<T extends FieldValues>({
               />
             ) : (
               <span className={styles.alert}>
-                <ImagePlus color="#8963ba" />
+                <ImagePlus color="#8963ba" size={50} />
               </span>
             )}
 

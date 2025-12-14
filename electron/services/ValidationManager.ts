@@ -92,7 +92,14 @@ export default class ValidationManager extends FileSystem {
       }
 
       const chapter = chapters.find((ch) => ch.id === chapterId);
-      return chapter?.isDownload ?? false;
+
+      if (!chapter) return false;
+
+      if (chapter.isDownloaded === 'downloaded') {
+        return true;
+      } else {
+        return false;
+      }
     } catch (error) {
       console.error(
         `Erro ao verificar estado do capítulo ${chapterId}:`,

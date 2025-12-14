@@ -65,13 +65,13 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         ? await Promise.all(
             data.chapters.map(async (chapter) => {
               const encodedCover =
-                typeof chapter.coverPath === 'string'
-                  ? await imageManager.encodeImageToBase64(chapter.coverPath)
+                typeof chapter.coverImage === 'string'
+                  ? await imageManager.encodeImageToBase64(chapter.coverImage)
                   : '';
 
               return {
                 ...chapter,
-                coverPath: encodedCover,
+                coverImage: encodedCover,
               };
             }),
           )
@@ -80,15 +80,15 @@ export default function seriesHandlers(ipcMain: IpcMain) {
       const updatedChildSeries = data.childSeries
         ? await Promise.all(
             data.childSeries.map(async (tieIn) => {
-              const encodedCover = tieIn.childSerieCoverPath
+              const encodedCover = tieIn.childSerieCoverImage
                 ? await imageManager.encodeImageToBase64(
-                    tieIn.childSerieCoverPath,
+                    tieIn.childSerieCoverImage,
                   )
                 : '';
 
               return {
                 ...tieIn,
-                childSerieCoverPath: encodedCover,
+                childSerieCoverImage: encodedCover,
               };
             }),
           )
@@ -117,11 +117,11 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         ? await Promise.all(
             data.chapters.map(async (chapter) => {
               const encodedCover = await imageManager.encodeImageToBase64(
-                chapter.coverPath!,
+                chapter.coverImage!,
               );
               return {
                 ...chapter,
-                coverPath: encodedCover,
+                coverImage: encodedCover,
               };
             }),
           )
@@ -140,7 +140,9 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('serie:addToCollection', async (_event, dataPath: string) => {
     try {
-      const serieData = await storageManager.readSerieData(dataPath);
+      const serieData = (await storageManager.readSerieData(
+        dataPath,
+      )) as Literatures;
       const normalizedData =
         await storageManager.createNormalizedData(serieData);
       const result = await collectionManager.serieToCollection(normalizedData);
@@ -155,7 +157,9 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     'serie:rating',
     async (_event, dataPath: string, userRating: number) => {
       try {
-        const serieData = await storageManager.readSerieData(dataPath);
+        const serieData = (await storageManager.readSerieData(
+          dataPath,
+        )) as Literatures;
         const updateData = await userManager.ratingSerie(serieData, userRating);
         await collectionManager.updateSerieInAllCollections(serieData.id, {
           rating: updateData.metadata.rating,
@@ -178,7 +182,9 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('serie:favorite', async (_event, dataPath: string) => {
     try {
-      const serieData = await storageManager.readSerieData(dataPath);
+      const serieData = (await storageManager.readSerieData(
+        dataPath,
+      )) as Literatures;
       await userManager.favoriteSerie(serieData);
       return { success: true };
     } catch (e) {
@@ -194,7 +200,9 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         const dPath = serie_name
           ? await fileManager.getDataPath(serie_name)
           : dataPath;
-        const serieData = await storageManager.readSerieData(dPath);
+        const serieData = (await storageManager.readSerieData(
+          dPath,
+        )) as Literatures;
         await userManager.addToRecents(serieData);
         return { success: true };
       } catch (e) {
@@ -232,11 +240,11 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     try {
       const dataResponse = await storageManager.getSerieData(serieName);
 
-      if (!dataResponse.success) {
+      if (!dataResponse.success || !dataResponse.data) {
         throw new Error('Erro na requisição original');
       }
 
-      const oldData: Literatures = dataResponse.data;
+      const oldData: Literatures = dataResponse.data as Literatures;
 
       const newData = {
         ...oldData,

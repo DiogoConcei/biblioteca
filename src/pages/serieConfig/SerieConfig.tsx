@@ -1,7 +1,7 @@
 import './SerieConfig.scss';
 import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useSerieStore } from '../../store/seriesStore';
+import { useSerieStore } from '../../store/useSerieStore';
 import { Pencil, Trash } from 'lucide-react';
 import Loading from '../../components/Loading/Loading';
 import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';

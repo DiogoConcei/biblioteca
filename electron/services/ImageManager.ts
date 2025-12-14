@@ -13,6 +13,16 @@ export default class ImageManager extends FileSystem {
     super();
   }
 
+  public normalizeImageFilename(filePath: string): string {
+    const dir = path.dirname(filePath);
+    const ext = path.extname(filePath);
+    let baseName = path.basename(filePath, ext);
+
+    baseName = baseName.replace(/\.(pdf|zip|rar)/gi, '');
+
+    return path.join(dir, `${baseName}${ext}`);
+  }
+
   public async normalizeChapter(dirPath: string): Promise<void> {
     try {
       const entries = await fse.readdir(dirPath, { withFileTypes: true });
@@ -84,6 +94,7 @@ export default class ImageManager extends FileSystem {
       if (await fse.pathExists(destPath)) {
         return destPath;
       }
+
       imageInstance = sharp(normalizedPath);
       await imageInstance.webp({ quality: 85 }).toFile(destPath);
       return destPath;

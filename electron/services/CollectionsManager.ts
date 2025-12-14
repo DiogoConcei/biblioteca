@@ -2,9 +2,9 @@ import fse from 'fs-extra';
 
 import FileSystem from './abstract/FileSystem.ts';
 import {
-  Response,
+  APIResponse,
   NormalizedSerieData,
-} from '../../src/types/series.interfaces.ts';
+} from '../../src/types/auxiliar.interfaces.ts';
 import {
   Collection,
   SerieCollectionInfo,
@@ -19,7 +19,7 @@ export default class CollectionsManager extends FileSystem {
     super();
   }
 
-  public async getCollections(): Promise<Response<Collection[]>> {
+  public async getCollections(): Promise<APIResponse<Collection[]>> {
     try {
       const data: Collection[] = await fse.readJson(this.appCollections);
       return { success: true, data: data };
@@ -31,7 +31,7 @@ export default class CollectionsManager extends FileSystem {
 
   public async createCollection(
     collectionName: string,
-  ): Promise<Response<void>> {
+  ): Promise<APIResponse<void>> {
     try {
       const date = new Date();
 
@@ -43,9 +43,8 @@ export default class CollectionsManager extends FileSystem {
         collections = [];
       }
 
-      const canCreate = await this.validationManager.collectionExist(
-        collectionName,
-      );
+      const canCreate =
+        await this.validationManager.collectionExist(collectionName);
 
       if (!canCreate) {
         return { success: false };
@@ -70,7 +69,7 @@ export default class CollectionsManager extends FileSystem {
 
   public async serieToCollection(
     serieData: NormalizedSerieData,
-  ): Promise<Response<void>> {
+  ): Promise<APIResponse<void>> {
     try {
       for (const collectionName of serieData.collections) {
         await this.createCollection(collectionName);
@@ -134,7 +133,7 @@ export default class CollectionsManager extends FileSystem {
     }
   }
 
-  public async getFavorites(): Promise<Response<Collection>> {
+  public async getFavorites(): Promise<APIResponse<Collection>> {
     try {
       const response = await this.getCollections();
       const collection = response.data;
@@ -157,7 +156,7 @@ export default class CollectionsManager extends FileSystem {
   public async updateRecCollection(
     collectionData: Collection[],
     collectionPath: string,
-  ): Promise<Response<void>> {
+  ): Promise<APIResponse<void>> {
     try {
       await fse.writeJson(collectionPath, collectionData, { spaces: 2 });
       return { success: true };
@@ -170,7 +169,7 @@ export default class CollectionsManager extends FileSystem {
   public async updateFavCollection(
     collectionData: Collection[],
     collectionPath: string,
-  ): Promise<Response<void>> {
+  ): Promise<APIResponse<void>> {
     try {
       await fse.writeJson(collectionPath, collectionData, { spaces: 2 });
       return { success: true };
@@ -183,7 +182,7 @@ export default class CollectionsManager extends FileSystem {
   public async updateSerieInAllCollections(
     serieId: number,
     updatedData: Partial<SerieCollectionInfo>,
-  ): Promise<Response<void>> {
+  ): Promise<APIResponse<void>> {
     try {
       const fileData: Collection[] = await fse.readJson(this.appCollections);
 

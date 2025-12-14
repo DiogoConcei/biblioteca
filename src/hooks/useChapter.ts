@@ -1,24 +1,24 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  UseChapterParams,
-  useChapterReturn,
-} from '../types/customHooks.interfaces';
+import useUIStore from '../store/useUIStore';
+import useSerieStore from '../store/useSerieStore';
+import { useEffect, useState } from 'react';
+import { ChapterView } from '../types/auxiliar.interfaces';
+import useSerie from '../hooks/useSerie';
+import { useParams } from 'react-router-dom';
 
-export default function useChapter({
-  serieName,
-  chapterId,
-  page,
-}: UseChapterParams): useChapterReturn {
-  const [currentPage, setCurrentPage] = useState<number>(page);
+export default function useChapter(
+  serieName: string,
+  chapterId: number,
+): ChapterView {
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const setError = useUIStore((state) => state.setError);
   const [pages, setPages] = useState<string[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [downloaded, setDownloaded] = useState<boolean>(false);
-  const isNextDownloaded = useRef<boolean>(false);
-  const isPrevDownloaded = useRef<boolean>(false);
 
-  const fetchChapter = useCallback(async () => {
-    setLoading(true);
+  const chapters = useSerieStore((state) => state.chapters);
+  const chapter = chapters.find((ch) => ch.id === chapterId) || chapters[0];
+
+  const fetchPages = async () => {
+    setIsLoading(true);
     setError(null);
 
     try {
@@ -26,6 +26,7 @@ export default function useChapter({
         serieName,
         chapterId,
       );
+
       const data = response.data;
 
       if (!data || data.length === 0) {
@@ -35,60 +36,29 @@ export default function useChapter({
       }
 
       setPages(data);
-      setCurrentPage(page);
-
-      const checks: Promise<[boolean, boolean]> = Promise.all([
-        await window.electronAPI.download.checkDownload(
-          serieName,
-          chapterId + 1,
-        ),
-        chapterId > 1
-          ? await window.electronAPI.download.checkDownload(
-              serieName,
-              chapterId - 1,
-            )
-          : Promise.resolve(false),
-      ]).then(([next, prev]) => [next, prev]);
-
-      const [next, prev] = await checks;
-      isNextDownloaded.current = next;
-      isPrevDownloaded.current = prev;
+      setCurrentPage(chapter.page.lastPageRead || 1);
     } catch (e) {
-      console.error(e);
-      setError('Falha em recuperar capítulo. Tente novamente');
-      setPages([]);
+      setIsLoading(false);
+      setError('Erro ao carregar as páginas do capítulo.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [serieName, chapterId, page]);
+  };
 
   useEffect(() => {
-    fetchChapter();
-  }, [fetchChapter]);
-
-  const markNextDownloaded = () => {
-    isNextDownloaded.current = true;
-  };
-
-  const markPrevDownloaded = () => {
-    isPrevDownloaded.current = true;
-  };
+    fetchPages();
+  }, [serieName, chapterId]);
 
   return {
-    serieName,
-    chapterId,
-    currentPage,
+    id: chapter.id,
+    serieName: chapter.serieName,
+    chapterName: chapter.name,
+    isLoading,
+    setIsLoading,
+    isDownloaded: chapter.isDownloaded,
     pages,
-    quantityPages: pages.length - 1,
-    isLoading: loading,
-    error,
-    downloaded,
-    setDownloaded,
-    isNextDownloaded,
-    isPrevDownloaded,
-    markNextDownloaded,
-    markPrevDownloaded,
-    setError,
+    quantityPages: pages.length,
+    currentPage,
     setCurrentPage,
   };
 }

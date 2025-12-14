@@ -1,48 +1,61 @@
+import { useState } from 'react';
 import { Tag } from 'lucide-react';
 import { Controller, FieldValues } from 'react-hook-form';
 import { GenericControllerProps } from '../../../../types/auxiliar.interfaces';
-import './TagsField.scss';
+import styles from './TagsField.module.scss';
 
 export default function TagsField<T extends FieldValues>({
   control,
   name,
 }: GenericControllerProps<T>) {
+  const [inputValue, setInputValue] = useState<string>('');
+
   return (
     <Controller
       name={name}
       control={control}
       render={({ field }) => (
-        <div className="tags-info">
-          <h2 className="form-subtitle">Tags:</h2>
-          <div className="tag-input">
+        <div className={styles.tagsInfo}>
+          <h2 className={styles.formSubtitle}>Tags:</h2>
+
+          <div className={styles.tagInput}>
             <input
               type="text"
               placeholder="Digite tags separadas por vírgula"
-              value={field.value.join(', ')}
-              onChange={(e) => {
-                const tagArray = e.target.value
-                  .split(',')
-                  .map((t) => t.trim())
-                  .filter((t) => t !== '');
-                field.onChange(tagArray);
-              }}
+              value={inputValue}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
                 }
+
+                if (e.key === ',') {
+                  e.preventDefault();
+
+                  const novaTag = inputValue.trim();
+                  if (!novaTag) return;
+
+                  if (!field.value.includes(novaTag)) {
+                    field.onChange([...field.value, novaTag]);
+                    setInputValue('');
+                  }
+                }
               }}
-              onBlur={() => {
-                field.onChange(field.value);
-              }}
+              onChange={(e) => setInputValue(e.target.value)}
+              onBlur={() => field.onChange(field.value)}
             />
           </div>
-          <div className="form-tag-preview">
-            <h3 className="form-subtitle">Tags Inseridas:</h3>
-            <ul className="tag-list">
+
+          <div className={styles.formTagPreview}>
+            <h3 className={styles.formSubtitle}>Tags Inseridas:</h3>
+
+            <ul className={styles.tagList}>
               {field.value.map((tag: string, idx: number) => (
-                <li key={idx}>
-                  <span>
-                    <Tag size={16} /> {tag}
+                <li key={idx} className={styles.tagItemWrapper}>
+                  <span className={styles.tagItem}>
+                    <Tag size={16} className={styles.tagIcon} />
+
+                    <span className={styles.tagText}>{tag}</span>
+
                     <button
                       type="button"
                       onClick={() => {
@@ -51,11 +64,9 @@ export default function TagsField<T extends FieldValues>({
                         );
                         field.onChange(novaLista);
                       }}
-                      className="remove-tag"
+                      className={styles.removeTag}
                       aria-label={`Remover tag ${tag}`}
-                    >
-                      &times;
-                    </button>
+                    ></button>
                   </span>
                 </li>
               ))}

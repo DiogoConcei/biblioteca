@@ -117,7 +117,6 @@ export default function downloadHandlers(ipcMain: IpcMain) {
     async (_event, serieName: string, chapterId: number) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
-        const LiteratureForm = await fileManager.foundLiteratureForm(dataPath);
         const serieData = await storageManager.readSerieData(dataPath);
 
         if (!serieData?.chapters) {

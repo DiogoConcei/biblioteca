@@ -191,12 +191,12 @@ export default class StorageManager extends FileSystem {
     chapter: LiteratureChapter,
   ) {
     try {
-      await fse.remove(chapter.chapterPath);
-
-      chapter.isDownload = false;
-      chapter.chapterPath = '';
-
-      await this.updateSerieData(serieData);
+      if (chapter.chapterPath && (await fse.pathExists(chapter.chapterPath))) {
+        await fse.remove(chapter.chapterPath);
+        chapter.isDownloaded = 'not_downloaded';
+        chapter.chapterPath = '';
+        await this.updateSerieData(serieData);
+      }
     } catch (e) {
       console.error('Falha em deletar capítulos', e);
       throw e;
@@ -309,22 +309,31 @@ export default class StorageManager extends FileSystem {
 
   public async getSerieData(
     serieName: string,
-  ): Promise<APIResponse<Literatures>> {
+  ): Promise<APIResponse<Literatures | TieIn>> {
     try {
-      const allDataPath = await this.fileManager.getDataPaths();
-      const serie = allDataPath.find(
+      const allDataPaths = await this.fileManager.getDataPaths();
+      const serie = allDataPaths.find(
         (pValue) => serieName === path.basename(pValue, path.extname(pValue)),
       );
 
-      if (!serie)
-        return { success: false, data: null, error: 'serie não encontrada' };
+      if (!serie) {
+        return { success: false, error: 'Série não encontrada' };
+      }
 
       const serieData = await this.readSerieData(serie);
 
+      if (!serieData) {
+        return {
+          success: false,
+          data: undefined,
+          error: 'Falha ao ler dados da série',
+        };
+      }
+
       return { success: true, data: serieData };
     } catch (e) {
-      console.error(`Falha em econtrar a serie: ${serieName}`);
-      return { success: false, error: e };
+      console.error('Erro ao obter dados da série:', e);
+      return { success: false, error: 'Erro ao obter dados da série' };
     }
   }
 }

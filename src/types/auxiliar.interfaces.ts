@@ -1,6 +1,6 @@
-import { Manga, MangaChapter } from 'electron/types/manga.interfaces';
-import { Book, BookPage } from 'electron/types/book.interfaces';
-import { Comic, ComicEdition } from 'electron/types/comic.interfaces';
+import { Manga, MangaChapter } from '../../electron/types/manga.interfaces';
+import { Comic, ComicEdition } from '../../electron/types/comic.interfaces';
+import { Collection } from './collections.interfaces';
 import {
   UseFormRegister,
   FieldError,
@@ -10,7 +10,7 @@ import {
 } from 'react-hook-form';
 import { SerieEditForm } from './series.interfaces';
 
-export type LiteratureChapter = ComicEdition | BookPage | MangaChapter;
+export type LiteratureChapter = ComicEdition | MangaChapter;
 
 export type LiteraturesAttributes =
   | string
@@ -30,7 +30,7 @@ export type LiteraturesAttributes =
 
 export type DownloadStatus = 'not_downloaded' | 'downloading' | 'downloaded';
 
-export type Literatures = Manga | Book | Comic;
+export type Literatures = Manga | Comic;
 
 export interface NormalizedSerieData {
   id: number;
@@ -79,6 +79,13 @@ export type LiteratureForms = 'Manga' | 'Quadrinho';
 
 export type LiteratureChapterAttributes = string | number | boolean;
 
+export interface FormTextInputProps {
+  name: string;
+  msg: string;
+  register: UseFormRegister<any>;
+  error?: FieldError;
+}
+
 export interface FormInputProps {
   name: string;
   register: UseFormRegister<any>;
@@ -97,8 +104,22 @@ export interface GenericControllerProps<T extends FieldValues = FieldValues> {
 
 export interface FavoriteProps {
   serie: Literatures;
+  setFavorites: React.Dispatch<React.SetStateAction<Collection | undefined>>;
 }
 
 export interface RatingProps {
   serie: Literatures;
+}
+
+export interface ChapterView {
+  id: number;
+  serieName: string;
+  chapterName: string;
+  isLoading: boolean;
+  isDownloaded: DownloadStatus;
+  pages: string[];
+  quantityPages: number;
+  currentPage: number;
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }

@@ -10,9 +10,8 @@ import StatusField from '../../components/Form/Fields/StatusField/StatusField';
 import CollectionsField from '../../components/Form/Fields/CollectionsField/CollectionsField';
 import TagsField from '../../components/Form/Fields/TagsField/TagsField';
 import Loading from '../../components/Loading/Loading';
-
 import { SerieData, SerieForm } from '../../types/series.interfaces';
-import './Upload.scss';
+import styles from './Upload.module.scss';
 
 export default function Upload() {
   const location = useLocation();
@@ -87,48 +86,49 @@ export default function Upload() {
 
   return (
     <article>
-      <section className="sec-form">
+      <section className={styles['sec-form']}>
         {newSeries.length > 0 && (
-          <span className="series-title">
+          <span>
             <h1>Personalizando série: {newSeries[currentIndex].name}</h1>
           </span>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="form-view">
-          <div className="image-upload">
-            <span>Capa de exibição</span>
-
+        <form onSubmit={handleSubmit(onSubmit)} className={styles['form-view']}>
+          <div className={styles['image-upload']}>
             <ImageController control={control} name={'cover_path'} />
           </div>
 
-          <div className="form-container">
-            <div className="text-info">
-              {/* Label de nome da série */}
-              <TextInput name="name" register={register} error={errors.name} />
+          <div className={styles['form-container']}>
+            <div className={styles['text-info']}>
+              <TextInput
+                name="name"
+                register={register}
+                error={errors.name}
+                msg={'Nome da série'}
+              />
 
-              {/* Label de genêro da série */}
               <TextInput
                 name="genre"
                 register={register}
                 error={errors.genre}
+                msg={'Gênero da série'}
               />
 
-              {/* Label de autor da série */}
               <TextInput
                 name="author"
                 register={register}
                 error={errors.author}
+                msg={'Autor'}
               />
 
-              {/* Label de idioma da série */}
               <TextInput
                 name="language"
                 register={register}
                 error={errors.language}
+                msg={'Idioma'}
               />
             </div>
 
-            {/* Label de LiteratureForm da série */}
             <LiteratureField
               name="literatureForm"
               register={register}
@@ -137,21 +137,18 @@ export default function Upload() {
 
             <TagsField control={control} name="tags" />
 
-            {/* Label de autoBackup da série */}
             <BackupField
               name="autoBackup"
               register={register}
               error={errors.autoBackup}
             />
 
-            {/* Label de Privacy da série */}
             <PrivacyField
               name="privacy"
               register={register}
               error={errors.privacy}
             />
 
-            {/* Label de Status da série */}
             <StatusField
               name="readingStatus"
               register={register}
@@ -160,7 +157,7 @@ export default function Upload() {
 
             <CollectionsField control={control} name="collections" />
 
-            <div className="navigation-buttons">
+            <div className={styles['navigation-buttons']}>
               <button
                 type="button"
                 onClick={handlePrev}
@@ -183,13 +180,3 @@ export default function Upload() {
     </article>
   );
 }
-
-// if (response.success && currentIndex < newSeries.length) {
-//     setIsLoading(false);
-//     navigate('/');
-//   }
-
-//   if (response.success) {
-//     setIsLoading(false);
-//     setCurrentIndex((prev) => prev + 1);
-//   }

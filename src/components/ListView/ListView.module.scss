@@ -1,4 +1,4 @@
-@use "../../styles/variables" as *;
+@use '../../styles/variables' as *;
 
 .Control {
   display: flex;
@@ -105,6 +105,24 @@
   @keyframes spin {
     100% {
       transform: rotate(360deg);
+    }
+  }
+
+  .iconDownloaded {
+    color: #000;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: $hover-shining;
+    }
+  }
+
+  .iconNotDownloaded {
+    color: #fcf7f8;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: $hover-shining;
     }
   }
 }

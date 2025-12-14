@@ -48,7 +48,7 @@ export default class UserManager extends FileSystem {
         throw new Error('Não foi possível carregar as coleções do usuário.');
       }
 
-      const collections = response.data;
+      const collections = response.data as Collection[];
       const recCollection = collections.find((col) => col.name === 'Recentes');
 
       if (!recCollection) {

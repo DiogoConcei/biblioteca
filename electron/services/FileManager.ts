@@ -10,10 +10,17 @@ export default class FileManager extends FileSystem {
   public sanitizeFilename(fileName: string): string {
     return fileName
       .replace(/\s+/g, '_')
+
+      .replace(/[<>:"/\\|?*\x00-\x1F#!]/g, '_')
       .replace(/[^a-zA-Z0-9._-]/g, '_')
+
       .replace(/_{2,}/g, '_')
+
+      .replace(/\.{2,}/g, '.')
+
       .replace(/^-+|-+$/g, '')
-      .replace(/\.{2,}/g, '.');
+
+      .replace(/[. ]+$/g, '');
   }
 
   public async orderComic(filesPath: string[]): Promise<string[]> {

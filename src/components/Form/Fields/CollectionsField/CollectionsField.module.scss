@@ -1,75 +1,93 @@
-@use '../../../../styles//variables' as *;
+@use '../../../../styles/variables' as *;
 
-.form-container {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: $spacing-4;
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  width: 450px;
+}
 
-  .subtitle {
-    font-size: $font-lg;
-    color: $indian-red;
+.subtitle {
+  font-size: $font-lg;
+  color: $indian-red;
+}
+
+/* ===== LISTA ===== */
+
+.collectionList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+  width: 400px;
+  height: 55px;
+  padding: $spacing-2;
+  border: 2px solid $amethyst;
+  scrollbar-width: none;
+  border-radius: $radius-md;
+  overflow-x: auto;
+}
+
+/* ===== ITEM ===== */
+
+.collectionItem {
+  display: flex;
+  align-items: center;
+
+  max-width: 200px;
+  padding: 8px 12px;
+  border-radius: $radius-md;
+
+  border: 2px solid $amethyst;
+  color: $snow;
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+
+  input {
+    display: none;
   }
 
-  .form-collection {
-    display: flex;
-    flex-flow: row wrap;
+  &:hover {
+    background: rgba($amethyst, 0.1);
+  }
+}
+
+.checked {
+  background: $amethyst;
+  color: $snow;
+}
+
+/* ===== TEXTO ===== */
+
+.collectionText {
+  flex: 1;
+  min-width: 0;
+
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ===== ADD ===== */
+
+.addCollection {
+  display: flex;
+  gap: $spacing-2;
+  font-size: $font-lg;
+
+  input[type='text'] {
+    @include pattern-input;
     border: 1px solid $amethyst;
-    overflow: hidden;
-    border-radius: $radius-md;
-    padding: $spacing-4;
-    width: 400px;
-    height: 250px;
-    gap: $spacing-10;
-
-    .collectionName {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: $spacing-3;
-      border: 2px solid $amethyst;
-      border-radius: $radius-md;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      background-color: transparent;
-      color: $indian-red;
-    }
-
-    input[type='checkbox'] {
-      display: none;
-
-      &:checked + label {
-        background-color: $amethyst;
-        color: $snow;
-      }
-    }
+    font-size: $font-lg;
+    flex: 1;
   }
 
-  .form-add-collection {
-    display: flex;
-    flex-flow: row nowrap;
-    gap: $spacing-3;
-
-    input[type='text'] {
-      display: flex;
-      border-radius: $radius-sm;
-      border: 1px solid $amethyst;
-      color: $snow;
-      background: $gunmetal;
-
-      &::placeholder {
-        color: $indian-red;
-        text-align: center;
-        font-size: $font-sm;
-      }
-    }
-
-    button {
-      color: $snow;
-      cursor: pointer;
-      padding: $spacing-3;
-      border-radius: $radius-md;
-      background: $indian-red;
-      border: 1px solid $indian-red;
-    }
+  button {
+    @include interactive-buttons;
+    color: $snow;
+    padding: $spacing-2;
+    font-size: $font-lg;
+    border-radius: $radius-md;
+    background: $indian-red;
   }
 }

@@ -20,16 +20,16 @@ export default function CollectionsField<T extends FieldValues>({
       render={({ field }) => {
         const value = (field.value ?? []) as string[];
 
-        // Junta as coleções disponíveis com as que já estão no form, sem duplicatas
         const allCollections = Array.from(
           new Set([...availableCollections, ...value]),
         );
 
-        const handleCheckboxChange = (collection: string, checked: boolean) => {
-          const updated = checked
-            ? [...value, collection]
-            : value.filter((c) => c !== collection);
-          field.onChange(updated);
+        const toggleCollection = (collection: string) => {
+          field.onChange(
+            value.includes(collection)
+              ? value.filter((c) => c !== collection)
+              : [...value, collection],
+          );
         };
 
         const handleButtonClick = () => {
@@ -38,8 +38,7 @@ export default function CollectionsField<T extends FieldValues>({
             newCollection &&
             !availableCollections.includes(newCollection)
           ) {
-            const updatedCollections = [...value, newCollection];
-            field.onChange(updatedCollections);
+            field.onChange([...value, newCollection]);
             setAvailableCollections([...availableCollections, newCollection]);
             setNewCollection('');
           }
@@ -47,38 +46,47 @@ export default function CollectionsField<T extends FieldValues>({
         };
 
         return (
-          <div className={styles['form-container']}>
-            <h2 className={styles.subtitle}>Incluir na coleção:</h2>
+          <div className={styles.formContainer}>
+            <h2 className={styles.subtitle}>Incluir na coleção</h2>
 
-            <div className={styles['form-collection']}>
-              {allCollections.map((collection, index) => (
-                <span key={index}>
-                  <input
-                    type="checkbox"
-                    value={collection}
-                    checked={value.includes(collection)}
-                    onChange={(e) =>
-                      handleCheckboxChange(collection, e.target.checked)
-                    }
-                  />
-                  <label className={styles.collectionName}>{collection}</label>
-                </span>
-              ))}
+            {/* ===== LISTA DE COLEÇÕES ===== */}
+            <div className={styles.collectionList}>
+              {allCollections.map((collection) => {
+                const checked = value.includes(collection);
+
+                return (
+                  <label
+                    key={collection}
+                    className={`${styles.collectionItem} ${
+                      checked ? styles.checked : ''
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleCollection(collection)}
+                    />
+
+                    <span className={styles.collectionText}>{collection}</span>
+                  </label>
+                );
+              })}
             </div>
 
-            <div className={styles['form-add-collection']}>
+            {/* ===== ADD NOVA COLEÇÃO ===== */}
+            <div className={styles.addCollection}>
               {isCreatingCollection && (
                 <input
                   type="text"
                   value={newCollection}
-                  placeholder="Digite o nome da nova coleção"
+                  placeholder="Nova coleção"
                   onChange={(e) => setNewCollection(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleButtonClick()}
                 />
               )}
 
               <button type="button" onClick={handleButtonClick}>
-                {isCreatingCollection ? 'Salvar Coleção' : 'Adicionar coleção'}
+                {isCreatingCollection ? 'Salvar coleção' : 'Adicionar coleção'}
               </button>
             </div>
           </div>

@@ -2,22 +2,21 @@ import { useState } from 'react';
 import { Download } from 'lucide-react';
 
 import useDownload from '../../hooks/useDownload';
-import useSerie from '../../hooks/useSerie';
 import ErrorScreen from '../ErrorScreen/ErrorScreen';
 import { downloadButtonProps } from '../../types/components.interfaces';
 
 import styles from './DownloadButton.module.scss';
-import { useSerieStore } from '../../store/seriesStore';
+import useSerieStore from '../../store/useSerieStore';
+import useUIStore from '../../store/useUIStore';
 
 export default function DownloadButton({ serie }: downloadButtonProps) {
-  const error = useSerieStore((state) => state.error);
-  const setError = useSerieStore((state) => state.setError);
-  const [selectedQuantity, setSelectedQuantity] = useState<number>(0);
+  const chapters = useSerieStore((state) => state.chapters);
+  const error = useUIStore((state) => state.error);
+  const setError = useUIStore((state) => state.setError);
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const { updateChapter } = useSerie(serie.name);
-  const { downloadMultipleChapters: downloadChapters } = useDownload({
-    setError,
-  });
+  const updateChapter = useSerieStore((state) => state.updateChapter);
+
+  const { downloadMultipleChapters } = useDownload();
 
   const options = [1, 5, 10, 20, 25];
 
@@ -26,29 +25,38 @@ export default function DownloadButton({ serie }: downloadButtonProps) {
   };
 
   const onSelect = async (quantity: number) => {
-    setSelectedQuantity(quantity);
-
+    console.log('selecionado', quantity);
     if (quantity > 0) {
       const startIndex = serie.metadata.lastDownload;
       const endIndex = startIndex + quantity;
-      const chapters: string[] = [];
+      const downloadingChapters = chapters.slice(startIndex, endIndex);
 
-      for (let i = startIndex; i < endIndex; i++) {
-        const path = `chapters.${i}.isDownload`;
-        updateChapter(i, path, true);
-        chapters.push(path);
+      for (let i = 0; i < downloadingChapters.length; i++) {
+        console.log(i, downloadingChapters[i].id);
+        console.log('baixando', downloadingChapters[i].id);
+        updateChapter(downloadingChapters[i].id, 'isDownloaded', 'downloading');
       }
 
-      const response = await downloadChapters(serie.dataPath, quantity);
+      const response = await downloadMultipleChapters(quantity);
 
       if (!response) {
-        for (let i = startIndex; i < endIndex; i++) {
-          const path = `chapters.${i}.isDownload`;
-          updateChapter(i, path, false);
-          chapters.push(path);
+        for (let i = 0; i < downloadingChapters.length; i++) {
+          updateChapter(
+            downloadingChapters[i].id,
+            'isDownloaded',
+            'not_downloaded',
+          );
         }
 
         setError('Falha ao baixar capítulos');
+      } else {
+        for (let i = 0; i < downloadingChapters.length; i++) {
+          updateChapter(
+            downloadingChapters[i].id,
+            'isDownloaded',
+            'downloaded',
+          );
+        }
       }
 
       setIsOpen(false);

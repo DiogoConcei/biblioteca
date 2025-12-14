@@ -1,9 +1,6 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
-import {
-  Collection,
-  SerieCollectionInfo,
-} from "../types/collections.interfaces";
+import { Collection } from '../types/collections.interfaces';
 
 interface CollectionState {
   collections: Collection[] | null;
@@ -26,12 +23,12 @@ export const useCollectionStore = create<CollectionState>((set) => ({
 
   setFav: (allCollections: Collection[]) =>
     set({
-      favorites: allCollections.find((collect) => collect.name === "Favoritas"),
+      favorites: allCollections.find((collect) => collect.name === 'Favoritas'),
     }),
 
   setRecents: (allCollections: Collection[]) =>
     set({
-      recents: allCollections.find((collect) => collect.name === "Recentes"),
+      recents: allCollections.find((collect) => collect.name === 'Recentes'),
     }),
 
   fetchCollections: async () => {
@@ -46,7 +43,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
         return [];
       }
     } catch (e) {
-      throw new Error("Falhou");
+      throw new Error('Falhou');
     }
   },
 }));

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { data, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { visualizerProps } from '../../types/components.interfaces';
-import { useSerieStore } from '../../store/seriesStore';
+import useSerieStore from '../../store/useSerieStore';
 import './ViewerMenu.scss';
 import {
   House,
@@ -20,7 +20,7 @@ export default function ViewerMenu({
   prevChapter,
   currentPage,
 }: visualizerProps) {
-  const resetStates = useSerieStore((state) => state.resetStates);
+  const clearSerie = useSerieStore((state) => state.clearSerie);
   const serie = useSerieStore((state) => state.serie);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -91,7 +91,7 @@ export default function ViewerMenu({
 
     await window.electronAPI.series.recentSerie(serie?.dataPath!, serie_name!);
 
-    resetStates();
+    clearSerie();
     navigate('/');
   }, [serie_name, chapter_id, currentPage, navigate]);
 

@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from "react";
-import { useChapterReturn } from "../types/customHooks.interfaces";
+import { useState, useRef, useEffect } from 'react';
+import { ChapterView } from '../types/auxiliar.interfaces';
 
-export default function useDrag(chapter: useChapterReturn) {
+export default function useDrag(chapter: ChapterView) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const isDragging = useRef(false);
   const elementRef = useRef<HTMLImageElement>(null);
@@ -29,16 +29,16 @@ export default function useDrag(chapter: useChapterReturn) {
       setPosition({ x: 0, y: 0 });
     };
 
-    element.addEventListener("mousedown", handleMouseDown);
-    element.addEventListener("mousemove", handleMouseMove);
-    element.addEventListener("mouseup", handleMouseUp);
-    element.addEventListener("mouseleave", handleMouseUp);
+    element.addEventListener('mousedown', handleMouseDown);
+    element.addEventListener('mousemove', handleMouseMove);
+    element.addEventListener('mouseup', handleMouseUp);
+    element.addEventListener('mouseleave', handleMouseUp);
 
     return () => {
-      element.removeEventListener("mousedown", handleMouseDown);
-      element.removeEventListener("mousemove", handleMouseMove);
-      element.removeEventListener("mouseup", handleMouseUp);
-      element.removeEventListener("mouseleave", handleMouseUp);
+      element.removeEventListener('mousedown', handleMouseDown);
+      element.removeEventListener('mousemove', handleMouseMove);
+      element.removeEventListener('mouseup', handleMouseUp);
+      element.removeEventListener('mouseleave', handleMouseUp);
     };
   }, [chapter.isLoading, chapter.currentPage]);
 

@@ -78,7 +78,9 @@ declare global {
           chapter_id: number,
           page_number: number,
         ) => Promise<APIResponse<void>>;
-        acessLastRead: (serieName: string) => Promise<APIResponse<string>>;
+        acessLastRead: (
+          serieName: string,
+        ) => Promise<APIResponse<[string, Literatures]>>;
         getNextChapter: (
           serieName: string,
           chapter_id: number,

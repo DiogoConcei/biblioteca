@@ -5,6 +5,7 @@ import MangaManager from '../services/MangaManager';
 import StorageManager from '../services/StorageManager';
 import ComicManager from '../services/ComicManager';
 import UserManager from '../services/UserManager.ts';
+import ImageManager from '../services/ImageManager.ts';
 import { Literatures } from '../../src/types/auxiliar.interfaces.ts';
 
 export default function chaptersHandlers(ipcMain: IpcMain) {
@@ -13,6 +14,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
   const mangaManager = new MangaManager();
   const comicManager = new ComicManager();
   const userManager = new UserManager();
+  const imageManager = new ImageManager();
 
   ipcMain.handle(
     'chapter:mark-read',
@@ -113,7 +115,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
             `Último capítulo não encontrado para a série ${serieData.name}`,
           );
 
-        if (!lastChapter.isDownload) {
+        if (!lastChapter.isDownloaded) {
           switch (literatureForm) {
             case 'Mangas':
               await mangaManager.createEditionById(
@@ -132,9 +134,16 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
           }
         }
 
+        const processedData = {
+          ...serieData,
+          coverImage: await imageManager.encodeImageToBase64(
+            serieData.coverImage,
+          ),
+        };
+
         const url = `/${encodeURI(serieData.name)}/${serieData.id}/${encodeURI(lastChapter.name)}/${lastChapter.id}/${lastChapter.page.lastPageRead}/${lastChapter.isRead}`;
 
-        return { success: true, data: url };
+        return { success: true, data: [url, processedData] };
       } catch (e) {
         console.error(`Erro ao acessar último capítulo lido: ${e}`);
         return { success: false, error: String(e) };
@@ -150,7 +159,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         const serieData = await storageManager.readSerieData(dataPath!);
 
         const nextChapter = serieData.chapters?.find(
-          (chapter) => chapter.id === chapter_id + 1,
+          (chapter) => chapter.id === chapter_id,
         );
 
         if (!nextChapter || nextChapter.id > serieData.totalChapters) {
@@ -161,7 +170,6 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         }
 
         const url = `/${serieData.name}/${serieData.id}/${nextChapter.name}/${nextChapter.id}/${nextChapter.page.lastPageRead}/${nextChapter.isRead}`;
-        console.log(url);
 
         return { success: true, data: url };
       } catch (e) {
@@ -181,7 +189,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         }
         const serieData = await storageManager.readSerieData(dataPath);
         const prevChapter = serieData.chapters?.find(
-          (chapter) => chapter.id === chapter_id - 1,
+          (chapter) => chapter.id === chapter_id,
         );
 
         if (!prevChapter || prevChapter.id < 0) {

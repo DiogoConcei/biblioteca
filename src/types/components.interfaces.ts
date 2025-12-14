@@ -3,6 +3,7 @@ import {
   Literatures,
   LiteraturesAttributes,
   LiteratureChapterAttributes,
+  ChapterView,
 } from './auxiliar.interfaces';
 import { SerieForm, SerieData } from './series.interfaces';
 
@@ -56,7 +57,6 @@ export interface ComicCardsProps {
 
 export interface downloadButtonProps {
   serie: Literatures;
-  updateSerie: (path: string, newValue: LiteraturesAttributes) => void;
 }
 
 export interface GlobalContext {

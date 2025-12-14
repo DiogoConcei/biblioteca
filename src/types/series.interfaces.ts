@@ -1,6 +1,5 @@
 import { Comic } from 'electron/types/comic.interfaces';
 import { Manga } from 'electron/types/manga.interfaces';
-import { Book } from 'electron/types/book.interfaces';
 import { LiteratureChapter } from './auxiliar.interfaces';
 
 export interface SerieData {
@@ -70,5 +69,5 @@ export interface SerieEditForm {
 }
 
 export interface SeriesTypes {
-  serie: Comic | Manga | Book;
+  serie: Comic | Manga;
 }

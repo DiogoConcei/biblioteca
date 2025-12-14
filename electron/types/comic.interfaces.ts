@@ -45,6 +45,7 @@ export interface TieIn {
   dataPath: string;
   coverImage: string;
   totalChapters: number;
+  chaptersRead: number;
   literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
   chapters?: ComicEdition[];
   readingData: {
@@ -66,21 +67,22 @@ export interface ComicTieIn {
   childSerieArchivesPath: string;
   childSerieDataPath: string;
   compiledComic: boolean;
-  childSerieCoverPath: string;
+  childSerieCoverImage: string;
   id: number;
   parentId?: number;
 }
 
 export interface ComicEdition {
   id: number;
+  serieName: string;
   name: string;
   sanitizedName: string;
-  coverPath?: string;
+  coverImage?: string;
   archivesPath: string;
   chapterPath: string;
   createdAt: string;
   isRead: boolean;
-  isDownload: boolean;
+  isDownloaded: 'not_downloaded' | 'downloading' | 'downloaded';
   page: {
     lastPageRead: number;
     favoritePage: number;
