@@ -4,6 +4,7 @@ import FileManager from './FileManager.ts';
 import fse from 'fs-extra';
 import path from 'path';
 import { AppConfig } from '../../src/types/auxiliar.interfaces.ts';
+import { Comic } from '../types/comic.interfaces.ts';
 
 export default class SystemManager extends FileSystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -112,7 +113,6 @@ export default class SystemManager extends FileSystem {
       dataPaths.map((rawData) => this.storageManager.readSerieData(rawData)),
     );
 
-    // Ordena para facilitar atribuição sequencial
     rawSeries.sort((a, b) => {
       if (a.id == null) return 1;
       if (b.id == null) return -1;
@@ -131,11 +131,9 @@ export default class SystemManager extends FileSystem {
         !usedIds.has(item.id);
 
       if (isValidNumber) {
-        // mantém ID, mas atualiza controle
         usedIds.add(item.id);
         lastId = Math.max(lastId, item.id);
       } else {
-        // atribui próximo ID sequencial
         lastId += 1;
         item.id = lastId;
         usedIds.add(item.id);
@@ -146,9 +144,37 @@ export default class SystemManager extends FileSystem {
 
     await this.setMangaId(lastId);
   }
+
+  public async fixChildSeriePaths(dataPath: string): Promise<void> {
+    const serieData = (await this.storageManager.readSerieData(
+      dataPath,
+    )) as Comic;
+    const childSeries = serieData.childSeries;
+
+    if (!serieData.metadata.compiledComic || !childSeries) {
+      console.log('Não é uma série compilada. (não possui Tie-Ins)');
+      return;
+    }
+
+    const archivesPath = serieData.archivesPath;
+    for (const child of childSeries) {
+      const result = await this.fileManager.findPath(
+        archivesPath,
+        child.serieName,
+      );
+
+      if (result) {
+        child.archivesPath = result;
+      }
+    }
+
+    await this.storageManager.updateSerieData(serieData);
+  }
 }
 
 // (async () => {
 //   const systemManager = new SystemManager();
-//   await systemManager.fixId();
+//   await systemManager.fixChildSeriePaths(
+//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Comics\\01 - Pré Vingadores A Queda.json',
+//   );
 // })();

@@ -37,8 +37,6 @@ export default function useNavigation(currentChapter: ChapterView) {
   const nextChapter = async () => {
     if (currentChapter.isLoading) return;
 
-    console.log('Passou aqui');
-
     currentChapter.setIsLoading(true);
 
     const nextChapterId = currentChapter.id + 1;
@@ -91,7 +89,6 @@ export default function useNavigation(currentChapter: ChapterView) {
 
       if (prevChapter.isDownloaded === 'not_downloaded') {
         await downloadInReading(prevChapter);
-        console.log('caiu aqui no prev');
       }
 
       const response = await window.electronAPI.chapters.getPrevChapter(

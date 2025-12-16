@@ -63,11 +63,11 @@ export interface TieIn {
 }
 
 export interface ComicTieIn {
-  childSerieName: string;
-  childSerieArchivesPath: string;
-  childSerieDataPath: string;
+  serieName: string;
+  archivesPath: string;
+  dataPath: string;
   compiledComic: boolean;
-  childSerieCoverImage: string;
+  coverImage: string;
   id: number;
   parentId?: number;
 }

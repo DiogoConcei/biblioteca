@@ -19,7 +19,7 @@ export default defineConfig({
           build: {
             // 1) Define que, no bundle do main, o módulo 'sharp' é external
             rollupOptions: {
-              external: ['sharp'],
+              external: ['sharp', '@napi-rs/canvas'],
             },
           },
         },

@@ -5,7 +5,8 @@ import path from 'path';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import { randomUUID } from 'crypto';
-
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { createCanvas } from '@napi-rs/canvas';
 import { Manga } from '../types/manga.interfaces';
 import { Comic, TieIn } from '../types/comic.interfaces';
 import { SerieData } from '../../src/types/series.interfaces';
@@ -203,6 +204,62 @@ export default class StorageManager extends FileSystem {
     }
   }
 
+  // Renderiza a primeira página do PDF como capa (PNG)
+  public async extractCoverFromPdf(
+    inputFile: string,
+    outputDir: string,
+  ): Promise<void> {
+    try {
+      const data = await fse.readFile(inputFile);
+      const loadingTask = pdfjsLib.getDocument({
+        data: new Uint8Array(data),
+      });
+      const pdf = await loadingTask.promise;
+      const page = await pdf.getPage(1);
+      const scale = 2;
+
+      const viewport = page.getViewport({ scale });
+
+      const canvas = createCanvas(viewport.width, viewport.height);
+      const context = canvas.getContext('2d');
+      await page.render({
+        canvas: canvas as unknown as HTMLCanvasElement,
+        canvasContext: context as unknown as CanvasRenderingContext2D,
+        viewport,
+      }).promise;
+
+      const tempDir = path.join(
+        path.dirname(outputDir),
+        `temp_${randomUUID()}`,
+      );
+      await fse.mkdir(tempDir, { recursive: true });
+      const buffer = canvas.toBuffer('image/png');
+
+      const fileName = 'cover.png';
+      const tempFilePath = path.join(tempDir, fileName);
+
+      await fse.writeFile(tempFilePath, buffer);
+      const safePath =
+        await this.fileManager.ensureSafeSourcePath(tempFilePath);
+
+      const name = path.basename(tempFilePath, path.extname(tempFilePath));
+      const ext = path.extname(tempFilePath);
+
+      const finalPath = this.fileManager.buildSafeImagePath(
+        outputDir,
+        name,
+        ext,
+      );
+
+      await fse.move(safePath, finalPath, { overwrite: true });
+
+      await fse.remove(tempDir);
+    } catch (e) {
+      console.error('Falha na conversão de PDF -> Imagem');
+      throw new Error(String(e));
+    }
+  }
+
   public async extractCoverWith7zip(inputFile: string, outputDir: string) {
     console.log(`📂 Iniciando extração da capa`);
     console.log(`   Arquivo de entrada: ${inputFile}`);
@@ -221,7 +278,7 @@ export default class StorageManager extends FileSystem {
       console.log(`⚡ Executando comando: ${extractCmd}`);
       await this.execAsync(extractCmd);
 
-      const allFiles = await this.fileManager.getAllFilesRecursively(tempDir);
+      let allFiles = await this.fileManager.getAllFilesRecursively(tempDir);
       console.log(`🔎 Total de arquivos extraídos: ${allFiles.length}`);
 
       if (allFiles.length === 0) {
@@ -230,30 +287,47 @@ export default class StorageManager extends FileSystem {
         );
       }
 
+      // 🔐 PASSO CRÍTICO: encurtar paths extraídos ANTES de usar
+      const safeFiles: string[] = [];
+
+      for (const filePath of allFiles) {
+        const safePath = await this.fileManager.ensureSafeSourcePath(filePath);
+        safeFiles.push(safePath);
+      }
+
       const bestCandidate = this.fileManager.findFirstCoverFile(
-        allFiles.map((f) => path.basename(f)),
+        safeFiles.map((f) => path.basename(f)),
       );
 
       if (!bestCandidate) {
         console.log(
           `🚨 Nenhum candidato válido encontrado para: ${path.basename(inputFile)}`,
         );
-        throw new Error('❌ Nenhuma imagem de capa válida encontrada.');
+        return; // não quebra fluxo
       }
 
-      const realPath = allFiles.find(
+      const realPath = safeFiles.find(
         (p) => path.basename(p) === bestCandidate,
       )!;
-      const finalName = this.fileManager.sanitizeFilename(bestCandidate);
-      const finalPath = path.join(outputDir, finalName);
 
-      await fse.emptyDir(outputDir);
+      const ext = path.extname(bestCandidate);
+      const baseName = path.basename(
+        bestCandidate,
+        path.extname(bestCandidate),
+      );
+      const safeName = baseName.replace(/[. ]+$/, '');
+
+      const finalPath = this.fileManager.buildSafeImagePath(
+        outputDir,
+        safeName,
+        ext,
+      );
 
       console.log(`✅ Candidato escolhido: ${bestCandidate}`);
       console.log(`➡️ Origem: ${realPath}`);
       console.log(`➡️ Destino: ${finalPath}`);
 
-      await fse.move(realPath, finalPath);
+      await fse.move(realPath, finalPath, { overwrite: true });
 
       await fse.remove(tempDir);
       console.log(`🧹 Diretório temporário removido: ${tempDir}`);

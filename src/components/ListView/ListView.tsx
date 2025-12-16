@@ -44,7 +44,7 @@ export default function ListView() {
 
                 <button
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
-                    downloadIndividual(chapter, e)
+                    downloadIndividual(e, chapter)
                   }
                 >
                   {chapter.isDownloaded === 'downloading' ? (

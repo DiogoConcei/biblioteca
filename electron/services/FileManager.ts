@@ -1,10 +1,147 @@
 import FileSystem from './abstract/FileSystem.ts';
 import path from 'path';
 import fse from 'fs-extra';
+import { randomUUID } from 'crypto';
 
 export default class FileManager extends FileSystem {
   constructor() {
     super();
+  }
+
+  public async ensureSafeSourcePath(originalPath: string): Promise<string> {
+    const max = 240;
+    if (originalPath.length < max) {
+      return originalPath;
+    }
+
+    const dir = path.dirname(originalPath);
+    const ext = path.extname(originalPath);
+    const shortName = `${randomUUID().slice(0, 8)}${ext}`;
+    const safePath = path.join(dir, shortName);
+
+    await fse.move(originalPath, safePath, { overwrite: true });
+
+    return safePath;
+  }
+
+  public buildSafeImagePath(
+    dirPath: string,
+    originalName: string,
+    ext = '.webp',
+  ): string {
+    const max = 260;
+    const min = 6;
+    const safeName = this.sanitizeFilename(originalName);
+    const resolvedDir = path.resolve(dirPath);
+
+    const staticLength = resolvedDir.length + path.sep.length + ext.length;
+
+    let maxBaseLength = max - staticLength;
+
+    // 🛑 Caso extremo: nem o mínimo cabe
+    if (maxBaseLength < min) {
+      const fallback = randomUUID().slice(0, min);
+      return path.join(resolvedDir, fallback + ext);
+    }
+
+    const base =
+      safeName.length > maxBaseLength
+        ? safeName.slice(0, maxBaseLength)
+        : safeName;
+
+    let finalPath = path.join(resolvedDir, base + ext);
+
+    // 🔁 Segurança extra
+    if (finalPath.length > max) {
+      finalPath = path.join(resolvedDir, randomUUID().slice(0, min) + ext);
+    }
+
+    return finalPath;
+  }
+
+  public buildSafePath(serieName: string, chapterIndex: number): string {
+    const safeChapter = String(chapterIndex + 1).padStart(3, '0');
+    return path.join(this.comicsImages, serieName, safeChapter);
+  }
+
+  public buildSafeChapterPath(
+    baseDir: string,
+    serieName: string,
+    chapterName: string,
+  ): string {
+    const max = 260;
+    const min = 8;
+    const safeSerie = this.sanitizeFilename(serieName);
+    const safeChapter = this.sanitizeFilename(chapterName);
+
+    const resolvedBase = path.resolve(baseDir);
+
+    // base + sep + serie + sep + chapter
+    const staticLength = resolvedBase.length + path.sep.length * 2;
+
+    let remaining = max - staticLength;
+
+    // 🔐 Fallback extremo
+    if (remaining <= min * 2) {
+      const s = randomUUID().slice(0, min);
+      const c = randomUUID().slice(0, min);
+      return path.join(resolvedBase, s, c);
+    }
+
+    // divide espaço entre serie / chapter
+    const maxSerieLen = Math.floor(remaining * 0.4);
+    const maxChapterLen = remaining - maxSerieLen;
+
+    const finalSerie =
+      safeSerie.length > maxSerieLen
+        ? safeSerie.slice(0, maxSerieLen)
+        : safeSerie;
+
+    const finalChapter =
+      safeChapter.length > maxChapterLen
+        ? safeChapter.slice(0, maxChapterLen)
+        : safeChapter;
+
+    let finalPath = path.join(resolvedBase, finalSerie, finalChapter);
+
+    // 🔁 Segurança final
+    if (finalPath.length > max) {
+      finalPath = path.join(
+        resolvedBase,
+        randomUUID().slice(0, min),
+        randomUUID().slice(0, min),
+      );
+    }
+
+    return finalPath;
+  }
+
+  public async findPath(
+    basePath: string,
+    name: string,
+  ): Promise<string | null> {
+    const dirPaths = await fse.readdir(basePath, { withFileTypes: true });
+
+    for (const dirent of dirPaths) {
+      if (dirent.isDirectory()) {
+        if (dirent.name === name) {
+          return path.join(basePath, dirent.name);
+        } else {
+          const foundPath = await this.findPath(
+            path.join(basePath, dirent.name),
+            name,
+          );
+          if (foundPath) {
+            return foundPath;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+  public shortenName(name: string, max = 60): string {
+    return name.length > max ? name.slice(0, max).trim() : name;
   }
 
   public sanitizeFilename(fileName: string): string {
@@ -21,6 +158,18 @@ export default class FileManager extends FileSystem {
       .replace(/^-+|-+$/g, '')
 
       .replace(/[. ]+$/g, '');
+  }
+
+  public sanitizeDirName(name: string): string {
+    return name
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '') // remove acentos
+      .replace(/[<>:"/\\|?*\x00-\x1F]/g, '') // inválidos Windows
+      .replace(/\./g, '_') // ⬅️ PONTO VIRA _
+      .replace(/\s+/g, ' ')
+      .replace(/[ ]+$/, '') // remove espaço final
+      .replace(/[_]+$/, '') // remove _ final
+      .trim();
   }
 
   public async orderComic(filesPath: string[]): Promise<string[]> {

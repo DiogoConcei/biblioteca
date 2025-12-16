@@ -50,7 +50,7 @@ export default function ComicPage() {
             <button
               className="downloadButton"
               onClick={(e) => {
-                downloadIndividual(edition, e);
+                downloadIndividual(e, edition);
               }}
             >
               {edition.isDownloaded === 'downloading' ? (
@@ -79,12 +79,12 @@ export default function ComicPage() {
           >
             <img
               className="cover"
-              src={`data:image/webp;base64,${tieIn.childSerieCoverImage}`}
-              alt={tieIn.childSerieName}
+              src={`data:image/webp;base64,${tieIn.coverImage}`}
+              alt={tieIn.serieName}
             />
             <div className="ribbon">Tie In</div>
             <div className="infoOverlay">
-              <p className="title">{tieIn.childSerieName}</p>
+              <p className="title">{tieIn.serieName}</p>
             </div>
           </div>
         ))}

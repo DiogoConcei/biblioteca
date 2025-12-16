@@ -11,11 +11,12 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
+    "skipDefaultLibCheck": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "skipLibCheck": true
   },
-  "include": ["src"]
+  "include": ["src", "electron/types"]
 }

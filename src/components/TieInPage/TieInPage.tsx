@@ -2,7 +2,8 @@ import useSerieStore from '../../store/useSerieStore';
 import useUIStore from '../../store/useUIStore';
 import useAction from '../../hooks/useAction';
 import useDownload from '../../hooks/useDownload';
-
+import { useParams } from 'react-router-dom';
+import useSerie from '../../hooks/useSerie';
 import Loading from '../Loading/Loading';
 import ErrorScreen from '../ErrorScreen/ErrorScreen';
 import { TieIn } from 'electron/types/comic.interfaces';
@@ -10,9 +11,11 @@ import { TieIn } from 'electron/types/comic.interfaces';
 import { ArrowDownToLine, ArrowDownFromLine, LoaderCircle } from 'lucide-react';
 
 export default function TieInPage() {
+  const { tiein_name: rawSerieName } = useParams<{ tiein_name: string }>();
+  const serie_name = decodeURIComponent(rawSerieName ?? '');
+  useSerie(serie_name, 'childSeries');
   const serie = useSerieStore((state) => state.serie) as TieIn;
-  const chaptersMap = useSerieStore((state) => state.chaptersMap);
-  const chapters = Object.values(chaptersMap).sort((a, b) => a.id - b.id);
+
   const error = useUIStore((state) => state.error);
   const loading = useUIStore((state) => state.loading);
   const { openChapter } = useAction();
@@ -28,11 +31,11 @@ export default function TieInPage() {
 
   return (
     <section className="comicGrid">
-      {chapters.map((edition) => (
+      {serie.chapters.map((edition) => (
         <div
           key={edition.id}
           className={`comicCard ${edition.isRead ? 'read' : ''}`}
-          onClick={(e) => openChapter(e, edition.id)}
+          onClick={(e) => openChapter(e, edition)}
         >
           <div className="ribbon">{edition.isRead ? 'Lido' : 'Não Lido'}</div>
           <img
@@ -47,7 +50,7 @@ export default function TieInPage() {
               className="downloadButton"
               onClick={(e) => {
                 e.stopPropagation();
-                downloadIndividual(edition.id, e);
+                downloadIndividual(e, edition);
               }}
             >
               {edition.isDownloaded === 'downloading' ? (

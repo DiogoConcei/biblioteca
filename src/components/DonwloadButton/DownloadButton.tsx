@@ -25,15 +25,12 @@ export default function DownloadButton({ serie }: downloadButtonProps) {
   };
 
   const onSelect = async (quantity: number) => {
-    console.log('selecionado', quantity);
     if (quantity > 0) {
       const startIndex = serie.metadata.lastDownload;
       const endIndex = startIndex + quantity;
       const downloadingChapters = chapters.slice(startIndex, endIndex);
 
       for (let i = 0; i < downloadingChapters.length; i++) {
-        console.log(i, downloadingChapters[i].id);
-        console.log('baixando', downloadingChapters[i].id);
         updateChapter(downloadingChapters[i].id, 'isDownloaded', 'downloading');
       }
 

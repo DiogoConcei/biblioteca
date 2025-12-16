@@ -83,7 +83,11 @@ export default class ImageManager extends FileSystem {
 
       const fileName = path.basename(imageName, imageExt);
       const sanitizedFileName = this.fileManager.sanitizeFilename(fileName);
-      const destPath = path.join(dinamicPath, `${sanitizedFileName}.webp`);
+      const destPath = this.fileManager.buildSafeImagePath(
+        dinamicPath,
+        sanitizedFileName,
+        '.webp',
+      );
 
       if (
         imageExt === '.webp' &&

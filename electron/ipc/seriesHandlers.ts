@@ -80,15 +80,13 @@ export default function seriesHandlers(ipcMain: IpcMain) {
       const updatedChildSeries = data.childSeries
         ? await Promise.all(
             data.childSeries.map(async (tieIn) => {
-              const encodedCover = tieIn.childSerieCoverImage
-                ? await imageManager.encodeImageToBase64(
-                    tieIn.childSerieCoverImage,
-                  )
+              const encodedCover = tieIn.coverImage
+                ? await imageManager.encodeImageToBase64(tieIn.coverImage)
                 : '';
 
               return {
                 ...tieIn,
-                childSerieCoverImage: encodedCover,
+                coverImage: encodedCover,
               };
             }),
           )
@@ -109,6 +107,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('serie:get-TieIn', async (_event, serieName: string) => {
     try {
+      const dataPath = await fileManager.getDataPath(serieName);
       const data = await storageManager.selectTieInData(serieName);
 
       if (!data) throw new Error('Data nao encontrada no Handle');
@@ -217,21 +216,21 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     async (_event, childSerie: ComicTieIn) => {
       try {
         const data = (await storageManager.readSerieData(
-          childSerie.childSerieDataPath,
-        )) as unknown;
-        const processedData = data as TieIn;
+          childSerie.dataPath,
+        )) as TieIn;
 
-        if (!processedData.metadata.isCreated)
-          await comicManager.createTieIn(childSerie);
+        if (!data.metadata.isCreated) {
+          await comicManager.createTieIn(data);
+        }
 
         return {
           success: true,
-          data: `/TieIn/${encodeURI(childSerie.childSerieName)}`,
+          data: `/TieIn/${encodeURIComponent(data.name)}`,
           error: '',
         };
       } catch (e) {
         console.log(`Falha em criar as capas da Tie-In`);
-        return { success: true, error: 'deu mole ' };
+        return { success: false, error: 'deu mole ' };
       }
     },
   );

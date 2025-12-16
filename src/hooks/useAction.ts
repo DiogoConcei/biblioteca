@@ -78,7 +78,7 @@ export default function useAction() {
         )}/${chapterId}/${page}/${isRead}`,
       );
     } else {
-      downloadIndividual(selectedChapter, e);
+      downloadIndividual(e, selectedChapter);
     }
   }
 

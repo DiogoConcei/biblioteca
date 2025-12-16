@@ -49,7 +49,6 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
             chapterData = await comicManager.getComic(dataPath, chapter_id);
           case 'childSeries':
             chapterData = await comicManager.getTieIn(dataPath, chapter_id);
-
           default:
             break;
         }

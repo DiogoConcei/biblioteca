@@ -32,8 +32,8 @@ export default function useDownload() {
   };
 
   const downloadIndividual = async (
-    selectedChapter: LiteratureChapter,
     e: React.MouseEvent,
+    selectedChapter: LiteratureChapter,
   ) => {
     e.stopPropagation();
 
