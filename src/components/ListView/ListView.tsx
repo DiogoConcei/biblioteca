@@ -51,7 +51,7 @@ export default function ListView() {
                     <LoaderCircle
                       size={24}
                       strokeWidth={1}
-                      className={styles.animateSpin}
+                      className={styles['animate-spin']}
                     />
                   ) : chapter.isDownloaded === 'downloaded' ? (
                     <ArrowDownFromLine className={styles.iconDownloaded} />

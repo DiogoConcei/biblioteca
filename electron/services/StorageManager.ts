@@ -17,6 +17,13 @@ import {
   viewData,
   APIResponse,
 } from '../../src/types/auxiliar.interfaces';
+// import { fileURLToPath, pathToFileURL } from 'url';
+
+// const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// pdfjsLib.GlobalWorkerOptions.workerSrc = pathToFileURL(
+//   path.join(__dirname, 'pdf.worker.mjs'),
+// ).href;
 
 export default class StorageManager extends FileSystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -208,7 +215,7 @@ export default class StorageManager extends FileSystem {
   public async extractCoverFromPdf(
     inputFile: string,
     outputDir: string,
-  ): Promise<void> {
+  ): Promise<string> {
     try {
       const data = await fse.readFile(inputFile);
       const loadingTask = pdfjsLib.getDocument({
@@ -233,9 +240,9 @@ export default class StorageManager extends FileSystem {
         `temp_${randomUUID()}`,
       );
       await fse.mkdir(tempDir, { recursive: true });
-      const buffer = canvas.toBuffer('image/png');
+      const buffer = canvas.toBuffer('image/jpeg');
 
-      const fileName = 'cover.png';
+      const fileName = 'cover.jpeg';
       const tempFilePath = path.join(tempDir, fileName);
 
       await fse.writeFile(tempFilePath, buffer);
@@ -254,10 +261,50 @@ export default class StorageManager extends FileSystem {
       await fse.move(safePath, finalPath, { overwrite: true });
 
       await fse.remove(tempDir);
+      return path.dirname(finalPath);
     } catch (e) {
       console.error('Falha na conversão de PDF -> Imagem');
       throw new Error(String(e));
     }
+  }
+
+  // Mais rápido que GhostScript
+  public async convertPdf_overdrive(inputFile: string, outputDir: string) {
+    await fse.ensureDir(outputDir);
+
+    const data = await fse.readFile(inputFile);
+    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(data) })
+      .promise;
+
+    const totalPages = pdf.numPages;
+    const scale = 1;
+
+    const tasks: Promise<void>[] = [];
+
+    for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+      tasks.push(
+        (async () => {
+          const page = await pdf.getPage(pageNum);
+          const viewport = page.getViewport({ scale });
+
+          const canvas = createCanvas(viewport.width, viewport.height);
+          const context = canvas.getContext('2d');
+
+          await page.render({
+            canvas: canvas as unknown as HTMLCanvasElement,
+            canvasContext: context as unknown as CanvasRenderingContext2D,
+            viewport,
+          }).promise;
+
+          const buffer = canvas.toBuffer('image/jpeg');
+          const fileName = `${String(pageNum).padStart(4, '0')}.jpeg`;
+
+          await fse.writeFile(path.join(outputDir, fileName), buffer);
+        })(),
+      );
+    }
+
+    await Promise.all(tasks);
   }
 
   public async extractCoverWith7zip(inputFile: string, outputDir: string) {
@@ -303,7 +350,7 @@ export default class StorageManager extends FileSystem {
         console.log(
           `🚨 Nenhum candidato válido encontrado para: ${path.basename(inputFile)}`,
         );
-        return; // não quebra fluxo
+        return '';
       }
 
       const realPath = safeFiles.find(
@@ -332,6 +379,7 @@ export default class StorageManager extends FileSystem {
       await fse.remove(tempDir);
       console.log(`🧹 Diretório temporário removido: ${tempDir}`);
       console.log(`🎉 Extração concluída com sucesso!`);
+      return path.dirname(finalPath);
     } catch (e) {
       console.error(`❌ Falha em descompactar cover:`, e);
       throw e;
@@ -411,3 +459,12 @@ export default class StorageManager extends FileSystem {
     }
   }
 }
+
+// (async () => {
+//   const storageManager = new StorageManager();
+//   const filePath =
+//     'c:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\user library\\01 - Pré Vingadores A Queda\\1.5 Iron Man 73-78 (1998)\\The Invincible Iron Man #73 A.melhor.Defesa.-.1.de.6.HQ.BR.29.08.05.GibiHQ.pdf';
+//   const outputDir =
+//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\images files\\comic\\1.5 Iron Man 73-78 (1998)\\The Invincible Iron Man #73 A.melhor.Defesa.-.1.de.6.HQ.BR.29.08.05.GibiHQ';
+//   await storageManager.convertPdf_overdrive(filePath, outputDir);
+// })();

@@ -6,15 +6,16 @@ import { useParams } from 'react-router-dom';
 import useSerie from '../../hooks/useSerie';
 import Loading from '../Loading/Loading';
 import ErrorScreen from '../ErrorScreen/ErrorScreen';
-import { TieIn } from 'electron/types/comic.interfaces';
-
+import { Comic, ComicEdition, TieIn } from 'electron/types/comic.interfaces';
 import { ArrowDownToLine, ArrowDownFromLine, LoaderCircle } from 'lucide-react';
+import styles from '../../pages/comicPage/comicPage.module.scss';
 
 export default function TieInPage() {
   const { tiein_name: rawSerieName } = useParams<{ tiein_name: string }>();
   const serie_name = decodeURIComponent(rawSerieName ?? '');
   useSerie(serie_name, 'childSeries');
   const serie = useSerieStore((state) => state.serie) as TieIn;
+  const chapters = useSerieStore((state) => state.chapters) as ComicEdition[];
 
   const error = useUIStore((state) => state.error);
   const loading = useUIStore((state) => state.loading);
@@ -30,24 +31,27 @@ export default function TieInPage() {
   }
 
   return (
-    <section className="comicGrid">
-      {serie.chapters.map((edition) => (
+    <section className={styles.comicGrid}>
+      {chapters.map((edition) => (
         <div
           key={edition.id}
-          className={`comicCard ${edition.isRead ? 'read' : ''}`}
+          className={`${styles.comicCard} ${edition.isRead ? styles.read : ''}`}
           onClick={(e) => openChapter(e, edition)}
         >
-          <div className="ribbon">{edition.isRead ? 'Lido' : 'Não Lido'}</div>
+          <div className={styles.ribbon}>
+            {edition.isRead ? 'Lido' : 'Não Lido'}
+          </div>
           <img
-            className="cover"
+            className={styles.cover}
             src={`data:image/webp;base64,${edition.coverImage}`}
             alt={edition.name}
           />
 
-          <div className="infoOverlay">
-            <p className="title">{edition.name}</p>
+          <div className={styles.infoOverlay}>
+            <p className={styles.title}>{edition.name}</p>
+            <p>{edition.isDownloaded}</p>
             <button
-              className="downloadButton"
+              className={styles.downloadButton}
               onClick={(e) => {
                 e.stopPropagation();
                 downloadIndividual(e, edition);
@@ -57,10 +61,9 @@ export default function TieInPage() {
                 <LoaderCircle
                   size={24}
                   strokeWidth={1}
-                  className="animate-spin"
+                  className={styles['animate-spin']}
                 />
-              ) : edition.isDownloaded ||
-                edition.isDownloaded === 'downloaded' ? (
+              ) : edition.isDownloaded === 'downloaded' ? (
                 <ArrowDownFromLine size={24} color="#8963ba" strokeWidth={1} />
               ) : (
                 <ArrowDownToLine size={24} color="#aa5042" strokeWidth={1} />

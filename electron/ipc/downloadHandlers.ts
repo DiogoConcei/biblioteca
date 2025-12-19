@@ -30,7 +30,6 @@ export default function downloadHandlers(ipcMain: IpcMain) {
     'download:single',
     async (_event, dataPath: string, chapter_id: number) => {
       const literatureForm = fileManager.foundLiteratureForm(dataPath);
-
       try {
         if (literatureForm === 'Mangas') {
           await mangaManager.createEditionById(dataPath, chapter_id);
@@ -39,8 +38,8 @@ export default function downloadHandlers(ipcMain: IpcMain) {
         } else if (literatureForm === 'childSeries') {
           await comicManager.createTieInById(dataPath, chapter_id);
         }
-
         return true;
+        return false;
       } catch (e) {
         console.error('Falha em baixar capítulo', e);
         return false;

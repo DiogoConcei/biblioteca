@@ -7,7 +7,6 @@ import StorageManager from './StorageManager';
 import CollectionsManager from './CollectionsManager';
 import fse from 'fs-extra';
 import path from 'path';
-import { randomUUID } from 'crypto';
 
 import { SerieForm } from '../../src/types/series.interfaces';
 import {
@@ -199,7 +198,7 @@ export default class ComicManager extends FileSystem {
 
       const chapters = await Promise.all(
         orderComics.map(async (orderPth, idx) => {
-          const fileName = path.basename(orderPth, path.extname(orderPth));
+          const fileName = path.basename(orderPth);
           const rawName = fileName.replace('#', '');
           const safeName = this.fileManager.sanitizeFilename(
             this.fileManager.shortenName(rawName),
@@ -208,9 +207,9 @@ export default class ComicManager extends FileSystem {
           return {
             id: idx + 1,
             serieName: serie.name,
-            name: fileName,
+            name: path.basename(fileName, path.extname(fileName)),
             coverImage: '',
-            sanitizedName: safeName,
+            sanitizedName: path.basename(safeName, path.extname(safeName)),
             archivesPath: path.join(this.userLibrary, serie.name, fileName),
             chapterPath: '',
             createdAt: serie.createdAt,
@@ -386,7 +385,8 @@ export default class ComicManager extends FileSystem {
 
     const firstChapter = path.join(basePath, firstChapterEntry.name);
     const ext = path.extname(firstChapter);
-    const chapName = path.basename(firstChapter, path.extname(firstChapter));
+    const rawName = path.basename(firstChapter, path.extname(firstChapter));
+    const chapName = this.fileManager.sanitizeDirName(rawName);
     const chapterOut = path.join(this.comicsImages, child.serieName, chapName);
 
     if (ext === '.pdf') {
@@ -411,24 +411,25 @@ export default class ComicManager extends FileSystem {
     const chapterToProcess = comicData.chapters.find(
       (chapter) => chapter.id === chapter_id,
     );
+
     if (!chapterToProcess) {
       throw new Error(`Chapter with id ${chapter_id} not found.`);
     }
 
-    const outputDir = this.fileManager.buildSafePath(
-      comicData.name,
-      chapterToProcess.id - 1,
-    );
+    const extName = path.extname(chapterToProcess.archivesPath);
+    const rawName = this.fileManager.sanitizeFilename(chapterToProcess.name);
+    const chapSafe = rawName.replaceAll('.', '_');
+    const chapterOut = path.join(this.comicsImages, comicData.name, chapSafe);
 
     try {
       await this.storageManager.extractWith7zip(
         chapterToProcess.archivesPath,
-        outputDir,
+        chapterOut,
       );
-      await this.imageManager.normalizeChapter(outputDir);
+      await this.imageManager.normalizeChapter(chapterOut);
 
       chapterToProcess.isDownloaded = 'downloaded';
-      chapterToProcess.chapterPath = outputDir;
+      chapterToProcess.chapterPath = chapterOut;
       comicData.metadata.lastDownload = chapterToProcess.id;
 
       await this.storageManager.updateSerieData(comicData);
@@ -446,7 +447,6 @@ export default class ComicManager extends FileSystem {
     chapter_id: number,
   ): Promise<void> {
     const serieData = await this.storageManager.readSerieData(dataPath);
-
     if (!serieData.chapters || !Array.isArray(serieData.chapters)) {
       throw new Error('Dados de capítulos indefinidos ou inválidos.');
     }
@@ -459,23 +459,33 @@ export default class ComicManager extends FileSystem {
       throw new Error(`Capítulo com id ${chapter_id} não encontrado.`);
     }
 
-    const outputDir = path.join(
-      this.comicsImages,
-      serieData.name,
-      chapterToProcess.name,
+    const extName = path.extname(chapterToProcess.archivesPath);
+    const rawName = this.fileManager.sanitizeFilename(chapterToProcess.name);
+    const chapSafe = rawName.replaceAll('.', '_');
+    const chapterOut = path.join(this.comicsImages, serieData.name, chapSafe);
+
+    console.log('Não normalizado: ', chapterToProcess.archivesPath);
+    console.log(
+      'Normalizado: ',
+      await path.normalize(chapterToProcess.archivesPath),
     );
 
     try {
-      await this.storageManager.extractWith7zip(
-        chapterToProcess.archivesPath,
-        outputDir,
-      );
-      await this.imageManager.normalizeChapter(outputDir);
-
+      if (extName === '.pdf') {
+        await this.storageManager.convertPdf_overdrive(
+          chapterToProcess.archivesPath,
+          chapterOut,
+        );
+      } else {
+        await this.storageManager.extractWith7zip(
+          chapterToProcess.archivesPath,
+          chapterOut,
+        );
+      }
+      await this.imageManager.normalizeChapter(chapterOut);
       chapterToProcess.isDownloaded = 'downloaded';
-      chapterToProcess.chapterPath = outputDir;
+      chapterToProcess.chapterPath = chapterOut;
       serieData.metadata.lastDownload = chapterToProcess.id;
-
       await this.storageManager.updateSerieData(serieData);
     } catch (error) {
       console.error(
@@ -523,7 +533,7 @@ export default class ComicManager extends FileSystem {
       return {
         id: idx + 1,
         serieName: tieInData.name,
-        name: safeName,
+        name: fileName,
         coverImage: '',
         sanitizedName,
         archivesPath: path.join(
@@ -553,31 +563,44 @@ export default class ComicManager extends FileSystem {
       dataPath,
     )) as TieIn;
     const tieChapters = tieInData.chapters;
-
     if (!tieChapters || tieChapters.length === 0) {
       console.warn(`Nenhum capítulo encontrado para Tie-In em ${dataPath}`);
       return;
     }
 
-    const serieName = path.basename(dataPath, path.extname(dataPath));
-
     await Promise.all(
-      tieChapters.map(async (tieChap) => {
-        const safeName = this.fileManager.sanitizeDirName(tieChap.name);
+      tieChapters.map(async (chap) => {
+        const rawName = this.fileManager.sanitizeFilename(chap.name);
+        const chapSafe = rawName.replaceAll('.', '_');
+        const safeDir = this.fileManager
+          .sanitizeDirName(tieInData.name)
+          .slice(0, 10);
+        const chapterOut = path.join(this.dinamicImages, safeDir, chapSafe);
 
-        const chapterOut = path.join(this.comicsImages, serieName, safeName);
+        const ext = path.extname(chap.archivesPath);
+        let coverPath = '';
 
         try {
-          await this.storageManager.extractCoverWith7zip(
-            tieChap.archivesPath,
-            chapterOut,
-          );
-          await this.imageManager.normalizeChapter(chapterOut);
-          tieChap.coverImage = await this.coverToComic(chapterOut);
-          tieChap.chapterPath = chapterOut;
+          if (ext === '.pdf') {
+            coverPath = await this.storageManager.extractCoverFromPdf(
+              chap.archivesPath,
+              chapterOut,
+            );
+          } else {
+            coverPath = await this.storageManager.extractCoverWith7zip(
+              chap.archivesPath,
+              chapterOut,
+            );
+          }
+
+          chap.chapterPath = path.join(this.comicsImages, safeDir, chapSafe);
+          chap.chapterPath = path.join(this.comicsImages, safeDir, chapSafe);
+
+          await this.imageManager.normalizeChapter(coverPath);
+          chap.coverImage = await this.coverToComic(coverPath);
         } catch (error) {
           console.error(
-            `Erro no capítulo ${tieChap.name} - (${tieChap.archivesPath}):`,
+            `Erro no capítulo ${chap.name} - (${chap.archivesPath}):`,
             error,
           );
           throw error;
@@ -678,39 +701,35 @@ export default class ComicManager extends FileSystem {
 //   const fileManager = new FileManager();
 //   const storageManager = new StorageManager();
 //   const comicManager = new ComicManager();
-//   const name = '01 - Pré Vingadores A Queda';
-//   const dataPath =
-//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Comics\\01 - Pré Vingadores A Queda.json';
-//   const comicData = (await storageManager.readSerieData(dataPath)) as Comic;
+//   const name = '03 - Capitão América Vol 5 - 1 a 21';
+//   const archivesPath =
+//     'C:\\Users\\diogo\\Desktop\\03 - Capitão América Vol 5 - 1 a 21';
 
-//   if (!comicData.childSeries) return;
+//   // const dataPath =
+//   //   'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\childSeries\\Versão PDF.json';
+//   // const tieIn = (await storageManager.readSerieData(dataPath)) as TieIn;
 
-//   const child = comicData.childSeries[7];
-//   const TieIn = (await storageManager.readSerieData(child.dataPath)) as TieIn;
+//   // await comicManager.createTieIn(tieIn);
+//   const dinastiaM: SerieForm = {
+//     name: name,
+//     genre: 'Marvel',
+//     author: 'Michael Bendis',
+//     language: 'Português',
+//     cover_path:
+//       'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\images files\\showcase images\\Capitao.webp',
+//     literatureForm: 'Quadrinho',
+//     collections: ['Marvel'],
+//     tags: ['Super Herói'],
+//     privacy: 'Publica',
+//     autoBackup: 'Sim',
+//     readingStatus: 'Completo',
+//     sanitizedName: fileManager.sanitizeFilename(name),
+//     chaptersPath: '',
+//     archivesPath: archivesPath,
+//     createdAt: '2025-08-08T16:00:00Z',
+//     oldPath: archivesPath,
+//     deletedAt: '',
+//   };
 
-//   await comicManager.createTieIn(TieIn);
-//   // const archivesPath = 'C:\\Users\\diogo\\Desktop\\01 - Pré Vingadores A Queda';
-
-//   // const dinastiaM: SerieForm = {
-//   //   name: name,
-//   //   genre: 'Marvel',
-//   //   author: 'Michael Bendis',
-//   //   language: 'Português',
-//   //   cover_path:
-//   //     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\images files\\showcase images\\cover1.webp',
-//   //   literatureForm: 'Quadrinho',
-//   //   collections: ['Marvel'],
-//   //   tags: ['Super Herói'],
-//   //   privacy: 'Publica',
-//   //   autoBackup: 'Sim',
-//   //   readingStatus: 'Completo',
-//   //   sanitizedName: fileManager.sanitizeFilename(name),
-//   //   chaptersPath: '',
-//   //   archivesPath: archivesPath,
-//   //   createdAt: '2025-08-08T16:00:00Z',
-//   //   oldPath: archivesPath,
-//   //   deletedAt: '',
-//   // };
-
-//   // await comicManager.createComicSerie(dinastiaM);
+//   await comicManager.createComicSerie(dinastiaM);
 // })();

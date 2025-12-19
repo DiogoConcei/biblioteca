@@ -2,20 +2,20 @@ import useSerieStore from '../../store/useSerieStore';
 import useUIStore from '../../store/useUIStore';
 import Loading from '../../components/Loading/Loading';
 import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
-import { Comic } from 'electron/types/comic.interfaces';
+import { Comic, ComicEdition } from 'electron/types/comic.interfaces';
 import useAction from '../../hooks/useAction';
 import useDownload from '../../hooks/useDownload';
 import { ArrowDownToLine, ArrowDownFromLine, LoaderCircle } from 'lucide-react';
 import useSerie from '../../hooks/useSerie';
 import { useParams } from 'react-router-dom';
-import './comicPage.scss';
+import styles from './comicPage.module.scss';
 
 export default function ComicPage() {
   const { comic_name: rawSerieName } = useParams<{ comic_name: string }>();
   const serie_name = decodeURIComponent(rawSerieName ?? '');
   useSerie(serie_name, 'Quadrinho');
   const serie = useSerieStore((state) => state.serie) as Comic;
-
+  const chapters = useSerieStore((state) => state.chapters) as ComicEdition[];
   const error = useUIStore((state) => state.error);
   const loading = useUIStore((state) => state.loading);
 
@@ -31,24 +31,26 @@ export default function ComicPage() {
   }
 
   return (
-    <section className="comicGrid">
-      {serie.chapters.map((edition) => (
+    <section className={styles.comicGrid}>
+      {chapters.map((edition, idx) => (
         <div
-          key={edition.id}
-          className={`comicCard ${edition.isRead ? 'read' : ''}`}
+          key={idx}
+          className={`${styles.comicCard} ${edition.isRead ? styles.read : ''}`}
           onClick={(e) => openChapter(e, edition)}
         >
-          <div className="ribbon">{edition.isRead ? 'Lido' : 'Não Lido'}</div>
+          <div className={styles.ribbon}>
+            {edition.isRead ? 'Lido' : 'Não Lido'}
+          </div>
           <img
-            className="cover"
+            className={styles.cover}
             src={`data:image/webp;base64,${edition.coverImage}`}
             alt={edition.name}
           />
 
-          <div className="infoOverlay">
-            <p className="title">{edition.name}</p>
+          <div className={styles.infoOverlay}>
+            <p className={styles.title}>{edition.name}</p>
             <button
-              className="downloadButton"
+              className={styles.downloadButton}
               onClick={(e) => {
                 downloadIndividual(e, edition);
               }}
@@ -57,10 +59,9 @@ export default function ComicPage() {
                 <LoaderCircle
                   size={24}
                   strokeWidth={1}
-                  className="animate-spin"
+                  className={styles['animate-spin']}
                 />
-              ) : edition.isDownloaded ||
-                edition.isDownloaded === 'downloaded' ? (
+              ) : edition.isDownloaded === 'downloaded' ? (
                 <ArrowDownFromLine size={24} color="#8963ba" strokeWidth={1} />
               ) : (
                 <ArrowDownToLine size={24} color="#aa5042" strokeWidth={1} />
@@ -74,17 +75,17 @@ export default function ComicPage() {
         .map((tieIn) => (
           <div
             key={tieIn.id}
-            className="comicTieIn"
+            className={styles.comicTieIn}
             onClick={() => openTieIn(tieIn)}
           >
             <img
-              className="cover"
+              className={styles.cover}
               src={`data:image/webp;base64,${tieIn.coverImage}`}
               alt={tieIn.serieName}
             />
-            <div className="ribbon">Tie In</div>
-            <div className="infoOverlay">
-              <p className="title">{tieIn.serieName}</p>
+            <div className={styles.ribbon}>Tie In</div>
+            <div className={styles.infoOverlay}>
+              <p className={styles.title}>{tieIn.serieName}</p>
             </div>
           </div>
         ))}

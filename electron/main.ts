@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { registerHandlers } from './ipc';
 import path from 'path';
 import fse from 'fs-extra';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 declare global {
   var storageFolder: string;
@@ -126,8 +127,6 @@ function createWindow() {
     },
   });
 
-  win.webContents.openDevTools();
-
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString());
   });
@@ -145,8 +144,6 @@ function createWindow() {
     );
     win.loadFile(indexHtml);
   }
-
-  Menu.setApplicationMenu(null);
 
   ipcMain.handle('window:minimize', async () => {
     if (win) win.minimize();
@@ -190,3 +187,8 @@ app.whenReady().then(async () => {
   await registerHandlers();
   createWindow();
 });
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/legacy/build/pdf.worker.mjs',
+  import.meta.url,
+).toString();

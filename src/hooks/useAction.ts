@@ -71,6 +71,8 @@ export default function useAction() {
       chapterId,
     );
 
+    console.log(safeOpen);
+
     if (safeOpen) {
       navigate(
         `/${encodeURIComponent(serieName)}/${serieId}/${encodeURIComponent(

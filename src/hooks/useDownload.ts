@@ -4,7 +4,6 @@ import useUIStore from '../store/useUIStore';
 
 export default function useDownload() {
   const dataPath = useSerieStore((state) => state.serie?.dataPath);
-  const chapters = useSerieStore((state) => state.chapters);
   const updateChapter = useSerieStore((state) => state.updateChapter);
   const setError = useUIStore((state) => state.setError);
 
@@ -36,9 +35,9 @@ export default function useDownload() {
     selectedChapter: LiteratureChapter,
   ) => {
     e.stopPropagation();
-
     if (selectedChapter.isDownloaded === 'downloaded') {
       updateChapter(selectedChapter.id, 'isDownloaded', 'downloading');
+
       const success = await window.electronAPI.download.singleRemove(
         dataPath!,
         selectedChapter.id,
