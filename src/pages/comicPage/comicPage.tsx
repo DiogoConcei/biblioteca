@@ -43,7 +43,7 @@ export default function ComicPage() {
           </div>
           <img
             className={styles.cover}
-            src={`data:image/webp;base64,${edition.coverImage}`}
+            src={`${edition.coverImage}`}
             alt={edition.name}
           />
 
@@ -80,7 +80,7 @@ export default function ComicPage() {
           >
             <img
               className={styles.cover}
-              src={`data:image/webp;base64,${tieIn.coverImage}`}
+              src={`${tieIn.coverImage}`}
               alt={tieIn.serieName}
             />
             <div className={styles.ribbon}>Tie In</div>

@@ -19,6 +19,7 @@ export default function ViewerMenu({
   nextChapter,
   prevChapter,
   currentPage,
+  totalPages,
 }: visualizerProps) {
   const clearSerie = useSerieStore((state) => state.clearSerie);
   const serie = useSerieStore((state) => state.serie);
@@ -82,37 +83,51 @@ export default function ViewerMenu({
     prevChapter();
   }, [prevChapter]);
 
-  const goHome = useCallback(async () => {
-    await window.electronAPI.chapters.saveLastRead(
-      serie_name!,
-      Number(chapter_id),
-      currentPage,
-    );
+  const goHome = useCallback(
+    async (totalPages: number) => {
+      await window.electronAPI.chapters.saveLastRead(
+        serie_name!,
+        Number(chapter_id),
+        currentPage,
+        totalPages,
+      );
 
-    await window.electronAPI.series.recentSerie(serie?.dataPath!, serie_name!);
+      await window.electronAPI.series.recentSerie(
+        serie?.dataPath!,
+        serie_name!,
+      );
 
-    clearSerie();
-    navigate('/');
-  }, [serie_name, chapter_id, currentPage, navigate]);
+      clearSerie();
+      navigate('/');
+    },
+    [serie_name, chapter_id, currentPage, navigate],
+  );
 
-  const seriePage = useCallback(async () => {
-    await window.electronAPI.chapters.saveLastRead(
-      serie_name!,
-      Number(chapter_id),
-      currentPage,
-    );
+  const seriePage = useCallback(
+    async (totalPages: number) => {
+      await window.electronAPI.chapters.saveLastRead(
+        serie_name!,
+        Number(chapter_id),
+        currentPage,
+        totalPages,
+      );
 
-    const toSeriePage = await window.electronAPI.userAction.returnPage(
-      serie_name!,
-      serie?.dataPath!,
-    );
+      const toSeriePage = await window.electronAPI.userAction.returnPage(
+        serie_name!,
+        serie?.dataPath!,
+      );
 
-    await window.electronAPI.series.recentSerie(serie?.dataPath!, serie_name!);
+      await window.electronAPI.series.recentSerie(
+        serie?.dataPath!,
+        serie_name!,
+      );
 
-    const seriePage = toSeriePage.data;
+      const seriePage = toSeriePage.data;
 
-    navigate(seriePage!);
-  }, [serie_name, chapter_id, currentPage, navigate]);
+      navigate(seriePage!);
+    },
+    [serie_name, chapter_id, currentPage, navigate],
+  );
 
   return (
     <article>
@@ -157,7 +172,7 @@ export default function ViewerMenu({
             </div>
             <div className="returnControl">
               <label htmlFor="home">
-                <button id="home" onClick={goHome}>
+                <button id="home" onClick={(e) => goHome(totalPages)}>
                   <House />
                 </button>
                 <span>Pagina Inicial</span>
@@ -165,7 +180,7 @@ export default function ViewerMenu({
               <label className="returnTest" htmlFor="returnPage">
                 <button
                   id="seriePage"
-                  onClick={seriePage}
+                  onClick={(e) => seriePage(totalPages)}
                   className="returnPageBtn"
                 >
                   <ChevronLeft />

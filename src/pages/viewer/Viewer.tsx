@@ -13,11 +13,7 @@ import { useParams } from 'react-router-dom';
 import './Viewer.scss';
 
 export default function Viewer() {
-  const {
-    serie_name: rawSerieName,
-    chapter_id,
-    LiteratureForm,
-  } = useParams<{
+  const { serie_name: rawSerieName, chapter_id } = useParams<{
     serie_name: string;
     chapter_id: string;
     LiteratureForm: string;
@@ -78,6 +74,7 @@ export default function Viewer() {
         currentPage={chapter.currentPage}
         nextChapter={chapterNavigation.nextChapter}
         prevChapter={chapterNavigation.prevChapter}
+        totalPages={chapter.quantityPages}
         setScale={setScale}
       />
       <div className="containerPage">
@@ -88,7 +85,7 @@ export default function Viewer() {
             transform: `scale(${scale})  translate(${position.x}px, ${position.y}px)`,
           }}
           ref={elementRef}
-          src={`data:image;base64,${chapter.pages[chapter.currentPage]}`}
+          src={`${chapter.pages[chapter.currentPage]}`}
           alt="pagina do capitulo"
         />
         {chapter.isLoading && <LoaderCircle className="spinner" />}

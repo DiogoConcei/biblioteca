@@ -33,6 +33,7 @@ export interface visualizerProps {
   prevChapter: () => void;
   setScale: React.Dispatch<React.SetStateAction<number>>;
   nextChapter: () => void;
+  totalPages: number;
 }
 
 export interface dinamicNavProp {

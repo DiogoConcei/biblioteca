@@ -68,25 +68,57 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
       serieName: string,
       chapter_id: number,
       page_number: number,
+      totalPages: number,
     ) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
 
-        const serieData = (await storageManager.readSerieData(
+        let serieData = (await storageManager.readSerieData(
           dataPath!,
         )) as Literatures;
-        const chapter = serieData.chapters?.find((c) => c.id === chapter_id);
 
-        if (chapter && !chapter.isRead) {
-          chapter.page.lastPageRead = page_number;
+        const chapters = serieData.chapters ?? [];
 
-          chapter.isRead = true;
-          serieData.chaptersRead += 1;
+        let chapterUpdated = false;
 
-          if (chapter_id > serieData.readingData.lastChapterId) {
+        const updatedChapters = chapters.map((chapter) => {
+          if (chapter.id !== chapter_id) return chapter;
+
+          chapterUpdated = true;
+
+          const isLastPage = page_number >= totalPages;
+
+          const updatedChapter = {
+            ...chapter,
+            page: {
+              ...chapter.page,
+              lastPageRead: Math.max(
+                chapter.page.lastPageRead ?? 0,
+                page_number,
+              ),
+            },
+          };
+
+          if (isLastPage && !chapter.isRead) {
+            updatedChapter.isRead = true;
+            serieData.chaptersRead += 1;
+          }
+
+          if (isLastPage && chapter_id > serieData.readingData.lastChapterId) {
             serieData.readingData.lastChapterId = chapter_id;
           }
+
+          return updatedChapter;
+        });
+
+        if (!chapterUpdated) {
+          return { success: false, error: 'Capítulo não encontrado' };
         }
+
+        serieData = {
+          ...serieData,
+          chapters: updatedChapters,
+        };
 
         await storageManager.updateSerieData(serieData);
 

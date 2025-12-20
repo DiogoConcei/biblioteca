@@ -4,6 +4,8 @@ import sharp from 'sharp';
 import FileSystem from './abstract/FileSystem.ts';
 import StorageManager from './StorageManager.ts';
 import FileManager from './FileManager.ts';
+import { fileTypeFromBuffer } from 'file-type';
+import mime from 'mime-types';
 
 export default class ImageManager extends FileSystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -112,6 +114,57 @@ export default class ImageManager extends FileSystem {
     }
   }
 
+  public async normalizeCover(
+    coverPath: string,
+    serieName: string,
+  ): Promise<string> {
+    let imageInstance: sharp.Sharp | null = null;
+
+    try {
+      const ext = path.extname(coverPath).toLowerCase();
+
+      const imageFilter = /\.(jpe?g|png|webp)$/i;
+
+      if (!imageFilter.test(ext)) {
+        throw new Error(`Arquivo não é uma imagem válida: ${coverPath}`);
+      }
+
+      const rawName = path.dirname(coverPath);
+      const dinamicPath = path.join(this.dinamicImages, serieName);
+      await fse.ensureDir(dinamicPath);
+
+      const baseName = path.basename(coverPath, ext);
+      const safeName = baseName.replaceAll('.', '_');
+
+      const finalPath = this.fileManager.buildSafeImagePath(
+        dinamicPath,
+        safeName,
+        '.webp',
+      );
+
+      if (ext === '.webp') {
+        await fse.move(coverPath, finalPath, { overwrite: true });
+        return finalPath;
+      }
+
+      sharp.cache(false);
+      imageInstance = sharp(coverPath);
+
+      await imageInstance.webp({ quality: 85 }).toFile(finalPath);
+
+      await fse.remove(coverPath);
+
+      return finalPath;
+    } catch (e) {
+      console.error('Erro ao normalizar capa:', e);
+      throw e;
+    } finally {
+      if (imageInstance) {
+        imageInstance.destroy();
+      }
+    }
+  }
+
   public async clearChapter(dirChapter: string): Promise<void> {
     try {
       const pathDirents = await fse.readdir(dirChapter, {
@@ -139,50 +192,75 @@ export default class ImageManager extends FileSystem {
   }
 
   public async encodeImageToBase64(
-    filePath: string[] | string,
+    filePath: string | string[],
   ): Promise<string | string[]> {
-    try {
-      if (typeof filePath === 'string') {
-        const fileData = await fse.readFile(filePath);
-        return fileData.toString('base64');
-      } else if (Array.isArray(filePath)) {
-        const base64Array = await Promise.all(
-          filePath.map(async (file) => {
-            const fileData = await fse.readFile(file);
-            return fileData.toString('base64');
-          }),
-        );
-        return base64Array;
+    const encodeSingle = async (file: string): Promise<string> => {
+      const buffer = await fse.readFile(file);
+      const type = await fileTypeFromBuffer(buffer);
+      const ext = path.extname(file).toLowerCase();
+
+      const allowedExt = ['.webp', '.jpg', '.jpeg', '.png'];
+
+      let mimeType: string | false | undefined;
+
+      if (type?.mime?.startsWith('image/')) {
+        mimeType = type.mime;
+      } else if (allowedExt.includes(ext)) {
+        mimeType = mime.lookup(ext);
       } else {
+        throw new Error(`Arquivo não é uma imagem válida: ${file}`);
+      }
+
+      if (!mimeType) {
         throw new Error(
-          'Entrada inválida. Deve ser um caminho de arquivo ou uma lista de caminhos.',
+          `Não foi possível determinar o MIME da imagem: ${file}`,
         );
       }
-    } catch (error) {
-      console.error('Erro ao processar imagens:', error);
-      throw error;
+
+      return `data:${mimeType};base64,${buffer.toString('base64')}`;
+    };
+
+    if (typeof filePath === 'string') {
+      return encodeSingle(filePath);
     }
+
+    return Promise.all(filePath.map(encodeSingle));
   }
 
   public async decodeBase64ToImage(
     serieName: string,
-    codePath: string,
+    base64Data: string,
   ): Promise<string> {
-    try {
-      const base64Data = codePath.replace(/^data:image\/webp;base64,/, '');
-      const fileName = `${serieName}_${Date.now()}.webp`;
-      const directory = path.join(this.imagesFolder, 'dinamic images');
+    const matches = base64Data.match(
+      /^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/,
+    );
 
-      if (!fse.existsSync(directory)) {
-        fse.mkdirSync(directory, { recursive: true });
-      }
-
-      const filePath = path.join(directory, fileName);
-      await fse.writeFile(filePath, base64Data, 'base64');
-
-      return filePath;
-    } catch (error) {
-      throw new Error(`Erro ao salvar a imagem: ${error}`);
+    if (!matches) {
+      throw new Error('Base64 inválido ou sem MIME type');
     }
+
+    const buffer = Buffer.from(matches[2], 'base64');
+    const detectedType = await fileTypeFromBuffer(buffer);
+
+    if (!detectedType || !detectedType.mime.startsWith('image/')) {
+      throw new Error('Conteúdo Base64 não é uma imagem válida');
+    }
+
+    const directory = path.join(this.imagesFolder, 'dinamic-images');
+    await fse.ensureDir(directory);
+
+    const fileName = `${serieName}_${Date.now()}.${detectedType.ext}`;
+    const filePath = path.join(directory, fileName);
+
+    await fse.writeFile(filePath, buffer);
+    return filePath;
   }
 }
+
+// (async () => {
+//   const imageGen = new ImageManager();
+//   const dirPath =
+//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\images files\\comic\\05 - Surpreendentes X-Men\\Surpreendentes_X-Men_V3_008_2005_';
+
+//   await imageGen.clearChapter(dirPath);
+// })();

@@ -4,7 +4,7 @@ import fse from 'fs-extra';
 import path from 'path';
 import { promisify } from 'util';
 import { exec } from 'child_process';
-import { randomUUID } from 'crypto';
+import { randomUUID, randomBytes } from 'crypto';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { createCanvas } from '@napi-rs/canvas';
 import { Manga } from '../types/manga.interfaces';
@@ -250,18 +250,20 @@ export default class StorageManager extends FileSystem {
         await this.fileManager.ensureSafeSourcePath(tempFilePath);
 
       const name = path.basename(tempFilePath, path.extname(tempFilePath));
+      const suffix = randomBytes(3).toString('hex');
+      const safeName = name.replace(/[. ]+$/, '').concat(`_${suffix}`);
       const ext = path.extname(tempFilePath);
 
       const finalPath = this.fileManager.buildSafeImagePath(
         outputDir,
-        name,
+        safeName,
         ext,
       );
 
       await fse.move(safePath, finalPath, { overwrite: true });
 
       await fse.remove(tempDir);
-      return path.dirname(finalPath);
+      return finalPath;
     } catch (e) {
       console.error('Falha na conversão de PDF -> Imagem');
       throw new Error(String(e));
@@ -323,7 +325,23 @@ export default class StorageManager extends FileSystem {
 
       const extractCmd = `"${this.SEVEN_ZIP_PATH}" x "${inputFile}" -o"${tempDir}" -y`;
       console.log(`⚡ Executando comando: ${extractCmd}`);
-      await this.execAsync(extractCmd);
+
+      try {
+        await this.execAsync(extractCmd);
+      } catch (err: any) {
+        // ✅ Aceita erro de CRC como WARNING
+        if (
+          err?.code === 2 &&
+          typeof err.stderr === 'string' &&
+          err.stderr.includes('CRC Failed')
+        ) {
+          console.warn(
+            '⚠️ Aviso: CBZ contém arquivos corrompidos (CRC Failed). Continuando com arquivos extraídos...',
+          );
+        } else {
+          throw err; // ❌ erro real → explode
+        }
+      }
 
       let allFiles = await this.fileManager.getAllFilesRecursively(tempDir);
       console.log(`🔎 Total de arquivos extraídos: ${allFiles.length}`);
@@ -362,7 +380,8 @@ export default class StorageManager extends FileSystem {
         bestCandidate,
         path.extname(bestCandidate),
       );
-      const safeName = baseName.replace(/[. ]+$/, '');
+      const suffix = randomBytes(3).toString('hex');
+      const safeName = baseName.replace(/[. ]+$/, '').concat(`_${suffix}`);
 
       const finalPath = this.fileManager.buildSafeImagePath(
         outputDir,
@@ -379,7 +398,7 @@ export default class StorageManager extends FileSystem {
       await fse.remove(tempDir);
       console.log(`🧹 Diretório temporário removido: ${tempDir}`);
       console.log(`🎉 Extração concluída com sucesso!`);
-      return path.dirname(finalPath);
+      return finalPath;
     } catch (e) {
       console.error(`❌ Falha em descompactar cover:`, e);
       throw e;
@@ -392,8 +411,24 @@ export default class StorageManager extends FileSystem {
   ): Promise<void> {
     try {
       await fse.mkdir(outputDir, { recursive: true });
+
       const extractCmd = `"${this.SEVEN_ZIP_PATH}" x "${inputFile}" -o"${outputDir}" -y`;
-      await this.execAsync(extractCmd);
+
+      try {
+        await this.execAsync(extractCmd);
+      } catch (err: any) {
+        if (
+          err?.code === 2 &&
+          typeof err.stderr === 'string' &&
+          err.stderr.includes('CRC Failed')
+        ) {
+          console.warn(
+            '⚠️ Extração concluída com erros de CRC. Alguns arquivos podem estar corrompidos.',
+          );
+        } else {
+          throw err;
+        }
+      }
     } catch (e) {
       console.error(`Falha em descompactar arquivos: ${e}`);
       throw e;

@@ -73,7 +73,7 @@ export default function MangaPage() {
       <figure className={styles.imageContainer}>
         <img
           className={styles.mangaCover}
-          src={`data:image;base64,${serie.coverImage}`}
+          src={`${serie.coverImage}`}
           alt={`Capa do quadrinho ${serie.name}`}
         />
         <figcaption className={styles.mangaTags}>

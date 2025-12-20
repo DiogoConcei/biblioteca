@@ -43,7 +43,7 @@ export default function TieInPage() {
           </div>
           <img
             className={styles.cover}
-            src={`data:image/webp;base64,${edition.coverImage}`}
+            src={`${edition.coverImage}`}
             alt={edition.name}
           />
 

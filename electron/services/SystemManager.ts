@@ -3,8 +3,9 @@ import StorageManager from './StorageManager.ts';
 import FileManager from './FileManager.ts';
 import fse from 'fs-extra';
 import path from 'path';
-import { AppConfig } from '../../src/types/auxiliar.interfaces.ts';
-import { Comic } from '../types/comic.interfaces.ts';
+import { AppConfig, Literatures } from '../../src/types/auxiliar.interfaces.ts';
+import { Comic, TieIn } from '../types/comic.interfaces.ts';
+import ComicManager from './ComicManager.ts';
 
 export default class SystemManager extends FileSystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -170,11 +171,61 @@ export default class SystemManager extends FileSystem {
 
     await this.storageManager.updateSerieData(serieData);
   }
+
+  public async fixChapterOrder(serieData: Literatures | TieIn) {
+    const entries = await fse.readdir(serieData.archivesPath, {
+      withFileTypes: true,
+    });
+
+    const comicFiles = entries
+      .filter((e) => e.isFile() && /\.(cbz|cbr|zip|rar|pdf)$/i.test(e.name))
+      .map((e) => path.join(serieData.archivesPath, e.name));
+
+    if (!serieData.chapters) {
+      throw new Error(
+        'Número de arquivos de quadrinhos é menor que o número de capítulos',
+      );
+    }
+
+    const orderComics = await this.fileManager.orderComic(comicFiles);
+
+    serieData.chapters = serieData.chapters.map((chap, idx) => {
+      const baseName = path.basename(
+        orderComics[idx],
+        path.extname(orderComics[idx]),
+      );
+      const archivesPath = orderComics[idx];
+      console.log(
+        path.join(
+          this.comicsImages,
+          serieData.name,
+          this.fileManager.sanitizeFilename(baseName),
+        ),
+      );
+
+      return {
+        ...chap,
+        name: baseName,
+        sanitizedName: this.fileManager.sanitizeFilename(baseName),
+        archivesPath,
+        chapterPath: path.join(
+          this.comicsImages,
+          serieData.name,
+          this.fileManager.sanitizeFilename(baseName),
+        ),
+        isDownloaded: 'not_downloaded',
+      };
+    });
+
+    await this.storageManager.updateSerieData(serieData);
+  }
 }
 
 // (async () => {
+//   const storageManager = new StorageManager();
 //   const systemManager = new SystemManager();
-//   await systemManager.fixChildSeriePaths(
-//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Comics\\01 - Pré Vingadores A Queda.json',
-//   );
+//   const dataPath =
+//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Comics\\05 - Surpreendentes X-Men.json';
+//   const comicData = await storageManager.readSerieData(dataPath);
+//   await systemManager.fixChapterOrder(comicData);
 // })();

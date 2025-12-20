@@ -38,10 +38,7 @@ export default function SerieConfig() {
           {series!.map((serie) => (
             <div className="serieCard" key={serie.id}>
               <figure className="coverCard">
-                <img
-                  src={`data:image;base64,${serie.coverImage}`}
-                  alt={`Série: ${serie.name}`}
-                />
+                <img src={`${serie.coverImage}`} alt={`Série: ${serie.name}`} />
                 <div className="cover-actions">
                   <button
                     className="deleteChapter"

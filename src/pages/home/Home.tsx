@@ -114,10 +114,7 @@ export default function Home() {
               className={styles.serieLink}
             >
               <figure className={styles.coverCard}>
-                <img
-                  src={`data:image;base64,${serie.coverImage}`}
-                  alt={`Série: ${serie.name}`}
-                />
+                <img src={`${serie.coverImage}`} alt={`Série: ${serie.name}`} />
                 <div className={styles['play-action']}>
                   <button
                     className={styles.playChapter}

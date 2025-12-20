@@ -36,7 +36,7 @@ export default function useChapter(
       }
 
       setPages(data);
-      setCurrentPage(chapter.page.lastPageRead || 1);
+      setCurrentPage(chapter.page.lastPageRead);
     } catch (e) {
       setIsLoading(false);
       setError('Erro ao carregar as páginas do capítulo.');

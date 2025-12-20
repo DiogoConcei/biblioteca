@@ -35,14 +35,7 @@ export default class MangaManager extends FileSystem {
     );
     mangaData.chapters = mangaChapters;
 
-    if (await this.validationManager.isDinamicImage(mangaData.coverImage)) {
-      const mangaCover = await this.imageManager.normalizeImage(
-        mangaData.coverImage,
-        this.showcaseImages,
-      );
-      await fse.remove(mangaData.coverImage);
-      mangaData.coverImage = mangaCover;
-    }
+    // normalização segura da capa principal
 
     const normalizedMangaData =
       this.storageManager.createNormalizedData(mangaData);

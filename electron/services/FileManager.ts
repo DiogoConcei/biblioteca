@@ -173,20 +173,34 @@ export default class FileManager extends FileSystem {
   }
 
   public async orderComic(filesPath: string[]): Promise<string[]> {
-    const fileDetails = await Promise.all(
-      filesPath.map(async (file) => {
-        const { volume, chapter } = this.extractComicInfo(
-          file,
-          path.basename(file),
-        );
+    const fileDetails = filesPath.map((file, index) => {
+      const { volume, chapter } = this.extractComicInfo(
+        file,
+        path.basename(file),
+      );
 
-        return { filePath: file, volume, chapter };
-      }),
-    );
+      return {
+        filePath: file,
+        volume,
+        chapter,
+        isSpecial: chapter === 0,
+        fsIndex: index,
+      };
+    });
 
     fileDetails.sort((a, b) => {
-      if (a.volume !== b.volume) return a.volume - b.volume;
-      return a.chapter - b.chapter;
+      if (a.isSpecial !== b.isSpecial) {
+        return a.isSpecial ? 1 : -1;
+      }
+
+      // 2️⃣ ambos normais → ordenação lógica
+      if (!a.isSpecial && !b.isSpecial) {
+        if (a.volume !== b.volume) return a.volume - b.volume;
+        return a.chapter - b.chapter;
+      }
+
+      // 3️⃣ ambos especiais → preserva ordem da pasta
+      return a.fsIndex - b.fsIndex;
     });
 
     return fileDetails.map((d) => d.filePath);
@@ -248,9 +262,14 @@ export default class FileManager extends FileSystem {
       return { volume, chapter };
     }
 
-    m = normName.match(/\b(\d{1,4})(?!\.\d)/);
-    if (m) {
-      chapter = parseInt(m[1], 10);
+    const specialKeywords =
+      /(giant[\s\-]?size|annual|special|one[\s\-]?shot|extra)/i;
+
+    if (!specialKeywords.test(normName)) {
+      m = normName.match(/\b(\d{1,4})(?!\.\d)/);
+      if (m) {
+        chapter = parseInt(m[1], 10);
+      }
     }
 
     return { volume, chapter };
@@ -470,6 +489,16 @@ export default class FileManager extends FileSystem {
     }
 
     return null;
+  }
+
+  public normalizeImageFilename(filePath: string): string {
+    const dir = path.dirname(filePath);
+    const ext = path.extname(filePath);
+    let baseName = path.basename(filePath, ext);
+
+    baseName = baseName.replace(/\.(pdf|zip|rar)/gi, '');
+
+    return path.join(dir, `${baseName}${ext}`);
   }
 
   public foundLiteratureForm(dataPath: string): string {

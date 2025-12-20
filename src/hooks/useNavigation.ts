@@ -65,6 +65,7 @@ export default function useNavigation(currentChapter: ChapterView) {
         currentChapter.serieName,
         currentChapter.id,
         currentChapter.currentPage,
+        currentChapter.quantityPages,
       );
 
       if (nextChapter.isDownloaded === 'downloaded' && nextChapterUrl) {
@@ -100,6 +101,7 @@ export default function useNavigation(currentChapter: ChapterView) {
         currentChapter.serieName,
         currentChapter.id,
         currentChapter.currentPage,
+        currentChapter.quantityPages,
       );
       if (prevChapter.isDownloaded === 'downloaded' && prevChapterUrl) {
         navigate(prevChapterUrl);
