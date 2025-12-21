@@ -71,6 +71,19 @@ export default class StorageManager extends FileSystem {
     }
   }
 
+  public async patchSerie(data: Literatures): Promise<boolean> {
+    const dir = path.dirname(data.dataPath);
+    const tmpPath = path.join(dir, `${path.basename(data.dataPath)}.tmp`);
+
+    // 1️⃣ escreve em arquivo temporário
+    await fse.writeJson(tmpPath, data, { spaces: 2 });
+
+    // 2️⃣ substitui o arquivo original (operação atômica)
+    await fse.move(tmpPath, data.dataPath, { overwrite: true });
+
+    return true;
+  }
+
   public async preProcessedData(seriePath: string): Promise<SerieData> {
     const serieName = path.basename(seriePath);
     const newPath = path.join(this.userLibrary, serieName);

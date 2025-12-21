@@ -1,16 +1,20 @@
 import { FormInputProps } from '../../../../types/auxiliar.interfaces';
 import './PrivacyField.scss';
 
-export default function PrivacyField({ register, error }: FormInputProps) {
+export default function PrivacyField({
+  name,
+  register,
+  error,
+}: FormInputProps) {
   return (
     <div className="privacy-info">
       <h2 className="form-subtitle">Privacidade:</h2>
       <div className="privacy-container">
         <input
           type="radio"
-          value="Pública"
+          value="Publica"
           id="Privacypublic"
-          {...register('privacy', {
+          {...register(name, {
             required: 'Escolha Pública ou Privada',
           })}
         />
@@ -20,7 +24,9 @@ export default function PrivacyField({ register, error }: FormInputProps) {
           type="radio"
           value="Privada"
           id="Privacyprivate"
-          {...register('privacy')}
+          {...register(name, {
+            required: 'Escolha Pública ou Privada',
+          })}
         />
         <label htmlFor="Privacyprivate">Privada</label>
       </div>

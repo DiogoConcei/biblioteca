@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Tag } from 'lucide-react';
+import { Tag, XIcon } from 'lucide-react';
 import { Controller, FieldValues } from 'react-hook-form';
 import { GenericControllerProps } from '../../../../types/auxiliar.interfaces';
 import styles from './TagsField.module.scss';
@@ -66,7 +66,9 @@ export default function TagsField<T extends FieldValues>({
                       }}
                       className={styles.removeTag}
                       aria-label={`Remover tag ${tag}`}
-                    ></button>
+                    >
+                      x
+                    </button>
                   </span>
                 </li>
               ))}

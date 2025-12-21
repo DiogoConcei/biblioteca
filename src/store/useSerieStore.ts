@@ -15,7 +15,7 @@ interface UseSerieStore {
 
   fetchSerie: (serieName: string, literatureForm: string) => Promise<void>;
   setSerie: (serie: Literatures | TieIn | null) => void;
-  setChapter: (chapters: LiteratureChapter[]) => void;
+  setChapters: (chapters: LiteratureChapter[]) => void;
 
   updateSerie: (path: string, newValue: LiteraturesAttributes) => void;
   updateChapter: (
@@ -30,7 +30,7 @@ const useSerieStore = create<UseSerieStore>((set, get) => ({
   serie: null,
   chapters: [],
 
-  setChapter: (new_chapters: LiteratureChapter[]) => {
+  setChapters: (new_chapters: LiteratureChapter[]) => {
     set({ chapters: new_chapters });
   },
 

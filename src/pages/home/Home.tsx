@@ -6,9 +6,9 @@ import useAllSeries from '../../hooks/useAllSeries';
 import Loading from '../../components/Loading/Loading';
 import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
 import SearchBar from '../../components/SearchBar/SearchBar';
-import { Play } from 'lucide-react';
-import styles from './Home.module.scss';
+import { Play, Pencil } from 'lucide-react';
 import { viewData } from '../../types/auxiliar.interfaces';
+import styles from './Home.module.scss';
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState<string>('');
@@ -115,7 +115,19 @@ export default function Home() {
             >
               <figure className={styles.coverCard}>
                 <img src={`${serie.coverImage}`} alt={`Série: ${serie.name}`} />
-                <div className={styles['play-action']}>
+                <div className={styles['cover-actions']}>
+                  <button
+                    className={styles.editChapter}
+                    aria-label={`Editar série ${serie.name}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(
+                        `/edit/serie/${serie.name}/${serie.literatureForm}`,
+                      );
+                    }}
+                  >
+                    <Pencil size={'24'} />
+                  </button>
                   <button
                     className={styles.playChapter}
                     aria-label={`Excluir série ${serie.name}`}

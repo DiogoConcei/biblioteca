@@ -1,7 +1,7 @@
 import { FormInputProps } from '../../../../types/auxiliar.interfaces';
 import './BackupField.scss';
 
-export default function BackupField({ register, error }: FormInputProps) {
+export default function BackupField({ name, register, error }: FormInputProps) {
   return (
     <div className="backup-info">
       <h2 className="form-subtitle">Adicionar ao auto backup:</h2>
@@ -10,7 +10,7 @@ export default function BackupField({ register, error }: FormInputProps) {
           type="radio"
           value="Sim"
           id="SimAutoBackup"
-          {...register('autoBackup', {
+          {...register(name, {
             required: 'Escolha Sim ou Não',
           })}
         />
@@ -20,7 +20,9 @@ export default function BackupField({ register, error }: FormInputProps) {
           type="radio"
           value="Não"
           id="NaoAutoBackup"
-          {...register('autoBackup')}
+          {...register(name, {
+            required: 'Escolha Sim ou Não',
+          })}
         />
         <label htmlFor="NaoAutoBackup">Não</label>
       </div>

@@ -66,6 +66,7 @@ declare global {
           dataPath: string,
           userRating: number,
         ) => Promise<APIResponse<void>>;
+        updateSerie: (data: SerieEditForm) => Promise<APIResponse<void>>;
       };
 
       chapters: {

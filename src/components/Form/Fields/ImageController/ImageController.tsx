@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Controller } from 'react-hook-form';
 import { ImagePlus } from 'lucide-react';
 import { GenericControllerProps } from '../../../../types/auxiliar.interfaces';
@@ -10,6 +10,7 @@ export default function ImageController<T extends FieldValues>({
   name,
 }: GenericControllerProps<T>) {
   const [preview, setPreview] = useState<string>();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   return (
     <Controller
@@ -20,22 +21,24 @@ export default function ImageController<T extends FieldValues>({
         <div className={styles['image-upload']}>
           <span>Capa</span>
           <div
-            className={styles['image-container']}
-            onClick={() => document.getElementById('coverInput')?.click()}
+            className={styles.imageContainer}
+            onClick={() => inputRef.current?.click()}
           >
             {preview || field.value ? (
               <img
                 src={preview || field.value}
                 alt="Preview da capa"
-                className={styles['cover-preview']}
+                className={styles.coverPreview}
               />
             ) : (
-              <span className={styles.alert}>
-                <ImagePlus color="#8963ba" size={50} />
-              </span>
+              <div className={styles.placeholder}>
+                <ImagePlus size={48} />
+                <span>Clique para adicionar</span>
+              </div>
             )}
 
             <input
+              ref={inputRef}
               id="coverInput"
               type="file"
               accept="image/*"

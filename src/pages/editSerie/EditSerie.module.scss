@@ -1,0 +1,206 @@
+@use '../../styles/variables' as *;
+
+h1 {
+  text-align: center;
+  span {
+    color: $snow;
+  }
+  color: $indian-red;
+  font-size: $font-lg;
+}
+
+.form-view {
+  display: grid;
+  grid-template-columns: auto max-content max-content;
+  gap: $spacing-3;
+  justify-content: center;
+  align-items: start;
+
+  max-width: 1400px;
+  padding: $spacing-3;
+
+  padding: $spacing-2;
+  margin-inline: auto;
+  margin-top: $spacing-3;
+  gap: $spacing-5;
+
+  .card {
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+
+    .actionButtons {
+      display: flex;
+      flex-flow: row nowrap;
+      justify-content: space-between;
+      width: 300px;
+      margin-top: $spacing-1;
+    }
+  }
+
+  .mainInfo {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: $spacing-4;
+    align-items: start;
+    justify-content: center;
+
+    .text-info {
+      display: flex;
+      flex-flow: column nowrap;
+      gap: $spacing-3;
+    }
+
+    .checkInfo {
+      display: flex;
+      flex-flow: column;
+      gap: $spacing-2;
+    }
+  }
+
+  .Control {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-flow: column;
+    gap: $spacing-2;
+
+    h2 {
+      font-size: $font-2xl;
+      color: $snow;
+    }
+
+    .chaptersList {
+      display: flex;
+      flex-flow: column nowrap;
+      gap: $spacing-2;
+
+      .chapter {
+        display: flex;
+        flex-flow: row;
+        justify-content: space-between;
+        padding: $spacing-3;
+        width: 500px;
+        max-width: 100%;
+        background: $strong-indian-red;
+        color: $snow;
+        gap: $spacing-4;
+        cursor: pointer;
+
+        .chapterName {
+          font-size: $font-base;
+          font-weight: 400;
+          width: 300px;
+          max-width: 100%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .actionButtons {
+          display: flex;
+          justify-content: space-between;
+          width: fit-content;
+          gap: $spacing-1;
+
+          button {
+            @include interactive-buttons;
+
+            &:hover {
+              color: $snow;
+            }
+          }
+        }
+      }
+    }
+
+    .ControlBtns {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      margin: $spacing-1;
+
+      .prevBTN,
+      .nextBTN {
+        @include interactive-buttons;
+        color: black;
+      }
+
+      .prevBTN:disabled,
+      .nextBTN:disabled {
+        color: #ccc;
+        @include interactive-buttons;
+      }
+
+      .disable {
+        width: 30px;
+        height: 30px;
+        border-radius: 5px;
+        transition: 250ms background;
+
+        &:hover {
+          color: #a878e5;
+          background-color: $hover-shining;
+        }
+      }
+
+      .active {
+        @include interactive-buttons;
+        color: black;
+        font-size: $font-lg;
+      }
+
+      .disable {
+        @include interactive-buttons;
+        color: $snow;
+        font-size: $font-lg;
+      }
+    }
+
+    .animate-spin {
+      color: $snow;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .iconDownloaded {
+      color: #000;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: $hover-shining;
+      }
+    }
+
+    .iconNotDownloaded {
+      color: #fcf7f8;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: $hover-shining;
+      }
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: space-evenly;
+    width: 500px;
+
+    button {
+      @include interactive-buttons;
+      padding: $spacing-2;
+      border-radius: $radius-md;
+      background: $indian-red;
+      color: $snow;
+      border: 2px solid $indian-red;
+    }
+  }
+}

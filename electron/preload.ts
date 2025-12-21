@@ -4,7 +4,11 @@ import {
   viewData,
   Literatures,
 } from '../src/types/auxiliar.interfaces.ts';
-import { SerieData, SerieForm } from '../src/types/series.interfaces.ts';
+import {
+  SerieData,
+  SerieEditForm,
+  SerieForm,
+} from '../src/types/series.interfaces.ts';
 import { Collection } from '../src/types/collections.interfaces.ts';
 import { ComicTieIn, TieIn } from './types/comic.interfaces.ts';
 
@@ -83,6 +87,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       serie_name: string,
     ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('serie:recent-read', dataPath, serie_name),
+    updateSerie: (data: SerieEditForm): Promise<APIResponse<void>> =>
+      ipcRenderer.invoke('serie:update-serie', data),
   },
 
   chapters: {

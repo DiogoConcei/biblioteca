@@ -1,7 +1,11 @@
 import { FormInputProps } from 'src/types/auxiliar.interfaces';
 import './LiteratureField.scss';
 
-export default function LiteratureField({ register, error }: FormInputProps) {
+export default function LiteratureField({
+  name,
+  register,
+  error,
+}: FormInputProps) {
   return (
     <div className="literature-info">
       <h2 className="form-subtitle">Forma de literatura:</h2>
@@ -10,7 +14,7 @@ export default function LiteratureField({ register, error }: FormInputProps) {
           type="radio"
           value="Manga"
           id="Manga"
-          {...register('literatureForm', {
+          {...register(name, {
             required: 'Selecione a forma de literatura',
           })}
         />
@@ -20,7 +24,9 @@ export default function LiteratureField({ register, error }: FormInputProps) {
           type="radio"
           value="Quadrinho"
           id="Quadrinho"
-          {...register('literatureForm')}
+          {...register(name, {
+            required: 'Selecione a forma de literatura',
+          })}
         />
         <label htmlFor="Quadrinho">Quadrinho</label>
 
@@ -28,7 +34,9 @@ export default function LiteratureField({ register, error }: FormInputProps) {
           type="radio"
           value="Livro"
           id="Livro"
-          {...register('literatureForm')}
+          {...register(name, {
+            required: 'Selecione a forma de literatura',
+          })}
         />
         <label htmlFor="Livro">Livro</label>
       </div>

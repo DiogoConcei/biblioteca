@@ -54,14 +54,18 @@
             display: block;
           }
 
-          .play-action {
+          .cover-actions {
             position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             bottom: 8px;
             right: 8px;
             z-index: 10;
+            width: 130px;
           }
-
-          .playChapter {
+          .playChapter,
+          .editChapter {
             display: flex;
             @include interactive-buttons;
             font-size: 24px;

@@ -94,6 +94,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
       const processedData = {
         ...data,
+        coverImage: await imageManager.encodeImageToBase64(data.coverImage),
         chapters: updatedChapters,
         childSeries: updatedChildSeries,
       };
@@ -229,7 +230,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
           error: '',
         };
       } catch (e) {
-        console.log(`Falha em criar as capas da Tie-In`);
+        console.error(`Falha em criar as capas da Tie-In`);
         return { success: false, error: 'deu mole ' };
       }
     },
@@ -253,6 +254,28 @@ export default function seriesHandlers(ipcMain: IpcMain) {
       return { success: true, data: newData };
     } catch (e) {
       console.error(`Falha em encontrar a serie: ${serieName}`);
+    }
+  });
+
+  ipcMain.handle('serie:update-serie', async (_event, data: Literatures) => {
+    try {
+      if (!data?.dataPath) {
+        throw new Error('dataPath inválido');
+      }
+
+      const result = await storageManager.patchSerie(data);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Erro ao atualizar série:', error);
+
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Erro desconhecido ao atualizar série',
+      };
     }
   });
 }

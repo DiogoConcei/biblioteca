@@ -9,9 +9,8 @@ import MangaPage from './pages/mangaPage/MangaPage';
 import ComicPage from './pages/comicPage/comicPage';
 import TieInPage from './components/TieInPage/TieInPage';
 import Viewer from './pages/viewer/Viewer';
+import EditSerie from './pages/editSerie/EditSerie';
 // import ErrorBoundary from './providers/ErrorBoundary';
-// import SerieConfig from './pages/serieConfig/serieConfig';
-// import SerieEdit from './pages/serieEdit/SerieEdit';
 
 const App = () => {
   return (
@@ -20,8 +19,10 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
-          {/* <Route path="config/serie" element={<SerieConfig />} /> */}
-          {/* <Route path="edit/serie/:serie_name" element={<SerieEdit />} /> */}
+          <Route
+            path="edit/serie/:serie_name/:literature_form"
+            element={<EditSerie />}
+          />
           <Route path="local-upload/serie" element={<Upload />} />
           <Route path="Manga/:manga_name/:manga_id" element={<MangaPage />} />
           <Route
