@@ -7,7 +7,7 @@ import styles from './Rating.module.scss';
 
 export default function Rating({ serie }: RatingProps) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const { ratingSerie } = useAction(serie.dataPath);
+  const { ratingSerie } = useAction();
   const { setFavorites } = useCollection();
 
   const [currentRating, setCurrentRating] = useState<number>(
@@ -22,8 +22,8 @@ export default function Rating({ serie }: RatingProps) {
     '5 - Excelente',
   ];
 
-  const newRating = async (index: number) => {
-    ratingSerie(serie.dataPath, index);
+  const newRating = async (e: React.MouseEvent, rating: number) => {
+    ratingSerie(e, serie, rating);
 
     setFavorites((prev) => {
       if (!prev) return prev;
@@ -32,7 +32,7 @@ export default function Rating({ serie }: RatingProps) {
         if (serie.name === serie.name) {
           return {
             ...serie,
-            rating: index,
+            rating: rating,
           };
         }
         return serie;
@@ -44,7 +44,7 @@ export default function Rating({ serie }: RatingProps) {
       };
     });
 
-    setCurrentRating(index);
+    setCurrentRating(rating);
   };
 
   const onToggle = () => {
@@ -57,7 +57,7 @@ export default function Rating({ serie }: RatingProps) {
   return (
     <div>
       <button className={styles.rating} onClick={onToggle}>
-        {currentRating > 0 ? <Star /> : <StarOff />}
+        {currentRating ? <Star /> : <StarOff />}
       </button>
 
       {isOpen && (
@@ -66,7 +66,7 @@ export default function Rating({ serie }: RatingProps) {
             <li key={index} className={styles['rating-item']}>
               <button
                 className={styles['rating-option']}
-                onClick={async () => await newRating(index)}
+                onClick={async (e) => newRating(e, index)}
               >
                 {quantity}
               </button>

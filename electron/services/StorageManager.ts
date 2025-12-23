@@ -9,7 +9,7 @@ import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { createCanvas } from '@napi-rs/canvas';
 import { Manga } from '../types/manga.interfaces';
 import { Comic, TieIn } from '../types/comic.interfaces';
-import { SerieData } from '../../src/types/series.interfaces';
+import { SerieData, SerieEditForm } from '../../src/types/series.interfaces';
 import {
   Literatures,
   LiteratureChapter,
@@ -71,17 +71,49 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  public async patchSerie(data: Literatures): Promise<boolean> {
-    const dir = path.dirname(data.dataPath);
-    const tmpPath = path.join(dir, `${path.basename(data.dataPath)}.tmp`);
+  public async patchSerie(data: SerieEditForm): Promise<Literatures[]> {
+    const oldData = (await this.readSerieData(data.dataPath)) as Literatures;
 
-    // 1️⃣ escreve em arquivo temporário
-    await fse.writeJson(tmpPath, data, { spaces: 2 });
+    const id = oldData.id;
+    const updated: Literatures = { ...data, id };
+    updated.id = id;
+    const isBase64 = updated.coverImage.startsWith('data:image/');
 
-    // 2️⃣ substitui o arquivo original (operação atômica)
-    await fse.move(tmpPath, data.dataPath, { overwrite: true });
+    if (isBase64) {
+      updated.coverImage = oldData.coverImage;
+    }
 
-    return true;
+    const rootPath = path.join(
+      this.imagesFolder,
+      data.literatureForm,
+      data.name,
+    );
+
+    if (updated.name !== oldData.name) {
+      await fse.move(oldData.chaptersPath, rootPath);
+
+      oldData.chapters = updated.chapters;
+
+      for (let idx = 0; idx < oldData.chapters.length; idx++) {
+        oldData.chapters[idx].id = idx;
+
+        const newChapterRoot = path.join(rootPath, oldData.chapters[idx].name);
+        const oldChapterPath = oldData.chapters[idx].chapterPath;
+
+        updated.chapters[idx].chapterPath = path.join(
+          rootPath,
+          oldData.chapters[idx].name,
+        );
+
+        if (await fse.pathExists(oldChapterPath)) {
+          await fse.move(oldChapterPath, newChapterRoot);
+        }
+      }
+    }
+
+    updated.totalChapters = updated.chapters.length;
+
+    return [oldData, updated];
   }
 
   public async preProcessedData(seriePath: string): Promise<SerieData> {
@@ -224,7 +256,6 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  // Renderiza a primeira página do PDF como capa (PNG)
   public async extractCoverFromPdf(
     inputFile: string,
     outputDir: string,
@@ -283,7 +314,6 @@ export default class StorageManager extends FileSystem {
     }
   }
 
-  // Mais rápido que GhostScript
   public async convertPdf_overdrive(inputFile: string, outputDir: string) {
     await fse.ensureDir(outputDir);
 
@@ -506,13 +536,67 @@ export default class StorageManager extends FileSystem {
       return { success: false, error: 'Erro ao obter dados da série' };
     }
   }
+
+  public async patchHelper(updatedData: Literatures, newData: SerieEditForm) {
+    try {
+      const dir = path.dirname(updatedData.dataPath);
+
+      const newPath = path.join(dir, `${newData.name}.json`);
+
+      updatedData.dataPath = newPath;
+
+      if (newData.name !== updatedData.name) {
+        await fse.writeJson(newPath, updatedData, { spaces: 2 });
+        await fse.move(newPath, updatedData.dataPath, { overwrite: true });
+      } else {
+        this.updateSerieData(updatedData);
+      }
+    } catch (e) {
+      console.error(`Falha ao finalizar update da serie: ${newData.name}`);
+    }
+  }
 }
 
 // (async () => {
 //   const storageManager = new StorageManager();
-//   const filePath =
-//     'c:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\user library\\01 - Pré Vingadores A Queda\\1.5 Iron Man 73-78 (1998)\\The Invincible Iron Man #73 A.melhor.Defesa.-.1.de.6.HQ.BR.29.08.05.GibiHQ.pdf';
-//   const outputDir =
-//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\images files\\comic\\1.5 Iron Man 73-78 (1998)\\The Invincible Iron Man #73 A.melhor.Defesa.-.1.de.6.HQ.BR.29.08.05.GibiHQ';
-//   await storageManager.convertPdf_overdrive(filePath, outputDir);
+//   const serieData = (await storageManager.readSerieData(
+//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Mangas\\Dr. Stone.json',
+//   )) as Manga;
+
+//   const testData: SerieEditForm = {
+//     name: 'Doutor Stone',
+//     sanitizedName: serieData.sanitizedName,
+//     genre: serieData.genre,
+//     author: serieData.author,
+//     language: serieData.language,
+//     coverImage: serieData.coverImage,
+//     archivesPath: serieData.archivesPath,
+//     chaptersPath: serieData.chaptersPath,
+//     dataPath: serieData.dataPath,
+//     chapters: serieData.chapters,
+//     totalChapters: serieData.totalChapters,
+//     chaptersRead: serieData.chaptersRead,
+//     literatureForm: serieData.literatureForm,
+//     readingData: {
+//       lastChapterId: serieData.readingData.lastChapterId,
+//       lastReadAt: serieData.readingData.lastReadAt,
+//     },
+//     metadata: {
+//       status: serieData.metadata.status,
+//       collections: serieData.metadata.collections,
+//       recommendedBy: serieData.metadata.recommendedBy,
+//       originalOwner: serieData.metadata.originalOwner,
+//       lastDownload: serieData.metadata.lastDownload,
+//       privacy: serieData.metadata.privacy,
+//       rating: serieData.metadata.rating,
+//       isFavorite: serieData.metadata.isFavorite,
+//       autoBackup: serieData.metadata.autoBackup,
+//     },
+//     comments: serieData.comments,
+//     tags: serieData.tags,
+//     deletedAt: serieData.deletedAt,
+//     createdAt: serieData.createdAt,
+//   };
+
+//   await storageManager.patchSerie(testData);
 // })();

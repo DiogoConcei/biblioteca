@@ -4,7 +4,6 @@ import useUIStore from '../../store/useUIStore';
 import useSerieStore from '../../store/useSerieStore';
 import useAllSeries from '../../hooks/useAllSeries';
 import Loading from '../../components/Loading/Loading';
-import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
 import SearchBar from '../../components/SearchBar/SearchBar';
 import { Play, Pencil } from 'lucide-react';
 import { viewData } from '../../types/auxiliar.interfaces';
@@ -13,11 +12,9 @@ import styles from './Home.module.scss';
 export default function Home() {
   const [searchInput, setSearchInput] = useState<string>('');
   const setError = useUIStore((state) => state.setError);
-  const serie = useSerieStore((state) => state.serie);
   const setSerie = useSerieStore((state) => state.setSerie);
 
   const loading = useUIStore((state) => state.loading);
-  const error = useUIStore((state) => state.error);
   const clearSerie = useSerieStore((state) => state.clearSerie);
   const series = useAllSeries();
   const navigate = useNavigate();
@@ -87,10 +84,6 @@ export default function Home() {
       setError('URL do último capítulo não encontrada.');
     }
   };
-
-  if (error) {
-    return <ErrorScreen error={error} />;
-  }
 
   if (loading || !series) {
     return <Loading />;

@@ -35,11 +35,17 @@ export default class MangaManager extends FileSystem {
     );
     mangaData.chapters = mangaChapters;
 
-    // normalização segura da capa principal
+    if (await this.validationManager.isDinamicImage(mangaData.coverImage)) {
+      const comicCover = await this.imageManager.normalizeCover(
+        mangaData.coverImage,
+        mangaData.name,
+      );
+      mangaData.coverImage = comicCover;
+    }
 
     const normalizedMangaData =
       this.storageManager.createNormalizedData(mangaData);
-    await this.collectionsManager.serieToCollection(normalizedMangaData);
+    await this.collectionsManager.addToCollection(normalizedMangaData);
     await this.storageManager.writeSerieData(mangaData);
     await this.systemManager.setMangaId(this.global_id);
     await this.fileManager.localUpload(serie.oldPath, mangaData.archivesPath);

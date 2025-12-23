@@ -67,6 +67,7 @@ export default function ListView() {
 
       <section className={styles.ControlBtns} aria-label="Paginação">
         <button
+          type="button"
           className={styles.prevBTN}
           onClick={() => handlePage(currentPage - 1)}
           disabled={currentPage === 1}
@@ -77,6 +78,7 @@ export default function ListView() {
 
         {pageNumbers.map((pageNumber) => (
           <button
+            type="button"
             key={pageNumber}
             onClick={() => handlePage(pageNumber)}
             className={
@@ -89,6 +91,7 @@ export default function ListView() {
         ))}
 
         <button
+          type="button"
           className={styles.nextBTN}
           onClick={() => handlePage(currentPage + 1)}
           disabled={currentPage === totalPages}

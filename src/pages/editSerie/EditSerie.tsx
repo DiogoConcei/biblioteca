@@ -38,8 +38,6 @@ import {
   LiteratureChapter,
 } from '../../types/auxiliar.interfaces';
 import CollectionButton from '../../components/CollectionButton/CollectionButton';
-import useDownload from '../../hooks/useDownload';
-import useAction from '../../hooks/useAction';
 import usePagination from '../../hooks/usePagination';
 import styles from './EditSerie.module.scss';
 
@@ -48,8 +46,6 @@ export default function EditSerie() {
     serie_name: string;
     literature_form: string;
   }>();
-  const { downloadIndividual } = useDownload();
-  const { markAsRead } = useAction();
   const serie_name = decodeURIComponent(rawSerieName ?? '');
   const navigate = useNavigate();
 
@@ -71,6 +67,8 @@ export default function EditSerie() {
     usePagination();
 
   const {
+    setValue,
+    watch,
     control,
     register,
     reset,
@@ -118,6 +116,26 @@ export default function EditSerie() {
         }
       : undefined,
   });
+  const chaptersRead = watch('chaptersRead');
+
+  const isRead = async (e: React.MouseEvent, chapter: LiteratureChapter) => {
+    e.stopPropagation();
+
+    const originalRead = chapter.isRead;
+
+    const currentRead = Number(chaptersRead) || 0;
+    const delta = originalRead ? -1 : 1;
+
+    setValue('chaptersRead', currentRead + delta, {
+      shouldDirty: true,
+    });
+
+    setChapters(
+      chapters.map((chap) =>
+        chap.id === chapter.id ? { ...chap, isRead: !originalRead } : chap,
+      ),
+    );
+  };
 
   const delChapter = async (
     e: React.MouseEvent<HTMLButtonElement>,
@@ -134,7 +152,6 @@ export default function EditSerie() {
       setLoading(true);
       setError(null);
 
-      // garante que o estado mais recente dos capítulos vá junto
       const payload = {
         ...data,
         chapters,
@@ -222,7 +239,13 @@ export default function EditSerie() {
                       <span className={styles.chapterName}>{chapter.name}</span>
 
                       <div className={styles.actionButtons}>
-                        <button onClick={(e) => markAsRead(e, chapter)}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            isRead(e, chapter);
+                          }}
+                        >
                           {chapter.isRead ? (
                             <Eye size={26} strokeWidth={1} />
                           ) : (
@@ -231,28 +254,9 @@ export default function EditSerie() {
                         </button>
 
                         <button
-                          onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
-                            downloadIndividual(e, chapter)
-                          }
+                          type="button"
+                          onClick={(e) => delChapter(e, chapter)}
                         >
-                          {chapter.isDownloaded === 'downloading' ? (
-                            <LoaderCircle
-                              size={24}
-                              strokeWidth={1}
-                              className={styles['animate-spin']}
-                            />
-                          ) : chapter.isDownloaded === 'downloaded' ? (
-                            <ArrowDownFromLine
-                              className={styles.iconDownloaded}
-                            />
-                          ) : (
-                            <ArrowDownToLine
-                              className={styles.iconNotDownloaded}
-                            />
-                          )}
-                        </button>
-
-                        <button onClick={(e) => delChapter(e, chapter)}>
                           <Trash />
                         </button>
                       </div>
@@ -263,6 +267,7 @@ export default function EditSerie() {
 
               <div className={styles.ControlBtns} aria-label="Paginação">
                 <button
+                  type="button"
                   className={styles.prevBTN}
                   onClick={() => handlePage(currentPage - 1)}
                   disabled={currentPage === 1}
@@ -274,6 +279,7 @@ export default function EditSerie() {
                 {pageNumbers.map((pageNumber) => (
                   <button
                     key={pageNumber}
+                    type="button"
                     onClick={() => handlePage(pageNumber)}
                     className={
                       pageNumber === currentPage
@@ -290,6 +296,7 @@ export default function EditSerie() {
 
                 <button
                   className={styles.nextBTN}
+                  type="button"
                   onClick={() => handlePage(currentPage + 1)}
                   disabled={currentPage === totalPages}
                   aria-disabled={currentPage === totalPages}
@@ -310,11 +317,12 @@ export default function EditSerie() {
             </div>
           </div>
           <div className={styles.checkInfo}>
-            <LiteratureField
+            {/* Conversão entre tipos apenas no futuro */}
+            {/* <LiteratureField
               name="literatureForm"
               register={register}
               error={errors.literatureForm}
-            />
+            /> */}
 
             <BackupField
               name="metadata.autoBackup"

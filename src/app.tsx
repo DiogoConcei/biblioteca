@@ -10,34 +10,34 @@ import ComicPage from './pages/comicPage/comicPage';
 import TieInPage from './components/TieInPage/TieInPage';
 import Viewer from './pages/viewer/Viewer';
 import EditSerie from './pages/editSerie/EditSerie';
-// import ErrorBoundary from './providers/ErrorBoundary';
+import ErrorBoundary from './providers/ErrorBoundary';
 
 const App = () => {
   return (
-    // <ErrorBoundary>
-    <HashRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
+    <ErrorBoundary>
+      <HashRouter>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route
+              path="edit/serie/:serie_name/:literature_form"
+              element={<EditSerie />}
+            />
+            <Route path="local-upload/serie" element={<Upload />} />
+            <Route path="Manga/:manga_name/:manga_id" element={<MangaPage />} />
+            <Route
+              path="Quadrinho/:comic_name/:comic_id"
+              element={<ComicPage />}
+            />
+            <Route path="TieIn/:tiein_name" element={<TieInPage />} />
+          </Route>
           <Route
-            path="edit/serie/:serie_name/:literature_form"
-            element={<EditSerie />}
+            path=":serie_name/:serie_id/:chapter_name/:chapter_id/:page/:isRead"
+            element={<Viewer />}
           />
-          <Route path="local-upload/serie" element={<Upload />} />
-          <Route path="Manga/:manga_name/:manga_id" element={<MangaPage />} />
-          <Route
-            path="Quadrinho/:comic_name/:comic_id"
-            element={<ComicPage />}
-          />
-          <Route path="TieIn/:tiein_name" element={<TieInPage />} />
-        </Route>
-        <Route
-          path=":serie_name/:serie_id/:chapter_name/:chapter_id/:page/:isRead"
-          element={<Viewer />}
-        />
-      </Routes>
-    </HashRouter>
-    // </ErrorBoundary>
+        </Routes>
+      </HashRouter>
+    </ErrorBoundary>
   );
 };
 

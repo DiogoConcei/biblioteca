@@ -38,7 +38,6 @@ export default class FileManager extends FileSystem {
 
     let maxBaseLength = max - staticLength;
 
-    // 🛑 Caso extremo: nem o mínimo cabe
     if (maxBaseLength < min) {
       const fallback = randomUUID().slice(0, min);
       return path.join(resolvedDir, fallback + ext);

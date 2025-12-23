@@ -70,7 +70,7 @@ export default class ComicManager extends FileSystem {
     const normalizedMangaData =
       this.storageManager.createNormalizedData(comicData);
 
-    await this.collectionsManager.serieToCollection(normalizedMangaData);
+    await this.collectionsManager.addToCollection(normalizedMangaData);
     await this.systemManager.setMangaId(this.global_id);
     await this.storageManager.writeSerieData(comicData);
     await this.fileManager.localUpload(serie.oldPath, comicData.archivesPath);

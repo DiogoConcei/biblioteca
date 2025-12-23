@@ -25,6 +25,25 @@ export default class ImageManager extends FileSystem {
     return path.join(dir, `${baseName}${ext}`);
   }
 
+  public async uploadNewCover(
+    serieName: string,
+    oldCover: string,
+    newCover: string,
+  ): Promise<string> {
+    if (oldCover === newCover) {
+      return oldCover;
+    }
+
+    const extName = path.extname(newCover).toLowerCase();
+
+    if (extName !== '.webp') {
+      const normalizedCover = await this.normalizeCover(newCover, serieName);
+      return normalizedCover;
+    }
+
+    return newCover;
+  }
+
   public async normalizeChapter(dirPath: string): Promise<void> {
     try {
       const entries = await fse.readdir(dirPath, { withFileTypes: true });
@@ -246,7 +265,7 @@ export default class ImageManager extends FileSystem {
       throw new Error('Conteúdo Base64 não é uma imagem válida');
     }
 
-    const directory = path.join(this.imagesFolder, 'dinamic-images');
+    const directory = path.join(this.imagesFolder, 'dinamic images');
     await fse.ensureDir(directory);
 
     const fileName = `${serieName}_${Date.now()}.${detectedType.ext}`;

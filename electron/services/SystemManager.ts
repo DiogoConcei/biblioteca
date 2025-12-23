@@ -158,6 +158,7 @@ export default class SystemManager extends FileSystem {
     }
 
     const archivesPath = serieData.archivesPath;
+
     for (const child of childSeries) {
       const result = await this.fileManager.findPath(
         archivesPath,
@@ -220,12 +221,3 @@ export default class SystemManager extends FileSystem {
     await this.storageManager.updateSerieData(serieData);
   }
 }
-
-// (async () => {
-//   const storageManager = new StorageManager();
-//   const systemManager = new SystemManager();
-//   const dataPath =
-//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Comics\\05 - Surpreendentes X-Men.json';
-//   const comicData = await storageManager.readSerieData(dataPath);
-//   await systemManager.fixChapterOrder(comicData);
-// })();

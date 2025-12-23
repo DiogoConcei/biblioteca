@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-
+import useUIStore from '../store/useUIStore';
 import {
   Collection,
   SerieCollectionInfo,
@@ -10,11 +10,21 @@ export default function useCollection() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [favorites, setFavorites] = useState<Collection>();
   const [recents, setRecents] = useState<Collection>();
+  const setError = useUIStore((state) => state.setError);
 
   useEffect(() => {
-    async function fetchCollection() {
-      const response = await window.electronAPI.collections.getCollections();
-      if (response.success && response.data) {
+    async function getCollections() {
+      try {
+        const response = await window.electronAPI.collections.getCollections();
+
+        if (!response.success || !response.data) {
+          setError('Falha na requisição');
+          return;
+        }
+
+        const data = response.data;
+        const collNames = data.map((col: Collection) => col.name);
+
         setCollections(response.data);
         setFavorites(
           response.data.find((coll: Collection) => coll.name === 'Favoritas'),
@@ -22,21 +32,12 @@ export default function useCollection() {
         setRecents(
           response.data.find((coll: Collection) => coll.name === 'Recentes'),
         );
-      } else {
-        console.log(response.error);
+      } catch (e) {
+        setError('Falha ao coletar todas as coleções');
       }
     }
 
-    fetchCollection();
-
-    window.electronAPI.on('update-rating', () => {
-      fetchCollection();
-    });
-    return () => {
-      window.electronAPI.on('update-rating', () => {
-        fetchCollection();
-      });
-    };
+    getCollections();
   }, []);
 
   const updateFav = async (
@@ -94,7 +95,10 @@ export default function useCollection() {
     dataPath: string,
   ) => {
     try {
-      await window.electronAPI.series.serieToCollection(dataPath);
+      await window.electronAPI.series.serieToCollection(
+        dataPath,
+        collectionName,
+      );
     } catch (error) {
       console.error(
         `Erro ao adicionar série à coleção "${collectionName}":`,

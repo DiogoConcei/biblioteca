@@ -73,8 +73,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
       childSerie: ComicTieIn,
     ): Promise<APIResponse<string | null>> =>
       ipcRenderer.invoke('serie:create-TieIn', childSerie),
-    serieToCollection: async (dataPath: string): Promise<APIResponse<void>> =>
-      ipcRenderer.invoke('serie:add-to-collection', dataPath),
+    serieToCollection: async (
+      dataPath: string,
+      collectionName: string,
+    ): Promise<APIResponse<void>> =>
+      ipcRenderer.invoke('serie:add-to-collection', dataPath, collectionName),
     ratingSerie: (
       dataPath: string,
       userRating: number,

@@ -30,11 +30,6 @@ export default function Nav() {
             <House className="IconHome" color="#8963ba" />
           </Link>
         </li>
-        <li>
-          <Link className="link" to="config/serie" onClick={resetStates}>
-            Editar Séries
-          </Link>
-        </li>
       </ul>
 
       <div className="windowBtns">

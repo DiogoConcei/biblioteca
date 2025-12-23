@@ -8,7 +8,6 @@ import useDownload from './useDownload';
 export default function useAction() {
   const serie = useSerieStore((state) => state.serie) as Literatures | TieIn;
   const clearSerie = useSerieStore((state) => state.clearSerie);
-  const chapters = useSerieStore((state) => state.chapters);
   const dataPath = useSerieStore((state) => state.serie?.dataPath || '');
   const updateChapter = useSerieStore((state) => state.updateChapter);
   const updateSerie = useSerieStore((state) => state.updateSerie);
@@ -17,11 +16,29 @@ export default function useAction() {
   const { downloadIndividual } = useDownload();
   const navigate = useNavigate();
 
-  async function ratingSerie(rating: number) {
+  async function ratingSerie(
+    e: React.MouseEvent,
+    serie: Literatures,
+    rating: number,
+  ) {
+    e.stopPropagation();
+
+    const originalRating = serie.metadata.rating;
+
+    updateSerie('metadata.rating', rating);
+
     try {
-      await window.electronAPI.series.ratingSerie(dataPath, rating);
+      const response = await window.electronAPI.series.ratingSerie(
+        serie.dataPath,
+        rating,
+      );
+
+      if (!response.success) {
+        updateSerie('metadata.rating', originalRating || 0);
+      }
     } catch (e) {
-      setError('Falha em avaliar a série.');
+      updateSerie('metadata.rating', originalRating || 0);
+      console.error('Falha em realizar ação');
     }
   }
 

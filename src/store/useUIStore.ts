@@ -6,7 +6,7 @@ export interface useUIStore {
   setLoading: (value: boolean) => void;
   setError: (msg: string | null) => void;
 
-  controlFetching: (value: boolean, error: string | null) => void;
+  controlFetching: (value?: boolean, error?: string | null) => void;
 
   clearError: () => void;
   clearLoading: () => void;
@@ -21,7 +21,7 @@ const useUIStore = create<useUIStore>((set, get, store) => ({
 
   setError: (msg: string | null) => set({ error: msg }),
 
-  controlFetching: (value: boolean, msg: string | null) => {
+  controlFetching: (value?: boolean, msg?: string | null) => {
     set({ loading: value, error: msg });
   },
 

@@ -1,19 +1,31 @@
-// import * as React from 'react';
-// import ErrorScreen from '../components/ErrorScreen/ErrorScreen';
-// import useUIStore from '../store/useUIStore';
-// import useSerieStore from '../store/useSerieStore';
+import * as React from 'react';
+import ErrorScreen from '../components/ErrorScreen/ErrorScreen';
 
-// export default class ErrorBoundary extends React.Component<{
-//   children: React.ReactNode;
-// }> {
-//   setError = useUIStore((state) => state.setError);
-//   clearError = useUIStore((state) => state.clearError);
-//   error = useUIStore((state) => state.error);
-//   serie = useSerieStore((state) => state.serie);
+type Props = {
+  children: React.ReactNode;
+};
 
-//   render() {
-//     if (this.error) {
-//       return <ErrorScreen error={this.error} serieName={this.serie?.name} />;
-//     }
-//   }
-// }
+type State = {
+  hasError: boolean;
+  error: Error | null;
+};
+
+export default class ErrorBoundary extends React.Component<Props, State> {
+  state: State = { hasError: false, error: null };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    this.setState({ error: error });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <ErrorScreen error={String(this.state.error?.message)} />;
+    }
+
+    return this.props.children;
+  }
+}

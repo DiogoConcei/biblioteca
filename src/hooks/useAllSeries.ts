@@ -14,10 +14,7 @@ export default function useAllSeries() {
         const response = await window.electronAPI.series.getSeries();
 
         if (!response.success) {
-          controlFetching(
-            false,
-            response.error || 'Aconteceu uma falha ao realizar a requisição',
-          );
+          controlFetching(false);
           setSeries(null);
         }
 
@@ -30,6 +27,8 @@ export default function useAllSeries() {
           false,
           'Aconteceu um erro desconhecido ao buscar séries',
         );
+      } finally {
+        controlFetching(false);
       }
     }
 

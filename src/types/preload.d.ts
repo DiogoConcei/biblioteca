@@ -56,6 +56,7 @@ declare global {
         ) => Promise<APIResponse<string | null>>;
         serieToCollection: (
           dataPath: string,
+          collectionName: string,
         ) => Promise<ResAPIResponseponse<void>>;
         favoriteSerie: (dataPath: string) => Promise<RespAPIResponseonse<void>>;
         recentSerie: (

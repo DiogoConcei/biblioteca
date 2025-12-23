@@ -16,39 +16,15 @@ export default class UserManager extends FileSystem {
     super();
   }
 
-  public ratingSerie(serieData: Literatures, userRating: number): Literatures {
-    const caseIndex = userRating;
-
-    switch (caseIndex) {
-      case 0:
-        serieData.metadata.rating = 1;
-        break;
-      case 1:
-        serieData.metadata.rating = 2;
-        break;
-      case 2:
-        serieData.metadata.rating = 3;
-        break;
-      case 3:
-        serieData.metadata.rating = 4;
-        break;
-      case 4:
-        serieData.metadata.rating = 5;
-        break;
-    }
-
-    return serieData;
-  }
-
   public async addToRecents(serieData: Literatures): Promise<Literatures> {
     try {
       const response = await this.collectionsManager.getCollections();
 
-      if (!response.success || !response.data) {
+      if (!response) {
         throw new Error('Não foi possível carregar as coleções do usuário.');
       }
 
-      const collections = response.data as Collection[];
+      const collections = response;
       const recCollection = collections.find((col) => col.name === 'Recentes');
 
       if (!recCollection) {
@@ -115,11 +91,12 @@ export default class UserManager extends FileSystem {
   public async favoriteSerie(serieData: Literatures): Promise<Literatures> {
     try {
       const response = await this.collectionsManager.getCollections();
-      if (!response.success || !response.data) {
+
+      if (!response) {
         throw new Error('Não foi possível carregar as coleções do usuário.');
       }
 
-      const collections = response.data;
+      const collections = response;
       const favCollection = collections.find((col) => col.name === 'Favoritas');
       if (!favCollection) {
         throw new Error('Coleção "Favoritas" não encontrada.');

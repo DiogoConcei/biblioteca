@@ -1,7 +1,9 @@
 import { Controller, FieldValues } from 'react-hook-form';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GenericControllerProps } from '../../../../types/auxiliar.interfaces';
+import { Collection } from '../../../../types/collections.interfaces';
 import styles from './CollectionsField.module.scss';
+import useUIStore from '../../../../store/useUIStore';
 
 export default function CollectionsField<T extends FieldValues>({
   control,
@@ -11,7 +13,30 @@ export default function CollectionsField<T extends FieldValues>({
   const [availableCollections, setAvailableCollections] = useState<string[]>(
     [],
   );
+  const setError = useUIStore((state) => state.setError);
   const [newCollection, setNewCollection] = useState('');
+
+  useEffect(() => {
+    async function getCollections() {
+      try {
+        const response = await window.electronAPI.collections.getCollections();
+
+        if (!response.success || !response.data) {
+          setError('Falha na requisição');
+          return;
+        }
+
+        const data = response.data;
+        const collNames = data.map((col: Collection) => col.name);
+
+        setAvailableCollections(collNames);
+      } catch (e) {
+        setError('Falha ao coletar todas as coleções');
+      }
+    }
+
+    getCollections();
+  }, []);
 
   return (
     <Controller
@@ -19,10 +44,6 @@ export default function CollectionsField<T extends FieldValues>({
       control={control}
       render={({ field }) => {
         const value = (field.value ?? []) as string[];
-
-        const allCollections = Array.from(
-          new Set([...availableCollections, ...value]),
-        );
 
         const toggleCollection = (collection: string) => {
           field.onChange(
@@ -49,9 +70,8 @@ export default function CollectionsField<T extends FieldValues>({
           <div className={styles.formContainer}>
             <h2 className={styles.subtitle}>Incluir na coleção</h2>
 
-            {/* ===== LISTA DE COLEÇÕES ===== */}
             <div className={styles.collectionList}>
-              {allCollections.map((collection) => {
+              {availableCollections.map((collection) => {
                 const checked = value.includes(collection);
 
                 return (
@@ -73,7 +93,6 @@ export default function CollectionsField<T extends FieldValues>({
               })}
             </div>
 
-            {/* ===== ADD NOVA COLEÇÃO ===== */}
             <div className={styles.addCollection}>
               {isCreatingCollection && (
                 <input

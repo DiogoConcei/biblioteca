@@ -8,6 +8,8 @@ import ComicManager from '../services/ComicManager.ts';
 import { ComicTieIn, TieIn } from '../types/comic.interfaces.ts';
 import { getMainWindow } from '../main.ts';
 import { Literatures } from '../../src/types/auxiliar.interfaces.ts';
+import { SerieEditForm } from '../../src/types/series.interfaces.ts';
+import { Collection } from '../../src/types/collections.interfaces.ts';
 
 export default function seriesHandlers(ipcMain: IpcMain) {
   const comicManager = new ComicManager();
@@ -138,20 +140,41 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle('serie:addToCollection', async (_event, dataPath: string) => {
-    try {
-      const serieData = (await storageManager.readSerieData(
-        dataPath,
-      )) as Literatures;
-      const normalizedData =
-        await storageManager.createNormalizedData(serieData);
-      const result = await collectionManager.serieToCollection(normalizedData);
-      return { success: result };
-    } catch (e) {
-      console.error(`Falha em adicionar a colecao: ${e}`);
-      return { sucess: false, error: String(e) };
-    }
-  });
+  ipcMain.handle(
+    'serie:add-to-collection',
+    async (_event, dataPath: string, collectionName: string) => {
+      try {
+        const serieData = (await storageManager.readSerieData(
+          dataPath,
+        )) as Literatures;
+
+        const collections = serieData.metadata.collections;
+        if (!collections.includes(collectionName)) {
+          serieData.metadata.collections.push(collectionName);
+
+          const normalizedData =
+            await storageManager.createNormalizedData(serieData);
+
+          await collectionManager.addToCollection(normalizedData);
+        } else {
+          serieData.metadata.collections = collections.filter(
+            (col) => col !== collectionName,
+          );
+
+          await collectionManager.removeFromCollection(
+            serieData.id,
+            collectionName,
+          );
+        }
+
+        await storageManager.updateSerieData(serieData);
+        return { success: true };
+      } catch (e) {
+        console.error(`Falha em adicionar a colecao: ${e}`);
+        return { success: false, error: String(e) };
+      }
+    },
+  );
 
   ipcMain.handle(
     'serie:rating',
@@ -160,18 +183,19 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         const serieData = (await storageManager.readSerieData(
           dataPath,
         )) as Literatures;
-        const updateData = await userManager.ratingSerie(serieData, userRating);
-        await collectionManager.updateSerieInAllCollections(serieData.id, {
-          rating: updateData.metadata.rating,
-        });
 
-        const win = getMainWindow();
+        serieData.metadata.rating = userRating;
 
-        if (win) {
-          win.webContents.send('update-rating');
+        const response = await collectionManager.updateSerieInAllCollections(
+          serieData.id,
+          userRating,
+        );
+
+        if (!response.success) {
+          return { success: false };
         }
 
-        await storageManager.updateSerieData(updateData);
+        await storageManager.updateSerieData(serieData);
         return { success: true };
       } catch (e) {
         console.error(`Falha em ranquear serie: ${e}`);
@@ -257,14 +281,24 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle('serie:update-serie', async (_event, data: Literatures) => {
+  ipcMain.handle('serie:update-serie', async (_event, data: SerieEditForm) => {
     try {
       if (!data?.dataPath) {
         throw new Error('dataPath inválido');
       }
 
-      const result = await storageManager.patchSerie(data);
+      const [serieData, updatedData] = await storageManager.patchSerie(data);
 
+      const newCover = await imageManager.uploadNewCover(
+        data.name,
+        serieData.coverImage,
+        updatedData.coverImage,
+      );
+      updatedData.coverImage = newCover;
+
+      await collectionManager.checkDifferences(serieData, updatedData);
+
+      await storageManager.patchHelper(updatedData, data);
       return { success: true };
     } catch (error) {
       console.error('Erro ao atualizar série:', error);

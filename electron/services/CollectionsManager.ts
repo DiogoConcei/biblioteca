@@ -3,6 +3,7 @@ import fse from 'fs-extra';
 import FileSystem from './abstract/FileSystem.ts';
 import {
   APIResponse,
+  Literatures,
   NormalizedSerieData,
 } from '../../src/types/auxiliar.interfaces.ts';
 import {
@@ -10,6 +11,7 @@ import {
   SerieCollectionInfo,
 } from '../../src/types/collections.interfaces.ts';
 import ValidationManager from './ValidationManager.ts';
+import { SerieEditForm } from '../../src/types/series.interfaces.ts';
 
 export default class CollectionsManager extends FileSystem {
   private readonly validationManager: ValidationManager =
@@ -19,13 +21,13 @@ export default class CollectionsManager extends FileSystem {
     super();
   }
 
-  public async getCollections(): Promise<APIResponse<Collection[]>> {
+  public async getCollections(): Promise<Collection[] | null> {
     try {
       const data: Collection[] = await fse.readJson(this.appCollections);
-      return { success: true, data: data };
+      return data;
     } catch (e) {
       console.error(`Falha em obter todas as coleções: ${e}`);
-      return { success: false, error: String(e) };
+      return null;
     }
   }
 
@@ -67,7 +69,35 @@ export default class CollectionsManager extends FileSystem {
     }
   }
 
-  public async serieToCollection(
+  public async removeFromCollection(
+    id: number,
+    collectionName: string,
+  ): Promise<void> {
+    const collections = await this.getCollections();
+    if (!collections) return;
+
+    const updatedAt = new Date().toISOString();
+
+    const newColls = collections.map((col) => {
+      if (collectionName === col.name) {
+        const filtered = col.series.filter((serie) => serie.id !== id);
+
+        if (filtered.length !== col.series.length) {
+          return {
+            ...col,
+            series: filtered,
+            updatedAt,
+          };
+        }
+      }
+
+      return col;
+    });
+
+    await this.saveCollections(newColls);
+  }
+
+  public async addToCollection(
     serieData: NormalizedSerieData,
   ): Promise<APIResponse<void>> {
     try {
@@ -135,8 +165,9 @@ export default class CollectionsManager extends FileSystem {
 
   public async getFavorites(): Promise<APIResponse<Collection>> {
     try {
-      const response = await this.getCollections();
-      const collection = response.data;
+      const data = await this.getCollections();
+
+      const collection = data;
 
       if (!collection) {
         throw new Error('Coleção de favorias não encontrada.');
@@ -181,16 +212,16 @@ export default class CollectionsManager extends FileSystem {
 
   public async updateSerieInAllCollections(
     serieId: number,
-    updatedData: Partial<SerieCollectionInfo>,
+    rating: number,
   ): Promise<APIResponse<void>> {
     try {
-      const fileData: Collection[] = await fse.readJson(this.appCollections);
+      const collections = await this.getCollections();
 
-      if (!fileData) {
+      if (!collections) {
         return { success: false };
       }
 
-      const updatedCollections = fileData.map((collection) => {
+      const updatedCollections = collections.map((collection) => {
         const hasSerie = collection.series.some(
           (serie) => serie.id === serieId,
         );
@@ -206,11 +237,13 @@ export default class CollectionsManager extends FileSystem {
 
           return {
             ...serie,
-            ...updatedData,
+            id: serie.id,
+            rating: rating,
           };
         });
 
         const date = new Date();
+
         return {
           ...collection,
           series: updatedSeries,
@@ -228,5 +261,52 @@ export default class CollectionsManager extends FileSystem {
 
   private async saveCollections(collections: Collection[]): Promise<void> {
     await fse.writeJson(this.appCollections, collections, { spaces: 2 });
+  }
+
+  private normalizeHelper(
+    serie: Literatures,
+    collections: string[],
+  ): NormalizedSerieData {
+    return {
+      id: serie.id,
+      name: serie.name,
+      coverImage: serie.coverImage,
+      chaptersPath: serie.chaptersPath,
+      archivesPath: serie.archivesPath,
+      totalChapters: serie.totalChapters,
+      status: serie.metadata.status,
+      recommendedBy: serie.metadata.recommendedBy,
+      originalOwner: serie.metadata.originalOwner,
+      rating: serie.metadata.rating,
+      collections,
+      isFavorite: collections.includes('Favoritas'),
+    };
+  }
+
+  public async checkDifferences(
+    oldData: Literatures,
+    updatedData: Literatures,
+  ) {
+    const oldCollections = oldData.metadata.collections;
+    const newCollections = updatedData.metadata.collections;
+
+    const oldSet = new Set(oldCollections);
+    const newSet = new Set(newCollections);
+
+    const toAdd = newCollections.filter((c) => !oldSet.has(c));
+    const toRemove = oldCollections.filter((c) => !newSet.has(c));
+
+    if (toAdd.length > 0) {
+      const normalizedData = this.normalizeHelper(
+        updatedData,
+        updatedData.metadata.collections,
+      );
+
+      await this.addToCollection(normalizedData);
+    }
+
+    for (const colName of toRemove) {
+      await this.removeFromCollection(updatedData.id, colName);
+    }
   }
 }

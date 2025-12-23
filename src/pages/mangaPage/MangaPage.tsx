@@ -45,10 +45,6 @@ export default function MangaPage() {
     return <Loading />;
   }
 
-  if (error) {
-    return <ErrorScreen error={error} serieName={serie.name} />;
-  }
-
   const lastRead = async (
     event: React.MouseEvent<HTMLButtonElement>,
     dataPath: string,
