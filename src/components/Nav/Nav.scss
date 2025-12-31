@@ -1,4 +1,4 @@
-@use "../../styles/variables" as *;
+@use '@/styles/variables' as *;
 
 .TitleBar {
   display: flex;
@@ -35,7 +35,9 @@
       text-align: center;
       cursor: pointer;
       color: $amethyst;
-      transition: background-color 0.3s, color 0.3s;
+      transition:
+        background-color 0.3s,
+        color 0.3s;
 
       &:hover {
         transition: 1s;

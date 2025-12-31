@@ -79,7 +79,6 @@ export default function useAction() {
     selectedChapter: LiteratureChapter,
   ) {
     e.stopPropagation();
-    console.log(selectedChapter.id);
     const { name: serieName, id: serieId } = serie;
     const { name: chapterName, id: chapterId, page, isRead } = selectedChapter;
 
@@ -87,8 +86,6 @@ export default function useAction() {
       serieName,
       chapterId,
     );
-
-    console.log(safeOpen);
 
     if (safeOpen) {
       navigate(

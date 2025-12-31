@@ -1,6 +1,9 @@
 import { IpcMain } from 'electron';
 import { SerieData, SerieForm } from '../../src/types/series.interfaces.ts';
-import { APIResponse } from '../../src/types/auxiliar.interfaces.ts';
+import {
+  APIResponse,
+  LiteratureChapter,
+} from '../../src/types/auxiliar.interfaces.ts';
 import MangaManager from '../services/MangaManager.ts';
 import StorageManager from '../services/StorageManager.ts';
 import ComicManager from '../services/ComicManager.ts';
@@ -64,6 +67,37 @@ export default function uploadHandlers(ipcMain: IpcMain) {
         console.error('Erro ao criar a série:', err);
         return { success: false, error: (err as Error).message };
       }
+    },
+  );
+
+  ipcMain.handle(
+    'chapter:upload-chapter',
+    async (
+      _event,
+      filesPath: string[],
+      literatureForm: string,
+      dataPath: string,
+    ) => {
+      let processedFiles: LiteratureChapter[] = [];
+
+      switch (literatureForm) {
+        case 'Manga':
+          processedFiles = await mangaManager.uploadChapters(
+            filesPath,
+            dataPath,
+          );
+          break;
+        case 'Quadrinho':
+          processedFiles = await comicManager.uploadChapters(
+            filesPath,
+            dataPath,
+          );
+          break;
+        default:
+          throw new Error('Tipo de literature inválido');
+      }
+
+      return { success: true, data: processedFiles };
     },
   );
 }

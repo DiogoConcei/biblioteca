@@ -22,17 +22,11 @@ export default function Upload() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
 
-  useEffect(() => {
-    if (location.state?.newSeries) {
-      setNewSeries(location.state.newSeries as SerieData[]);
-      setCurrentIndex(0);
-    }
-  }, [location.state?.newSeries]);
-
   const {
     register,
     handleSubmit,
     reset,
+    getValues,
     control,
     formState: { errors },
   } = useForm<SerieForm>({
@@ -63,26 +57,55 @@ export default function Upload() {
 
     if (response.success) {
       setIsLoading(false);
-      navigate('/');
+      setCurrentIndex((prev) => prev + 1);
+      reset();
     } else {
       setIsLoading(false);
     }
+
+    if (currentIndex === newSeries.length - 1) {
+      navigate('/');
+    }
+  };
+
+  const formManager = () => {
+    const formData = getValues();
+
+    setNewSeries((prev) => {
+      const updated = [...prev];
+      updated[currentIndex] = {
+        ...updated[currentIndex],
+        ...formData,
+      };
+      return updated;
+    });
+  };
+
+  const handleNext = () => {
+    if (currentIndex >= newSeries.length - 1) return;
+
+    formManager();
+    setCurrentIndex((prev) => prev + 1);
   };
 
   const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
-    }
-  };
-  const handleNext = () => {
-    if (currentIndex < newSeries.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-    }
+    if (currentIndex <= 0) return;
+
+    formManager();
+    setCurrentIndex((prev) => prev - 1);
   };
 
   if (isLoading) {
     return <Loading />;
   }
+
+  useEffect(() => {
+    if (!newSeries[currentIndex]) return;
+
+    reset({
+      ...newSeries[currentIndex],
+    });
+  }, [currentIndex, newSeries, reset]);
 
   return (
     <article>

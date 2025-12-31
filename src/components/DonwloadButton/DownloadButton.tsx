@@ -5,9 +5,9 @@ import useDownload from '../../hooks/useDownload';
 import ErrorScreen from '../ErrorScreen/ErrorScreen';
 import { downloadButtonProps } from '../../types/components.interfaces';
 
-import styles from './DownloadButton.module.scss';
 import useSerieStore from '../../store/useSerieStore';
 import useUIStore from '../../store/useUIStore';
+import styles from './DownloadButton.module.scss';
 
 export default function DownloadButton({ serie }: downloadButtonProps) {
   const chapters = useSerieStore((state) => state.chapters);

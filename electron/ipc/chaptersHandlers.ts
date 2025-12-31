@@ -183,7 +183,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
   );
 
   ipcMain.handle(
-    'get-next-chapter',
+    'chapter:get-next-chapter',
     async (_event, serieName: string, chapter_id: number) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
@@ -211,7 +211,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
   );
 
   ipcMain.handle(
-    'get-prev-chapter',
+    'chapter:get-prev-chapter',
     async (_event, serieName: string, chapter_id: number) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);

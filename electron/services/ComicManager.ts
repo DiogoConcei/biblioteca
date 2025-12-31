@@ -709,51 +709,137 @@ export default class ComicManager extends FileSystem {
       throw error;
     }
   }
+
+  public async uploadChapters(
+    filesPath: string[],
+    dataPath: string,
+  ): Promise<ComicEdition[]> {
+    try {
+      const serieData = await this.storageManager.readSerieData(dataPath);
+
+      if (!serieData.chapters)
+        throw new Error('Dados do capítulo não encontrandos.');
+
+      const updatedChapters = await this.processChapterData(
+        filesPath,
+        serieData.chapters,
+      );
+
+      serieData.chapters = updatedChapters;
+      serieData.totalChapters = updatedChapters.length;
+
+      await this.storageManager.updateSerieData(serieData);
+
+      const encodeChapter = await Promise.all(
+        updatedChapters.map(async (ch) => {
+          const encodeCover = await this.imageManager.encodeImageToBase64(
+            ch.coverImage!,
+          );
+
+          return {
+            ...ch,
+            coverImage: encodeCover as string,
+          };
+        }),
+      );
+      return encodeChapter;
+    } catch (err) {
+      console.error('Falha ao processar capítulos enviados: ', err);
+      throw err;
+    }
+  }
+
+  private async processChapterData(
+    filesPath: string[],
+    chapters: ComicEdition[],
+  ): Promise<ComicEdition[]> {
+    const chapterMap = new Map(chapters.map((ch) => [ch.archivesPath, ch]));
+    const existingPaths = chapters.map((ch) => ch.archivesPath);
+    const allPaths = [...existingPaths, ...filesPath];
+    const orderedPaths = await this.fileManager.orderByChapters(allPaths);
+
+    const date = new Date().toISOString();
+
+    const result: ComicEdition[] = await Promise.all(
+      orderedPaths.map(async (chapterPath) => {
+        const existing = chapterMap.get(chapterPath);
+
+        if (existing) {
+          return existing;
+        }
+
+        const name = path.basename(chapterPath, path.extname(chapterPath));
+        const sanitizedName = this.fileManager.sanitizeFilename(name);
+        const archivesPath = path.join(
+          this.userLibrary,
+          chapters[0].serieName,
+          path.basename(chapterPath),
+        );
+
+        const [outputPath, coverImage] = await this.processCoverImage(
+          chapterPath,
+          chapters[0].serieName,
+          name,
+        );
+
+        await fse.move(chapterPath, archivesPath);
+
+        return {
+          id: 0,
+          serieName: chapters[0].serieName,
+          name,
+          coverImage: coverImage,
+          sanitizedName,
+          archivesPath: archivesPath,
+          chapterPath: outputPath,
+          createdAt: date,
+          isRead: false,
+          isDownloaded: 'not_downloaded',
+          page: {
+            lastPageRead: 0,
+            favoritePage: 0,
+          },
+        };
+      }),
+    );
+
+    result.forEach((ch, idx) => {
+      ch.id = idx + 1;
+    });
+
+    return result;
+  }
+
+  private async processCoverImage(
+    chapterPath: string,
+    chName: string,
+    serieName: string,
+  ): Promise<string[]> {
+    console.log(chapterPath);
+    const ext = path.extname(chapterPath);
+    let coverPath = '';
+
+    const chapName = this.fileManager.sanitizeDirName(chName);
+    const chapterOut = path.join(this.comicsImages, serieName, chapName);
+    const outputPath = path.join(this.dinamicImages, serieName);
+
+    if (ext === '.pdf') {
+      coverPath = await this.storageManager.extractCoverFromPdf(
+        chapterPath,
+        outputPath,
+      );
+    } else {
+      coverPath = await this.storageManager.extractCoverWith7zip(
+        chapterPath,
+        outputPath,
+      );
+    }
+
+    const resultCover = await this.imageManager.normalizeCover(
+      coverPath,
+      serieName,
+    );
+
+    return [chapterOut, resultCover];
+  }
 }
-
-// (async () => {
-//   const fileManager = new FileManager();
-//   const storageManager = new StorageManager();
-//   const comicManager = new ComicManager();
-//   const name = '04 - Mini-Série Guerra Secreta';
-//   const archivesPath =
-//     'C:\\Users\\diogo\\Downloads\\Coisa ruim\\04 - Mini-Série Guerra Secreta';
-
-//   // const dataPath =
-//   // 'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Comics\\05 - Surpreendentes X-Men.json';
-//   // const comic = (await storageManager.readSerieData(dataPath)) as Comic
-//   // if (!comic.childSeries) return;
-
-//   // await Promise.all(
-//   //   comic.childSeries.map(async (child) => {
-//   //     const tieIn = (await storageManager.readSerieData(
-//   //       child.dataPath,
-//   //     )) as TieIn;
-
-//   //     await comicManager.createTieIn(tieIn);
-//   //     console.log(`Tie-In criada: ${tieIn.name}`);
-//   //   }),
-//   // );
-
-//   const dinastiaM: SerieForm = {
-//     name: name,
-//     genre: 'Marvel',
-//     author: 'Michael Bendis',
-//     language: 'Português',
-//     cover_path: 'c:\\Users\\diogo\\Downloads\\Imagens\\Secret.jpg',
-//     literatureForm: 'Quadrinho',
-//     collections: ['Marvel'],
-//     tags: ['Super Herói'],
-//     privacy: 'Publica',
-//     autoBackup: 'Sim',
-//     readingStatus: 'Completo',
-//     sanitizedName: fileManager.sanitizeFilename(name),
-//     chaptersPath: '',
-//     archivesPath: archivesPath,
-//     createdAt: '2025-08-08T16:00:00Z',
-//     oldPath: archivesPath,
-//     deletedAt: '',
-//   };
-
-//   await comicManager.createComicSerie(dinastiaM);
-// })();

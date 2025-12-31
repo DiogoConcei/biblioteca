@@ -319,6 +319,87 @@ export default class MangaManager extends FileSystem {
       throw e;
     }
   }
+
+  public async uploadChapters(
+    filesPath: string[],
+    dataPath: string,
+  ): Promise<MangaChapter[]> {
+    try {
+      const serieData = await this.storageManager.readSerieData(dataPath);
+
+      if (!serieData.chapters)
+        throw new Error('Dados do capítulo não encontrandos.');
+
+      const updatedChapters = await this.processChapterData(
+        filesPath,
+        serieData.chapters,
+      );
+
+      serieData.chapters = updatedChapters;
+      serieData.totalChapters = updatedChapters.length;
+
+      await this.storageManager.updateSerieData(serieData);
+
+      return updatedChapters;
+    } catch (err) {
+      console.error('Falha ao processar capítulos enviados: ', err);
+      throw err;
+    }
+  }
+
+  private async processChapterData(
+    filesPath: string[],
+    chapters: MangaChapter[],
+  ): Promise<MangaChapter[]> {
+    const chapterMap = new Map(chapters.map((ch) => [ch.archivesPath, ch]));
+    const existingPaths = chapters.map((ch) => ch.archivesPath);
+    const allPaths = [...existingPaths, ...filesPath];
+    const orderedPaths = await this.fileManager.orderByChapters(allPaths);
+
+    const date = new Date().toISOString();
+
+    const result: MangaChapter[] = await Promise.all(
+      orderedPaths.map(async (chapterPath) => {
+        const existing = chapterMap.get(chapterPath);
+
+        if (existing) {
+          return existing;
+        }
+
+        const name = path.basename(chapterPath, path.extname(chapterPath));
+        const sanitizedName = this.fileManager.sanitizeFilename(name);
+        const archivesPath = path.join(
+          this.userLibrary,
+          chapters[0].serieName,
+          path.basename(chapterPath),
+        );
+
+        await fse.move(chapterPath, archivesPath);
+
+        return {
+          id: 0,
+          serieName: chapters[0].serieName,
+          name,
+          sanitizedName,
+          archivesPath: path.join(this.userLibrary, chapters[0].name, name),
+          chapterPath: '',
+          createdAt: date,
+          isRead: false,
+          isDownloaded: 'not_downloaded',
+          page: {
+            lastPageRead: 0,
+            favoritePage: 0,
+          },
+        };
+      }),
+    );
+
+    result.forEach((ch, idx) => {
+      ch.id = idx + 1;
+    });
+
+    return result;
+  }
 }
 
 // (async () => {

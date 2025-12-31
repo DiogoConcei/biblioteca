@@ -2,7 +2,12 @@ export {};
 
 import { childSerie, ComicTieIn } from 'electron/types/comic.interfaces.js';
 
-import { Literatures, viewData, APIResponse } from './auxiliar.interfaces.js';
+import {
+  Literatures,
+  viewData,
+  APIResponse,
+  LiteratureChapter,
+} from './auxiliar.interfaces.js';
 import { SerieData } from './series.interfaces.ts';
 
 declare global {
@@ -35,6 +40,11 @@ declare global {
         uploadSerie: (
           serieData: SerieForm,
         ) => Promise<ResAPIResponseponse<SerieForm>>;
+        uploadChapter: (
+          files: string[],
+          literatureForm: string,
+          dataPath: string,
+        ) => Promise<APIResponse<LiteratureChapter[]>>;
       };
 
       series: {

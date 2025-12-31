@@ -1,7 +1,10 @@
 import useDownload from '../../hooks/useDownload';
 import useAction from '../../hooks/useAction';
+import useSerieStore from '../../store/useSerieStore';
 import usePagination from '../../hooks/usePagination';
 import {
+  ArrowDownUp,
+  Upload,
   EyeOff,
   Eye,
   ArrowDownToLine,
@@ -10,18 +13,49 @@ import {
   ChevronRight,
   LoaderCircle,
 } from 'lucide-react';
+import { useState } from 'react';
+
+import UploadPopUp from '../UploadPopUp/UploadPopUp';
 import styles from './ListView.module.scss';
 
 export default function ListView() {
   const { downloadIndividual } = useDownload();
   const { openChapter, markAsRead } = useAction();
+  const [isOrder, setIsOrder] = useState<boolean>(true);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const setChapters = useSerieStore((s) => s.setChapters);
+
+  const chapters = useSerieStore((s) => s.chapters);
 
   const { handlePage, pageNumbers, totalPages, currentItems, currentPage } =
     usePagination();
 
+  const orderList = () => {
+    if (isOrder) {
+      setChapters(chapters.sort((a, b) => a.id - b.id));
+    } else {
+      setChapters(chapters.sort((a, b) => b.id - a.id));
+    }
+
+    setIsOrder((prev) => !prev);
+  };
+
   return (
-    <section className={styles.Control}>
-      <h2>Capítulos</h2>
+    <section className={styles.control}>
+      <div className={styles['list-header']}>
+        <h2>Capítulos</h2>
+        <div>
+          <button className={styles.sortButton} onClick={orderList}>
+            <ArrowDownUp size={26} strokeWidth={1} />
+          </button>
+          <button
+            className={styles.uploadButton}
+            onClick={() => setIsOpen(true)}
+          >
+            <Upload size={26} strokeWidth={1} />
+          </button>
+        </div>
+      </div>
 
       <ul className={styles.chaptersList}>
         {currentItems.map((chapter, idx) => (
@@ -100,6 +134,14 @@ export default function ListView() {
           <ChevronRight />
         </button>
       </section>
+
+      {isOpen && (
+        <UploadPopUp
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
+          literatureForm="Manga"
+        />
+      )}
     </section>
   );
 }

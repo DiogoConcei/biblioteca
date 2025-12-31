@@ -2,6 +2,7 @@ import { ipcRenderer, contextBridge, webUtils } from 'electron';
 import {
   APIResponse,
   viewData,
+  LiteratureChapter,
   Literatures,
 } from '../src/types/auxiliar.interfaces.ts';
 import {
@@ -50,6 +51,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('upload:process-data', filePaths),
     uploadSerie: (serieData: SerieForm): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('upload:process-serie', serieData),
+    uploadChapter: async (
+      files: string[],
+      literatureForm: string,
+      dataPath: string,
+    ): Promise<APIResponse<LiteratureChapter[]>> =>
+      ipcRenderer.invoke(
+        'chapter:upload-chapter',
+        files,
+        literatureForm,
+        dataPath,
+      ),
   },
 
   series: {
@@ -111,6 +123,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
         serieName,
         chapter_id,
         page_number,
+        totalPages,
       ),
     acessLastRead: async (
       serieName: string,
@@ -120,12 +133,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
       serieName: string,
       chapter_id: number,
     ): Promise<APIResponse<string>> =>
-      ipcRenderer.invoke('get-next-chapter', serieName, chapter_id),
+      ipcRenderer.invoke('chapter:get-next-chapter', serieName, chapter_id),
     getPrevChapter: async (
       serieName: string,
       chapter_id: number,
     ): Promise<APIResponse<string>> =>
-      ipcRenderer.invoke('get-prev-chapter', serieName, chapter_id),
+      ipcRenderer.invoke('chapter:get-prev-chapter', serieName, chapter_id),
   },
 
   collections: {

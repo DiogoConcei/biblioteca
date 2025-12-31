@@ -1,5 +1,5 @@
 import { StarOff, Star } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import useAction from '../../hooks/useAction';
 import useCollection from '../../hooks/useCollection';
 import { RatingProps } from '../../types/auxiliar.interfaces';
@@ -10,9 +10,16 @@ export default function Rating({ serie }: RatingProps) {
   const { ratingSerie } = useAction();
   const { setFavorites } = useCollection();
 
-  const [currentRating, setCurrentRating] = useState<number>(
-    serie.metadata.rating !== undefined ? serie.metadata.rating + 1 : 0,
-  );
+  useEffect(() => {
+    if (!serie) return;
+    const value = serie.metadata.rating;
+
+    if (!value) return;
+
+    setCurrentRating(value);
+  }, []);
+
+  const [currentRating, setCurrentRating] = useState<number>(0);
 
   const starsRating = [
     '1 - Péssimo',
@@ -57,7 +64,7 @@ export default function Rating({ serie }: RatingProps) {
   return (
     <div>
       <button className={styles.rating} onClick={onToggle}>
-        {currentRating ? <Star /> : <StarOff />}
+        {currentRating > 0 ? <Star /> : <StarOff />}
       </button>
 
       {isOpen && (

@@ -1,4 +1,4 @@
-@use '../../styles/variables' as *;
+@use '@/styles/variables' as *;
 
 @keyframes spin {
   100% {
@@ -150,5 +150,23 @@
 
   .ribbon {
     background: $pacific-cyan;
+  }
+}
+
+.addComicButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 5px dashed $amethyst;
+  border-radius: $radius-sm;
+  transition: background-color 0.5s;
+
+  &:hover {
+    background-color: $hover-shining;
+  }
+
+  :nth-child(1) {
+    z-index: 1000;
   }
 }
