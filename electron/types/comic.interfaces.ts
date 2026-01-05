@@ -99,3 +99,26 @@ export interface ComicConfig {
     };
   };
 }
+
+export interface unComic {
+  nextId: number;
+  totalChapters: string[];
+  childSeries: ComicTieIn[];
+  name: string;
+  genre?: string;
+  author?: string;
+  language?: string;
+  cover_path: string;
+  literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
+  collections: string[];
+  tags: string[];
+  privacy: 'Publica' | 'Privada' | '';
+  autoBackup: 'Sim' | 'Não' | '';
+  readingStatus: 'Em andamento' | 'Completo' | 'Pendente' | '';
+  sanitizedName: string;
+  chaptersPath: string;
+  oldPath: string;
+  archivesPath: string;
+  createdAt: string;
+  deletedAt: string;
+}

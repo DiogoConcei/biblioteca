@@ -1,6 +1,6 @@
 import { IpcMain } from 'electron';
 import StorageManager from '../services/StorageManager.ts';
-import CollectionsManager from '../services/CollectionsManager';
+import CollectionsManager from '../services/CollectionManager';
 import FileManager from '../services/FileManager.ts';
 import ImageManager from '../services/ImageManager.ts';
 import UserManager from '../services/UserManager.ts';
@@ -18,6 +18,10 @@ export default function seriesHandlers(ipcMain: IpcMain) {
   const userManager = new UserManager();
   const fileManager = new FileManager();
   const collectionManager = new CollectionsManager();
+
+  ipcMain.handle('web:readFileAsDataUrl', async (_evt, rawPath: string) => {
+    return await imageManager.readFileAsDataUrl(rawPath);
+  });
 
   ipcMain.handle('serie:get-all', async () => {
     try {

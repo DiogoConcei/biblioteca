@@ -2,11 +2,11 @@ import fse from 'fs-extra';
 import path from 'path';
 
 import SystemManager from './SystemManager.ts';
-import FileSystem from './abstract/FileSystem.ts';
+import FileSystem from './abstract/LibrarySystem.ts';
 import ValidationManager from './ValidationManager.ts';
 import ImageManager from './ImageManager.ts';
 import StorageManager from './StorageManager.ts';
-import CollectionsManager from './CollectionsManager.ts';
+import CollectionsManager from './CollectionManager.ts';
 import FileManager from './FileManager.ts';
 import { SerieForm } from '../../src/types/series.interfaces.ts';
 import { Manga, MangaChapter } from '../types/manga.interfaces.ts';

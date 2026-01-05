@@ -1,4 +1,4 @@
-import FileSystem from './abstract/FileSystem.ts';
+import FileSystem from './abstract/LibrarySystem.ts';
 import path from 'path';
 import fse from 'fs-extra';
 import { randomUUID } from 'crypto';

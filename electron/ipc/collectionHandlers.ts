@@ -1,6 +1,6 @@
 import { IpcMain } from 'electron';
 
-import CollectionsManager from '../services/CollectionsManager';
+import CollectionsManager from '../services/CollectionManager';
 
 export default function collectionHandlers(ipcMain: IpcMain) {
   const collectionsOperations = new CollectionsManager();

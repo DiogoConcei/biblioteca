@@ -1,0 +1,470 @@
+import fse from 'fs-extra';
+import path from 'path';
+import {
+  Collection,
+  SeriesInCollection,
+} from '../../src/types/collections.interfaces';
+
+import LibrarySystem from './abstract/LibrarySystem';
+import StorageManager from './StorageManager';
+import { Literatures } from '../../src/types/auxiliar.interfaces';
+
+export default class CollectionManager extends LibrarySystem {
+  private readonly storageManager = new StorageManager();
+
+  constructor() {
+    super();
+  }
+
+  public async getCollections(): Promise<Collection[] | null> {
+    try {
+      const data = (await fse.readJson(this.appCollections)) as Collection[];
+      return data;
+    } catch (e) {
+      console.error('Erro ao obter coleções: ', e);
+      return null;
+    }
+  }
+
+  public async getCollection(name: string): Promise<Collection | null> {
+    try {
+      const data = await this.getCollections();
+      const rawName = name.toLocaleLowerCase().trim();
+
+      if (!data) return null;
+
+      const collection = data.find(
+        (col) => col.name.toLocaleLowerCase().trim() === rawName,
+      );
+
+      if (!collection) return null;
+
+      return collection;
+    } catch (e) {
+      console.error('Erro ao obter a coleção de favoritos: ', e);
+      return null;
+    }
+  }
+
+  //   Avaliar a necessidade
+  public async getDefaultCollections(): Promise<Collection[] | null> {
+    try {
+      const data = await this.getCollections();
+      if (!data) return null;
+
+      const favorites = data.find(
+        (col) => col.name.toLocaleLowerCase().trim() === 'favoritos',
+      );
+
+      const recentes = data.find(
+        (col) => col.name.toLocaleLowerCase().trim() === 'recentes',
+      );
+
+      if (!favorites || !recentes) return null;
+
+      return [favorites, recentes];
+    } catch (e) {
+      console.error('Erro ao obter a coleção de favoritos: ', e);
+      return null;
+    }
+  }
+  //   Avaliar a necessidade
+  public async getFavorites(): Promise<Collection | null> {
+    try {
+      const data = await this.getCollections();
+      if (!data) return null;
+
+      const favorites = data.find(
+        (col) => col.name.toLocaleLowerCase().trim() === 'favoritos',
+      );
+      return favorites || null;
+    } catch (e) {
+      console.error('Erro ao obter a coleção de favoritos: ', e);
+      return null;
+    }
+  }
+  //   Avaliar a necessidade
+  public async getLastRead(): Promise<Collection | null> {
+    try {
+      const data = await this.getCollections();
+      if (!data) return null;
+
+      const favorites = data.find(
+        (col) => col.name.toLocaleLowerCase().trim() === 'recentes',
+      );
+      return favorites || null;
+    } catch (e) {
+      console.error('Erro ao obter a coleção de recentes: ', e);
+      return null;
+    }
+  }
+
+  public async quicklyCreate(name: string): Promise<boolean> {
+    try {
+      const data = await this.getCollections();
+
+      if (!data) return false;
+
+      const rawName = name.toLocaleLowerCase().trim();
+      const exist = data.some(
+        (col) => col.name.toLocaleLowerCase().trim() == rawName,
+      );
+
+      if (exist) {
+        return false;
+      }
+
+      const newCollection = this.mountCollection(name);
+      data.push(newCollection);
+
+      await fse.writeJson(this.appCollections, data, { spaces: 2 });
+      return true;
+    } catch (e) {
+      console.error('Erro ao criar nova coleção: ', e);
+      return false;
+    }
+  }
+
+  // Cria a partir das diferenças
+  public async diffCreate(serieCollections: string[]): Promise<boolean> {
+    try {
+      const notExist = await this.notExist(serieCollections);
+
+      if (!notExist) return false;
+
+      for (const collectionName of notExist) {
+        await this.quicklyCreate(collectionName);
+      }
+
+      return true;
+    } catch (e) {
+      console.error('Falha em criar novas coleções: ', e);
+      return false;
+    }
+  }
+
+  public async removeCollection(name: string): Promise<boolean> {
+    try {
+      const data = await this.getCollections();
+
+      if (!data) return false;
+
+      const updatedData = data.filter((col) => col.name !== name);
+
+      await fse.writeJson(this.appCollections, updatedData, { spaces: 2 });
+      return true;
+    } catch (e) {
+      console.error('Falha ao remover a coleção: ', e);
+      return false;
+    }
+  }
+
+  private async updateCollection(collection: Collection): Promise<boolean> {
+    try {
+      const collections = await this.getCollections();
+      const newDate = new Date().toISOString();
+
+      if (!collections) return false;
+
+      const updatedData = collections.map((col) => {
+        if (col.name === collection.name) {
+          return {
+            ...collection,
+            updatedAt: newDate,
+          };
+        }
+
+        return col;
+      });
+
+      await fse.writeJson(this.appCollections, updatedData, { spaces: 2 });
+      return true;
+    } catch (e) {
+      console.error('Falha em atualizar a coleção: ', e);
+      return false;
+    }
+  }
+
+  // remove a série de uma coleção
+  public async removeInCollection(
+    collectionName: string,
+    serieName: string,
+  ): Promise<boolean> {
+    try {
+      const collection = await this.getCollection(collectionName);
+
+      if (!collection) return false;
+
+      const updatedCollection = {
+        ...collection,
+        series: collection.series.filter((serie) => serie.name !== serieName),
+      };
+
+      await this.updateCollection(updatedCollection);
+      return true;
+    } catch (e) {
+      console.error('Falha em retirar série da coleção: ', e);
+      return false;
+    }
+  }
+
+  // remove a série de uma ou mais coleções
+  public async removeInCollections(
+    serieName: string,
+    serieCollections: string[],
+  ): Promise<boolean> {
+    try {
+      const data = await this.getCollections();
+      if (!data || data.length === 0) return false;
+
+      const collectionSet = new Set(serieCollections);
+
+      const collectionsToUpdate = data.filter(
+        (col) =>
+          collectionSet.has(col.name) &&
+          col.series.some((serie) => serie.name === serieName),
+      );
+
+      if (collectionsToUpdate.length === 0) {
+        console.warn(
+          'A série não existe em nenhuma das coleções selecionadas.',
+        );
+        return false;
+      }
+
+      const updates = collectionsToUpdate.map((col) => {
+        const updatedCol = {
+          ...col,
+          series: col.series.filter((serie) => serie.name !== serieName),
+        };
+
+        return this.updateCollection(updatedCol);
+      });
+
+      await Promise.all(updates);
+      return true;
+    } catch (e) {
+      console.error('Falha em retirar série da coleção: ', e);
+      return false;
+    }
+  }
+
+  // adiciona em uma coleção
+  public async addInCollection(dataPath: string, collectionName: string) {
+    try {
+      const collection = await this.getCollection(collectionName);
+
+      if (!collection) return false;
+
+      const serie = await this.mountSerieInfo(dataPath);
+
+      const update = {
+        ...collection,
+        series: [...collection.series, serie],
+      };
+
+      await this.updateCollection(update);
+      return true;
+    } catch (e) {
+      console.error('Falha em adicionar a serie à coleção: ', e);
+      return false;
+    }
+  }
+
+  // adiciona a série em uma ou mais coleções
+  public async addInCollections(dataPath: string, serieCollections: string[]) {
+    try {
+      const allExist = await this.diffCreate(serieCollections);
+
+      if (!allExist) return false;
+
+      const data = await this.getCollections();
+      if (!data || data.length === 0) return false;
+
+      const serie = await this.mountSerieInfo(dataPath);
+      const collectionSet = new Set(serieCollections);
+
+      const targetCollections = data.filter(
+        (col) =>
+          collectionSet.has(col.name) &&
+          !col.series.some((s) => s.id === serie.id),
+      );
+
+      if (targetCollections.length === 0) {
+        console.warn('Série já existe em todas as coleções selecionadas.');
+        return false;
+      }
+
+      const updates = targetCollections.map((col) => {
+        const updatedCol = {
+          ...col,
+          series: [...col.series, serie],
+          updatedAt: new Date().toISOString(),
+        };
+
+        return updatedCol;
+      });
+
+      // await Promise.all(updates);
+      console.log(updates);
+
+      return true;
+    } catch (e) {
+      console.error('Falha em adicionar a serie à coleção: ', e);
+      return false;
+    }
+  }
+
+  // Retorna as que não existem
+  public async notExist(collections: string[]): Promise<string[] | []> {
+    try {
+      const data = await this.getCollections();
+
+      if (!data) return [];
+
+      const collectionsName = data.map((col) => col.name);
+      const existSet = new Set(collectionsName);
+
+      const notExist = collections.filter((c) => !existSet.has(c));
+
+      return notExist;
+    } catch (e) {
+      console.error('Falha em verificar quais colecoes ainda nao existem: ', e);
+      return [];
+    }
+  }
+
+  public async collectionControl(
+    dataPath: string,
+    oldCollections: string[],
+    newCollection: string[],
+  ) {
+    try {
+      const serieName = path.basename(dataPath, path.extname(dataPath));
+      const oldSet = new Set(oldCollections);
+      const newSet = new Set(newCollection);
+
+      const toAdd = newCollection.filter((c) => !oldSet.has(c));
+      const toRemove = oldCollections.filter((c) => !newSet.has(c));
+
+      console.log(serieName);
+      if (toAdd.length > 0) {
+        await this.addInCollections(dataPath, toAdd);
+      }
+
+      if (toRemove.length > 0) {
+        await this.removeInCollections(serieName, toRemove);
+      }
+
+      return true;
+    } catch (e) {
+      console.error('Falha em gerenciar as coleções: ', e);
+      return false;
+    }
+  }
+
+  private mountCollection(name: string, description?: string): Collection {
+    const date = new Date().toISOString();
+
+    return {
+      name,
+      description: description || '',
+      coverImage: '',
+      series: [],
+      comments: [],
+      updatedAt: date,
+      createdAt: date,
+    };
+  }
+
+  private async mountSerieInfo(dataPath: string): Promise<SeriesInCollection> {
+    const date = new Date().toISOString();
+    const serie = (await this.storageManager.readSerieData(
+      dataPath,
+    )) as Literatures;
+
+    return {
+      id: serie.id,
+      name: serie.name,
+      coverImage: serie.coverImage,
+      archivesPath: serie.archivesPath,
+      status: serie.metadata.status,
+      rating: serie.metadata.rating || 0,
+      totalChapters: serie.totalChapters,
+      recommendedBy: serie.metadata.recommendedBy || '',
+      originalOwner: serie.metadata.originalOwner || '',
+      addAt: date,
+    };
+  }
+
+  public async clearCollection(collectionName: string): Promise<boolean> {
+    try {
+      const emptyCollection = await this.mountCollection(collectionName);
+
+      await this.updateCollection(emptyCollection);
+
+      return true;
+    } catch (e) {
+      console.error('Falha em resetar a coleção: ', e);
+      return false;
+    }
+  }
+
+  public async hasSerie(
+    serieId: number,
+    collectionName: string,
+  ): Promise<boolean> {
+    try {
+      const collection = await this.getCollection(collectionName);
+
+      if (!collection) return false;
+
+      const result = collection.series.find((serie) => serie.id === serieId);
+
+      if (result) return true;
+      else return false;
+    } catch (e) {
+      console.error('Falha em verificar se a coleção já possui a série: ', e);
+      return false;
+    }
+  }
+
+  public async updateSerie(dataPath: string): Promise<boolean> {
+    try {
+      const collections = await this.getCollections();
+      const updatedSerie = await this.mountSerieInfo(dataPath);
+
+      if (!collections) return false;
+
+      // Collections que tem a série
+      const toUpdate = collections.filter((col) =>
+        col.series.some((serie) => serie.id === updatedSerie.id),
+      );
+
+      // Atualizando a série em cada collection
+      const updatedCols: Collection[] = toUpdate.map((col) => {
+        const updatedSeries = col.series.map((serie) => {
+          if (serie.id === updatedSerie.id) {
+            return updatedSerie;
+          }
+
+          return serie;
+        });
+
+        return {
+          ...col,
+          series: updatedSeries,
+        };
+      });
+
+      for (const collection of updatedCols) {
+        await this.updateCollection(collection);
+      }
+
+      return true;
+    } catch (e) {
+      console.error('Falha em atualizar dados da série: ', e);
+      return false;
+    }
+  }
+}

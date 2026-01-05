@@ -31,14 +31,18 @@ declare global {
 
       webUtilities: {
         getPathForFile: (file: File) => string;
+        readFileAsDataUrl: (path: string) => string;
       };
 
       upload: {
-        processSerie: (
+        processSeries: (
           filePaths: string[],
         ) => Promise<APIResponse<SerieData[]>>;
         uploadSerie: (
           serieData: SerieForm,
+        ) => Promise<ResAPIResponseponse<SerieForm>>;
+        uploadSeries: (
+          serieData: SerieForm[],
         ) => Promise<ResAPIResponseponse<SerieForm>>;
         uploadChapter: (
           files: string[],

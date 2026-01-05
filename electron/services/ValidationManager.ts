@@ -2,7 +2,7 @@ import path from 'path';
 import fse from 'fs-extra';
 
 import StorageManager from './StorageManager';
-import FileSystem from './abstract/FileSystem.ts';
+import FileSystem from './abstract/LibrarySystem.ts';
 import { Collection } from '../../src/types/collections.interfaces.ts';
 import { Literatures } from '../../src/types/auxiliar.interfaces.ts';
 import { Comic, TieIn } from '../types/comic.interfaces.ts';

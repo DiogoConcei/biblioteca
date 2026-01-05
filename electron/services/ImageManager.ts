@@ -1,7 +1,7 @@
 import fse from 'fs-extra';
 import path from 'path';
 import sharp from 'sharp';
-import FileSystem from './abstract/FileSystem.ts';
+import FileSystem from './abstract/LibrarySystem.ts';
 import StorageManager from './StorageManager.ts';
 import FileManager from './FileManager.ts';
 import { fileTypeFromBuffer } from 'file-type';
@@ -13,6 +13,12 @@ export default class ImageManager extends FileSystem {
 
   constructor() {
     super();
+  }
+
+  public async readFileAsDataUrl(rawPath: string): Promise<string> {
+    const buf = await fse.promises.readFile(rawPath);
+    const mimeType = mime.lookup(rawPath) || 'application/octet-stream';
+    return `data:${mimeType};base64,${buf.toString('base64')}`;
   }
 
   public normalizeImageFilename(filePath: string): string {
@@ -283,3 +289,192 @@ export default class ImageManager extends FileSystem {
 
 //   await imageGen.clearChapter(dirPath);
 // })();
+
+//   public async createCovers(serie: SerieForm, comicData: Comic): Promise<void> {
+//     try {
+//       const entries = await fse.readdir(serie.oldPath, { withFileTypes: true });
+//       const comicFiles = entries
+//         .filter((e) => e.isFile() && /\.(cbz|cbr|zip|rar|pdf)$/i.test(e.name))
+//         .map((e) => path.join(serie.oldPath, e.name));
+//       if (!comicData.chapters || comicData.chapters.length === 0) {
+//         throw new Error('Comic data chapters are missing or empty');
+//       }
+//       if (comicFiles.length < comicData.chapters.length) {
+//         throw new Error(
+//           'Número de arquivos de quadrinhos é menor que o número de capítulos',
+//         );
+//       }
+//       await Promise.all(
+//         comicData.chapters.map(async (chap, idx) => {
+//           let coverPath = '';
+//           const ext = path.extname(chap.archivesPath);
+//           const rawName = chap.name;
+//           const chapName = this.fileManager.sanitizeDirName(rawName);
+//           const chapterOut = path.join(
+//             this.comicsImages,
+//             comicData.name,
+//             chapName,
+//           );
+//           const outputPath = path.join(this.dinamicImages, comicData.name);
+//           try {
+//             if (ext === '.pdf') {
+//               coverPath = await this.storageManager.extractCoverFromPdf(
+//                 comicFiles[idx],
+//                 outputPath,
+//               );
+//             } else {
+//               coverPath = await this.storageManager.extractCoverWith7zip(
+//                 comicFiles[idx],
+//                 outputPath,
+//               );
+//             }
+//             const resultCover = await this.imageManager.normalizeCover(
+//               coverPath,
+//               serie.name,
+//             );
+//             chap.chapterPath = chapterOut;
+//             chap.coverImage = resultCover;
+//           } catch (e) {
+//             console.error(
+//               `Erro no capítulo ${chap.name} - arquivo ${comicFiles[idx]}:`,
+//               e,
+//             );
+//             throw e;
+//           }
+//         }),
+//       );
+//     } catch (e) {
+//       console.error('Erro ao criar capas:', e);
+//       throw e;
+//     }
+//   }
+
+//   private async createChildCovers(
+//     child: ComicTieIn,
+//     basePath: string,
+//   ): Promise<void> {
+//     if (!child.compiledComic) return;
+
+//     const entries = await fse.readdir(basePath, {
+//       withFileTypes: true,
+//     });
+
+//     const firstChapterEntry = entries.find(
+//       (e) => e.isFile() && /\.(cbz|cbr|zip|rar|PDF)$/i.test(e.name),
+//     );
+
+//     if (!firstChapterEntry) return;
+
+//     let coverPath = '';
+//     const firstChapter = path.join(basePath, firstChapterEntry.name);
+//     const ext = path.extname(firstChapter);
+
+//     const outputPath = path.join(this.dinamicImages, child.serieName);
+
+//     if (ext === '.pdf') {
+//       coverPath = await this.storageManager.extractCoverFromPdf(
+//         firstChapter,
+//         outputPath,
+//       );
+//     } else {
+//       coverPath = await this.storageManager.extractCoverWith7zip(
+//         firstChapter,
+//         outputPath,
+//       );
+//     }
+
+//     const resultCover = await this.imageManager.normalizeCover(
+//       coverPath,
+//       child.serieName,
+//     );
+//     child.coverImage = resultCover;
+//   }
+
+//   public async createTieInCovers(dataPath: string): Promise<void> {
+//     if (await this.validationManager.tieInCreated(dataPath)) {
+//       return;
+//     }
+
+//     const tieInData = (await this.storageManager.readSerieData(
+//       dataPath,
+//     )) as TieIn;
+//     const tieChapters = tieInData.chapters;
+//     if (!tieChapters || tieChapters.length === 0) {
+//       console.warn(`Nenhum capítulo encontrado para Tie-In em ${dataPath}`);
+//       return;
+//     }
+
+//     await Promise.all(
+//       tieChapters.map(async (chap) => {
+//         const ext = path.extname(chap.archivesPath);
+//         let coverPath = '';
+//         const rawName = this.fileManager.sanitizeFilename(chap.name);
+//         const chapSafe = rawName.replaceAll('.', '_');
+//         const safeDir = this.fileManager
+//           .sanitizeDirName(tieInData.name)
+//           .slice(0, 10)
+//           .replaceAll('.', '_');
+//         const chapterOut = path.join(this.comicsImages, safeDir, chapSafe);
+//         const outputPath = path.join(this.dinamicImages, tieInData.name);
+
+//         try {
+//           if (ext === '.pdf') {
+//             coverPath = await this.storageManager.extractCoverFromPdf(
+//               chap.archivesPath,
+//               outputPath,
+//             );
+//           } else {
+//             coverPath = await this.storageManager.extractCoverWith7zip(
+//               chap.archivesPath,
+//               outputPath,
+//             );
+//           }
+
+//           const resultCover = await this.imageManager.normalizeCover(
+//             coverPath,
+//             tieInData.name,
+//           );
+//           chap.chapterPath = chapterOut;
+//           chap.coverImage = resultCover;
+//         } catch (error) {
+//           console.error(
+//             `Erro no capítulo ${chap.name} - (${chap.archivesPath}):`,
+//             error,
+//           );
+//           throw error;
+//         }
+//       }),
+//     );
+
+//     tieInData.metadata.isCreated = true;
+//     await fse.writeJson(tieInData.dataPath, tieInData, { spaces: 2 });
+//   }
+
+//   private async processCoverImage(
+//     chapterPath: string,
+//     chName: string,
+//     serieName: string,
+//   ): Promise<string[]> {
+//     console.log(chapterPath);
+//     const ext = path.extname(chapterPath);
+//     let coverPath = '';
+//     const chapName = this.fileManager.sanitizeDirName(chName);
+//     const chapterOut = path.join(this.comicsImages, serieName, chapName);
+//     const outputPath = path.join(this.dinamicImages, serieName);
+//     if (ext === '.pdf') {
+//       coverPath = await this.storageManager.extractCoverFromPdf(
+//         chapterPath,
+//         outputPath,
+//       );
+//     } else {
+//       coverPath = await this.storageManager.extractCoverWith7zip(
+//         chapterPath,
+//         outputPath,
+//       );
+//     }
+//     const resultCover = await this.imageManager.normalizeCover(
+//       coverPath,
+//       serieName,
+//     );
+//     return [chapterOut, resultCover];
+//   }

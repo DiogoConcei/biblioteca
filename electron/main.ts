@@ -95,7 +95,7 @@ async function ensureAppFolders() {
       collectionsJsonPath,
       [
         {
-          name: 'Favoritas',
+          name: 'Favoritos',
           description: 'Minhas séries favoritas.',
           series: [],
           updatedAt: new Date().toISOString(),

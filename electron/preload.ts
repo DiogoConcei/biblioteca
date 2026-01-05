@@ -44,6 +44,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   webUtilities: {
     getPathForFile: (file: File): string => webUtils.getPathForFile(file),
+    readFileAsDataUrl: (path: string) =>
+      ipcRenderer.invoke('web:readFileAsDataUrl', path),
   },
 
   upload: {
@@ -51,6 +53,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('upload:process-data', filePaths),
     uploadSerie: (serieData: SerieForm): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('upload:process-serie', serieData),
+    uploadSeries: (serieData: SerieForm[]): Promise<APIResponse<void>> =>
+      ipcRenderer.invoke('upload:process-series', serieData),
     uploadChapter: async (
       files: string[],
       literatureForm: string,
@@ -104,6 +108,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('serie:recent-read', dataPath, serie_name),
     updateSerie: (data: SerieEditForm): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('serie:update-serie', data),
+    readFileAsDataUrl: (path: string) =>
+      ipcRenderer.invoke('web:readFileAsDataUrl', path),
   },
 
   chapters: {

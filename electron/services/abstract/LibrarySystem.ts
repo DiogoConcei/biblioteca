@@ -1,7 +1,7 @@
 import path from 'path';
 import fse from 'fs-extra';
 
-export default abstract class FileSystem {
+export default abstract class LibrarySystem {
   readonly baseStorageFolder: string =
     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage';
 

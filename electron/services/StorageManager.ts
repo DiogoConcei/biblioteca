@@ -1,4 +1,4 @@
-import FileSystem from './abstract/FileSystem';
+import FileSystem from './abstract/LibrarySystem';
 import FileManager from './FileManager';
 import fse from 'fs-extra';
 import path from 'path';

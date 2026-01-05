@@ -1,4 +1,4 @@
-import FileSystem from './abstract/FileSystem.ts';
+import FileSystem from './abstract/LibrarySystem.ts';
 import StorageManager from './StorageManager.ts';
 import FileManager from './FileManager.ts';
 import fse from 'fs-extra';
@@ -65,7 +65,7 @@ export default class SystemManager extends FileSystem {
     }
   }
 
-  public async getMangaId(): Promise<number> {
+  public async getGlobalId(): Promise<number> {
     try {
       const data: AppConfig = JSON.parse(
         await fse.readFile(this.configFilePath, 'utf-8'),

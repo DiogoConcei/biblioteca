@@ -200,6 +200,9 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
           return null;
         }
 
+        console.log(
+          `/${serieData.name}/${serieData.id}/${nextChapter.name}/${nextChapter.id}/${nextChapter.page.lastPageRead}/${nextChapter.isRead}`,
+        );
         const url = `/${serieData.name}/${serieData.id}/${nextChapter.name}/${nextChapter.id}/${nextChapter.page.lastPageRead}/${nextChapter.isRead}`;
 
         return { success: true, data: url };

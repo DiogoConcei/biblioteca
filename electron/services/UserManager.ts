@@ -1,5 +1,5 @@
-import FileSystem from './abstract/FileSystem';
-import CollectionsManager from './CollectionsManager';
+import FileSystem from './abstract/LibrarySystem';
+import CollectionsManager from './CollectionManager';
 import StorageManager from './StorageManager';
 import {
   SerieCollectionInfo,
