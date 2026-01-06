@@ -43,7 +43,6 @@ export interface TieIn {
   archivesPath: string;
   chaptersPath: string;
   dataPath: string;
-  coverImage: string;
   totalChapters: number;
   chaptersRead: number;
   literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';

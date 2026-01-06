@@ -2,7 +2,7 @@ import path from 'path';
 import fse from 'fs-extra';
 
 import LibrarySystem from './abstract/LibrarySystem';
-import { ComicTieIn } from '../types/comic.interfaces';
+import { ComicTieIn, TieIn } from '../types/comic.interfaces';
 
 export default class TieInManager extends LibrarySystem {
   public async createChildSeries(
@@ -21,6 +21,7 @@ export default class TieInManager extends LibrarySystem {
     const baseAntigo = parts.slice(0, index + 1).join(path.sep);
     const rightDir = subPath.replace(baseAntigo, rightPath);
     const rawName = path.basename(subPath);
+
     return {
       id: idx,
       parentId,
@@ -34,52 +35,68 @@ export default class TieInManager extends LibrarySystem {
       coverImage: '',
     };
   }
+
+  public async createTieInData(
+    child: ComicTieIn,
+    basePath: string,
+  ): Promise<TieIn> {
+    const id = child.id + 1;
+    const createdAt = new Date().toISOString();
+
+    const totalChapters = (
+      await fse.readdir(basePath, {
+        withFileTypes: true,
+      })
+    ).filter((entry) => entry.isFile()).length;
+
+    const safeName = this.sanitizeFilename(child.serieName).slice(0, 60).trim();
+    const emptyTie = this.mountTieIn();
+
+    const newTie: TieIn = {
+      ...emptyTie,
+      id,
+      name: child.serieName,
+      sanitizedName: safeName,
+      archivesPath: child.archivesPath,
+      chaptersPath: path.join(this.imagesFolder, 'Quadrinho', child.serieName),
+      totalChapters,
+      dataPath: child.dataPath,
+      literatureForm: 'Quadrinho',
+      createdAt,
+    };
+
+    return newTie;
+  }
+
+  private mountTieIn(): TieIn {
+    return {
+      id: 0,
+      name: '',
+      sanitizedName: '',
+      archivesPath: '',
+      chaptersPath: '',
+      totalChapters: 0,
+      chaptersRead: 0,
+      dataPath: '',
+      literatureForm: 'Quadrinho',
+      chapters: [],
+      readingData: {
+        lastChapterId: 0,
+        lastReadAt: '',
+      },
+      metadata: {
+        lastDownload: 0,
+        isFavorite: false,
+        isCreated: false,
+      },
+      createdAt: '',
+      deletedAt: '',
+      comments: [],
+    };
+  }
 }
 
 // export default class TieInManager extends LibrarySystem {
-//   public async createTieInData(
-//     child: ComicTieIn,
-//     basePath: string,
-//   ): Promise<TieIn> {
-//     const id = (await this.systemManager.getMangaId()) + 1;
-//     const createdAt = new Date().toISOString();
-
-//     const totalChapters = (
-//       await fse.readdir(basePath, {
-//         withFileTypes: true,
-//       })
-//     ).filter((entry) => entry.isFile()).length;
-
-//     const safeName = this.fileManager.shortenName(
-//       this.fileManager.sanitizeFilename(child.serieName),
-//     );
-
-//     return {
-//       id,
-//       name: child.serieName,
-//       sanitizedName: safeName,
-//       archivesPath: child.archivesPath,
-//       chaptersPath: path.join(this.imagesFolder, 'Quadrinho', child.serieName),
-//       totalChapters,
-//       chaptersRead: 0,
-//       dataPath: child.dataPath,
-//       coverImage: '',
-//       literatureForm: 'Quadrinho',
-//       chapters: [],
-//       readingData: {
-//         lastChapterId: 0,
-//         lastReadAt: '',
-//       },
-//       metadata: {
-//         lastDownload: 0,
-//         isFavorite: false,
-//         isCreated: false,
-//       },
-//       createdAt,
-//       deletedAt: '',
-//       comments: [],
-//     };
-//   }
 
 //   public async createTieInById(
 //     dataPath: string,

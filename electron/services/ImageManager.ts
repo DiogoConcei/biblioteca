@@ -478,3 +478,35 @@ export default class ImageManager extends FileSystem {
 //     );
 //     return [chapterOut, resultCover];
 //   }
+
+//     if (comicData.chapters.length === 0) {
+//       comicData.metadata.compiledComic = true;
+//     } else {
+//       await this.createCovers(serie, comicData);
+//     }
+
+//     if (await this.validationManager.isDinamicImage(comicData.coverImage)) {
+//       const comicCover = await this.imageManager.normalizeCover(
+//         comicData.coverImage,
+//         comicData.name,
+//       );
+//       comicData.coverImage = comicCover;
+//     }
+
+//       await this.storageManager.extractWith7zip(
+//         chapterToProcess.archivesPath,
+//         chapterOut,
+//       );
+
+// const encodeChapter = await Promise.all(
+//   updatedChapters.map(async (ch) => {
+//     const encodeCover = await this.imageManager.encodeImageToBase64(
+//       ch.coverImage!,
+//     );
+
+//     return {
+//       ...ch,
+//       coverImage: encodeCover as string,
+//     };
+//   }),
+// );

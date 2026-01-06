@@ -113,4 +113,32 @@ export default abstract class LibrarySystem {
       throw e;
     }
   }
+
+  public sanitizeFilename(fileName: string): string {
+    return fileName
+      .replace(/\s+/g, '_')
+
+      .replace(/[<>:"/\\|?*\x00-\x1F#!]/g, '_')
+      .replace(/[^a-zA-Z0-9._-]/g, '_')
+
+      .replace(/_{2,}/g, '_')
+
+      .replace(/\.{2,}/g, '.')
+
+      .replace(/^-+|-+$/g, '')
+
+      .replace(/[. ]+$/g, '');
+  }
+
+  public sanitizeDirName(name: string): string {
+    return name
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '') // remove acentos
+      .replace(/[<>:"/\\|?*\x00-\x1F]/g, '') // inválidos Windows
+      .replace(/\./g, '_') // ⬅️ PONTO VIRA _
+      .replace(/\s+/g, ' ')
+      .replace(/[ ]+$/, '') // remove espaço final
+      .replace(/[_]+$/, '') // remove _ final
+      .trim();
+  }
 }
