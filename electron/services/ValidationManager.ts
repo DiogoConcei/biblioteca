@@ -199,3 +199,17 @@ export default class ValidationManager extends FileSystem {
 //   //   throw new Error('Erro ao recuperar os dados da série.');
 //   // }
 // })();
+
+// File exist?
+// let stat;
+//     try {
+//       stat = await fse.stat(resolvedPath);
+//     } catch (err: any) {
+//       if (err.code === 'ENOENT') {
+//         throw new Error(`Arquivo não encontrado: ${resolvedPath}`);
+//       }
+//       throw err;
+//     }
+//     if (!stat.isFile()) {
+//       throw new Error(`Caminho não é um arquivo: ${resolvedPath}`);
+//     }

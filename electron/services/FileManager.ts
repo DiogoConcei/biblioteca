@@ -8,6 +8,11 @@ export default class FileManager extends FileSystem {
     super();
   }
 
+  public async ensureDestDir(destPath: string): Promise<void> {
+    const dir = path.dirname(destPath);
+    await fse.ensureDir(dir);
+  }
+
   public async ensureSafeSourcePath(originalPath: string): Promise<string> {
     const max = 240;
     if (originalPath.length < max) {
