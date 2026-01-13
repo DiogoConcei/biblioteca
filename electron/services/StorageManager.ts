@@ -16,7 +16,7 @@ import {
   NormalizedSerieData,
   viewData,
   APIResponse,
-} from '../../src/types/auxiliar.interfaces';
+} from '../types/electron-auxiliar.interfaces';
 // import { fileURLToPath, pathToFileURL } from 'url';
 
 // const __dirname = path.dirname(fileURLToPath(import.meta.url));

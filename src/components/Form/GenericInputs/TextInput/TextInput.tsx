@@ -1,4 +1,4 @@
-import { FormTextInputProps } from 'src/types/auxiliar.interfaces';
+import { FormTextInputProps } from 'electron/types/electron-auxiliar.interfaces';
 import './TextInput.scss';
 
 export default function TextInput({

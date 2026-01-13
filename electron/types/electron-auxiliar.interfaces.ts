@@ -1,6 +1,6 @@
-import { Manga, MangaChapter } from '../../electron/types/manga.interfaces';
-import { Comic, ComicEdition } from '../../electron/types/comic.interfaces';
-import { Collection } from './collections.interfaces';
+import { Manga, MangaChapter } from './manga.interfaces';
+import { Comic, ComicEdition } from './comic.interfaces';
+import { Collection } from '../../src/types/collections.interfaces';
 import {
   UseFormRegister,
   FieldError,
@@ -8,7 +8,7 @@ import {
   FieldValues,
   Path,
 } from 'react-hook-form';
-import { SerieEditForm } from './series.interfaces';
+import { SerieEditForm } from '../../src/types/series.interfaces';
 
 export type LiteratureChapter = ComicEdition | MangaChapter;
 

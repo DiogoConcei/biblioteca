@@ -1,13 +1,16 @@
-import FileSystem from './abstract/LibrarySystem.ts';
+import LibrarySystem from './abstract/LibrarySystem.ts';
 import StorageManager from './StorageManager.ts';
 import FileManager from './FileManager.ts';
 import fse from 'fs-extra';
 import path from 'path';
-import { AppConfig, Literatures } from '../../src/types/auxiliar.interfaces.ts';
+import {
+  AppConfig,
+  Literatures,
+} from '../types/electron-auxiliar.interfaces.ts';
 import { Comic, TieIn } from '../types/comic.interfaces.ts';
 import ComicManager from './ComicManager.ts';
 
-export default class SystemManager extends FileSystem {
+export default class SystemManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
   private readonly storageManager: StorageManager = new StorageManager();
 
@@ -65,48 +68,6 @@ export default class SystemManager extends FileSystem {
     }
   }
 
-  public async getGlobalId(): Promise<number> {
-    try {
-      const data: AppConfig = JSON.parse(
-        await fse.readFile(this.configFilePath, 'utf-8'),
-      );
-
-      return data.metadata.global_id;
-    } catch (e) {
-      console.error(`Erro ao obter o ID atual: ${e}`);
-      throw e;
-    }
-  }
-
-  public async setMangaId(newId: number): Promise<void> {
-    try {
-      let data: Partial<AppConfig>;
-      try {
-        const raw = await fse.readFile(this.configFilePath, 'utf-8');
-        data = JSON.parse(raw);
-      } catch (err) {
-        throw new Error(`Erro ao ler ou interpretar o JSON: ${err}`);
-      }
-
-      if (!data.metadata || typeof data.metadata !== 'object') {
-        data.metadata = { global_id: newId };
-      } else {
-        data.metadata.global_id = newId;
-      }
-
-      await fse.writeFile(
-        this.configFilePath,
-        JSON.stringify(data, null, 2),
-        'utf-8',
-      );
-
-      console.log(`✅ global_id atualizado para ${newId}`);
-    } catch (err) {
-      console.error(`❌ Erro ao atualizar global_id:`, err);
-      throw err;
-    }
-  }
-
   public async fixId(): Promise<void> {
     const dataPaths = await this.fileManager.getDataPaths();
 
@@ -143,7 +104,7 @@ export default class SystemManager extends FileSystem {
       }
     }
 
-    await this.setMangaId(lastId);
+    await this.setSerieId(lastId);
   }
 
   public async fixChildSeriePaths(dataPath: string): Promise<void> {

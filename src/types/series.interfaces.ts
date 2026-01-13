@@ -1,6 +1,6 @@
 import { Comic } from 'electron/types/comic.interfaces';
 import { Manga } from 'electron/types/manga.interfaces';
-import { LiteratureChapter } from './auxiliar.interfaces';
+import { LiteratureChapter } from '../../electron/types/electron-auxiliar.interfaces';
 
 export interface SerieData {
   name: string;

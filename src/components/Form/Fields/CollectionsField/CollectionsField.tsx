@@ -1,6 +1,6 @@
 import { Controller, FieldValues } from 'react-hook-form';
 import { useEffect, useState } from 'react';
-import { GenericControllerProps } from '../../../../types/auxiliar.interfaces';
+import { GenericControllerProps } from '../../../../../electron/types/electron-auxiliar.interfaces';
 import { Collection } from '../../../../types/collections.interfaces';
 import styles from './CollectionsField.module.scss';
 import useUIStore from '../../../../store/useUIStore';

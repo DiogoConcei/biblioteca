@@ -1,4 +1,4 @@
-import { LiteratureChapter } from '../types/auxiliar.interfaces';
+import { LiteratureChapter } from '../../electron/types/electron-auxiliar.interfaces';
 
 export interface UseChapterParams {
   serieName: string;

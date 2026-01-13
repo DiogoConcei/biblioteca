@@ -7,7 +7,7 @@ import {
   viewData,
   APIResponse,
   LiteratureChapter,
-} from './auxiliar.interfaces.js';
+} from '../../electron/types/electron-auxiliar.interfaces.js';
 import { SerieData } from './series.interfaces.ts';
 
 declare global {

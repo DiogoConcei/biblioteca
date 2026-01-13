@@ -36,7 +36,7 @@ import {
 import {
   Literatures,
   LiteratureChapter,
-} from '../../types/auxiliar.interfaces';
+} from '../../../electron/types/electron-auxiliar.interfaces';
 import CollectionButton from '../../components/CollectionButton/CollectionButton';
 import usePagination from '../../hooks/usePagination';
 import styles from './EditSerie.module.scss';

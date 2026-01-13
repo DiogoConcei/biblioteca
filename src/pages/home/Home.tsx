@@ -6,7 +6,7 @@ import useAllSeries from '../../hooks/useAllSeries';
 import Loading from '../../components/Loading/Loading';
 import SearchBar from '../../components/SearchBar/SearchBar';
 import { Play, Pencil } from 'lucide-react';
-import { viewData } from '../../types/auxiliar.interfaces';
+import { viewData } from '../../../electron/types/electron-auxiliar.interfaces';
 import styles from './Home.module.scss';
 
 export default function Home() {

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChapterView } from '../types/auxiliar.interfaces';
+import { ChapterView } from '../../electron/types/electron-auxiliar.interfaces';
 
 export default function useDrag(chapter: ChapterView) {
   const [position, setPosition] = useState({ x: 0, y: 0 });

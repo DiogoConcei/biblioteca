@@ -5,7 +5,7 @@ import {
   LiteratureChapterAttributes,
   LiteraturesAttributes,
   APIResponse,
-} from '../types/auxiliar.interfaces';
+} from '../../electron/types/electron-auxiliar.interfaces';
 import { TieIn } from 'electron/types/comic.interfaces';
 import useUIStore from './useUIStore';
 

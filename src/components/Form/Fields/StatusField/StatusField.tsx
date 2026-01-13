@@ -1,4 +1,4 @@
-import { FormInputProps } from '../../../../types/auxiliar.interfaces';
+import { FormInputProps } from '../../../../../electron/types/electron-auxiliar.interfaces';
 import './StatusField.scss';
 
 export default function StatusField({ name, register, error }: FormInputProps) {

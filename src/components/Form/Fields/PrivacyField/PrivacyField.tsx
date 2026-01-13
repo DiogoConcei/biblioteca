@@ -1,4 +1,4 @@
-import { FormInputProps } from '../../../../types/auxiliar.interfaces';
+import { FormInputProps } from '../../../../../electron/types/electron-auxiliar.interfaces';
 import './PrivacyField.scss';
 
 export default function PrivacyField({

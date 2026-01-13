@@ -2,7 +2,7 @@ import { StarOff, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import useAction from '../../hooks/useAction';
 import useCollection from '../../hooks/useCollection';
-import { RatingProps } from '../../types/auxiliar.interfaces';
+import { RatingProps } from '../../../electron/types/electron-auxiliar.interfaces';
 import styles from './Rating.module.scss';
 
 export default function Rating({ serie }: RatingProps) {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { viewData } from '../types/auxiliar.interfaces';
+import { viewData } from '../../electron/types/electron-auxiliar.interfaces';
 import useUIStore from '../store/useUIStore';
 
 export default function useAllSeries() {

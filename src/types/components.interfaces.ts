@@ -4,7 +4,7 @@ import {
   LiteraturesAttributes,
   LiteratureChapterAttributes,
   ChapterView,
-} from './auxiliar.interfaces';
+} from '../../electron/types/electron-auxiliar.interfaces';
 import { SerieForm, SerieData } from './series.interfaces';
 
 export interface OnlySerieProp {

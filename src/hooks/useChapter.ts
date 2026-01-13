@@ -1,7 +1,7 @@
 import useUIStore from '../store/useUIStore';
 import useSerieStore from '../store/useSerieStore';
 import { useEffect, useState } from 'react';
-import { ChapterView } from '../types/auxiliar.interfaces';
+import { ChapterView } from '../../electron/types/electron-auxiliar.interfaces';
 import useSerie from '../hooks/useSerie';
 import { useParams } from 'react-router-dom';
 

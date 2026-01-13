@@ -1,5 +1,6 @@
 import path from 'path';
 import fse from 'fs-extra';
+import { AppConfig } from '../../types/electron-auxiliar.interfaces';
 
 export default abstract class LibrarySystem {
   readonly baseStorageFolder: string =
@@ -110,6 +111,48 @@ export default abstract class LibrarySystem {
       return filePaths;
     } catch (e) {
       console.error(`erro encontrado: ${e}`);
+      throw e;
+    }
+  }
+
+  public async setSerieId(newId: number): Promise<void> {
+    try {
+      let data: Partial<AppConfig>;
+      try {
+        const raw = await fse.readFile(this.configFilePath, 'utf-8');
+        data = JSON.parse(raw);
+      } catch (err) {
+        throw new Error(`Erro ao ler ou interpretar o JSON: ${err}`);
+      }
+
+      if (!data.metadata || typeof data.metadata !== 'object') {
+        data.metadata = { global_id: newId };
+      } else {
+        data.metadata.global_id = newId;
+      }
+
+      await fse.writeFile(
+        this.configFilePath,
+        JSON.stringify(data, null, 2),
+        'utf-8',
+      );
+
+      console.log(`✅ global_id atualizado para ${newId}`);
+    } catch (err) {
+      console.error(`❌ Erro ao atualizar global_id:`, err);
+      throw err;
+    }
+  }
+
+  public async getSerieId(): Promise<number> {
+    try {
+      const data: AppConfig = JSON.parse(
+        await fse.readFile(this.configFilePath, 'utf-8'),
+      );
+
+      return data.metadata.global_id;
+    } catch (e) {
+      console.error(`Erro ao obter o ID atual: ${e}`);
       throw e;
     }
   }

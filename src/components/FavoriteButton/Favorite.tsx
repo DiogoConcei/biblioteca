@@ -1,6 +1,6 @@
 import { Bookmark, BookmarkCheck } from 'lucide-react';
 import useCollection from '../../hooks/useCollection';
-import { FavoriteProps } from '../../types/auxiliar.interfaces';
+import { FavoriteProps } from '../../../electron/types/electron-auxiliar.interfaces';
 import styles from './Favorite.module.scss';
 import { SerieCollectionInfo } from '../../types/collections.interfaces';
 import useSerieStore from '../../store/useSerieStore';
