@@ -1,146 +1,119 @@
-import FileSystem from './abstract/LibrarySystem.ts';
-import path from 'path';
 import fse from 'fs-extra';
-import { randomUUID } from 'crypto';
+import path from 'path';
+import pLimit from 'p-limit';
 
-export default class FileManager extends FileSystem {
-  constructor() {
-    super();
-  }
+import LibrarySystem from './abstract/LibrarySystem';
 
-  public async ensureSafeSourcePath(originalPath: string): Promise<string> {
-    const max = 240;
-    if (originalPath.length < max) {
-      return originalPath;
+export default class FileManager extends LibrarySystem {
+  public async searchChapters(
+    archivesPath: string,
+  ): Promise<[string[], number]> {
+    const entries = await fse.readdir(archivesPath, { withFileTypes: true });
+    const dirEntries = entries
+      .filter(
+        (entry) =>
+          entry.isFile() && /\.(cbz|cbr|zip|rar|pdf)$/i.test(entry.name),
+      )
+      .map((entry) => path.join(archivesPath, entry.name));
+
+    if (dirEntries.length === 0) {
+      return [[], 0];
     }
 
-    const dir = path.dirname(originalPath);
-    const ext = path.extname(originalPath);
-    const shortName = `${randomUUID().slice(0, 8)}${ext}`;
-    const safePath = path.join(dir, shortName);
-
-    await fse.move(originalPath, safePath, { overwrite: true });
-
-    return safePath;
+    return [dirEntries, dirEntries.length];
   }
 
-  public buildSafeImagePath(
-    dirPath: string,
-    originalName: string,
-    ext = '.webp',
-  ): string {
-    const max = 260;
-    const min = 6;
-    const safeName = this.sanitizeFilename(originalName);
-    const resolvedDir = path.resolve(dirPath);
+  public async singleCountChapter(dir: string): Promise<number> {
+    const rawExts = ['.cbz', '.cbr', '.zip', '.rar', '.pdf'];
+    const extSet = new Set(
+      rawExts.map((e) =>
+        e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`,
+      ),
+    );
 
-    const staticLength = resolvedDir.length + path.sep.length + ext.length;
+    try {
+      const entries = await fse.readdir(dir, { withFileTypes: true });
+      if (!entries || entries.length === 0) return 0;
 
-    let maxBaseLength = max - staticLength;
-
-    if (maxBaseLength < min) {
-      const fallback = randomUUID().slice(0, min);
-      return path.join(resolvedDir, fallback + ext);
-    }
-
-    const base =
-      safeName.length > maxBaseLength
-        ? safeName.slice(0, maxBaseLength)
-        : safeName;
-
-    let finalPath = path.join(resolvedDir, base + ext);
-
-    // 🔁 Segurança extra
-    if (finalPath.length > max) {
-      finalPath = path.join(resolvedDir, randomUUID().slice(0, min) + ext);
-    }
-
-    return finalPath;
-  }
-
-  public buildSafePath(serieName: string, chapterIndex: number): string {
-    const safeChapter = String(chapterIndex + 1).padStart(3, '0');
-    return path.join(this.comicsImages, serieName, safeChapter);
-  }
-
-  public buildSafeChapterPath(
-    baseDir: string,
-    serieName: string,
-    chapterName: string,
-  ): string {
-    const max = 260;
-    const min = 8;
-    const safeSerie = this.sanitizeFilename(serieName);
-    const safeChapter = this.sanitizeFilename(chapterName);
-
-    const resolvedBase = path.resolve(baseDir);
-
-    // base + sep + serie + sep + chapter
-    const staticLength = resolvedBase.length + path.sep.length * 2;
-
-    let remaining = max - staticLength;
-
-    // 🔐 Fallback extremo
-    if (remaining <= min * 2) {
-      const s = randomUUID().slice(0, min);
-      const c = randomUUID().slice(0, min);
-      return path.join(resolvedBase, s, c);
-    }
-
-    // divide espaço entre serie / chapter
-    const maxSerieLen = Math.floor(remaining * 0.4);
-    const maxChapterLen = remaining - maxSerieLen;
-
-    const finalSerie =
-      safeSerie.length > maxSerieLen
-        ? safeSerie.slice(0, maxSerieLen)
-        : safeSerie;
-
-    const finalChapter =
-      safeChapter.length > maxChapterLen
-        ? safeChapter.slice(0, maxChapterLen)
-        : safeChapter;
-
-    let finalPath = path.join(resolvedBase, finalSerie, finalChapter);
-
-    // 🔁 Segurança final
-    if (finalPath.length > max) {
-      finalPath = path.join(
-        resolvedBase,
-        randomUUID().slice(0, min),
-        randomUUID().slice(0, min),
-      );
-    }
-
-    return finalPath;
-  }
-
-  public async findPath(
-    basePath: string,
-    name: string,
-  ): Promise<string | null> {
-    const dirPaths = await fse.readdir(basePath, { withFileTypes: true });
-
-    for (const dirent of dirPaths) {
-      if (dirent.isDirectory()) {
-        if (dirent.name === name) {
-          return path.join(basePath, dirent.name);
-        } else {
-          const foundPath = await this.findPath(
-            path.join(basePath, dirent.name),
-            name,
-          );
-          if (foundPath) {
-            return foundPath;
-          }
-        }
+      let count = 0;
+      for (const e of entries) {
+        if (!e.isFile()) continue;
+        const ext = path.extname(e.name).toLowerCase();
+        if (extSet.has(ext)) count++;
       }
-    }
 
-    return null;
+      return count;
+    } catch {
+      return 0;
+    }
   }
-  public shortenName(name: string, max = 60): string {
-    return name.length > max ? name.slice(0, max).trim() : name;
+
+  public async countChapters(directories: string[]): Promise<number> {
+    const concurrency = 8;
+    const rawExts = ['.cbz', '.cbr', '.zip', '.rar', '.pdf'];
+    const extSet = new Set(
+      rawExts.map((e) =>
+        e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`,
+      ),
+    );
+
+    const limit = pLimit(concurrency);
+
+    const tasks = directories.map((dir) =>
+      limit(async (): Promise<number> => {
+        try {
+          const entries = await fse.readdir(dir, { withFileTypes: true });
+          if (entries.length === 0) return 0;
+
+          let count = 0;
+          for (const e of entries) {
+            if (!e.isFile()) continue;
+            const ext = path.extname(e.name).toLowerCase();
+            if (extSet.has(ext)) count++;
+          }
+          return count;
+        } catch {
+          return 0;
+        }
+      }),
+    );
+
+    const results = await Promise.all(tasks);
+    return results.reduce((s, v) => s + v, 0);
+  }
+
+  public async searchDirectories(dirPath: string): Promise<string[]> {
+    const entries = (
+      await fse.readdir(dirPath, { withFileTypes: true })
+    ).filter((e) => e.isDirectory());
+    const dirPaths = entries.map((e) => path.join(dirPath, e.name));
+
+    try {
+      const directories: string[] = [];
+      const subDirsArrays = await Promise.all(
+        dirPaths.map((dir) => this.searchDirectories(dir)),
+      );
+      for (const dir of dirPaths) directories.push(dir);
+      for (const subDirs of subDirsArrays) directories.push(...subDirs);
+      return directories;
+    } catch (e) {
+      console.error('Falha em verificar todos os sub diretorios: ', e);
+      return [];
+    }
+  }
+
+  public async findFirstChapter(dir: string): Promise<string> {
+    const entries = await fse.readdir(dir, { withFileTypes: true });
+
+    const chapter = entries.find(
+      (e) => e.isFile() && /\.(cbz|cbr|zip|rar|pdf)$/i.test(e.name),
+    );
+
+    if (!chapter) return '';
+
+    const firstPath = path.join(dir, chapter?.name);
+
+    return firstPath;
   }
 
   public sanitizeFilename(fileName: string): string {
@@ -156,19 +129,8 @@ export default class FileManager extends FileSystem {
 
       .replace(/^-+|-+$/g, '')
 
-      .replace(/[. ]+$/g, '');
-  }
-
-  public sanitizeDirName(name: string): string {
-    return name
-      .normalize('NFKD')
-      .replace(/[\u0300-\u036f]/g, '') // remove acentos
-      .replace(/[<>:"/\\|?*\x00-\x1F]/g, '') // inválidos Windows
-      .replace(/\./g, '_') // ⬅️ PONTO VIRA _
-      .replace(/\s+/g, ' ')
-      .replace(/[ ]+$/, '') // remove espaço final
-      .replace(/[_]+$/, '') // remove _ final
-      .trim();
+      .replace(/[. ]+$/g, '')
+      .replaceAll('#', '');
   }
 
   public async orderComic(filesPath: string[]): Promise<string[]> {
@@ -192,13 +154,11 @@ export default class FileManager extends FileSystem {
         return a.isSpecial ? 1 : -1;
       }
 
-      // 2️⃣ ambos normais → ordenação lógica
       if (!a.isSpecial && !b.isSpecial) {
         if (a.volume !== b.volume) return a.volume - b.volume;
         return a.chapter - b.chapter;
       }
 
-      // 3️⃣ ambos especiais → preserva ordem da pasta
       return a.fsIndex - b.fsIndex;
     });
 
@@ -272,243 +232,5 @@ export default class FileManager extends FileSystem {
     }
 
     return { volume, chapter };
-  }
-
-  public async orderByChapters(filesPath: string[]): Promise<string[]> {
-    const fileDetails = await Promise.all(
-      filesPath.map(async (file) => {
-        const fileName = path.basename(file);
-        const { volume, chapter } = this.extractSerieInfo(fileName);
-
-        return {
-          filePath: file,
-          volume: volume ? Number(volume) : 0,
-          chapter: chapter ? Number(chapter) : 0,
-        };
-      }),
-    );
-
-    fileDetails.sort((a, b) => a.chapter - b.chapter);
-
-    const orderedPaths = fileDetails.map((fileDetail) => fileDetail.filePath);
-    return orderedPaths;
-  }
-
-  private extractSerieInfo(fileName: string): {
-    volume: number;
-    chapter: number;
-  } {
-    const regex =
-      /Vol\.\s*(\d+)|Ch\.\s*(\d+(\.\d+)?)|Chapter\s*(\d+(\.\d+)?)|Capítulo\s*(\d+(\.\d+)?)/gi;
-    const matches = [...fileName.matchAll(regex)];
-
-    let volume = 0;
-    let chapter = 0;
-
-    matches.forEach((match) => {
-      if (match[1]) {
-        volume = parseInt(match[1], 10);
-      }
-      if (match[2] || match[4] || match[6]) {
-        const chapterValue = match[2] || match[4] || match[6];
-        const chapterNumber = parseFloat(chapterValue);
-        chapter = chapterNumber;
-      }
-    });
-
-    return { volume, chapter };
-  }
-
-  public async localUpload(oldPath: string, newPath: string): Promise<void> {
-    try {
-      await fse.move(oldPath, newPath);
-    } catch (error) {
-      console.error(`Erro ao fazer upload do arquivo: ${error}`);
-      throw error;
-    }
-  }
-
-  public async uploadCover(oldPath: string, newPath: string): Promise<void> {
-    try {
-      await fse.move(oldPath, newPath);
-    } catch (e) {
-      console.error(`Erro ao fazer upload de imagem: ${e}`);
-      throw e;
-    }
-  }
-
-  public async getAllFilesRecursively(dir: string): Promise<string[]> {
-    const entries = await fse.readdir(dir, { withFileTypes: true });
-    const files = await Promise.all(
-      entries.map(async (entry) => {
-        const fullPath = path.join(dir, entry.name);
-        if (entry.isDirectory()) {
-          return await this.getAllFilesRecursively(fullPath);
-        } else {
-          return fullPath;
-        }
-      }),
-    );
-    return files.flat();
-  }
-
-  public async uploadImage(file: string): Promise<string> {
-    try {
-      const destPath = path.join(
-        this.imagesFolder,
-        'dinamicImages',
-        path.basename(file),
-      );
-      await fse.move(file, destPath);
-      return destPath;
-    } catch (e) {
-      console.error(`Erro ao fazer upload de imagem: ${e}`);
-      throw e;
-    }
-  }
-
-  public async getDataPaths(): Promise<string[]> {
-    try {
-      const directories = [this.booksData, this.comicsData, this.mangasData];
-
-      const contentArrays = await Promise.all(
-        directories.map(async (dir) =>
-          (await fse.readdir(dir, { withFileTypes: true })).map((item) =>
-            path.join(dir, item.name),
-          ),
-        ),
-      );
-
-      return contentArrays.flat();
-    } catch (e) {
-      console.error(`Erro ao obter séries: ${e}`);
-      throw e;
-    }
-  }
-
-  public async getDataPath(serieName: string): Promise<string> {
-    const directories = [
-      this.booksData,
-      this.comicsData,
-      this.mangasData,
-      this.childSeriesData,
-    ];
-
-    try {
-      const allPaths = (
-        await Promise.all(
-          directories.map(async (dir) => {
-            const items = await fse.readdir(dir, { withFileTypes: true });
-            return items.map((item) => path.join(dir, item.name));
-          }),
-        )
-      ).flat();
-
-      return (
-        allPaths.find((p) => path.basename(p, path.extname(p)) === serieName) ||
-        ''
-      );
-    } catch (e) {
-      console.error(`Erro ao obter série: ${e}`);
-      throw e;
-    }
-  }
-
-  public findFirstCoverFile(fileNames: string[]): string | null {
-    const imageExtensionRegex = /\.(jpg|jpeg|png|gif|webp)$/i;
-
-    const zerosOnlyCandidates: string[] = [];
-    const zeroThenOneCandidates: string[] = [];
-    const namedCoverCandidates: string[] = [];
-    const fallbackCandidates: string[] = [];
-    const allWithNumbers: { name: string; num: number }[] = [];
-
-    const coverKeywords = [
-      'cover',
-      'front',
-      'capa',
-      'capa1',
-      'page0001',
-      'pg0001',
-      '01a',
-      '01',
-      '01b',
-      'preview',
-    ];
-
-    for (const name of fileNames) {
-      if (!imageExtensionRegex.test(name)) continue;
-
-      const baseName = name.replace(imageExtensionRegex, '').toLowerCase();
-
-      if (coverKeywords.some((keyword) => baseName.includes(keyword))) {
-        namedCoverCandidates.push(name);
-      }
-
-      const lastDigitsMatch = baseName.match(/(\d+)(?!.*\d)/);
-      if (!lastDigitsMatch) continue;
-
-      const digits = lastDigitsMatch[1];
-      const numericValue = parseInt(digits, 10);
-      allWithNumbers.push({ name, num: numericValue });
-
-      if (/^0+$/.test(digits)) {
-        zerosOnlyCandidates.push(name);
-      } else if (/^0*1$/.test(digits)) {
-        zeroThenOneCandidates.push(name);
-      } else if (/^0*2$/.test(digits) || /^0*3$/.test(digits)) {
-        fallbackCandidates.push(name);
-      }
-    }
-
-    if (zerosOnlyCandidates.length > 0) {
-      return zerosOnlyCandidates[0];
-    }
-
-    if (zeroThenOneCandidates.length > 0) {
-      return zeroThenOneCandidates[0];
-    }
-
-    if (namedCoverCandidates.length > 0) {
-      return namedCoverCandidates[0];
-    }
-
-    if (fallbackCandidates.length > 0) {
-      return fallbackCandidates[0];
-    }
-
-    if (allWithNumbers.length > 0) {
-      const smallest = allWithNumbers.reduce((min, curr) =>
-        curr.num < min.num ? curr : min,
-      );
-      console.log(
-        `⚠️ Nenhum critério específico bateu, usando menor número como fallback: ${smallest.name} (número: ${smallest.num})`,
-      );
-      return smallest.name;
-    }
-
-    return null;
-  }
-
-  public normalizeImageFilename(filePath: string): string {
-    const dir = path.dirname(filePath);
-    const ext = path.extname(filePath);
-    let baseName = path.basename(filePath, ext);
-
-    baseName = baseName.replace(/\.(pdf|zip|rar)/gi, '');
-
-    return path.join(dir, `${baseName}${ext}`);
-  }
-
-  public foundLiteratureForm(dataPath: string): string {
-    try {
-      const LiteratureForm = path.basename(path.dirname(dataPath));
-      return LiteratureForm;
-    } catch (e) {
-      console.error(
-        `Falha em descobrir o tipo da serie: ${path.basename(dataPath)}`,
-      );
-      throw e;
-    }
   }
 }

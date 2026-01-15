@@ -1,92 +1,95 @@
 import path from 'path';
-import fse from 'fs-extra';
-import pLimit from 'p-limit';
 
 import LibrarySystem from './abstract/LibrarySystem';
-import SystemManager from './SystemManager';
+import FileManager from './FileManager';
+import StorageManager from './StorageManager';
 
-import { Comic, ComicTieIn } from '../types/comic.interfaces';
+import {
+  Comic,
+  ComicEdition,
+  ComicTieIn,
+  TieIn,
+} from '../types/comic.interfaces';
 
 import { SerieForm } from '../../src/types/series.interfaces';
 
 export default class ComicManager extends LibrarySystem {
-  // ==============================================================================
+  private readonly fileManager: FileManager = new FileManager();
+  private readonly storageManager: StorageManager = new StorageManager();
 
-  // public async createComicData(serie: SerieForm): Promise<Comic> {
+  public async createTieIn(
+    child: ComicTieIn,
+    basePath: string,
+  ): Promise<TieIn> {
+    const totalChapters = await this.fileManager.singleCountChapter(basePath);
+    const safeName = this.fileManager.sanitizeFilename(child.serieName);
+    const emptyTie = await this.mountEmptyTieIn();
 
-  //   const [comics, childSeries] = await Promise.all([
-  //     this.searchComics([serie.oldPath, ...subDir]),
-  //     subDir.length
-  //       ? Promise.all(
-  //           subDir.map((sd, idx) =>
-  //             this.createChildSeries(rightPath, sd, idx, nextId),
-  //           ),
-  //         )
-  //       : Promise.resolve([]),
-  //   ]);
-  //
-  // }
+    return {
+      ...emptyTie,
+      name: child.serieName,
+      sanitizedName: safeName,
+      archivesPath: child.archivesPath,
+      chaptersPath: path.join(this.imagesFolder, 'Quadrinho', child.serieName),
+      totalChapters,
+      dataPath: child.dataPath,
+    };
+  }
 
-  // ==============================================================================
+  public async createChilds(
+    archivesPath: string,
+    serieName: string,
+    parentId: number,
+  ): Promise<ComicTieIn[]> {
+    const rightPath = path.join(this.userLibrary, serieName);
+    const subPaths = await this.fileManager.searchDirectories(archivesPath);
 
-  // Deve ser adaptado para o FileManager
-  // ======================================
-  private async countComics(directories: string[]): Promise<number> {
-    const concurrency = 8;
-    const rawExts = ['.cbz', '.cbr', '.zip'];
+    const childSeries: ComicTieIn[] = await Promise.all(
+      subPaths.map(async (subPath, idx) => {
+        const chapter = await this.fileManager.findFirstChapter(subPath);
 
-    const extSet = new Set(
-      rawExts.map((e) =>
-        e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`,
-      ),
-    );
+        const relativeToSerie = path.relative(
+          subPath.split(path.sep).slice(-1)[0],
+          subPath,
+        );
 
-    const limit = pLimit(concurrency);
+        const rightDir = path.join(rightPath, relativeToSerie);
 
-    const tasks = directories.map((dir) =>
-      limit(async (): Promise<number> => {
-        try {
-          const entries = await fse.readdir(dir, { withFileTypes: true });
-
-          if (entries.length === 0) return 0;
-
-          let count = 0;
-          for (const e of entries) {
-            if (!e.isFile()) continue;
-            const ext = path.extname(e.name).toLowerCase();
-            if (extSet.has(ext)) count++;
-          }
-          return count;
-        } catch {
-          return 0;
-        }
+        return {
+          ...this.mountEmptyChild(parentId, subPath),
+          id: idx,
+          compiledComic: chapter ? true : false,
+          archivesPath: rightDir,
+        };
       }),
     );
 
-    const results = await Promise.all(tasks);
-    return results.reduce((s, v) => s + v, 0);
+    return childSeries;
   }
 
-  // Deve ser adaptado para o FileManager
-  // ======================================
-  private async searchDirectories(dirPath: string): Promise<string[]> {
-    const entries = (
-      await fse.readdir(dirPath, { withFileTypes: true })
-    ).filter((e) => e.isDirectory());
-    const dirPaths = entries.map((e) => path.join(dirPath, e.name));
+  public async createEdition(
+    serieName: string,
+    archivesPath: string,
+  ): Promise<ComicEdition[]> {
+    const [comicEntries] = await this.fileManager.searchChapters(archivesPath);
+    const orderComics = await this.fileManager.orderComic(comicEntries);
 
-    try {
-      const directories: string[] = [];
-      const subDirsArrays = await Promise.all(
-        dirPaths.map((dir) => this.searchDirectories(dir)),
-      );
-      for (const dir of dirPaths) directories.push(dir);
-      for (const subDirs of subDirsArrays) directories.push(...subDirs);
-      return directories;
-    } catch (e) {
-      console.error('Falha em verificar todos os sub diretorios: ', e);
-      return [];
-    }
+    const chapters = await Promise.all(
+      orderComics.map(async (comicPath, idx) => {
+        const fileName = path
+          .basename(comicPath, path.extname(comicPath))
+          .replaceAll('#', '');
+        const sanitizedName = this.fileManager.sanitizeFilename(fileName);
+
+        return {
+          ...this.mountEmptyEdition(serieName, fileName),
+          id: idx,
+          sanitizedName,
+        };
+      }),
+    );
+
+    return chapters;
   }
 
   private async mountEmptyComic(serie: SerieForm): Promise<Comic> {
@@ -131,5 +134,72 @@ export default class ComicManager extends LibrarySystem {
     };
   }
 
-  // private async mountEmpyChilds();
+  private async mountEmptyTieIn(): Promise<TieIn> {
+    const id = (await this.getSerieId()) + 1;
+    const createdAt = new Date().toISOString();
+
+    return {
+      id,
+      name: '',
+      sanitizedName: '',
+      archivesPath: '',
+      chaptersPath: '',
+      totalChapters: 0,
+      chaptersRead: 0,
+      dataPath: '',
+      coverImage: '',
+      literatureForm: 'Quadrinho',
+      chapters: [],
+      readingData: {
+        lastChapterId: 0,
+        lastReadAt: '',
+      },
+      metadata: {
+        lastDownload: 0,
+        isFavorite: false,
+        isCreated: false,
+      },
+      createdAt,
+      deletedAt: '',
+      comments: [],
+    };
+  }
+
+  private mountEmptyEdition(serieName: string, fileName: string): ComicEdition {
+    const createdAt = new Date().toISOString();
+
+    return {
+      id: 0,
+      serieName: serieName,
+      name: fileName,
+      coverImage: '',
+      sanitizedName: '',
+      archivesPath: path.join(this.userLibrary, serieName, fileName),
+      chapterPath: '',
+      createdAt,
+      isRead: false,
+      isDownloaded: 'not_downloaded',
+      page: {
+        lastPageRead: 0,
+        favoritePage: 0,
+      },
+    };
+  }
+
+  private mountEmptyChild(parentId: number, subPath: string) {
+    const rawName = path.basename(subPath);
+
+    return {
+      id: 0,
+      parentId,
+      serieName: rawName,
+      compiledComic: false,
+      archivesPath: '',
+      dataPath: path.join(
+        this.childSeriesData,
+        `${path.basename(subPath)}.json`,
+      ),
+      coverImage: '',
+    };
+  }
 }
