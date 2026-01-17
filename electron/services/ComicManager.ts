@@ -203,3 +203,103 @@ export default class ComicManager extends LibrarySystem {
     };
   }
 }
+
+//   public async createCovers(serie: SerieForm, comicData: Comic): Promise<void> {
+//     try {
+//       const entries = await fse.readdir(serie.oldPath, { withFileTypes: true });
+//       const comicFiles = entries
+//         .filter((e) => e.isFile() && /\.(cbz|cbr|zip|rar|pdf)$/i.test(e.name))
+//         .map((e) => path.join(serie.oldPath, e.name));
+//       if (!comicData.chapters || comicData.chapters.length === 0) {
+//         throw new Error('Comic data chapters are missing or empty');
+//       }
+//       if (comicFiles.length < comicData.chapters.length) {
+//         throw new Error(
+//           'Número de arquivos de quadrinhos é menor que o número de capítulos',
+//         );
+//       }
+
+//       await Promise.all(
+//         comicData.chapters.map(async (chap, idx) => {
+//           let coverPath = '';
+//           const ext = path.extname(chap.archivesPath);
+//           const rawName = chap.name;
+//           const chapName = this.fileManager.sanitizeDirName(rawName);
+//           const chapterOut = path.join(
+//             this.comicsImages,
+//             comicData.name,
+//             chapName,
+//           );
+
+//           try {
+//             chap.chapterPath = chapterOut;
+//             chap.coverImage = resultCover;
+//           } catch (e) {
+//             console.error(
+//               `Erro no capítulo ${chap.name} - arquivo ${comicFiles[idx]}:`,
+//               e,
+//             );
+//             throw e;
+//           }
+//         }),
+//       );
+//     } catch (e) {
+//       console.error('Erro ao criar capas:', e);
+//       throw e;
+//     }
+//   }
+
+//   private async processCoverImage(
+//     chapterPath: string,
+//     chName: string,
+//     serieName: string,
+//   ): Promise<string[]> {
+//     const chapterOut = path.join(this.comicsImages, serieName, chapName);
+
+//     return [chapterOut, resultCover];
+//   }
+
+//   public async createTieInCovers(dataPath: string): Promise<void> {
+//     if (await this.validationManager.tieInCreated(dataPath)) {
+//       return;
+//     }
+
+//     const tieInData = (await this.storageManager.readSerieData(
+//       dataPath,
+//     )) as TieIn;
+//     const tieChapters = tieInData.chapters;
+//     if (!tieChapters || tieChapters.length === 0) {
+//       console.warn(`Nenhum capítulo encontrado para Tie-In em ${dataPath}`);
+//       return;
+//     }
+
+//     await Promise.all(
+//       tieChapters.map(async (chap) => {
+//         const ext = path.extname(chap.archivesPath);
+//         let coverPath = '';
+//         const rawName = this.fileManager.sanitizeFilename(chap.name);
+//         const chapSafe = rawName.replaceAll('.', '_');
+//         const safeDir = this.fileManager
+//           .sanitizeDirName(tieInData.name)
+//           .slice(0, 10)
+//           .replaceAll('.', '_');
+//         const chapterOut = path.join(this.comicsImages, safeDir, chapSafe);
+//         const outputPath = path.join(this.dinamicImages, tieInData.name);
+
+//         try {
+//
+//           chap.chapterPath = chapterOut;
+//           chap.coverImage = resultCover;
+//         } catch (error) {
+//           console.error(
+//             `Erro no capítulo ${chap.name} - (${chap.archivesPath}):`,
+//             error,
+//           );
+//           throw error;
+//         }
+//       }),
+//     );
+
+//     tieInData.metadata.isCreated = true;
+//     await fse.writeJson(tieInData.dataPath, tieInData, { spaces: 2 });
+//   }

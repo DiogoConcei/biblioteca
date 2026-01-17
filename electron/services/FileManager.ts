@@ -1,6 +1,7 @@
 import fse from 'fs-extra';
 import path from 'path';
 import pLimit from 'p-limit';
+import { randomUUID } from 'crypto';
 
 import LibrarySystem from './abstract/LibrarySystem';
 
@@ -163,6 +164,39 @@ export default class FileManager extends LibrarySystem {
     });
 
     return fileDetails.map((d) => d.filePath);
+  }
+
+  public buildSafePath(
+    dirPath: string,
+    originalName: string,
+    ext = '.webp',
+  ): string {
+    const max = 260;
+    const min = 6;
+    const safeName = this.sanitizeFilename(originalName);
+    const resolvedDir = path.resolve(dirPath);
+
+    const staticLength = resolvedDir.length + path.sep.length + ext.length;
+
+    let maxBaseLength = max - staticLength;
+
+    if (maxBaseLength < min) {
+      const fallback = randomUUID().slice(0, min);
+      return path.join(resolvedDir, fallback + ext);
+    }
+
+    const base =
+      safeName.length > maxBaseLength
+        ? safeName.slice(0, maxBaseLength)
+        : safeName;
+
+    let finalPath = path.join(resolvedDir, base + ext);
+
+    if (finalPath.length > max) {
+      finalPath = path.join(resolvedDir, randomUUID().slice(0, min) + ext);
+    }
+
+    return finalPath;
   }
 
   private extractComicInfo(
