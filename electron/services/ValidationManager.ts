@@ -147,23 +147,6 @@ export default class ValidationManager extends FileSystem {
       throw e;
     }
   }
-
-  public async tieInCreated(dataPath: string): Promise<boolean> {
-    try {
-      const tieInData = (await this.storageManager.readSerieData(
-        dataPath,
-      )) as unknown as TieIn;
-
-      if (tieInData.metadata.isCreated) {
-        return true;
-      }
-
-      return false;
-    } catch (e) {
-      console.log(`Falha em verificar existência da TieIn`);
-      throw e;
-    }
-  }
 }
 
 // (async () => {

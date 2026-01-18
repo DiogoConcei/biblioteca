@@ -190,3 +190,37 @@ export default class ImageManager extends LibrarySystem {
     }
   }
 }
+
+// private async processCoverImage(
+//     chapterPath: string,
+//     chName: string,
+//     serieName: string,
+//   ): Promise<string[]> {
+//     console.log(chapterPath);
+//     const ext = path.extname(chapterPath);
+//     let coverPath = '';
+
+//     const chapName = this.fileManager.sanitizeDirName(chName);
+//     const chapterOut = path.join(this.comicsImages, serieName, chapName);
+//     const outputPath = path.join(this.dinamicImages, serieName);
+
+//     if (ext === '.pdf') {
+//       coverPath = await this.storageManager.extractCoverFromPdf(
+//         chapterPath,
+//         outputPath,
+//       );
+//     } else {
+//       coverPath = await this.storageManager.extractCoverWith7zip(
+//         chapterPath,
+//         outputPath,
+//       );
+//     }
+
+//     const resultCover = await this.imageManager.normalizeCover(
+//       coverPath,
+//       serieName,
+//     );
+
+//     return [chapterOut, resultCover];
+//   }
+// }
