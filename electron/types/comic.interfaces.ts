@@ -79,6 +79,7 @@ export interface ComicEdition {
   sanitizedName: string;
   coverImage?: string;
   archivesPath: string;
+  originalPath: string;
   chapterPath: string;
   createdAt: string;
   isRead: boolean;

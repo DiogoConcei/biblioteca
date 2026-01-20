@@ -83,6 +83,15 @@ export default class FileManager extends LibrarySystem {
     return results.reduce((s, v) => s + v, 0);
   }
 
+  public async localUpload(oldPath: string, newPath: string): Promise<void> {
+    try {
+      await fse.move(oldPath, newPath);
+    } catch (error) {
+      console.error(`Erro ao fazer upload do arquivo: ${error}`);
+      throw error;
+    }
+  }
+
   public async searchDirectories(dirPath: string): Promise<string[]> {
     const entries = (
       await fse.readdir(dirPath, { withFileTypes: true })
@@ -117,20 +126,42 @@ export default class FileManager extends LibrarySystem {
     return firstPath;
   }
 
+  public async findPath(basePath: string, name: string): Promise<string> {
+    const dirPaths = await fse.readdir(basePath, { withFileTypes: true });
+
+    for (const dirent of dirPaths) {
+      if (dirent.isDirectory()) {
+        if (dirent.name === name) {
+          return path.join(basePath, dirent.name);
+        } else {
+          const foundPath = await this.findPath(
+            path.join(basePath, dirent.name),
+            name,
+          );
+          if (foundPath) {
+            return foundPath;
+          }
+        }
+      }
+    }
+
+    return '';
+  }
+
   public sanitizeFilename(fileName: string): string {
     return fileName
-      .replace(/\s+/g, '_')
+      .replaceAll(/\s+/g, '_')
 
-      .replace(/[<>:"/\\|?*\x00-\x1F#!]/g, '_')
-      .replace(/[^a-zA-Z0-9._-]/g, '_')
+      .replaceAll(/[<>:"/\\|?*\x00-\x1F#!]/g, '_')
+      .replaceAll(/[^a-zA-Z0-9._-]/g, '_')
 
-      .replace(/_{2,}/g, '_')
+      .replaceAll(/_{2,}/g, '_')
 
-      .replace(/\.{2,}/g, '.')
+      .replaceAll(/\.{2,}/g, '.')
 
-      .replace(/^-+|-+$/g, '')
+      .replaceAll(/^-+|-+$/g, '')
 
-      .replace(/[. ]+$/g, '')
+      .replaceAll(/[. ]+$/g, '')
       .replaceAll('#', '');
   }
 
@@ -197,6 +228,134 @@ export default class FileManager extends LibrarySystem {
     }
 
     return finalPath;
+  }
+
+  // Serve para pegar tods os caminhos de json
+  public async getDataPaths(): Promise<string[]> {
+    try {
+      const directories = [this.comicsData, this.mangasData];
+
+      const contentArrays = await Promise.all(
+        directories.map(async (dir) =>
+          (await fse.readdir(dir, { withFileTypes: true })).map((item) =>
+            path.join(dir, item.name),
+          ),
+        ),
+      );
+
+      return contentArrays.flat();
+    } catch (e) {
+      console.error(`Erro ao obter séries: ${e}`);
+      throw e;
+    }
+  }
+
+  public async ensureSafeSourcePath(originalPath: string): Promise<string> {
+    const max = 240;
+    if (originalPath.length < max) {
+      return originalPath;
+    }
+
+    const dir = path.dirname(originalPath);
+    const ext = path.extname(originalPath);
+    const shortName = `${randomUUID().slice(0, 8)}${ext}`;
+    const safePath = path.join(dir, shortName);
+
+    await fse.move(originalPath, safePath, { overwrite: true });
+
+    return safePath;
+  }
+
+  // Recursivo
+  public async getAllFiles(dir: string): Promise<string[]> {
+    const entries = await fse.readdir(dir, { withFileTypes: true });
+    const files = await Promise.all(
+      entries.map(async (entry) => {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          return await this.getAllFiles(fullPath);
+        } else {
+          return fullPath;
+        }
+      }),
+    );
+    return files.flat();
+  }
+
+  public findFirstCoverFile(fileNames: string[]): string | null {
+    const imageExtensionRegex = /\.(jpg|jpeg|png|gif|webp)$/i;
+
+    const zerosOnlyCandidates: string[] = [];
+    const zeroThenOneCandidates: string[] = [];
+    const namedCoverCandidates: string[] = [];
+    const fallbackCandidates: string[] = [];
+    const allWithNumbers: { name: string; num: number }[] = [];
+
+    const coverKeywords = [
+      'cover',
+      'front',
+      'capa',
+      'capa1',
+      'page0001',
+      'pg0001',
+      '01a',
+      '01',
+      '01b',
+      'preview',
+    ];
+
+    for (const name of fileNames) {
+      if (!imageExtensionRegex.test(name)) continue;
+
+      const baseName = name.replace(imageExtensionRegex, '').toLowerCase();
+
+      if (coverKeywords.some((keyword) => baseName.includes(keyword))) {
+        namedCoverCandidates.push(name);
+      }
+
+      const lastDigitsMatch = baseName.match(/(\d+)(?!.*\d)/);
+      if (!lastDigitsMatch) continue;
+
+      const digits = lastDigitsMatch[1];
+      const numericValue = parseInt(digits, 10);
+      allWithNumbers.push({ name, num: numericValue });
+
+      if (/^0+$/.test(digits)) {
+        zerosOnlyCandidates.push(name);
+      } else if (/^0*1$/.test(digits)) {
+        zeroThenOneCandidates.push(name);
+      } else if (/^0*2$/.test(digits) || /^0*3$/.test(digits)) {
+        fallbackCandidates.push(name);
+      }
+    }
+
+    if (zerosOnlyCandidates.length > 0) {
+      return zerosOnlyCandidates[0];
+    }
+
+    if (zeroThenOneCandidates.length > 0) {
+      return zeroThenOneCandidates[0];
+    }
+
+    if (namedCoverCandidates.length > 0) {
+      return namedCoverCandidates[0];
+    }
+
+    if (fallbackCandidates.length > 0) {
+      return fallbackCandidates[0];
+    }
+
+    if (allWithNumbers.length > 0) {
+      const smallest = allWithNumbers.reduce((min, curr) =>
+        curr.num < min.num ? curr : min,
+      );
+      console.log(
+        `⚠️ Nenhum critério específico bateu, usando menor número como fallback: ${smallest.name} (número: ${smallest.num})`,
+      );
+      return smallest.name;
+    }
+
+    return null;
   }
 
   private extractComicInfo(

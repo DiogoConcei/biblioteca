@@ -7,7 +7,7 @@ import {
 
 import LibrarySystem from './abstract/LibrarySystem';
 import StorageManager from './StorageManager';
-import { Literatures } from '../../src/types/auxiliar.interfaces';
+import { Literatures } from '../types/electron-auxiliar.interfaces';
 
 export default class CollectionManager extends LibrarySystem {
   private readonly storageManager = new StorageManager();
@@ -307,6 +307,50 @@ export default class CollectionManager extends LibrarySystem {
 
       // await Promise.all(updates);
       console.log(updates);
+
+      return true;
+    } catch (e) {
+      console.error('Falha em adicionar a serie à coleção: ', e);
+      return false;
+    }
+  }
+
+  public async preAddInCollection(
+    serie: Literatures,
+    serieCollections: string[],
+  ) {
+    try {
+      const allExist = await this.diffCreate(serieCollections);
+
+      if (!allExist) return false;
+
+      const data = await this.getCollections();
+      if (!data || data.length === 0) return false;
+
+      const collectionSet = new Set(serieCollections);
+
+      const targetCollections = data.filter(
+        (col) =>
+          collectionSet.has(col.name) &&
+          !col.series.some((s) => s.id === serie.id),
+      );
+
+      if (targetCollections.length === 0) {
+        console.warn('Série já existe em todas as coleções selecionadas.');
+        return false;
+      }
+
+      const updates = targetCollections.map((col) => {
+        const updatedCol = {
+          ...col,
+          series: [...col.series, serie],
+          updatedAt: new Date().toISOString(),
+        };
+
+        return updatedCol;
+      });
+
+      await Promise.all(updates);
 
       return true;
     } catch (e) {

@@ -5,40 +5,67 @@ import FileManager from './FileManager';
 import StorageManager from './StorageManager';
 import ImageManager from './ImageManager';
 import TieInManager from './TieInManager';
+import CollectionManager from './CollectionManager';
 
 import { Comic, ComicEdition, ComicTieIn } from '../types/comic.interfaces';
 
-import { SerieForm } from '../../src/types/series.interfaces';
+import { SerieData, SerieForm } from '../../src/types/series.interfaces';
 
 export default class ComicManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
   private readonly imageManager: ImageManager = new ImageManager();
   private readonly tieManager: TieInManager = new TieInManager();
+  private readonly collManager: CollectionManager = new CollectionManager();
   private readonly storageManager: StorageManager = new StorageManager();
 
-  public async createComic(serie: SerieForm): Promise<boolean> {
-    const comicData = await this.mountEmptyComic(serie);
-    comicData.chapters = await this.createEdition(
-      comicData.name,
-      serie.oldPath,
-    );
-    comicData.childSeries = await this.tieManager.createChilds(
-      serie.oldPath,
-      serie.name,
-      comicData.id,
+  public async createComicSerie(serie: SerieForm) {
+    const comicData = await this.processSerieData(serie);
+
+    if (comicData.childSeries) {
+      await this.processTieInData(serie.oldPath, comicData.childSeries);
+    }
+
+    await this.processCovers(serie.oldPath, comicData);
+
+    await this.collManager.preAddInCollection(
+      comicData,
+      comicData.metadata.collections,
     );
 
-    if (comicData.childSeries) return false;
+    await this.updateSytem(comicData, serie.oldPath);
   }
 
-  public async createEdition(
+  public async processCovers(oldPath: string, comicData: Comic) {
+    if (comicData.childSeries) {
+      const childSeries = comicData.childSeries;
+      await this.tieManager.generateChildCovers(childSeries, oldPath);
+    }
+
+    if (comicData.chapters) {
+      await this.createEditionCovers(oldPath, comicData.chapters);
+    }
+
+    const isImg = await this.imageManager.isImage(comicData.coverImage);
+
+    if (isImg) {
+      comicData.coverImage = await this.imageManager.normalizeImage(
+        comicData.coverImage,
+        path.join(this.showcaseImages, comicData.name),
+      );
+    }
+  }
+
+  public async createEditions(
     serieName: string,
     archivesPath: string,
   ): Promise<ComicEdition[]> {
-    const [comicEntries] = await this.fileManager.searchChapters(archivesPath);
+    const [comicEntries, total] =
+      await this.fileManager.searchChapters(archivesPath);
     const orderComics = await this.fileManager.orderComic(comicEntries);
 
-    const chapters = await Promise.all(
+    if (!comicEntries || comicEntries.length === 0) return [];
+
+    const chapters: ComicEdition[] = await Promise.all(
       orderComics.map(async (comicPath, idx) => {
         const fileName = path
           .basename(comicPath, path.extname(comicPath))
@@ -49,6 +76,7 @@ export default class ComicManager extends LibrarySystem {
           ...this.mountEmptyEdition(serieName, fileName),
           id: idx,
           sanitizedName,
+          originalPath: comicPath,
         };
       }),
     );
@@ -60,18 +88,20 @@ export default class ComicManager extends LibrarySystem {
     archivesPath: string,
     comicEdition: ComicEdition[],
   ) {
-    if (comicEdition.length === 0) return;
-
     const parse = path.parse(archivesPath);
-    const dirName = path.basename(parse.dir);
-    const outputPath = path.join(this.dinamicImages, dirName);
+    const dirName = path.basename(archivesPath);
 
     try {
       await Promise.all(
         comicEdition.map(async (chap, idx) => {
+          const outputPath = path.join(
+            this.showcaseImages,
+            chap.serieName,
+            chap.name,
+          );
           chap.chapterPath = path.join(this.comicsImages, dirName, chap.name);
           chap.coverImage = await this.imageManager.generateCover(
-            chap.archivesPath,
+            chap.originalPath,
             outputPath,
           );
         }),
@@ -82,10 +112,56 @@ export default class ComicManager extends LibrarySystem {
     }
   }
 
+  public async processTieInData(basePath: string, childSeries: ComicTieIn[]) {
+    if (!childSeries) return;
+
+    for (let idx = 0; idx < childSeries.length; idx++) {
+      const child = childSeries[idx];
+      const oldPath = await this.fileManager.findPath(
+        basePath,
+        child.serieName,
+      );
+
+      if (!oldPath) {
+        console.warn(
+          `Não encontrado child ${child.serieName} em ${basePath}, pulando TieIn.`,
+        );
+        continue;
+      }
+
+      await this.tieManager.createTieIn(child, oldPath);
+    }
+  }
+
+  private async updateSytem(comicData: Comic, oldPath: string) {
+    await this.storageManager.writeSerieData(comicData);
+    await this.fileManager.localUpload(oldPath, comicData.archivesPath);
+    await this.setSerieId(comicData.id + 1);
+  }
+
+  private async processSerieData(serie: SerieForm): Promise<Comic> {
+    const comic = await this.mountEmptyComic(serie);
+    const chapters = await this.createEditions(serie.name, serie.oldPath);
+    const childSeries = await this.tieManager.createChilds(
+      serie.name,
+      comic.id,
+      serie.oldPath,
+    );
+
+    return {
+      ...comic,
+      chapters,
+      childSeries,
+    };
+  }
+
   private async mountEmptyComic(serie: SerieForm): Promise<Comic> {
     const nextId = (await this.getSerieId()) + 1;
-    const subDir = await this.fileManager.searchDirectories(serie.archivesPath);
-    const totalChapters = await this.fileManager.countChapters(subDir);
+    const subDir = await this.fileManager.searchDirectories(serie.oldPath);
+    const totalChapters = await this.fileManager.countChapters([
+      serie.oldPath,
+      ...subDir,
+    ]);
 
     return {
       id: nextId,
@@ -118,7 +194,7 @@ export default class ComicManager extends LibrarySystem {
         isFavorite: serie.collections.includes('Favoritas'),
         privacy: serie.privacy,
         autoBackup: serie.autoBackup,
-        compiledComic: false,
+        compiledComic: totalChapters ? false : true,
       },
       createdAt: serie.createdAt,
       deletedAt: serie.deletedAt,
@@ -137,6 +213,7 @@ export default class ComicManager extends LibrarySystem {
       coverImage: '',
       sanitizedName: '',
       archivesPath: path.join(this.userLibrary, serieName, fileName),
+      originalPath: '',
       chapterPath: '',
       createdAt,
       isRead: false,
@@ -148,6 +225,42 @@ export default class ComicManager extends LibrarySystem {
     };
   }
 }
+
+(async () => {
+  const fManager = new FileManager();
+  const cManager = new ComicManager();
+  const name = 'X-Men - Nação X (2010)';
+
+  const preData: SerieData = {
+    name: name,
+    sanitizedName: fManager.sanitizeFilename(name),
+    createdAt: new Date().toISOString(),
+    newPath: `C:\\Users\\diogo\AppData\\Roaming\\biblioteca\\storage\\user library\\${name}`,
+    oldPath: 'C:\\Users\\diogo\\Downloads\\Quadrinho\\X-Men - Nação X (2010)',
+  };
+
+  const data: SerieForm = {
+    name: preData.name,
+    archivesPath: preData.newPath,
+    autoBackup: 'Sim',
+    chaptersPath: '',
+    collections: ['Marvel', 'X-Man'],
+    cover_path: 'C:\\Users\\diogo\\Downloads\\Imagens\\XCover.jpg',
+    createdAt: preData.createdAt,
+    literatureForm: 'Quadrinho',
+    oldPath: preData.oldPath,
+    privacy: 'Publica',
+    readingStatus: 'Pendente',
+    sanitizedName: preData.sanitizedName,
+    tags: ['Herói'],
+    author: 'Desconhecido',
+    genre: 'Super Herói',
+    language: 'Português',
+    deletedAt: '',
+  };
+
+  cManager.createComicSerie(data);
+})();
 
 // public async createEditionById(
 //     dataPath: string,

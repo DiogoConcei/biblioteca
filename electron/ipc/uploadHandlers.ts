@@ -3,7 +3,7 @@ import { SerieData, SerieForm } from '../../src/types/series.interfaces.ts';
 import {
   APIResponse,
   LiteratureChapter,
-} from '../../src/types/auxiliar.interfaces.ts';
+} from '../types/electron-auxiliar.interfaces.ts';
 import MangaManager from '../services/MangaManager.ts';
 import StorageManager from '../services/StorageManager.ts';
 import ComicManager from '../services/ComicManager.ts';

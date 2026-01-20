@@ -28,7 +28,7 @@ export default class ImageManager extends LibrarySystem {
       return normalizedPath;
     }
 
-    if (!this.isImage(normalizedPath)) {
+    if (!(await this.isImage(normalizedPath))) {
       throw new Error(`Formato de imagem não suportado: ${normalizedPath}`);
     }
 
@@ -43,6 +43,9 @@ export default class ImageManager extends LibrarySystem {
         '.webp',
       );
 
+      const dir = path.dirname(destPath);
+      await fse.ensureDir(dir);
+
       if (await fse.pathExists(destPath)) {
         return destPath;
       }
@@ -52,6 +55,7 @@ export default class ImageManager extends LibrarySystem {
       }
 
       imageInstance = sharp(normalizedPath);
+
       await imageInstance.webp({ quality: 85 }).toFile(destPath);
       return destPath;
     } catch (e) {
@@ -68,7 +72,7 @@ export default class ImageManager extends LibrarySystem {
     const normalizedPath = path.resolve(coverPath);
     const parse = path.parse(normalizedPath);
 
-    if (!this.isImage(normalizedPath)) {
+    if (!(await this.isImage(normalizedPath))) {
       throw new Error(`Formato de imagem não suportado: ${normalizedPath}`);
     }
 
@@ -80,10 +84,12 @@ export default class ImageManager extends LibrarySystem {
 
     try {
       const finalPath = this.fileManager.buildSafePath(
-        this.dinamicImages,
+        parse.dir,
         parse.name,
         '.webp',
       );
+
+      console.log(finalPath);
 
       sharp.cache(false);
       imageInstance = sharp(coverPath);
@@ -158,7 +164,13 @@ export default class ImageManager extends LibrarySystem {
       const buffer = await fse.readFile(path);
       const type = await fileTypeFromBuffer(buffer);
       if (!type) return false;
-      return type.mime === 'image/jpeg' || type.mime === 'image/png';
+      return [
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/tiff',
+        'image/gif',
+      ].includes(type.mime);
     } catch {
       return false;
     }
@@ -184,6 +196,7 @@ export default class ImageManager extends LibrarySystem {
         );
       }
 
+      console.log(`Caminho fornecido pela extração comum: ${resultCover}`);
       return await this.normalizeCover(resultCover);
     } catch (e) {
       throw new Error('Falha em gerar cover');

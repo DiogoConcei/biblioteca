@@ -13,7 +13,7 @@ export default class TieInManager extends LibrarySystem {
   private readonly imageManager: ImageManager = new ImageManager();
   private readonly storageManager: StorageManager = new StorageManager();
 
-  public async crateChildCover(
+  public async createChildCover(
     serieName: string,
     basePath: string,
   ): Promise<string> {
@@ -24,6 +24,22 @@ export default class TieInManager extends LibrarySystem {
     } catch (e) {
       throw new Error('Falha em gerar capa da TieIn');
     }
+  }
+
+  public async generateChildCovers(childs: ComicTieIn[], basePath: string) {
+    await Promise.all(
+      childs.map(async (child) => {
+        const oldPath = await this.fileManager.findPath(
+          basePath,
+          child.serieName,
+        );
+
+        child.coverImage = await this.createChildCover(
+          child.serieName,
+          oldPath,
+        );
+      }),
+    );
   }
 
   public async createTieCovers(dataPath: string): Promise<void> {
@@ -61,32 +77,12 @@ export default class TieInManager extends LibrarySystem {
     await fse.writeJson(tieInData.dataPath, tieInData, { spaces: 2 });
   }
 
-  private async isCreated(dataPath: string): Promise<boolean> {
-    try {
-      const tieInData = (await this.storageManager.readSerieData(
-        dataPath,
-      )) as unknown as TieIn;
-
-      if (tieInData.metadata.isCreated) {
-        return true;
-      }
-
-      return false;
-    } catch (e) {
-      console.log(`Falha em verificar existência da TieIn`);
-      throw e;
-    }
-  }
-
-  public async createTieIn(
-    child: ComicTieIn,
-    basePath: string,
-  ): Promise<TieIn> {
+  public async createTieIn(child: ComicTieIn, basePath: string): Promise<void> {
     const totalChapters = await this.fileManager.singleCountChapter(basePath);
     const safeName = this.fileManager.sanitizeFilename(child.serieName);
     const emptyTie = await this.mountEmptyTieIn();
 
-    return {
+    const tieIn: TieIn = {
       ...emptyTie,
       name: child.serieName,
       sanitizedName: safeName,
@@ -95,43 +91,14 @@ export default class TieInManager extends LibrarySystem {
       totalChapters,
       dataPath: child.dataPath,
     };
-  }
 
-  private async mountEmptyTieIn(): Promise<TieIn> {
-    const id = (await this.getSerieId()) + 1;
-    const createdAt = new Date().toISOString();
-
-    return {
-      id,
-      name: '',
-      sanitizedName: '',
-      archivesPath: '',
-      chaptersPath: '',
-      totalChapters: 0,
-      chaptersRead: 0,
-      dataPath: '',
-      coverImage: '',
-      literatureForm: 'Quadrinho',
-      chapters: [],
-      readingData: {
-        lastChapterId: 0,
-        lastReadAt: '',
-      },
-      metadata: {
-        lastDownload: 0,
-        isFavorite: false,
-        isCreated: false,
-      },
-      createdAt,
-      deletedAt: '',
-      comments: [],
-    };
+    await this.storageManager.writeSerieData(tieIn);
   }
 
   public async createChilds(
-    archivesPath: string,
     serieName: string,
     parentId: number,
+    archivesPath: string,
   ): Promise<ComicTieIn[]> {
     const rightPath = path.join(this.userLibrary, serieName);
     const subPaths = await this.fileManager.searchDirectories(archivesPath);
@@ -174,6 +141,54 @@ export default class TieInManager extends LibrarySystem {
       ),
       coverImage: '',
     };
+  }
+
+  private async mountEmptyTieIn(): Promise<TieIn> {
+    const id = (await this.getSerieId()) + 1;
+    const createdAt = new Date().toISOString();
+
+    return {
+      id,
+      name: '',
+      sanitizedName: '',
+      archivesPath: '',
+      chaptersPath: '',
+      totalChapters: 0,
+      chaptersRead: 0,
+      dataPath: '',
+      coverImage: '',
+      literatureForm: 'Quadrinho',
+      chapters: [],
+      readingData: {
+        lastChapterId: 0,
+        lastReadAt: '',
+      },
+      metadata: {
+        lastDownload: 0,
+        isFavorite: false,
+        isCreated: false,
+      },
+      createdAt,
+      deletedAt: '',
+      comments: [],
+    };
+  }
+
+  private async isCreated(dataPath: string): Promise<boolean> {
+    try {
+      const tieInData = (await this.storageManager.readSerieData(
+        dataPath,
+      )) as unknown as TieIn;
+
+      if (tieInData.metadata.isCreated) {
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      console.log(`Falha em verificar existência da TieIn`);
+      throw e;
+    }
   }
 }
 

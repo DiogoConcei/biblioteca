@@ -129,10 +129,7 @@ export default class StorageManager extends FileSystem {
       sanitizedName: this.fileManager.sanitizeFilename(serieName),
       newPath: newPath,
       oldPath: seriePath,
-      chaptersPath: '',
       createdAt: new Date().toISOString(),
-      collections: [],
-      deletedAt: '',
     };
   }
 
@@ -298,7 +295,7 @@ export default class StorageManager extends FileSystem {
       const safeName = name.replace(/[. ]+$/, '').concat(`_${suffix}`);
       const ext = path.extname(tempFilePath);
 
-      const finalPath = this.fileManager.buildSafeImagePath(
+      const finalPath = this.fileManager.buildSafePath(
         outputDir,
         safeName,
         ext,
@@ -386,7 +383,7 @@ export default class StorageManager extends FileSystem {
         }
       }
 
-      let allFiles = await this.fileManager.getAllFilesRecursively(tempDir);
+      let allFiles = await this.fileManager.getAllFiles(tempDir);
       console.log(`🔎 Total de arquivos extraídos: ${allFiles.length}`);
 
       if (allFiles.length === 0) {
@@ -426,7 +423,7 @@ export default class StorageManager extends FileSystem {
       const suffix = randomBytes(3).toString('hex');
       const safeName = baseName.replace(/[. ]+$/, '').concat(`_${suffix}`);
 
-      const finalPath = this.fileManager.buildSafeImagePath(
+      const finalPath = this.fileManager.buildSafePath(
         outputDir,
         safeName,
         ext,

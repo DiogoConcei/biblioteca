@@ -7,10 +7,7 @@ export interface SerieData {
   sanitizedName: string;
   newPath: string;
   oldPath: string;
-  chaptersPath: string;
   createdAt: string;
-  collections: string[];
-  deletedAt: string;
 }
 
 export interface SerieForm {
