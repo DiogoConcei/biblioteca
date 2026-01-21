@@ -83,16 +83,16 @@ export default class CollectionManager extends LibrarySystem {
       return null;
     }
   }
-  //   Avaliar a necessidade
+  //   Atualmente utilizada
   public async getLastRead(): Promise<Collection | null> {
     try {
       const data = await this.getCollections();
       if (!data) return null;
 
-      const favorites = data.find(
+      const recents = data.find(
         (col) => col.name.toLocaleLowerCase().trim() === 'recentes',
       );
-      return favorites || null;
+      return recents || null;
     } catch (e) {
       console.error('Erro ao obter a coleção de recentes: ', e);
       return null;
@@ -143,6 +143,7 @@ export default class CollectionManager extends LibrarySystem {
     }
   }
 
+  // Apagar coleção
   public async removeCollection(name: string): Promise<boolean> {
     try {
       const data = await this.getCollections();
@@ -253,10 +254,15 @@ export default class CollectionManager extends LibrarySystem {
   public async addInCollection(dataPath: string, collectionName: string) {
     try {
       const collection = await this.getCollection(collectionName);
-
       if (!collection) return false;
 
       const serie = await this.mountSerieInfo(dataPath);
+
+      const alreadyExists = collection.series.some((s) => s.id === serie.id);
+
+      if (alreadyExists) {
+        return false;
+      }
 
       const update = {
         ...collection,
@@ -306,7 +312,6 @@ export default class CollectionManager extends LibrarySystem {
       });
 
       // await Promise.all(updates);
-      console.log(updates);
 
       return true;
     } catch (e) {
@@ -315,7 +320,7 @@ export default class CollectionManager extends LibrarySystem {
     }
   }
 
-  public async preAddInCollection(
+  public async initializeCollections(
     serie: Literatures,
     serieCollections: string[],
   ) {
@@ -391,7 +396,6 @@ export default class CollectionManager extends LibrarySystem {
       const toAdd = newCollection.filter((c) => !oldSet.has(c));
       const toRemove = oldCollections.filter((c) => !newSet.has(c));
 
-      console.log(serieName);
       if (toAdd.length > 0) {
         await this.addInCollections(dataPath, toAdd);
       }

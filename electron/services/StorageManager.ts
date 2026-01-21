@@ -287,15 +287,14 @@ export default class StorageManager extends FileSystem {
       const tempFilePath = path.join(tempDir, fileName);
 
       await fse.writeFile(tempFilePath, buffer);
-      const safePath =
-        await this.fileManager.ensureSafeSourcePath(tempFilePath);
+      const safePath = await this.fileManager.ensurSourcePath(tempFilePath);
 
       const name = path.basename(tempFilePath, path.extname(tempFilePath));
       const suffix = randomBytes(3).toString('hex');
       const safeName = name.replace(/[. ]+$/, '').concat(`_${suffix}`);
       const ext = path.extname(tempFilePath);
 
-      const finalPath = this.fileManager.buildSafePath(
+      const finalPath = this.fileManager.buildImagePath(
         outputDir,
         safeName,
         ext,
@@ -396,7 +395,7 @@ export default class StorageManager extends FileSystem {
       const safeFiles: string[] = [];
 
       for (const filePath of allFiles) {
-        const safePath = await this.fileManager.ensureSafeSourcePath(filePath);
+        const safePath = await this.fileManager.ensurSourcePath(filePath);
         safeFiles.push(safePath);
       }
 
@@ -423,7 +422,7 @@ export default class StorageManager extends FileSystem {
       const suffix = randomBytes(3).toString('hex');
       const safeName = baseName.replace(/[. ]+$/, '').concat(`_${suffix}`);
 
-      const finalPath = this.fileManager.buildSafePath(
+      const finalPath = this.fileManager.buildImagePath(
         outputDir,
         safeName,
         ext,

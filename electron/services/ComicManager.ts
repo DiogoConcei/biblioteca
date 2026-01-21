@@ -27,7 +27,7 @@ export default class ComicManager extends LibrarySystem {
 
     await this.processCovers(serie.oldPath, comicData);
 
-    await this.collManager.preAddInCollection(
+    await this.collManager.initializeCollections(
       comicData,
       comicData.metadata.collections,
     );
@@ -61,7 +61,7 @@ export default class ComicManager extends LibrarySystem {
   ): Promise<ComicEdition[]> {
     const [comicEntries, total] =
       await this.fileManager.searchChapters(archivesPath);
-    const orderComics = await this.fileManager.orderComic(comicEntries);
+    const orderComics = await this.fileManager.orderChapters(comicEntries);
 
     if (!comicEntries || comicEntries.length === 0) return [];
 
@@ -76,7 +76,12 @@ export default class ComicManager extends LibrarySystem {
           ...this.mountEmptyEdition(serieName, fileName),
           id: idx,
           sanitizedName,
-          originalPath: comicPath,
+          chapterPath: await this.fileManager.buildChapterPath(
+            this.comicsImages,
+            serieName,
+            fileName,
+          ),
+          archivesPath: comicPath,
         };
       }),
     );
@@ -84,11 +89,34 @@ export default class ComicManager extends LibrarySystem {
     return chapters;
   }
 
+  public async createEdition(
+    serieName: string,
+    archivePath: string,
+    id: number,
+  ): Promise<ComicEdition> {
+    const fileName = path
+      .basename(archivePath, path.extname(archivePath))
+      .replaceAll('#', '');
+    const sanitizedName = this.fileManager.sanitizeFilename(fileName);
+
+    return {
+      ...this.mountEmptyEdition(serieName, fileName),
+      id: id,
+      sanitizedName,
+      chapterPath: await this.fileManager.buildChapterPath(
+        this.comicsImages,
+        serieName,
+        fileName,
+      ),
+      // preenche archivesPath com o caminho do arquivo de origem
+      archivesPath: archivePath,
+    };
+  }
+
   public async createEditionCovers(
     archivesPath: string,
     comicEdition: ComicEdition[],
   ) {
-    const parse = path.parse(archivesPath);
     const dirName = path.basename(archivesPath);
 
     try {
@@ -100,8 +128,16 @@ export default class ComicManager extends LibrarySystem {
             chap.name,
           );
           chap.chapterPath = path.join(this.comicsImages, dirName, chap.name);
+
+          if (!chap.archivesPath) {
+            console.warn(
+              `Arquivo de origem não informado para a edição ${chap.name}. Pulando geração de capa.`,
+            );
+            return;
+          }
+
           chap.coverImage = await this.imageManager.generateCover(
-            chap.originalPath,
+            chap.archivesPath,
             outputPath,
           );
         }),
@@ -133,9 +169,196 @@ export default class ComicManager extends LibrarySystem {
     }
   }
 
+  public async createChapterById(dataPath: string, chapter_id: number) {
+    const comicData = (await this.storageManager.readSerieData(
+      dataPath,
+    )) as Comic;
+
+    if (!comicData.chapters) {
+      throw new Error('Serie não possui capitulos.');
+    }
+
+    const chapterToProcess = comicData.chapters.find(
+      (chapter) => chapter.id === chapter_id,
+    );
+
+    if (!chapterToProcess) {
+      throw new Error(`Capitulo com id ${chapter_id} nao foi encontrado.`);
+    }
+
+    await this.generateChapter(chapterToProcess);
+
+    chapterToProcess.isDownloaded = 'downloaded';
+    comicData.metadata.lastDownload = chapterToProcess.id;
+    await this.storageManager.updateSerieData(comicData);
+  }
+
+  public async getComic(
+    dataPath: string,
+    chapter_id: number,
+  ): Promise<string[]> {
+    try {
+      const comic = await this.storageManager.readSerieData(dataPath);
+
+      if (!comic.chapters || comic.chapters.length === 0) {
+        throw new Error('Nenhum capítulo encontrado.');
+      }
+
+      const chapter = comic.chapters.find((chap) => chap.id === chapter_id);
+
+      if (!chapter || !chapter.chapterPath) {
+        throw new Error('Capítulo não encontrado ou caminho inválido.');
+      }
+
+      const imageFiles = await this.fileManager.searchImages(
+        chapter.chapterPath,
+      );
+
+      for (let idx = 0; idx < imageFiles.length; idx++) {
+        const imageFile = imageFiles[idx];
+
+        if (!(await this.imageManager.isImage(imageFile))) {
+          return [];
+        }
+      }
+
+      const processedImages = await this.imageManager.encodeImages(imageFiles);
+
+      return processedImages;
+    } catch (error) {
+      console.error('Não foi possível encontrar a edição do quadrinho:', error);
+      throw error;
+    }
+  }
+
+  // Atualizar a quantidade de capítulos
+  public async updateChapters(
+    filesPath: string[],
+    dataPath: string,
+  ): Promise<ComicEdition[]> {
+    const serieData = (await this.storageManager.readSerieData(
+      dataPath,
+    )) as Comic;
+
+    if (!serieData.chapters)
+      throw new Error('Dados do capítulo não encontrandos.');
+
+    const rawChapters = await this.createNewChapter(
+      filesPath,
+      serieData.chapters,
+    );
+
+    const updatedChapters = await Promise.all(
+      rawChapters.map(async (edition: ComicEdition) => {
+        if (edition.coverImage) {
+          return edition;
+        }
+
+        const outputPath = path.join(
+          this.showcaseImages,
+          edition.serieName,
+          edition.name,
+        );
+
+        // usa archivesPath
+        if (!edition.archivesPath) {
+          console.warn(
+            `Arquivo de origem não informado para a edição ${edition.name}. Pulando geração de capa.`,
+          );
+          return edition;
+        }
+
+        edition.coverImage = await this.imageManager.generateCover(
+          edition.archivesPath,
+          outputPath,
+        );
+
+        return edition;
+      }),
+    );
+
+    serieData.chapters = updatedChapters;
+    serieData.totalChapters = updatedChapters.length;
+    await this.storageManager.updateSerieData(serieData);
+
+    return await this.imageManager.encodeComic(updatedChapters);
+  }
+
+  // Trouxxe todos os capítulos porque preciso fazer um setState no front
+  private async createNewChapter(
+    filesPath: string[],
+    chapters: ComicEdition[],
+  ) {
+    const chapterMap = new Map(chapters.map((ch) => [ch.archivesPath, ch]));
+    const existingPaths = chapters.map((ch) => ch.archivesPath);
+    const allPaths = [...existingPaths, ...filesPath];
+    const orderedPaths = await this.fileManager.orderChapters(allPaths);
+
+    const result: ComicEdition[] = await Promise.all(
+      orderedPaths.map(async (chapterPath, idx) => {
+        const exits = chapterMap.get(chapterPath);
+
+        if (exits) {
+          return exits;
+        }
+
+        this.fileManager.moveChapter(
+          chapterPath,
+          path.join(
+            this.userLibrary,
+            chapters[0].serieName,
+            path.basename(chapterPath),
+          ),
+        );
+
+        const newChapter = await this.createEdition(
+          chapters[0].serieName,
+          chapterPath,
+          idx,
+        );
+        return newChapter;
+      }),
+    );
+
+    result.forEach((ch, idx) => {
+      ch.id = idx + 1;
+    });
+
+    return result;
+  }
+
+  private async generateChapter(chapter: ComicEdition) {
+    const normalized = path.resolve(chapter.archivesPath);
+    const ext = path.extname(normalized);
+
+    const rawName = this.fileManager.sanitizeFilename(chapter.name);
+    const chapSafe = rawName.replaceAll('.', '_');
+
+    const chapterOut = await this.fileManager.buildChapterPath(
+      this.comicsImages,
+      chapter.serieName,
+      chapter.name,
+    );
+
+    try {
+      if (ext === '.pdf') {
+        await this.storageManager.convertPdf_overdrive(normalized, chapterOut);
+      } else {
+        await this.storageManager.extractWith7zip(normalized, chapterOut);
+      }
+
+      chapter.chapterPath = chapterOut;
+    } catch (e) {
+      console.error(`Erro ao processar os capítulos em "${chapter.name}":`, e);
+      throw e;
+    } finally {
+      await this.imageManager.normalizeChapter(chapterOut);
+    }
+  }
+
   private async updateSytem(comicData: Comic, oldPath: string) {
+    await this.fileManager.localUpload(comicData, oldPath);
     await this.storageManager.writeSerieData(comicData);
-    await this.fileManager.localUpload(oldPath, comicData.archivesPath);
     await this.setSerieId(comicData.id + 1);
   }
 
@@ -212,8 +435,7 @@ export default class ComicManager extends LibrarySystem {
       name: fileName,
       coverImage: '',
       sanitizedName: '',
-      archivesPath: path.join(this.userLibrary, serieName, fileName),
-      originalPath: '',
+      archivesPath: '',
       chapterPath: '',
       createdAt,
       isRead: false,
@@ -226,224 +448,39 @@ export default class ComicManager extends LibrarySystem {
   }
 }
 
-(async () => {
-  const fManager = new FileManager();
-  const cManager = new ComicManager();
-  const name = 'X-Men - Nação X (2010)';
+// (async () => {
+//   const name = 'X-Factor v1(1986)v2(2006)v3(2010)';
+//   const fManager = new FileManager();
+//   const cManager = new ComicManager();
 
-  const preData: SerieData = {
-    name: name,
-    sanitizedName: fManager.sanitizeFilename(name),
-    createdAt: new Date().toISOString(),
-    newPath: `C:\\Users\\diogo\AppData\\Roaming\\biblioteca\\storage\\user library\\${name}`,
-    oldPath: 'C:\\Users\\diogo\\Downloads\\Quadrinho\\X-Men - Nação X (2010)',
-  };
+//   const preData: SerieData = {
+//     name,
+//     newPath:
+//       'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\user library',
+//     oldPath: 'C:\\Users\\diogo\\Desktop\\X-Factor v1(1986)v2(2006)v3(2010)',
+//     sanitizedName: fManager.sanitizeFilename(name),
+//     createdAt: new Date().toISOString(),
+//   };
 
-  const data: SerieForm = {
-    name: preData.name,
-    archivesPath: preData.newPath,
-    autoBackup: 'Sim',
-    chaptersPath: '',
-    collections: ['Marvel', 'X-Man'],
-    cover_path: 'C:\\Users\\diogo\\Downloads\\Imagens\\XCover.jpg',
-    createdAt: preData.createdAt,
-    literatureForm: 'Quadrinho',
-    oldPath: preData.oldPath,
-    privacy: 'Publica',
-    readingStatus: 'Pendente',
-    sanitizedName: preData.sanitizedName,
-    tags: ['Herói'],
-    author: 'Desconhecido',
-    genre: 'Super Herói',
-    language: 'Português',
-    deletedAt: '',
-  };
+//   const data: SerieForm = {
+//     autoBackup: 'Sim',
+//     chaptersPath: '',
+//     collections: ['Marvel', 'X-Man'],
+//     cover_path: 'C:\\Users\\diogo\\Downloads\\Imagens\\X-man.jpg',
+//     createdAt: preData.createdAt,
+//     deletedAt: '',
+//     literatureForm: 'Quadrinho',
+//     name,
+//     oldPath: preData.oldPath,
+//     privacy: 'Publica',
+//     readingStatus: 'Pendente',
+//     sanitizedName: preData.sanitizedName,
+//     tags: [],
+//     author: 'Desconhecido',
+//     genre: 'Super Herói',
+//     language: 'Português',
+//     archivesPath: path.join(preData.newPath, preData.name),
+//   };
 
-  cManager.createComicSerie(data);
-})();
-
-// public async createEditionById(
-//     dataPath: string,
-//     chapter_id: number,
-//   ): Promise<void> {
-//     const comicData = await this.storageManager.readSerieData(dataPath);
-
-//     if (!comicData.chapters) {
-//       throw new Error('Chapters data is undefined.');
-//     }
-
-//     const chapterToProcess = comicData.chapters.find(
-//       (chapter) => chapter.id === chapter_id,
-//     );
-
-//     if (!chapterToProcess) {
-//       throw new Error(`Chapter with id ${chapter_id} not found.`);
-//     }
-
-//     const extName = path.extname(chapterToProcess.archivesPath);
-//     const rawName = this.fileManager.sanitizeFilename(chapterToProcess.name);
-//     const chapSafe = rawName.replaceAll('.', '_');
-//     const chapterOut = path.join(this.comicsImages, comicData.name, chapSafe);
-
-//     try {
-//       await this.storageManager.extractWith7zip(
-//         chapterToProcess.archivesPath,
-//         chapterOut,
-//       );
-//       await this.imageManager.normalizeChapter(chapterOut);
-
-//       chapterToProcess.isDownloaded = 'downloaded';
-//       chapterToProcess.chapterPath = chapterOut;
-//       comicData.metadata.lastDownload = chapterToProcess.id;
-
-//       await this.storageManager.updateSerieData(comicData);
-//     } catch (error) {
-//       console.error(
-//         `Erro ao processar os capítulos em "${comicData.name}":`,
-//         error,
-//       );
-//       throw error;
-//     }
-//   }
-
-// public async getComic(
-//     dataPath: string,
-//     chapter_id: number,
-//   ): Promise<string[] | string> {
-//     try {
-//       const comic = await this.storageManager.readSerieData(dataPath);
-
-//       if (!comic.chapters || comic.chapters.length === 0) {
-//         throw new Error('Nenhum capítulo encontrado.');
-//       }
-
-//       const chapter = comic.chapters.find((chap) => chap.id === chapter_id);
-
-//       if (!chapter || !chapter.chapterPath) {
-//         throw new Error('Capítulo não encontrado ou caminho inválido.');
-//       }
-
-//       const chapterDirents = await fse.readdir(chapter.chapterPath, {
-//         withFileTypes: true,
-//       });
-
-//       const imageFiles = chapterDirents
-//         .filter(
-//           (dirent) =>
-//             dirent.isFile() && /\.(jpeg|png|webp|tiff|jpg)$/i.test(dirent.name),
-//         )
-//         .map((dirent) => path.join(chapter.chapterPath, dirent.name));
-
-//       if (imageFiles.length === 0) {
-//         throw new Error('Nenhuma imagem encontrada no capítulo.');
-//       }
-
-//       const processedImages =
-//         await this.imageManager.encodeImageToBase64(imageFiles);
-
-//       return processedImages;
-//     } catch (error) {
-//       console.error('Não foi possível encontrar a edição do quadrinho:', error);
-//       throw error;
-//     }
-//   }
-
-// public async uploadChapters(
-//   filesPath: string[],
-//   dataPath: string,
-// ): Promise<ComicEdition[]> {
-//   try {
-//     const serieData = await this.storageManager.readSerieData(dataPath);
-
-//     if (!serieData.chapters)
-//       throw new Error('Dados do capítulo não encontrandos.');
-
-//     const updatedChapters = await this.processChapterData(
-//       filesPath,
-//       serieData.chapters,
-//     );
-
-//     serieData.chapters = updatedChapters;
-//     serieData.totalChapters = updatedChapters.length;
-
-//     await this.storageManager.updateSerieData(serieData);
-
-//     const encodeChapter = await Promise.all(
-//       updatedChapters.map(async (ch) => {
-//         const encodeCover = await this.imageManager.encodeImageToBase64(
-//           ch.coverImage!,
-//         );
-
-//         return {
-//           ...ch,
-//           coverImage: encodeCover as string,
-//         };
-//       }),
-//     );
-//     return encodeChapter;
-//   } catch (err) {
-//     console.error('Falha ao processar capítulos enviados: ', err);
-//     throw err;
-//   }
-// }
-
-//  private async processChapterData(
-//     filesPath: string[],
-//     chapters: ComicEdition[],
-//   ): Promise<ComicEdition[]> {
-//     const chapterMap = new Map(chapters.map((ch) => [ch.archivesPath, ch]));
-//     const existingPaths = chapters.map((ch) => ch.archivesPath);
-//     const allPaths = [...existingPaths, ...filesPath];
-//     const orderedPaths = await this.fileManager.orderByChapters(allPaths);
-
-//     const date = new Date().toISOString();
-
-//     const result: ComicEdition[] = await Promise.all(
-//       orderedPaths.map(async (chapterPath) => {
-//         const existing = chapterMap.get(chapterPath);
-
-//         if (existing) {
-//           return existing;
-//         }
-
-//         const name = path.basename(chapterPath, path.extname(chapterPath));
-//         const sanitizedName = this.fileManager.sanitizeFilename(name);
-//         const archivesPath = path.join(
-//           this.userLibrary,
-//           chapters[0].serieName,
-//           path.basename(chapterPath),
-//         );
-
-//         const [outputPath, coverImage] = await this.processCoverImage(
-//           chapterPath,
-//           chapters[0].serieName,
-//           name,
-//         );
-
-//         await fse.move(chapterPath, archivesPath);
-
-//         return {
-//           id: 0,
-//           serieName: chapters[0].serieName,
-//           name,
-//           coverImage: coverImage,
-//           sanitizedName,
-//           archivesPath: archivesPath,
-//           chapterPath: outputPath,
-//           createdAt: date,
-//           isRead: false,
-//           isDownloaded: 'not_downloaded',
-//           page: {
-//             lastPageRead: 0,
-//             favoritePage: 0,
-//           },
-//         };
-//       }),
-//     );
-
-//     result.forEach((ch, idx) => {
-//       ch.id = idx + 1;
-//     });
-
-//     return result;
-//   }
+//   await cManager.createComicSerie(data);
+// })();

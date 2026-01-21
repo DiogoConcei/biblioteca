@@ -1,11 +1,13 @@
 import path from 'path';
 import sharp from 'sharp';
+import mime from 'mime-types';
 import { fileTypeFromBuffer } from 'file-type';
 import fse from 'fs-extra';
 
 import LibrarySystem from './abstract/LibrarySystem';
 import StorageManager from './StorageManager.ts';
 import FileManager from './FileManager';
+import { ComicEdition } from '../types/comic.interfaces.ts';
 
 export default class ImageManager extends LibrarySystem {
   private readonly storageManager: StorageManager = new StorageManager();
@@ -37,7 +39,7 @@ export default class ImageManager extends LibrarySystem {
     try {
       sharp.cache(false);
 
-      const destPath = this.fileManager.buildSafePath(
+      const destPath = this.fileManager.buildImagePath(
         finalPath,
         parse.name,
         '.webp',
@@ -83,13 +85,11 @@ export default class ImageManager extends LibrarySystem {
     let imageInstance: sharp.Sharp | null = null;
 
     try {
-      const finalPath = this.fileManager.buildSafePath(
+      const finalPath = this.fileManager.buildImagePath(
         parse.dir,
         parse.name,
         '.webp',
       );
-
-      console.log(finalPath);
 
       sharp.cache(false);
       imageInstance = sharp(coverPath);
@@ -107,6 +107,12 @@ export default class ImageManager extends LibrarySystem {
         imageInstance.destroy();
       }
     }
+  }
+
+  public async readFileAsDataUrl(rawPath: string): Promise<string> {
+    const buf = await fse.promises.readFile(rawPath);
+    const mimeType = mime.lookup(rawPath) || 'application/octet-stream';
+    return `data:${mimeType};base64,${buf.toString('base64')}`;
   }
 
   public async normalizeChapter(dirPath: string): Promise<void> {
@@ -196,44 +202,79 @@ export default class ImageManager extends LibrarySystem {
         );
       }
 
-      console.log(`Caminho fornecido pela extração comum: ${resultCover}`);
       return await this.normalizeCover(resultCover);
     } catch (e) {
       throw new Error('Falha em gerar cover');
     }
   }
+
+  public async encodeImages(filePaths: string[]): Promise<string[]> {
+    try {
+      const codedImages = await Promise.all(
+        filePaths.map(async (filePath) => {
+          const buffer = await fse.readFile(filePath);
+          const mimeType = await this.getMime(filePath);
+
+          if (!mimeType) {
+            throw new Error(`Arquivo não é uma imagem válida: ${filePath}`);
+          }
+
+          return `data:${mimeType};base64,${buffer.toString('base64')}`;
+        }),
+      );
+
+      return codedImages;
+    } catch (e) {
+      console.error('Falha em codificar as imagens', e);
+      return [];
+    }
+  }
+
+  public async encodeImage(filePath: string): Promise<string> {
+    try {
+      const buffer = await fse.readFile(filePath);
+      const mimeType = await this.getMime(filePath);
+
+      if (!mimeType) {
+        throw new Error(`Arquivo não é uma imagem válida: ${filePath}`);
+      }
+
+      return `data:${mimeType};base64,${buffer.toString('base64')}`;
+    } catch (e) {
+      console.error('Falha em codificar as imagens', e);
+      return '';
+    }
+  }
+
+  public async encodeComic(chapters: ComicEdition[]): Promise<ComicEdition[]> {
+    const encodeChapter = await Promise.all(
+      chapters.map(async (ch) => {
+        if (!ch.coverImage) return ch;
+
+        const encodeCover = await this.encodeImage(ch.coverImage);
+
+        return {
+          ...ch,
+          coverImage: encodeCover as string,
+        };
+      }),
+    );
+
+    return encodeChapter;
+  }
+
+  private async getMime(filePath: string): Promise<string | null> {
+    try {
+      const buffer = await fse.readFile(filePath);
+      const type = await fileTypeFromBuffer(buffer);
+
+      if (type?.mime?.startsWith('image/')) {
+        return type.mime;
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  }
 }
-
-// private async processCoverImage(
-//     chapterPath: string,
-//     chName: string,
-//     serieName: string,
-//   ): Promise<string[]> {
-//     console.log(chapterPath);
-//     const ext = path.extname(chapterPath);
-//     let coverPath = '';
-
-//     const chapName = this.fileManager.sanitizeDirName(chName);
-//     const chapterOut = path.join(this.comicsImages, serieName, chapName);
-//     const outputPath = path.join(this.dinamicImages, serieName);
-
-//     if (ext === '.pdf') {
-//       coverPath = await this.storageManager.extractCoverFromPdf(
-//         chapterPath,
-//         outputPath,
-//       );
-//     } else {
-//       coverPath = await this.storageManager.extractCoverWith7zip(
-//         chapterPath,
-//         outputPath,
-//       );
-//     }
-
-//     const resultCover = await this.imageManager.normalizeCover(
-//       coverPath,
-//       serieName,
-//     );
-
-//     return [chapterOut, resultCover];
-//   }
-// }

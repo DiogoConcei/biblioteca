@@ -22,6 +22,8 @@ export default function useChapter(
     setError(null);
 
     try {
+      console.log(`Nome da série: ${serieName}, id do capítulo ${chapterId}`);
+
       const response = await window.electronAPI.chapters.getChapter(
         serieName,
         chapterId,

@@ -4,15 +4,17 @@ import FileManager from '../services/FileManager';
 import MangaManager from '../services/MangaManager';
 import StorageManager from '../services/StorageManager';
 import ComicManager from '../services/ComicManager';
+import TieInManager from '../services/TieInManager.ts';
 import UserManager from '../services/UserManager.ts';
 import ImageManager from '../services/ImageManager.ts';
-import { Literatures } from '../../src/types/auxiliar.interfaces.ts';
+import { Literatures } from '../types/electron-auxiliar.interfaces.ts';
 
 export default function chaptersHandlers(ipcMain: IpcMain) {
   const fileManager = new FileManager();
   const storageManager = new StorageManager();
   const mangaManager = new MangaManager();
   const comicManager = new ComicManager();
+  const tieManager = new TieInManager();
   const userManager = new UserManager();
   const imageManager = new ImageManager();
 
@@ -41,19 +43,20 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
         const LiteratureForm = fileManager.foundLiteratureForm(dataPath);
         let chapterData: string[] | string = '';
+        let tempData: string[] = [];
 
         switch (LiteratureForm) {
           case 'Mangas':
             chapterData = await mangaManager.getChapter(dataPath, chapter_id);
           case 'Comics':
-            chapterData = await comicManager.getComic(dataPath, chapter_id);
+            tempData = await comicManager.getComic(dataPath, chapter_id);
           case 'childSeries':
-            chapterData = await comicManager.getTieIn(dataPath, chapter_id);
+            chapterData = await tieManager.getTieIn(dataPath, chapter_id);
           default:
             break;
         }
 
-        return { success: true, data: chapterData };
+        return { success: true, data: tempData };
       } catch (e) {
         console.error(`Erro ao recuperar o capitulo: ${e}`);
         return { success: false, error: String(e) };
@@ -155,7 +158,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
               );
               break;
             case 'Comics':
-              await comicManager.createEditionById(
+              await comicManager.createChapterById(
                 serieData.dataPath,
                 lastChapterId,
               );
@@ -167,9 +170,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
         const processedData = {
           ...serieData,
-          coverImage: await imageManager.encodeImageToBase64(
-            serieData.coverImage,
-          ),
+          coverImage: await imageManager.encodeImage(serieData.coverImage),
         };
 
         const url = `/${encodeURI(serieData.name)}/${serieData.id}/${encodeURI(lastChapter.name)}/${lastChapter.id}/${lastChapter.page.lastPageRead}/${lastChapter.isRead}`;
@@ -200,9 +201,6 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
           return null;
         }
 
-        console.log(
-          `/${serieData.name}/${serieData.id}/${nextChapter.name}/${nextChapter.id}/${nextChapter.page.lastPageRead}/${nextChapter.isRead}`,
-        );
         const url = `/${serieData.name}/${serieData.id}/${nextChapter.name}/${nextChapter.id}/${nextChapter.page.lastPageRead}/${nextChapter.isRead}`;
 
         return { success: true, data: url };

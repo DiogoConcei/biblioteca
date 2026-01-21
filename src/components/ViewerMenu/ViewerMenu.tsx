@@ -113,8 +113,8 @@ export default function ViewerMenu({
       );
 
       const toSeriePage = await window.electronAPI.userAction.returnPage(
-        serie_name!,
         serie?.dataPath!,
+        serie_name!,
       );
 
       await window.electronAPI.series.recentSerie(

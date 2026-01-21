@@ -149,7 +149,7 @@ export default class SystemManager extends LibrarySystem {
       );
     }
 
-    const orderComics = await this.fileManager.orderComic(comicFiles);
+    const orderComics = await this.fileManager.orderChapters(comicFiles);
 
     serieData.chapters = serieData.chapters.map((chap, idx) => {
       const baseName = path.basename(
@@ -157,13 +157,6 @@ export default class SystemManager extends LibrarySystem {
         path.extname(orderComics[idx]),
       );
       const archivesPath = orderComics[idx];
-      console.log(
-        path.join(
-          this.comicsImages,
-          serieData.name,
-          this.fileManager.sanitizeFilename(baseName),
-        ),
-      );
 
       return {
         ...chap,

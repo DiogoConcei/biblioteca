@@ -4,6 +4,7 @@ import pLimit from 'p-limit';
 import { randomUUID } from 'crypto';
 
 import LibrarySystem from './abstract/LibrarySystem';
+import { Literatures } from '../types/electron-auxiliar.interfaces';
 
 export default class FileManager extends LibrarySystem {
   public async searchChapters(
@@ -83,9 +84,23 @@ export default class FileManager extends LibrarySystem {
     return results.reduce((s, v) => s + v, 0);
   }
 
-  public async localUpload(oldPath: string, newPath: string): Promise<void> {
+  public async localUpload(
+    serieData: Literatures,
+    oldPath: string,
+  ): Promise<void> {
     try {
-      await fse.move(oldPath, newPath);
+      if (!serieData.chapters) return;
+
+      await fse.move(oldPath, serieData.archivesPath);
+
+      serieData.chapters = serieData.chapters.map((c) => {
+        const fileName = path.basename(c.archivesPath);
+
+        return {
+          ...c,
+          archivesPath: path.join(this.userLibrary, c.serieName, fileName),
+        };
+      });
     } catch (error) {
       console.error(`Erro ao fazer upload do arquivo: ${error}`);
       throw error;
@@ -165,7 +180,7 @@ export default class FileManager extends LibrarySystem {
       .replaceAll('#', '');
   }
 
-  public async orderComic(filesPath: string[]): Promise<string[]> {
+  public async orderChapters(filesPath: string[]): Promise<string[]> {
     const fileDetails = filesPath.map((file, index) => {
       const { volume, chapter } = this.extractComicInfo(
         file,
@@ -197,7 +212,23 @@ export default class FileManager extends LibrarySystem {
     return fileDetails.map((d) => d.filePath);
   }
 
-  public buildSafePath(
+  public async ensurSourcePath(originalPath: string): Promise<string> {
+    const max = 240;
+    if (originalPath.length < max) {
+      return originalPath;
+    }
+
+    const dir = path.dirname(originalPath);
+    const ext = path.extname(originalPath);
+    const shortName = `${randomUUID().slice(0, 8)}${ext}`;
+    const safePath = path.join(dir, shortName);
+
+    await fse.move(originalPath, safePath, { overwrite: true });
+
+    return safePath;
+  }
+
+  public buildImagePath(
     dirPath: string,
     originalName: string,
     ext = '.webp',
@@ -250,20 +281,52 @@ export default class FileManager extends LibrarySystem {
     }
   }
 
-  public async ensureSafeSourcePath(originalPath: string): Promise<string> {
-    const max = 240;
-    if (originalPath.length < max) {
-      return originalPath;
+  public buildChapterPath(
+    baseDir: string,
+    serieName: string,
+    chapterName: string,
+  ): string {
+    const max = 260;
+    const min = 8;
+    const safeSerie = this.sanitizeFilename(serieName);
+    const safeChapter = this.sanitizeFilename(chapterName);
+
+    const resolvedBase = path.resolve(baseDir);
+
+    const staticLength = resolvedBase.length + path.sep.length * 2;
+
+    let remaining = max - staticLength;
+
+    if (remaining <= min * 2) {
+      const s = randomUUID().slice(0, min);
+      const c = randomUUID().slice(0, min);
+      return path.join(resolvedBase, s, c);
     }
 
-    const dir = path.dirname(originalPath);
-    const ext = path.extname(originalPath);
-    const shortName = `${randomUUID().slice(0, 8)}${ext}`;
-    const safePath = path.join(dir, shortName);
+    const maxSerieLen = Math.floor(remaining * 0.4);
+    const maxChapterLen = remaining - maxSerieLen;
 
-    await fse.move(originalPath, safePath, { overwrite: true });
+    const finalSerie =
+      safeSerie.length > maxSerieLen
+        ? safeSerie.slice(0, maxSerieLen)
+        : safeSerie;
 
-    return safePath;
+    const finalChapter =
+      safeChapter.length > maxChapterLen
+        ? safeChapter.slice(0, maxChapterLen)
+        : safeChapter;
+
+    let finalPath = path.join(resolvedBase, finalSerie, finalChapter);
+
+    if (finalPath.length > max) {
+      finalPath = path.join(
+        resolvedBase,
+        randomUUID().slice(0, min),
+        randomUUID().slice(0, min),
+      );
+    }
+
+    return finalPath;
   }
 
   // Recursivo
@@ -356,6 +419,67 @@ export default class FileManager extends LibrarySystem {
     }
 
     return null;
+  }
+
+  public async searchImages(imagesPath: string): Promise<string[]> {
+    const chapterDirents = await fse.readdir(imagesPath, {
+      withFileTypes: true,
+    });
+
+    const imageFiles = chapterDirents
+      .filter(
+        (dirent) =>
+          dirent.isFile() && /\.(jpeg|png|webp|tiff|jpg)$/i.test(dirent.name),
+      )
+      .map((dirent) => path.join(imagesPath, dirent.name));
+
+    if (imageFiles.length === 0) {
+      throw new Error('Nenhuma imagem encontrada no capítulo.');
+    }
+
+    return imageFiles;
+  }
+
+  public async getDataPath(serieName: string): Promise<string> {
+    const directories = [
+      this.comicsData,
+      this.mangasData,
+      this.childSeriesData,
+    ];
+
+    try {
+      const allPaths = (
+        await Promise.all(
+          directories.map(async (dir) => {
+            const items = await fse.readdir(dir, { withFileTypes: true });
+            return items.map((item) => path.join(dir, item.name));
+          }),
+        )
+      ).flat();
+
+      return (
+        allPaths.find((p) => path.basename(p, path.extname(p)) === serieName) ||
+        ''
+      );
+    } catch (e) {
+      console.error(`Erro ao obter série: ${e}`);
+      throw e;
+    }
+  }
+
+  public foundLiteratureForm(dataPath: string): string {
+    try {
+      const LiteratureForm = path.basename(path.dirname(dataPath));
+      return LiteratureForm;
+    } catch (e) {
+      console.error(
+        `Falha em descobrir o tipo da serie: ${path.basename(dataPath)}`,
+      );
+      throw e;
+    }
+  }
+  public async moveChapter(from: string, to: string) {
+    await fse.move(from, to);
   }
 
   private extractComicInfo(

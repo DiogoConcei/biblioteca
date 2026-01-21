@@ -6,7 +6,7 @@ import FileManager from './FileManager';
 import ImageManager from './ImageManager';
 import StorageManager from './StorageManager';
 
-import { ComicTieIn, TieIn } from '../types/comic.interfaces';
+import { ComicTieIn, TieIn, ComicEdition } from '../types/comic.interfaces';
 
 export default class TieInManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -24,6 +24,179 @@ export default class TieInManager extends LibrarySystem {
     } catch (e) {
       throw new Error('Falha em gerar capa da TieIn');
     }
+  }
+
+  public async createTieInSerie(tieIn: TieIn): Promise<void> {
+    try {
+      tieIn.chapters = await this.createEditions(
+        tieIn.name,
+        tieIn.archivesPath,
+      );
+
+      await fse.writeJson(tieIn.dataPath, tieIn, { spaces: 2 });
+
+      await this.createEditionCovers(tieIn.archivesPath, tieIn.chapters);
+    } catch (error) {
+      console.error('Erro ao criar Tie-In:', error);
+      throw error;
+    }
+  }
+
+  public async createEditionCovers(
+    archivesPath: string,
+    comicEdition: ComicEdition[],
+  ) {
+    const dirName = path.basename(archivesPath);
+
+    try {
+      await Promise.all(
+        comicEdition.map(async (chap, idx) => {
+          const outputPath = path.join(
+            this.showcaseImages,
+            chap.serieName,
+            chap.name,
+          );
+          chap.chapterPath = path.join(this.comicsImages, dirName, chap.name);
+
+          if (!chap.archivesPath) {
+            console.warn(
+              `Arquivo de origem não informado para a edição ${chap.name}. Pulando geração de capa.`,
+            );
+            return;
+          }
+
+          chap.coverImage = await this.imageManager.generateCover(
+            chap.archivesPath,
+            outputPath,
+          );
+        }),
+      );
+    } catch (e) {
+      console.error(`Falha em gerar capa para as edicoes`);
+      throw e;
+    }
+  }
+
+  public async getTieIn(
+    dataPath: string,
+    chapter_id: number,
+  ): Promise<string[] | string> {
+    try {
+      const comic = await this.storageManager.readSerieData(dataPath);
+
+      if (!comic.chapters || comic.chapters.length === 0) {
+        throw new Error('Nenhum capítulo encontrado.');
+      }
+
+      const chapter = comic.chapters.find((chap) => chap.id === chapter_id);
+
+      if (!chapter || !chapter.chapterPath) {
+        throw new Error('Capítulo não encontrado ou caminho inválido.');
+      }
+
+      const imageFiles = await this.fileManager.searchImages(
+        chapter.chapterPath,
+      );
+
+      for (let idx = 0; idx < imageFiles.length; idx++) {
+        const imageFile = imageFiles[idx];
+
+        if (await this.imageManager.isImage(imageFile)) {
+          return [];
+        }
+      }
+
+      const processedImages = await this.imageManager.encodeImages(imageFiles);
+
+      return processedImages;
+    } catch (error) {
+      console.error('Não foi possível encontrar a edição do quadrinho:', error);
+      throw error;
+    }
+  }
+
+  public async createChapterById(dataPath: string, chapter_id: number) {
+    const tieInData = (await this.storageManager.readSerieData(
+      dataPath,
+    )) as TieIn;
+
+    if (!tieInData.chapters || !Array.isArray(tieInData.chapters)) {
+      throw new Error('Dados de capítulos indefinidos ou inválidos.');
+    }
+
+    const chapterToProcess = tieInData.chapters.find(
+      (chapter) => chapter.id === chapter_id,
+    );
+
+    if (!chapterToProcess) {
+      throw new Error(`Capítulo com id ${chapter_id} não encontrado.`);
+    }
+
+    await this.generateChapter(chapterToProcess);
+
+    chapterToProcess.isDownloaded = 'downloaded';
+    tieInData.metadata.lastDownload = chapterToProcess.id;
+    await this.storageManager.updateSerieData(tieInData);
+  }
+
+  private async generateChapter(chapter: ComicEdition) {
+    const normalized = path.resolve(chapter.archivesPath);
+    const ext = path.extname(normalized);
+
+    const chapterOut = await this.fileManager.buildChapterPath(
+      this.comicsImages,
+      chapter.serieName,
+      chapter.name,
+    );
+
+    try {
+      if (ext === '.pdf') {
+        await this.storageManager.convertPdf_overdrive(normalized, chapterOut);
+      } else {
+        await this.storageManager.extractWith7zip(normalized, chapterOut);
+      }
+
+      chapter.chapterPath = chapterOut;
+    } catch (e) {
+      console.error(`Erro ao processar os capítulos em "${chapter.name}":`, e);
+      throw e;
+    } finally {
+      await this.imageManager.normalizeChapter(chapterOut);
+    }
+  }
+
+  public async createEditions(
+    serieName: string,
+    archivesPath: string,
+  ): Promise<ComicEdition[]> {
+    const [comicEntries, total] =
+      await this.fileManager.searchChapters(archivesPath);
+    const orderComics = await this.fileManager.orderChapters(comicEntries);
+
+    if (!comicEntries || comicEntries.length === 0) return [];
+
+    const chapters: ComicEdition[] = await Promise.all(
+      orderComics.map(async (comicPath, idx) => {
+        const fileName = path
+          .basename(comicPath, path.extname(comicPath))
+          .replaceAll('#', '');
+        const sanitizedName = this.fileManager.sanitizeFilename(fileName);
+
+        return {
+          ...this.mountEmptyEdition(serieName, fileName),
+          id: idx,
+          sanitizedName,
+          chapterPath: await this.fileManager.buildChapterPath(
+            this.comicsImages,
+            serieName,
+            fileName,
+          ),
+          originalPath: comicPath,
+        };
+      }),
+    );
+
+    return chapters;
   }
 
   public async generateChildCovers(childs: ComicTieIn[], basePath: string) {
@@ -186,162 +359,29 @@ export default class TieInManager extends LibrarySystem {
 
       return false;
     } catch (e) {
-      console.log(`Falha em verificar existência da TieIn`);
+      console.error(`Falha em verificar existência da TieIn`);
       throw e;
     }
   }
+
+  private mountEmptyEdition(serieName: string, fileName: string): ComicEdition {
+    const createdAt = new Date().toISOString();
+
+    return {
+      id: 0,
+      serieName: serieName,
+      name: fileName,
+      coverImage: '',
+      sanitizedName: '',
+      archivesPath: '',
+      chapterPath: '',
+      createdAt,
+      isRead: false,
+      isDownloaded: 'not_downloaded',
+      page: {
+        lastPageRead: 0,
+        favoritePage: 0,
+      },
+    };
+  }
 }
-
-// public async createTieInById(
-//     dataPath: string,
-//     chapter_id: number,
-//   ): Promise<void> {
-//     const serieData = await this.storageManager.readSerieData(dataPath);
-//     if (!serieData.chapters || !Array.isArray(serieData.chapters)) {
-//       throw new Error('Dados de capítulos indefinidos ou inválidos.');
-//     }
-
-//     const chapterToProcess = serieData.chapters.find(
-//       (chapter) => chapter.id === chapter_id,
-//     );
-
-//     if (!chapterToProcess) {
-//       throw new Error(`Capítulo com id ${chapter_id} não encontrado.`);
-//     }
-
-//     const extName = path.extname(chapterToProcess.archivesPath);
-//     const rawName = this.fileManager.sanitizeFilename(chapterToProcess.name);
-//     const chapSafe = rawName.replaceAll('.', '_');
-//     const chapterOut = path.join(this.comicsImages, serieData.name, chapSafe);
-
-//     console.log('Não normalizado: ', chapterToProcess.archivesPath);
-//     console.log(
-//       'Normalizado: ',
-//       await path.normalize(chapterToProcess.archivesPath),
-//     );
-
-//     try {
-//       if (extName === '.pdf') {
-//         await this.storageManager.convertPdf_overdrive(
-//           chapterToProcess.archivesPath,
-//           chapterOut,
-//         );
-//       } else {
-//         await this.storageManager.extractWith7zip(
-//           chapterToProcess.archivesPath,
-//           chapterOut,
-//         );
-//       }
-//       await this.imageManager.normalizeChapter(chapterOut);
-//       chapterToProcess.isDownloaded = 'downloaded';
-//       chapterToProcess.chapterPath = chapterOut;
-//       serieData.metadata.lastDownload = chapterToProcess.id;
-//       await this.storageManager.updateSerieData(serieData);
-//     } catch (error) {
-//       console.error(
-//         `Erro ao processar o capítulo "${chapterToProcess.name}" da série "${serieData.name}":`,
-//         error,
-//       );
-//       throw error;
-//     }
-//   }
-
-// public async createTieIn(tieIn: TieIn): Promise<void> {
-//   try {
-//     tieIn.chapters = await this.createTieInChap(tieIn);
-
-//     await fse.writeJson(tieIn.dataPath, tieIn, { spaces: 2 });
-
-//     await this.createTieInCovers(tieIn.dataPath);
-//   } catch (error) {
-//     console.error('Erro ao criar Tie-In:', error);
-//     throw error;
-//   }
-// }
-
-// public async createTieInChap(tieInData: TieIn): Promise<ComicEdition[]> {
-//     const entries = await fse.readdir(tieInData.archivesPath, {
-//       withFileTypes: true,
-//     });
-
-//     const comicEntries = entries
-//       .filter((entry) => entry.isFile())
-//       .map((entry) => path.join(tieInData.archivesPath, entry.name));
-
-//     if (comicEntries.length === 0) {
-//       throw new Error(`Nenhum arquivo encontrado em ${tieInData.archivesPath}`);
-//     }
-
-//     const orderComics = await this.fileManager.orderComic(comicEntries);
-
-//     const chapters: ComicEdition[] = orderComics.map((orderPath, idx) => {
-//       const fileName = path.basename(orderPath, path.extname(orderPath));
-//       const rawName = fileName.replace('#', '');
-//       const safeName = this.fileManager.shortenName(rawName);
-//       const sanitizedName = this.fileManager.sanitizeFilename(safeName);
-
-//       return {
-//         id: idx + 1,
-//         serieName: tieInData.name,
-//         name: fileName,
-//         coverImage: '',
-//         sanitizedName,
-//         archivesPath: path.join(
-//           tieInData.archivesPath,
-//           path.basename(orderPath),
-//         ),
-//         chapterPath: '',
-//         createdAt: tieInData.createdAt,
-//         isRead: false,
-//         isDownloaded: 'not_downloaded',
-//         page: {
-//           lastPageRead: 0,
-//           favoritePage: 0,
-//         },
-//       };
-//     });
-
-//     return chapters;
-//   }
-
-//  public async getTieIn(
-//     dataPath: string,
-//     chapter_id: number,
-//   ): Promise<string[] | string> {
-//     try {
-//       const tieIn = await this.storageManager.readSerieData(dataPath);
-
-//       if (!tieIn.chapters || tieIn.chapters.length === 0) {
-//         throw new Error('Nenhum capítulo encontrado.');
-//       }
-
-//       const chapter = tieIn.chapters.find((chap) => chap.id === chapter_id);
-
-//       if (!chapter || !chapter.chapterPath) {
-//         throw new Error('Capítulo não encontrado ou caminho inválido.');
-//       }
-
-//       const chapterDirents = await fse.readdir(chapter.chapterPath, {
-//         withFileTypes: true,
-//       });
-
-//       const imageFiles = chapterDirents
-//         .filter(
-//           (dirent) =>
-//             dirent.isFile() && /\.(jpeg|png|webp|tiff|jpg)$/i.test(dirent.name),
-//         )
-//         .map((dirent) => path.join(chapter.chapterPath, dirent.name));
-
-//       if (imageFiles.length === 0) {
-//         throw new Error('Nenhuma imagem encontrada no capítulo.');
-//       }
-
-//       const processedImages =
-//         await this.imageManager.encodeImageToBase64(imageFiles);
-
-//       return processedImages;
-//     } catch (error) {
-//       console.error('Não foi possível encontrar a edição do quadrinho:', error);
-//       throw error;
-//     }
-//   }

@@ -4,15 +4,13 @@ import CollectionsManager from '../services/CollectionManager';
 import FileManager from '../services/FileManager.ts';
 import ImageManager from '../services/ImageManager.ts';
 import UserManager from '../services/UserManager.ts';
-import ComicManager from '../services/ComicManager.ts';
+import TieInManager from '../services/TieInManager.ts';
 import { ComicTieIn, TieIn } from '../types/comic.interfaces.ts';
-import { getMainWindow } from '../main.ts';
-import { Literatures } from '../../src/types/auxiliar.interfaces.ts';
 import { SerieEditForm } from '../../src/types/series.interfaces.ts';
-import { Collection } from '../../src/types/collections.interfaces.ts';
+import { Literatures } from '../types/electron-auxiliar.interfaces.ts';
 
 export default function seriesHandlers(ipcMain: IpcMain) {
-  const comicManager = new ComicManager();
+  const tieIn = new TieInManager();
   const storageManager = new StorageManager();
   const imageManager = new ImageManager();
   const userManager = new UserManager();
@@ -29,7 +27,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
       const procesData = await Promise.all(
         getData.map(async (serieData) => {
-          const encodedImage = await imageManager.encodeImageToBase64(
+          const encodedImage = await imageManager.encodeImage(
             serieData.coverImage,
           );
 
@@ -53,7 +51,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
       const processedData = {
         ...data,
-        coverImage: await imageManager.encodeImageToBase64(data.coverImage),
+        coverImage: await imageManager.encodeImage(data.coverImage),
       };
 
       return { success: true, data: processedData, error: ' ' };
@@ -72,7 +70,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
             data.chapters.map(async (chapter) => {
               const encodedCover =
                 typeof chapter.coverImage === 'string'
-                  ? await imageManager.encodeImageToBase64(chapter.coverImage)
+                  ? await imageManager.encodeImage(chapter.coverImage)
                   : '';
 
               return {
@@ -87,7 +85,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         ? await Promise.all(
             data.childSeries.map(async (tieIn) => {
               const encodedCover = tieIn.coverImage
-                ? await imageManager.encodeImageToBase64(tieIn.coverImage)
+                ? await imageManager.encodeImage(tieIn.coverImage)
                 : '';
 
               return {
@@ -100,7 +98,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
       const processedData = {
         ...data,
-        coverImage: await imageManager.encodeImageToBase64(data.coverImage),
+        coverImage: await imageManager.encodeImage(data.coverImage),
         chapters: updatedChapters,
         childSeries: updatedChildSeries,
       };
@@ -122,7 +120,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
       const updatedChapters = data.chapters
         ? await Promise.all(
             data.chapters.map(async (chapter) => {
-              const encodedCover = await imageManager.encodeImageToBase64(
+              const encodedCover = await imageManager.encodeImage(
                 chapter.coverImage!,
               );
               return {
@@ -153,21 +151,18 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         )) as Literatures;
 
         const collections = serieData.metadata.collections;
+
         if (!collections.includes(collectionName)) {
           serieData.metadata.collections.push(collectionName);
-
-          const normalizedData =
-            await storageManager.createNormalizedData(serieData);
-
-          await collectionManager.addToCollection(normalizedData);
+          await collectionManager.addInCollection(dataPath, collectionName);
         } else {
           serieData.metadata.collections = collections.filter(
             (col) => col !== collectionName,
           );
 
-          await collectionManager.removeFromCollection(
-            serieData.id,
+          await collectionManager.removeInCollection(
             collectionName,
+            serieData.name,
           );
         }
 
@@ -190,12 +185,9 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
         serieData.metadata.rating = userRating;
 
-        const response = await collectionManager.updateSerieInAllCollections(
-          serieData.id,
-          userRating,
-        );
+        const success = await collectionManager.updateSerie(serieData.dataPath);
 
-        if (!response.success) {
+        if (!success) {
           return { success: false };
         }
 
@@ -213,8 +205,8 @@ export default function seriesHandlers(ipcMain: IpcMain) {
       const serieData = (await storageManager.readSerieData(
         dataPath,
       )) as Literatures;
-      await userManager.favoriteSerie(serieData);
-      return { success: true };
+      const result = await userManager.favoriteSerie(serieData);
+      return { success: result };
     } catch (e) {
       console.error(`Erro em favoritar serie: ${e}`);
       return { success: false, error: String(e) };
@@ -231,8 +223,8 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         const serieData = (await storageManager.readSerieData(
           dPath,
         )) as Literatures;
-        await userManager.addToRecents(serieData);
-        return { success: true };
+        const result = await userManager.addToRecents(serieData);
+        return { success: result };
       } catch (e) {
         console.error(`Erro em adicionar em recentes: ${e}`);
         return { success: false, error: String(e) };
@@ -249,7 +241,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         )) as TieIn;
 
         if (!data.metadata.isCreated) {
-          await comicManager.createTieIn(data);
+          await tieIn.createTieInSerie(data);
         }
 
         return {
@@ -259,7 +251,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         };
       } catch (e) {
         console.error(`Falha em criar as capas da Tie-In`);
-        return { success: false, error: 'deu mole ' };
+        return { success: false, error: 'falha em gerar Tie-In ' };
       }
     },
   );
@@ -276,7 +268,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
       const newData = {
         ...oldData,
-        coverImage: await imageManager.encodeImageToBase64(oldData.coverImage),
+        coverImage: await imageManager.encodeImage(oldData.coverImage),
       };
 
       return { success: true, data: newData };
@@ -285,35 +277,36 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle('serie:update-serie', async (_event, data: SerieEditForm) => {
-    try {
-      if (!data?.dataPath) {
-        throw new Error('dataPath inválido');
-      }
+  // Esse código por acaso é meu?
+  // ipcMain.handle('serie:update-serie', async (_event, data: SerieEditForm) => {
+  //   try {
+  //     if (!data?.dataPath) {
+  //       throw new Error('dataPath inválido');
+  //     }
 
-      const [serieData, updatedData] = await storageManager.patchSerie(data);
+  //     const [serieData, updatedData] = await storageManager.patchSerie(data);
 
-      const newCover = await imageManager.uploadNewCover(
-        data.name,
-        serieData.coverImage,
-        updatedData.coverImage,
-      );
-      updatedData.coverImage = newCover;
+  //     const newCover = await imageManager.generateCover(
+  //       data.name,
+  //       serieData.coverImage,
+  //       updatedData.coverImage,
+  //     );
+  //     updatedData.coverImage = newCover;
 
-      await collectionManager.checkDifferences(serieData, updatedData);
+  //     await collectionManager.checkDifferences(serieData, updatedData);
 
-      await storageManager.patchHelper(updatedData, data);
-      return { success: true };
-    } catch (error) {
-      console.error('Erro ao atualizar série:', error);
+  //     await storageManager.patchHelper(updatedData, data);
+  //     return { success: true };
+  //   } catch (error) {
+  //     console.error('Erro ao atualizar série:', error);
 
-      return {
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Erro desconhecido ao atualizar série',
-      };
-    }
-  });
+  //     return {
+  //       success: false,
+  //       error:
+  //         error instanceof Error
+  //           ? error.message
+  //           : 'Erro desconhecido ao atualizar série',
+  //     };
+  //   }
+  // });
 }

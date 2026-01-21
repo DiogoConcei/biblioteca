@@ -4,7 +4,7 @@ import {
   viewData,
   LiteratureChapter,
   Literatures,
-} from '../src/types/auxiliar.interfaces.ts';
+} from './types/electron-auxiliar.interfaces.ts';
 import {
   SerieData,
   SerieEditForm,
@@ -169,7 +169,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       dataPath: string,
       serieName?: string,
     ): Promise<APIResponse<string>> =>
-      ipcRenderer.invoke('chapter:return-page', serieName, dataPath),
+      ipcRenderer.invoke('chapter:return-page', dataPath, serieName),
   },
 
   download: {

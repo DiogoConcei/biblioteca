@@ -1,161 +1,47 @@
 import FileSystem from './abstract/LibrarySystem';
-import CollectionsManager from './CollectionManager';
+import CollectionManager from './CollectionManager';
 import StorageManager from './StorageManager';
-import {
-  SerieCollectionInfo,
-  Collection,
-} from '../../src/types/collections.interfaces';
-import { Literatures } from '../../src/types/auxiliar.interfaces';
+import { Collection } from '../../src/types/collections.interfaces';
+import { Literatures } from '../types/electron-auxiliar.interfaces';
 
 export default class UserManager extends FileSystem {
-  private readonly collectionsManager: CollectionsManager =
-    new CollectionsManager();
+  private readonly collManager: CollectionManager = new CollectionManager();
   private readonly storageManager: StorageManager = new StorageManager();
 
   constructor() {
     super();
   }
 
-  public async addToRecents(serieData: Literatures): Promise<Literatures> {
+  public async addToRecents(serieData: Literatures): Promise<boolean> {
     try {
-      const response = await this.collectionsManager.getCollections();
-
-      if (!response) {
-        throw new Error('Não foi possível carregar as coleções do usuário.');
-      }
-
-      const collections = response;
-      const recCollection = collections.find((col) => col.name === 'Recentes');
-
-      if (!recCollection) {
-        throw new Error('Coleção "Recentes" não encontrada.');
-      }
-
-      const {
-        id,
-        name,
-        coverImage,
-        chaptersPath: comic_path,
-        archivesPath,
-        totalChapters,
-        metadata: {
-          status,
-          recommendedBy = serieData.metadata.recommendedBy,
-          originalOwner = serieData.metadata.originalOwner,
-          rating = 0,
-          isFavorite,
-        },
-      } = serieData;
-
-      const dataAtual = Date.now();
-
-      const RecentSerieJson: SerieCollectionInfo = {
-        id,
-        name,
-        coverImage,
-        comic_path,
-        archivesPath,
-        totalChapters,
-        status,
-        recommendedBy: recommendedBy ?? '',
-        originalOwner: originalOwner ?? '',
-        rating,
-        addAt: dataAtual,
-      };
-
-      const newFavoriteStatus = !isFavorite;
-      const existsInFavs = recCollection.series.some((s) => s.id === id);
-
-      if (newFavoriteStatus && !existsInFavs) {
-        recCollection.series.push(RecentSerieJson);
-      } else if (!newFavoriteStatus && existsInFavs) {
-        recCollection.series = recCollection.series.filter((s) => s.id !== id);
-      }
-
-      serieData.metadata.isFavorite = newFavoriteStatus;
-      recCollection.updatedAt = new Date().toISOString();
-
-      await this.collectionsManager.updateRecCollection(
-        collections,
-        this.appCollections,
-      );
-      await this.storageManager.updateSerieData(serieData);
-
-      return serieData;
+      await this.collManager.addInCollection(serieData.dataPath, 'recentes');
+      return true;
     } catch (err) {
-      console.error('Erro ao atualizar favoritação de série:', err);
-      throw err;
+      console.error('Erro ao atualizar historico de series:', err);
+      throw false;
     }
   }
 
-  public async favoriteSerie(serieData: Literatures): Promise<Literatures> {
+  public async favoriteSerie(serieData: Literatures): Promise<boolean> {
     try {
-      const response = await this.collectionsManager.getCollections();
+      const isFavorite = !serieData.metadata.isFavorite;
 
-      if (!response) {
-        throw new Error('Não foi possível carregar as coleções do usuário.');
+      if (isFavorite) {
+        await this.collManager.addInCollection(serieData.dataPath, 'favoritos');
+      } else {
+        await this.collManager.removeInCollection(
+          serieData.dataPath,
+          'favoritos',
+        );
       }
 
-      const collections = response;
-      const favCollection = collections.find((col) => col.name === 'Favoritas');
-      if (!favCollection) {
-        throw new Error('Coleção "Favoritas" não encontrada.');
-      }
+      serieData.metadata.isFavorite = isFavorite;
 
-      const {
-        id,
-        name,
-        coverImage,
-        chaptersPath: comic_path,
-        archivesPath,
-        totalChapters,
-        metadata: {
-          status,
-          recommendedBy = serieData.metadata.recommendedBy,
-          originalOwner = serieData.metadata.originalOwner,
-          rating = 0,
-          isFavorite,
-        },
-      } = serieData;
-
-      const dataAtual = Date.now();
-
-      const favSerieJson: SerieCollectionInfo = {
-        id,
-        name,
-        coverImage,
-        comic_path,
-        archivesPath,
-        totalChapters,
-        status,
-        recommendedBy: recommendedBy ?? '',
-        originalOwner: originalOwner ?? '',
-        rating,
-        addAt: dataAtual,
-      };
-
-      const newFavoriteStatus = !isFavorite;
-      const existsInFavs = favCollection.series.some((s) => s.id === id);
-
-      if (newFavoriteStatus && !existsInFavs) {
-        favCollection.series.push(favSerieJson);
-      } else if (!newFavoriteStatus && existsInFavs) {
-        favCollection.series = favCollection.series.filter((s) => s.id !== id);
-      }
-
-      serieData.metadata.isFavorite = newFavoriteStatus;
-      favCollection.updatedAt = new Date().toISOString();
-
-      await this.collectionsManager.updateFavCollection(
-        collections,
-        this.appCollections,
-      );
       await this.storageManager.updateSerieData(serieData);
-
-      return serieData;
+      return true;
     } catch (err) {
       console.error('Erro ao atualizar favoritação de série:', err);
-      throw err;
+      throw false;
     }
   }
 

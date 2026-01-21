@@ -5,6 +5,7 @@ import StorageManager from '../services/StorageManager';
 import ValidationManager from '../services/ValidationManager';
 import MangaManager from '../services/MangaManager';
 import ComicManager from '../services/ComicManager';
+import TieInManager from '../services/TieInManager';
 
 export default function downloadHandlers(ipcMain: IpcMain) {
   const storageManager = new StorageManager();
@@ -12,6 +13,7 @@ export default function downloadHandlers(ipcMain: IpcMain) {
   const fileManager = new FileManager();
   const mangaManager = new MangaManager();
   const comicManager = new ComicManager();
+  const tieManager = new TieInManager();
 
   ipcMain.handle(
     'donwload:multiple',
@@ -34,12 +36,12 @@ export default function downloadHandlers(ipcMain: IpcMain) {
         if (literatureForm === 'Mangas') {
           await mangaManager.createEditionById(dataPath, chapter_id);
         } else if (literatureForm === 'Comics') {
-          await comicManager.createEditionById(dataPath, chapter_id);
+          await comicManager.createChapterById(dataPath, chapter_id);
         } else if (literatureForm === 'childSeries') {
-          await comicManager.createTieInById(dataPath, chapter_id);
+          await tieManager.createChapterById(dataPath, chapter_id);
         }
+
         return true;
-        return false;
       } catch (e) {
         console.error('Falha em baixar capítulo', e);
         return false;
@@ -95,10 +97,10 @@ export default function downloadHandlers(ipcMain: IpcMain) {
             await mangaManager.createEditionById(dataPath, chapter_id);
             break;
           case 'Comics':
-            await comicManager.createEditionById(dataPath, chapter_id);
+            await comicManager.createChapterById(dataPath, chapter_id);
             break;
           case 'childSeries':
-            await comicManager.createTieInById(dataPath, chapter_id);
+            await comicManager.createChapterById(dataPath, chapter_id);
           default:
             break;
         }

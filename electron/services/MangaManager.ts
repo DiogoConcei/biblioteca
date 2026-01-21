@@ -224,8 +224,7 @@ export default class MangaManager extends FileSystem {
         )
         .map((dirent) => path.join(chapter.chapterPath, dirent.name));
 
-      const processedImages =
-        await this.imageManager.encodeImageToBase64(imageFiles);
+      const processedImages = await this.imageManager.encodeImages(imageFiles);
 
       return processedImages;
     } catch (error) {

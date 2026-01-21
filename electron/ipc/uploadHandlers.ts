@@ -152,7 +152,7 @@ export default function uploadHandlers(ipcMain: IpcMain) {
           );
           break;
         case 'Quadrinho':
-          processedFiles = await comicManager.uploadChapters(
+          processedFiles = await comicManager.updateChapters(
             filesPath,
             dataPath,
           );
