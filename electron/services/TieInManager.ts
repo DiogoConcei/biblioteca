@@ -1,12 +1,12 @@
-import path from 'path';
-import fse from 'fs-extra';
+import path from "path";
+import fse from "fs-extra";
 
-import LibrarySystem from './abstract/LibrarySystem';
-import FileManager from './FileManager';
-import ImageManager from './ImageManager';
-import StorageManager from './StorageManager';
+import LibrarySystem from "./abstract/LibrarySystem";
+import FileManager from "./FileManager";
+import ImageManager from "./ImageManager";
+import StorageManager from "./StorageManager";
 
-import { ComicTieIn, TieIn, ComicEdition } from '../types/comic.interfaces';
+import { ComicTieIn, TieIn, ComicEdition } from "../types/comic.interfaces";
 
 export default class TieInManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -22,7 +22,7 @@ export default class TieInManager extends LibrarySystem {
       const outputPath = path.join(this.dinamicImages, serieName);
       return await this.imageManager.generateCover(firstChapter, outputPath);
     } catch (e) {
-      throw new Error('Falha em gerar capa da TieIn');
+      throw new Error("Falha em gerar capa da TieIn");
     }
   }
 
@@ -35,9 +35,9 @@ export default class TieInManager extends LibrarySystem {
 
       await fse.writeJson(tieIn.dataPath, tieIn, { spaces: 2 });
 
-      await this.createEditionCovers(tieIn.archivesPath, tieIn.chapters);
+      // await this.createEditionCovers(tieIn.archivesPath, tieIn.chapters);
     } catch (error) {
-      console.error('Erro ao criar Tie-In:', error);
+      console.error("Erro ao criar Tie-In:", error);
       throw error;
     }
   }
@@ -56,6 +56,7 @@ export default class TieInManager extends LibrarySystem {
             chap.serieName,
             chap.name,
           );
+
           chap.chapterPath = path.join(this.comicsImages, dirName, chap.name);
 
           if (!chap.archivesPath) {
@@ -85,13 +86,13 @@ export default class TieInManager extends LibrarySystem {
       const comic = await this.storageManager.readSerieData(dataPath);
 
       if (!comic.chapters || comic.chapters.length === 0) {
-        throw new Error('Nenhum capítulo encontrado.');
+        throw new Error("Nenhum capítulo encontrado.");
       }
 
       const chapter = comic.chapters.find((chap) => chap.id === chapter_id);
 
       if (!chapter || !chapter.chapterPath) {
-        throw new Error('Capítulo não encontrado ou caminho inválido.');
+        throw new Error("Capítulo não encontrado ou caminho inválido.");
       }
 
       const imageFiles = await this.fileManager.searchImages(
@@ -110,7 +111,7 @@ export default class TieInManager extends LibrarySystem {
 
       return processedImages;
     } catch (error) {
-      console.error('Não foi possível encontrar a edição do quadrinho:', error);
+      console.error("Não foi possível encontrar a edição do quadrinho:", error);
       throw error;
     }
   }
@@ -121,7 +122,7 @@ export default class TieInManager extends LibrarySystem {
     )) as TieIn;
 
     if (!tieInData.chapters || !Array.isArray(tieInData.chapters)) {
-      throw new Error('Dados de capítulos indefinidos ou inválidos.');
+      throw new Error("Dados de capítulos indefinidos ou inválidos.");
     }
 
     const chapterToProcess = tieInData.chapters.find(
@@ -134,7 +135,7 @@ export default class TieInManager extends LibrarySystem {
 
     await this.generateChapter(chapterToProcess);
 
-    chapterToProcess.isDownloaded = 'downloaded';
+    chapterToProcess.isDownloaded = "downloaded";
     tieInData.metadata.lastDownload = chapterToProcess.id;
     await this.storageManager.updateSerieData(tieInData);
   }
@@ -150,7 +151,7 @@ export default class TieInManager extends LibrarySystem {
     );
 
     try {
-      if (ext === '.pdf') {
+      if (ext === ".pdf") {
         await this.storageManager.convertPdf_overdrive(normalized, chapterOut);
       } else {
         await this.storageManager.extractWith7zip(normalized, chapterOut);
@@ -171,7 +172,7 @@ export default class TieInManager extends LibrarySystem {
   ): Promise<ComicEdition[]> {
     const [comicEntries, total] =
       await this.fileManager.searchChapters(archivesPath);
-    const orderComics = await this.fileManager.orderChapters(comicEntries);
+    const orderComics = await this.fileManager.orderComic(comicEntries);
 
     if (!comicEntries || comicEntries.length === 0) return [];
 
@@ -179,7 +180,7 @@ export default class TieInManager extends LibrarySystem {
       orderComics.map(async (comicPath, idx) => {
         const fileName = path
           .basename(comicPath, path.extname(comicPath))
-          .replaceAll('#', '');
+          .replaceAll("#", "");
         const sanitizedName = this.fileManager.sanitizeFilename(fileName);
 
         return {
@@ -260,7 +261,7 @@ export default class TieInManager extends LibrarySystem {
       name: child.serieName,
       sanitizedName: safeName,
       archivesPath: child.archivesPath,
-      chaptersPath: path.join(this.imagesFolder, 'Quadrinho', child.serieName),
+      chaptersPath: path.join(this.imagesFolder, "Quadrinho", child.serieName),
       totalChapters,
       dataPath: child.dataPath,
     };
@@ -280,17 +281,14 @@ export default class TieInManager extends LibrarySystem {
       subPaths.map(async (subPath, idx) => {
         const chapter = await this.fileManager.findFirstChapter(subPath);
 
-        const relativeToSerie = path.relative(
-          subPath.split(path.sep).slice(-1)[0],
-          subPath,
-        );
+        const relative = path.relative(archivesPath, subPath);
 
-        const rightDir = path.join(rightPath, relativeToSerie);
+        const rightDir = path.join(rightPath, relative);
 
         return {
           ...this.mountEmptyChild(parentId, subPath),
           id: idx,
-          compiledComic: chapter ? true : false,
+          compiledComic: !!chapter,
           archivesPath: rightDir,
         };
       }),
@@ -307,12 +305,12 @@ export default class TieInManager extends LibrarySystem {
       parentId,
       serieName: rawName,
       compiledComic: false,
-      archivesPath: '',
+      archivesPath: "",
       dataPath: path.join(
         this.childSeriesData,
         `${path.basename(subPath)}.json`,
       ),
-      coverImage: '',
+      coverImage: "",
     };
   }
 
@@ -322,19 +320,19 @@ export default class TieInManager extends LibrarySystem {
 
     return {
       id,
-      name: '',
-      sanitizedName: '',
-      archivesPath: '',
-      chaptersPath: '',
+      name: "",
+      sanitizedName: "",
+      archivesPath: "",
+      chaptersPath: "",
       totalChapters: 0,
       chaptersRead: 0,
-      dataPath: '',
-      coverImage: '',
-      literatureForm: 'Quadrinho',
+      dataPath: "",
+      coverImage: "",
+      literatureForm: "Quadrinho",
       chapters: [],
       readingData: {
         lastChapterId: 0,
-        lastReadAt: '',
+        lastReadAt: "",
       },
       metadata: {
         lastDownload: 0,
@@ -342,7 +340,7 @@ export default class TieInManager extends LibrarySystem {
         isCreated: false,
       },
       createdAt,
-      deletedAt: '',
+      deletedAt: "",
       comments: [],
     };
   }
@@ -371,13 +369,13 @@ export default class TieInManager extends LibrarySystem {
       id: 0,
       serieName: serieName,
       name: fileName,
-      coverImage: '',
-      sanitizedName: '',
-      archivesPath: '',
-      chapterPath: '',
+      coverImage: "",
+      sanitizedName: "",
+      archivesPath: "",
+      chapterPath: "",
       createdAt,
       isRead: false,
-      isDownloaded: 'not_downloaded',
+      isDownloaded: "not_downloaded",
       page: {
         lastPageRead: 0,
         favoritePage: 0,
@@ -385,3 +383,15 @@ export default class TieInManager extends LibrarySystem {
     };
   }
 }
+
+(async () => {
+  const tM = new TieInManager();
+  const sT = new StorageManager();
+  const dP =
+    "C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\childSeries\\Poderosos Vingadores 01 a 36 - SQ.json";
+  const tD = (await sT.readSerieData(
+    "C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\childSeries\\Poderosos Vingadores 01 a 36 - SQ.json",
+  )) as TieIn;
+
+  console.log(await tM.createTieInSerie(tD));
+})();

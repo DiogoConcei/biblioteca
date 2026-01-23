@@ -1,15 +1,15 @@
-import path from 'path';
+import path from "path";
 
-import LibrarySystem from './abstract/LibrarySystem';
-import FileManager from './FileManager';
-import StorageManager from './StorageManager';
-import ImageManager from './ImageManager';
-import TieInManager from './TieInManager';
-import CollectionManager from './CollectionManager';
+import LibrarySystem from "./abstract/LibrarySystem";
+import FileManager from "./FileManager";
+import StorageManager from "./StorageManager";
+import ImageManager from "./ImageManager";
+import TieInManager from "./TieInManager";
+import CollectionManager from "./CollectionManager";
 
-import { Comic, ComicEdition, ComicTieIn } from '../types/comic.interfaces';
+import { Comic, ComicEdition, ComicTieIn } from "../types/comic.interfaces";
 
-import { SerieData, SerieForm } from '../../src/types/series.interfaces';
+import { SerieData, SerieForm } from "../../src/types/series.interfaces";
 
 export default class ComicManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -61,7 +61,7 @@ export default class ComicManager extends LibrarySystem {
   ): Promise<ComicEdition[]> {
     const [comicEntries, total] =
       await this.fileManager.searchChapters(archivesPath);
-    const orderComics = await this.fileManager.orderChapters(comicEntries);
+    const orderComics = await this.fileManager.orderComic(comicEntries);
 
     if (!comicEntries || comicEntries.length === 0) return [];
 
@@ -69,7 +69,7 @@ export default class ComicManager extends LibrarySystem {
       orderComics.map(async (comicPath, idx) => {
         const fileName = path
           .basename(comicPath, path.extname(comicPath))
-          .replaceAll('#', '');
+          .replaceAll("#", "");
         const sanitizedName = this.fileManager.sanitizeFilename(fileName);
 
         return {
@@ -96,7 +96,7 @@ export default class ComicManager extends LibrarySystem {
   ): Promise<ComicEdition> {
     const fileName = path
       .basename(archivePath, path.extname(archivePath))
-      .replaceAll('#', '');
+      .replaceAll("#", "");
     const sanitizedName = this.fileManager.sanitizeFilename(fileName);
 
     return {
@@ -175,21 +175,21 @@ export default class ComicManager extends LibrarySystem {
     )) as Comic;
 
     if (!comicData.chapters) {
-      throw new Error('Serie não possui capitulos.');
+      throw new Error("Serie não possui capitulos.");
     }
 
-    const chapterToProcess = comicData.chapters.find(
+    const editionToProces = comicData.chapters.find(
       (chapter) => chapter.id === chapter_id,
     );
 
-    if (!chapterToProcess) {
+    if (!editionToProces) {
       throw new Error(`Capitulo com id ${chapter_id} nao foi encontrado.`);
     }
 
-    await this.generateChapter(chapterToProcess);
+    await this.generateChapter(editionToProces);
 
-    chapterToProcess.isDownloaded = 'downloaded';
-    comicData.metadata.lastDownload = chapterToProcess.id;
+    editionToProces.isDownloaded = "downloaded";
+    comicData.metadata.lastDownload = editionToProces.id;
     await this.storageManager.updateSerieData(comicData);
   }
 
@@ -201,13 +201,13 @@ export default class ComicManager extends LibrarySystem {
       const comic = await this.storageManager.readSerieData(dataPath);
 
       if (!comic.chapters || comic.chapters.length === 0) {
-        throw new Error('Nenhum capítulo encontrado.');
+        throw new Error("Nenhum capítulo encontrado.");
       }
 
       const chapter = comic.chapters.find((chap) => chap.id === chapter_id);
 
       if (!chapter || !chapter.chapterPath) {
-        throw new Error('Capítulo não encontrado ou caminho inválido.');
+        throw new Error("Capítulo não encontrado ou caminho inválido.");
       }
 
       const imageFiles = await this.fileManager.searchImages(
@@ -226,13 +226,13 @@ export default class ComicManager extends LibrarySystem {
 
       return processedImages;
     } catch (error) {
-      console.error('Não foi possível encontrar a edição do quadrinho:', error);
+      console.error("Não foi possível encontrar a edição do quadrinho:", error);
       throw error;
     }
   }
 
   // Atualizar a quantidade de capítulos
-  public async updateChapters(
+  public async updateEditions(
     filesPath: string[],
     dataPath: string,
   ): Promise<ComicEdition[]> {
@@ -241,9 +241,9 @@ export default class ComicManager extends LibrarySystem {
     )) as Comic;
 
     if (!serieData.chapters)
-      throw new Error('Dados do capítulo não encontrandos.');
+      throw new Error("Dados do capítulo não encontrandos.");
 
-    const rawChapters = await this.createNewChapter(
+    const rawChapters = await this.createNewEdition(
       filesPath,
       serieData.chapters,
     );
@@ -285,14 +285,14 @@ export default class ComicManager extends LibrarySystem {
   }
 
   // Trouxxe todos os capítulos porque preciso fazer um setState no front
-  private async createNewChapter(
+  private async createNewEdition(
     filesPath: string[],
     chapters: ComicEdition[],
   ) {
     const chapterMap = new Map(chapters.map((ch) => [ch.archivesPath, ch]));
     const existingPaths = chapters.map((ch) => ch.archivesPath);
     const allPaths = [...existingPaths, ...filesPath];
-    const orderedPaths = await this.fileManager.orderChapters(allPaths);
+    const orderedPaths = await this.fileManager.orderComic(allPaths);
 
     const result: ComicEdition[] = await Promise.all(
       orderedPaths.map(async (chapterPath, idx) => {
@@ -331,9 +331,6 @@ export default class ComicManager extends LibrarySystem {
     const normalized = path.resolve(chapter.archivesPath);
     const ext = path.extname(normalized);
 
-    const rawName = this.fileManager.sanitizeFilename(chapter.name);
-    const chapSafe = rawName.replaceAll('.', '_');
-
     const chapterOut = await this.fileManager.buildChapterPath(
       this.comicsImages,
       chapter.serieName,
@@ -341,7 +338,7 @@ export default class ComicManager extends LibrarySystem {
     );
 
     try {
-      if (ext === '.pdf') {
+      if (ext === ".pdf") {
         await this.storageManager.convertPdf_overdrive(normalized, chapterOut);
       } else {
         await this.storageManager.extractWith7zip(normalized, chapterOut);
@@ -366,7 +363,7 @@ export default class ComicManager extends LibrarySystem {
     const comic = await this.mountEmptyComic(serie);
     const chapters = await this.createEditions(serie.name, serie.oldPath);
     const childSeries = await this.tieManager.createChilds(
-      serie.name,
+      comic.name,
       comic.id,
       serie.oldPath,
     );
@@ -404,17 +401,17 @@ export default class ComicManager extends LibrarySystem {
       language: serie.language,
       literatureForm: serie.literatureForm,
       chaptersRead: 0,
-      readingData: { lastChapterId: 1, lastReadAt: '' },
+      readingData: { lastChapterId: 1, lastReadAt: "" },
       chapters: [],
       childSeries: [],
       metadata: {
         status: serie.readingStatus,
         collections: serie.collections,
-        recommendedBy: '',
-        originalOwner: '',
+        recommendedBy: "",
+        originalOwner: "",
         lastDownload: 0,
         rating: 0,
-        isFavorite: serie.collections.includes('Favoritas'),
+        isFavorite: serie.collections.includes("Favoritas"),
         privacy: serie.privacy,
         autoBackup: serie.autoBackup,
         compiledComic: totalChapters ? false : true,
@@ -433,13 +430,13 @@ export default class ComicManager extends LibrarySystem {
       id: 0,
       serieName: serieName,
       name: fileName,
-      coverImage: '',
-      sanitizedName: '',
-      archivesPath: '',
-      chapterPath: '',
+      coverImage: "",
+      sanitizedName: "",
+      archivesPath: "",
+      chapterPath: "",
       createdAt,
       isRead: false,
-      isDownloaded: 'not_downloaded',
+      isDownloaded: "not_downloaded",
       page: {
         lastPageRead: 0,
         favoritePage: 0,
@@ -448,39 +445,39 @@ export default class ComicManager extends LibrarySystem {
   }
 }
 
-// (async () => {
-//   const name = 'X-Factor v1(1986)v2(2006)v3(2010)';
-//   const fManager = new FileManager();
-//   const cManager = new ComicManager();
+(async () => {
+  const name = "14 Poderosos Vingadores";
+  const fManager = new FileManager();
+  const cManager = new ComicManager();
 
-//   const preData: SerieData = {
-//     name,
-//     newPath:
-//       'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\user library',
-//     oldPath: 'C:\\Users\\diogo\\Desktop\\X-Factor v1(1986)v2(2006)v3(2010)',
-//     sanitizedName: fManager.sanitizeFilename(name),
-//     createdAt: new Date().toISOString(),
-//   };
+  const preData: SerieData = {
+    name,
+    newPath:
+      "C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\user library",
+    oldPath: "C:\\Users\\diogo\\Downloads\\Arquivos\\14 Poderosos Vingadores",
+    sanitizedName: fManager.sanitizeFilename(name),
+    createdAt: new Date().toISOString(),
+  };
 
-//   const data: SerieForm = {
-//     autoBackup: 'Sim',
-//     chaptersPath: '',
-//     collections: ['Marvel', 'X-Man'],
-//     cover_path: 'C:\\Users\\diogo\\Downloads\\Imagens\\X-man.jpg',
-//     createdAt: preData.createdAt,
-//     deletedAt: '',
-//     literatureForm: 'Quadrinho',
-//     name,
-//     oldPath: preData.oldPath,
-//     privacy: 'Publica',
-//     readingStatus: 'Pendente',
-//     sanitizedName: preData.sanitizedName,
-//     tags: [],
-//     author: 'Desconhecido',
-//     genre: 'Super Herói',
-//     language: 'Português',
-//     archivesPath: path.join(preData.newPath, preData.name),
-//   };
+  const data: SerieForm = {
+    autoBackup: "Sim",
+    chaptersPath: "",
+    collections: ["Marvel"],
+    cover_path: "C:\\Users\\diogo\\Downloads\\Imagens\\migt.jpg",
+    createdAt: preData.createdAt,
+    deletedAt: "",
+    literatureForm: "Quadrinho",
+    name,
+    oldPath: preData.oldPath,
+    privacy: "Publica",
+    readingStatus: "Pendente",
+    sanitizedName: preData.sanitizedName,
+    tags: [],
+    author: "Desconhecido",
+    genre: "Super Herói",
+    language: "Português",
+    archivesPath: path.join(preData.newPath, preData.name),
+  };
 
-//   await cManager.createComicSerie(data);
-// })();
+  await cManager.createComicSerie(data);
+})();

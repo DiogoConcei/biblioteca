@@ -1,15 +1,14 @@
-import { FormTextInputProps } from 'electron/types/electron-auxiliar.interfaces';
-import './TextInput.scss';
+import { FormTextInputProps } from "electron/types/electron-auxiliar.interfaces";
+import "./TextInput.scss";
 
 export default function TextInput({
   register,
   error,
-  name,
   msg,
 }: FormTextInputProps) {
   return (
     <div>
-      <input type="text" {...register(name)} placeholder={msg} />
+      <input type="text" {...register} placeholder={msg} />
       {error && <p>{error.message}</p>}
     </div>
   );

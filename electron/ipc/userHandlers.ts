@@ -1,13 +1,13 @@
-import { IpcMain } from 'electron';
-import StorageManager from '../services/StorageManager';
-import FileManager from '../services/FileManager';
+import { IpcMain } from "electron";
+import StorageManager from "../services/StorageManager";
+import FileManager from "../services/FileManager";
 
 export default function userHandlers(ipcMain: IpcMain) {
   const storageManager = new StorageManager();
   const fileManager = new FileManager();
 
   ipcMain.handle(
-    'chapter:return-page',
+    "chapter:return-page",
     async (_event, dataPath: string, serieName?: string) => {
       try {
         const sDPath = serieName
@@ -21,12 +21,12 @@ export default function userHandlers(ipcMain: IpcMain) {
         let serieLink;
 
         switch (literatureForm) {
-          case 'Comics':
+          case "Comics":
             serieLink = `/${serieData.literatureForm}/${serieData.name}/${serieData.id}`;
-          case 'Mangas':
+          case "Mangas":
             serieLink = `/${serieData.literatureForm}/${serieData.name}/${serieData.id}`;
             return { success: true, data: serieLink };
-          case 'childSeries':
+          case "childSeries":
             serieLink = `/TieIn/${encodeURI(serieData.name)}`;
             return { success: true, data: serieLink };
 

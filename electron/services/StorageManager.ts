@@ -1,22 +1,22 @@
-import FileSystem from './abstract/LibrarySystem';
-import FileManager from './FileManager';
-import fse from 'fs-extra';
-import path from 'path';
-import { promisify } from 'util';
-import { exec } from 'child_process';
-import { randomUUID, randomBytes } from 'crypto';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
-import { createCanvas } from '@napi-rs/canvas';
-import { Manga } from '../types/manga.interfaces';
-import { Comic, TieIn } from '../types/comic.interfaces';
-import { SerieData, SerieEditForm } from '../../src/types/series.interfaces';
+import FileSystem from "./abstract/LibrarySystem";
+import FileManager from "./FileManager";
+import fse from "fs-extra";
+import path from "path";
+import { promisify } from "util";
+import { exec } from "child_process";
+import { randomUUID, randomBytes } from "crypto";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+import { createCanvas } from "@napi-rs/canvas";
+import { Manga } from "../types/manga.interfaces";
+import { Comic, TieIn } from "../types/comic.interfaces";
+import { SerieData, SerieEditForm } from "../../src/types/series.interfaces";
 import {
   Literatures,
   LiteratureChapter,
   NormalizedSerieData,
   viewData,
   APIResponse,
-} from '../types/electron-auxiliar.interfaces';
+} from "../types/electron-auxiliar.interfaces";
 // import { fileURLToPath, pathToFileURL } from 'url';
 
 // const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -27,7 +27,7 @@ import {
 
 export default class StorageManager extends FileSystem {
   private readonly fileManager: FileManager = new FileManager();
-  private readonly SEVEN_ZIP_PATH = 'C:\\Program Files\\7-Zip\\7z';
+  private readonly SEVEN_ZIP_PATH = "C:\\Program Files\\7-Zip\\7z";
   private readonly execAsync = promisify(exec);
 
   constructor() {
@@ -58,11 +58,11 @@ export default class StorageManager extends FileSystem {
   public async readSerieData(dataPath: string): Promise<Literatures | TieIn> {
     try {
       const serieData = await fse.readJson(dataPath, {
-        encoding: 'utf-8',
+        encoding: "utf-8",
       });
 
       if (!serieData) {
-        throw new Error('Arquivo lido, mas vazio ou inválido.');
+        throw new Error("Arquivo lido, mas vazio ou inválido.");
       }
 
       return serieData;
@@ -77,7 +77,7 @@ export default class StorageManager extends FileSystem {
     const id = oldData.id;
     const updated: Literatures = { ...data, id };
     updated.id = id;
-    const isBase64 = updated.coverImage.startsWith('data:image/');
+    const isBase64 = updated.coverImage.startsWith("data:image/");
 
     if (isBase64) {
       updated.coverImage = oldData.coverImage;
@@ -157,7 +157,7 @@ export default class StorageManager extends FileSystem {
       return await Promise.all(
         dataPaths.map(async (dataPath) => {
           const serie: Literatures = await fse.readJson(dataPath, {
-            encoding: 'utf-8',
+            encoding: "utf-8",
           });
 
           return {
@@ -189,9 +189,9 @@ export default class StorageManager extends FileSystem {
         throw new Error(`Nenhuma série encontrada com o nome: ${serieName}`);
       }
 
-      return fse.readJson(serieDataPath, { encoding: 'utf-8' });
+      return fse.readJson(serieDataPath, { encoding: "utf-8" });
     } catch (e) {
-      console.error('Erro ao selecionar dados do Manga:', e);
+      console.error("Erro ao selecionar dados do Manga:", e);
       throw e;
     }
   }
@@ -208,9 +208,9 @@ export default class StorageManager extends FileSystem {
         throw new Error(`Nenhuma série encontrada com o nome: ${serieName}`);
       }
 
-      return fse.readJson(serieDataPath, { encoding: 'utf-8' });
+      return fse.readJson(serieDataPath, { encoding: "utf-8" });
     } catch (e) {
-      console.error('Erro ao selecionar dados do Quadrinho:', e);
+      console.error("Erro ao selecionar dados do Quadrinho:", e);
       throw e;
     }
   }
@@ -229,9 +229,9 @@ export default class StorageManager extends FileSystem {
         throw new Error(`Nenhuma série encontrada com o nome: ${serieName}`);
       }
 
-      return fse.readJson(serieDataPath, { encoding: 'utf-8' });
+      return fse.readJson(serieDataPath, { encoding: "utf-8" });
     } catch (e) {
-      console.error('Erro ao selecionar dados da TieIn:', e);
+      console.error("Erro ao selecionar dados da TieIn:", e);
       throw e;
     }
   }
@@ -243,12 +243,12 @@ export default class StorageManager extends FileSystem {
     try {
       if (chapter.chapterPath && (await fse.pathExists(chapter.chapterPath))) {
         await fse.remove(chapter.chapterPath);
-        chapter.isDownloaded = 'not_downloaded';
-        chapter.chapterPath = '';
+        chapter.isDownloaded = "not_downloaded";
+        chapter.chapterPath = "";
         await this.updateSerieData(serieData);
       }
     } catch (e) {
-      console.error('Falha em deletar capítulos', e);
+      console.error("Falha em deletar capítulos", e);
       throw e;
     }
   }
@@ -269,7 +269,7 @@ export default class StorageManager extends FileSystem {
       const viewport = page.getViewport({ scale });
 
       const canvas = createCanvas(viewport.width, viewport.height);
-      const context = canvas.getContext('2d');
+      const context = canvas.getContext("2d");
       await page.render({
         canvas: canvas as unknown as HTMLCanvasElement,
         canvasContext: context as unknown as CanvasRenderingContext2D,
@@ -281,17 +281,17 @@ export default class StorageManager extends FileSystem {
         `temp_${randomUUID()}`,
       );
       await fse.mkdir(tempDir, { recursive: true });
-      const buffer = canvas.toBuffer('image/jpeg');
+      const buffer = canvas.toBuffer("image/jpeg");
 
-      const fileName = 'cover.jpeg';
+      const fileName = "cover.jpeg";
       const tempFilePath = path.join(tempDir, fileName);
 
       await fse.writeFile(tempFilePath, buffer);
       const safePath = await this.fileManager.ensurSourcePath(tempFilePath);
 
       const name = path.basename(tempFilePath, path.extname(tempFilePath));
-      const suffix = randomBytes(3).toString('hex');
-      const safeName = name.replace(/[. ]+$/, '').concat(`_${suffix}`);
+      const suffix = randomBytes(3).toString("hex");
+      const safeName = name.replace(/[. ]+$/, "").concat(`_${suffix}`);
       const ext = path.extname(tempFilePath);
 
       const finalPath = this.fileManager.buildImagePath(
@@ -305,7 +305,7 @@ export default class StorageManager extends FileSystem {
       await fse.remove(tempDir);
       return finalPath;
     } catch (e) {
-      console.error('Falha na conversão de PDF -> Imagem');
+      console.error("Falha na conversão de PDF -> Imagem");
       throw new Error(String(e));
     }
   }
@@ -329,7 +329,7 @@ export default class StorageManager extends FileSystem {
           const viewport = page.getViewport({ scale });
 
           const canvas = createCanvas(viewport.width, viewport.height);
-          const context = canvas.getContext('2d');
+          const context = canvas.getContext("2d");
 
           await page.render({
             canvas: canvas as unknown as HTMLCanvasElement,
@@ -337,8 +337,8 @@ export default class StorageManager extends FileSystem {
             viewport,
           }).promise;
 
-          const buffer = canvas.toBuffer('image/jpeg');
-          const fileName = `${String(pageNum).padStart(4, '0')}.jpeg`;
+          const buffer = canvas.toBuffer("image/jpeg");
+          const fileName = `${String(pageNum).padStart(4, "0")}.jpeg`;
 
           await fse.writeFile(path.join(outputDir, fileName), buffer);
         })(),
@@ -371,11 +371,11 @@ export default class StorageManager extends FileSystem {
         // ✅ Aceita erro de CRC como WARNING
         if (
           err?.code === 2 &&
-          typeof err.stderr === 'string' &&
-          err.stderr.includes('CRC Failed')
+          typeof err.stderr === "string" &&
+          err.stderr.includes("CRC Failed")
         ) {
           console.warn(
-            '⚠️ Aviso: CBZ contém arquivos corrompidos (CRC Failed). Continuando com arquivos extraídos...',
+            "⚠️ Aviso: CBZ contém arquivos corrompidos (CRC Failed). Continuando com arquivos extraídos...",
           );
         } else {
           throw err; // ❌ erro real → explode
@@ -387,7 +387,7 @@ export default class StorageManager extends FileSystem {
 
       if (allFiles.length === 0) {
         throw new Error(
-          '❌ Extração concluída, mas nenhum arquivo foi gerado.',
+          "❌ Extração concluída, mas nenhum arquivo foi gerado.",
         );
       }
 
@@ -407,7 +407,7 @@ export default class StorageManager extends FileSystem {
         console.log(
           `🚨 Nenhum candidato válido encontrado para: ${path.basename(inputFile)}`,
         );
-        return '';
+        return "";
       }
 
       const realPath = safeFiles.find(
@@ -419,8 +419,8 @@ export default class StorageManager extends FileSystem {
         bestCandidate,
         path.extname(bestCandidate),
       );
-      const suffix = randomBytes(3).toString('hex');
-      const safeName = baseName.replace(/[. ]+$/, '').concat(`_${suffix}`);
+      const suffix = randomBytes(3).toString("hex");
+      const safeName = baseName.replace(/[. ]+$/, "").concat(`_${suffix}`);
 
       const finalPath = this.fileManager.buildImagePath(
         outputDir,
@@ -458,11 +458,11 @@ export default class StorageManager extends FileSystem {
       } catch (err: any) {
         if (
           err?.code === 2 &&
-          typeof err.stderr === 'string' &&
-          err.stderr.includes('CRC Failed')
+          typeof err.stderr === "string" &&
+          err.stderr.includes("CRC Failed")
         ) {
           console.warn(
-            '⚠️ Extração concluída com erros de CRC. Alguns arquivos podem estar corrompidos.',
+            "⚠️ Extração concluída com erros de CRC. Alguns arquivos podem estar corrompidos.",
           );
         } else {
           throw err;
@@ -477,30 +477,28 @@ export default class StorageManager extends FileSystem {
   public async fixComicDir(
     brokenPath: string,
     correctPath: string,
-  ): Promise<void> {
-    try {
-      const entries = await fse.readdir(brokenPath, { withFileTypes: true });
+  ): Promise<string[]> {
+    const moved: string[] = [];
 
-      for (const entry of entries) {
-        const src = path.join(brokenPath, entry.name);
-        const dest = path.join(correctPath, entry.name);
+    const entries = await fse.readdir(brokenPath, { withFileTypes: true });
 
-        if (await fse.pathExists(dest)) {
-          await fse.remove(dest);
-        }
+    for (const entry of entries) {
+      const src = path.join(brokenPath, entry.name);
+      const dest = path.join(correctPath, entry.name);
 
-        await fse.move(src, dest, { overwrite: true });
+      if (await fse.pathExists(dest)) {
+        await fse.remove(dest);
       }
 
-      await fse.remove(brokenPath);
-    } catch (error) {
-      console.error(
-        `[fixComicDir] Falha ao corrigir "${brokenPath}" → "${correctPath}"`,
-        `[fixComicDir] Falha ao corrigir "${brokenPath}" → "${correctPath}"`,
-        error,
-      );
-      throw error;
+      await fse.move(src, dest, { overwrite: true });
+
+      if (entry.isFile() && /\.(jpe?g|png|webp)$/i.test(entry.name)) {
+        moved.push(dest);
+      }
     }
+
+    await fse.remove(brokenPath);
+    return moved;
   }
 
   public async getSerieData(
@@ -513,7 +511,7 @@ export default class StorageManager extends FileSystem {
       );
 
       if (!serie) {
-        return { success: false, error: 'Série não encontrada' };
+        return { success: false, error: "Série não encontrada" };
       }
 
       const serieData = await this.readSerieData(serie);
@@ -522,14 +520,14 @@ export default class StorageManager extends FileSystem {
         return {
           success: false,
           data: undefined,
-          error: 'Falha ao ler dados da série',
+          error: "Falha ao ler dados da série",
         };
       }
 
       return { success: true, data: serieData };
     } catch (e) {
-      console.error('Erro ao obter dados da série:', e);
-      return { success: false, error: 'Erro ao obter dados da série' };
+      console.error("Erro ao obter dados da série:", e);
+      return { success: false, error: "Erro ao obter dados da série" };
     }
   }
 

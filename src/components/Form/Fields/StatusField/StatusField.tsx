@@ -1,7 +1,7 @@
-import { FormInputProps } from '../../../../../electron/types/electron-auxiliar.interfaces';
-import './StatusField.scss';
+import { FormInputProps } from "../../../../../electron/types/electron-auxiliar.interfaces";
+import "./StatusField.scss";
 
-export default function StatusField({ name, register, error }: FormInputProps) {
+export default function StatusField({ register, error }: FormInputProps) {
   return (
     <div className="status-info">
       <h2 className="form-subtitle">Status de leitura:</h2>
@@ -10,9 +10,7 @@ export default function StatusField({ name, register, error }: FormInputProps) {
           type="radio"
           value="Em andamento"
           id="StatusEmAndamento"
-          {...register(name, {
-            required: 'Selecione um status',
-          })}
+          {...register}
         />
         <label htmlFor="StatusEmAndamento">Em andamento</label>
 
@@ -20,9 +18,7 @@ export default function StatusField({ name, register, error }: FormInputProps) {
           type="radio"
           value="Completo"
           id="StatusCompleto"
-          {...register(name, {
-            required: 'Selecione um status',
-          })}
+          {...register}
         />
         <label htmlFor="StatusCompleto">Completo</label>
 
@@ -30,9 +26,7 @@ export default function StatusField({ name, register, error }: FormInputProps) {
           type="radio"
           value="Pendente"
           id="StatusPendente"
-          {...register(name, {
-            required: 'Selecione um status',
-          })}
+          {...register}
         />
         <label htmlFor="StatusPendente">Pendente</label>
       </div>

@@ -1,10 +1,10 @@
-import fse from 'fs-extra';
-import path from 'path';
-import pLimit from 'p-limit';
-import { randomUUID } from 'crypto';
+import fse from "fs-extra";
+import path from "path";
+import pLimit from "p-limit";
+import { randomUUID } from "crypto";
 
-import LibrarySystem from './abstract/LibrarySystem';
-import { Literatures } from '../types/electron-auxiliar.interfaces';
+import LibrarySystem from "./abstract/LibrarySystem";
+import { Literatures } from "../types/electron-auxiliar.interfaces";
 
 export default class FileManager extends LibrarySystem {
   public async searchChapters(
@@ -26,10 +26,10 @@ export default class FileManager extends LibrarySystem {
   }
 
   public async singleCountChapter(dir: string): Promise<number> {
-    const rawExts = ['.cbz', '.cbr', '.zip', '.rar', '.pdf'];
+    const rawExts = [".cbz", ".cbr", ".zip", ".rar", ".pdf"];
     const extSet = new Set(
       rawExts.map((e) =>
-        e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`,
+        e.startsWith(".") ? e.toLowerCase() : `.${e.toLowerCase()}`,
       ),
     );
 
@@ -52,10 +52,10 @@ export default class FileManager extends LibrarySystem {
 
   public async countChapters(directories: string[]): Promise<number> {
     const concurrency = 8;
-    const rawExts = ['.cbz', '.cbr', '.zip', '.rar', '.pdf'];
+    const rawExts = [".cbz", ".cbr", ".zip", ".rar", ".pdf"];
     const extSet = new Set(
       rawExts.map((e) =>
-        e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`,
+        e.startsWith(".") ? e.toLowerCase() : `.${e.toLowerCase()}`,
       ),
     );
 
@@ -122,7 +122,7 @@ export default class FileManager extends LibrarySystem {
       for (const subDirs of subDirsArrays) directories.push(...subDirs);
       return directories;
     } catch (e) {
-      console.error('Falha em verificar todos os sub diretorios: ', e);
+      console.error("Falha em verificar todos os sub diretorios: ", e);
       return [];
     }
   }
@@ -134,7 +134,7 @@ export default class FileManager extends LibrarySystem {
       (e) => e.isFile() && /\.(cbz|cbr|zip|rar|pdf)$/i.test(e.name),
     );
 
-    if (!chapter) return '';
+    if (!chapter) return "";
 
     const firstPath = path.join(dir, chapter?.name);
 
@@ -160,56 +160,24 @@ export default class FileManager extends LibrarySystem {
       }
     }
 
-    return '';
+    return "";
   }
 
   public sanitizeFilename(fileName: string): string {
     return fileName
-      .replaceAll(/\s+/g, '_')
+      .replaceAll(/\s+/g, "_")
 
-      .replaceAll(/[<>:"/\\|?*\x00-\x1F#!]/g, '_')
-      .replaceAll(/[^a-zA-Z0-9._-]/g, '_')
+      .replaceAll(/[<>:"/\\|?*\x00-\x1F#!]/g, "_")
+      .replaceAll(/[^a-zA-Z0-9._-]/g, "_")
 
-      .replaceAll(/_{2,}/g, '_')
+      .replaceAll(/_{2,}/g, "_")
 
-      .replaceAll(/\.{2,}/g, '.')
+      .replaceAll(/\.{2,}/g, ".")
 
-      .replaceAll(/^-+|-+$/g, '')
+      .replaceAll(/^-+|-+$/g, "")
 
-      .replaceAll(/[. ]+$/g, '')
-      .replaceAll('#', '');
-  }
-
-  public async orderChapters(filesPath: string[]): Promise<string[]> {
-    const fileDetails = filesPath.map((file, index) => {
-      const { volume, chapter } = this.extractComicInfo(
-        file,
-        path.basename(file),
-      );
-
-      return {
-        filePath: file,
-        volume,
-        chapter,
-        isSpecial: chapter === 0,
-        fsIndex: index,
-      };
-    });
-
-    fileDetails.sort((a, b) => {
-      if (a.isSpecial !== b.isSpecial) {
-        return a.isSpecial ? 1 : -1;
-      }
-
-      if (!a.isSpecial && !b.isSpecial) {
-        if (a.volume !== b.volume) return a.volume - b.volume;
-        return a.chapter - b.chapter;
-      }
-
-      return a.fsIndex - b.fsIndex;
-    });
-
-    return fileDetails.map((d) => d.filePath);
+      .replaceAll(/[. ]+$/g, "")
+      .replaceAll("#", "");
   }
 
   public async ensurSourcePath(originalPath: string): Promise<string> {
@@ -231,7 +199,7 @@ export default class FileManager extends LibrarySystem {
   public buildImagePath(
     dirPath: string,
     originalName: string,
-    ext = '.webp',
+    ext = ".webp",
   ): string {
     const max = 260;
     const min = 6;
@@ -355,22 +323,22 @@ export default class FileManager extends LibrarySystem {
     const allWithNumbers: { name: string; num: number }[] = [];
 
     const coverKeywords = [
-      'cover',
-      'front',
-      'capa',
-      'capa1',
-      'page0001',
-      'pg0001',
-      '01a',
-      '01',
-      '01b',
-      'preview',
+      "cover",
+      "front",
+      "capa",
+      "capa1",
+      "page0001",
+      "pg0001",
+      "01a",
+      "01",
+      "01b",
+      "preview",
     ];
 
     for (const name of fileNames) {
       if (!imageExtensionRegex.test(name)) continue;
 
-      const baseName = name.replace(imageExtensionRegex, '').toLowerCase();
+      const baseName = name.replace(imageExtensionRegex, "").toLowerCase();
 
       if (coverKeywords.some((keyword) => baseName.includes(keyword))) {
         namedCoverCandidates.push(name);
@@ -434,7 +402,7 @@ export default class FileManager extends LibrarySystem {
       .map((dirent) => path.join(imagesPath, dirent.name));
 
     if (imageFiles.length === 0) {
-      throw new Error('Nenhuma imagem encontrada no capítulo.');
+      throw new Error("Nenhuma imagem encontrada no capítulo.");
     }
 
     return imageFiles;
@@ -459,7 +427,7 @@ export default class FileManager extends LibrarySystem {
 
       return (
         allPaths.find((p) => path.basename(p, path.extname(p)) === serieName) ||
-        ''
+        ""
       );
     } catch (e) {
       console.error(`Erro ao obter série: ${e}`);
@@ -482,6 +450,60 @@ export default class FileManager extends LibrarySystem {
     await fse.move(from, to);
   }
 
+  public async orderManga(filesPath: string[]): Promise<string[]> {
+    const fileDetails = await Promise.all(
+      filesPath.map(async (file) => {
+        const fileName = path.basename(file);
+        const { volume, chapter } = this.extractSerieInfo(fileName);
+
+        return {
+          filePath: file,
+          volume: volume ? Number(volume) : 0,
+          chapter: chapter ? Number(chapter) : 0,
+        };
+      }),
+    );
+
+    fileDetails.sort((a, b) => a.chapter - b.chapter);
+
+    const orderedPaths = fileDetails.map((fileDetail) => fileDetail.filePath);
+    return orderedPaths;
+  }
+
+  public async orderComic(filesPath: string[]): Promise<string[]> {
+    const fileDetails = filesPath.map((file, index) => {
+      const { volume, chapter } = this.extractComicInfo(
+        file,
+        path.basename(file),
+      );
+
+      return {
+        filePath: file,
+        volume,
+        chapter,
+        isSpecial: chapter === 0,
+        fsIndex: index,
+      };
+    });
+
+    fileDetails.sort((a, b) => {
+      if (a.isSpecial !== b.isSpecial) {
+        return a.isSpecial ? 1 : -1;
+      }
+
+      // 2️⃣ ambos normais → ordenação lógica
+      if (!a.isSpecial && !b.isSpecial) {
+        if (a.volume !== b.volume) return a.volume - b.volume;
+        return a.chapter - b.chapter;
+      }
+
+      // 3️⃣ ambos especiais → preserva ordem da pasta
+      return a.fsIndex - b.fsIndex;
+    });
+
+    return fileDetails.map((d) => d.filePath);
+  }
+
   private extractComicInfo(
     fullPath: string,
     fileName: string,
@@ -489,15 +511,15 @@ export default class FileManager extends LibrarySystem {
     let volume = 0;
     let chapter = 0;
 
-    const normFull = fullPath.replace(/[_\-]/g, ' ').replace(/\s+/g, ' ');
+    const normFull = fullPath.replace(/[_\-]/g, " ").replace(/\s+/g, " ");
     const volM = normFull.match(/\b(?:v|vol\.?)\s*(\d+)/i);
     if (volM) {
       volume = parseInt(volM[1], 10);
     }
 
     const normName = fileName
-      .replace(/[_\-]/g, ' ')
-      .replace(/\s+/g, ' ')
+      .replace(/[_\-]/g, " ")
+      .replace(/\s+/g, " ")
       .trim();
 
     if (/\(\s*[a-d]\d+\s*\)/i.test(normName)) {
@@ -547,6 +569,31 @@ export default class FileManager extends LibrarySystem {
         chapter = parseInt(m[1], 10);
       }
     }
+
+    return { volume, chapter };
+  }
+
+  private extractSerieInfo(fileName: string): {
+    volume: number;
+    chapter: number;
+  } {
+    const regex =
+      /Vol\.\s*(\d+)|Ch\.\s*(\d+(\.\d+)?)|Chapter\s*(\d+(\.\d+)?)|Capítulo\s*(\d+(\.\d+)?)/gi;
+    const matches = [...fileName.matchAll(regex)];
+
+    let volume = 0;
+    let chapter = 0;
+
+    matches.forEach((match) => {
+      if (match[1]) {
+        volume = parseInt(match[1], 10);
+      }
+      if (match[2] || match[4] || match[6]) {
+        const chapterValue = match[2] || match[4] || match[6];
+        const chapterNumber = parseFloat(chapterValue);
+        chapter = chapterNumber;
+      }
+    });
 
     return { volume, chapter };
   }

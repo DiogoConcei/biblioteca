@@ -1,13 +1,13 @@
-import { IpcMain } from 'electron';
+import { IpcMain } from "electron";
 
-import FileManager from '../services/FileManager';
-import MangaManager from '../services/MangaManager';
-import StorageManager from '../services/StorageManager';
-import ComicManager from '../services/ComicManager';
-import TieInManager from '../services/TieInManager.ts';
-import UserManager from '../services/UserManager.ts';
-import ImageManager from '../services/ImageManager.ts';
-import { Literatures } from '../types/electron-auxiliar.interfaces.ts';
+import FileManager from "../services/FileManager";
+import MangaManager from "../services/MangaManager";
+import StorageManager from "../services/StorageManager";
+import ComicManager from "../services/ComicManager";
+import TieInManager from "../services/TieInManager.ts";
+import UserManager from "../services/UserManager.ts";
+import ImageManager from "../services/ImageManager.ts";
+import { Literatures } from "../types/electron-auxiliar.interfaces.ts";
 
 export default function chaptersHandlers(ipcMain: IpcMain) {
   const fileManager = new FileManager();
@@ -19,7 +19,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
   const imageManager = new ImageManager();
 
   ipcMain.handle(
-    'chapter:mark-read',
+    "chapter:mark-read",
     async (_event, dataPath: string, chapter_id: number, isRead: boolean) => {
       try {
         await userManager.markChapterRead(dataPath, chapter_id, isRead);
@@ -32,7 +32,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
   );
 
   ipcMain.handle(
-    'chapter:get-single',
+    "chapter:get-single",
     async (_event, serieName: string, chapter_id: number) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
@@ -42,15 +42,15 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         }
 
         const LiteratureForm = fileManager.foundLiteratureForm(dataPath);
-        let chapterData: string[] | string = '';
+        let chapterData: string[] | string = "";
         let tempData: string[] = [];
 
         switch (LiteratureForm) {
-          case 'Mangas':
-            chapterData = await mangaManager.getChapter(dataPath, chapter_id);
-          case 'Comics':
+          case "Mangas":
+            chapterData = await mangaManager.getManga(dataPath, chapter_id);
+          case "Comics":
             tempData = await comicManager.getComic(dataPath, chapter_id);
-          case 'childSeries':
+          case "childSeries":
             chapterData = await tieManager.getTieIn(dataPath, chapter_id);
           default:
             break;
@@ -65,7 +65,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
   );
 
   ipcMain.handle(
-    'chapter:save-last-read',
+    "chapter:save-last-read",
     async (
       _event,
       serieName: string,
@@ -115,7 +115,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         });
 
         if (!chapterUpdated) {
-          return { success: false, error: 'Capítulo não encontrado' };
+          return { success: false, error: "Capítulo não encontrado" };
         }
 
         serieData = {
@@ -134,7 +134,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
   );
 
   ipcMain.handle(
-    'chapter:acess-last-read',
+    "chapter:acess-last-read",
     async (_event, dataPath: string) => {
       try {
         const serieData = await storageManager.readSerieData(dataPath);
@@ -151,13 +151,13 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
         if (!lastChapter.isDownloaded) {
           switch (literatureForm) {
-            case 'Mangas':
-              await mangaManager.createEditionById(
+            case "Mangas":
+              await mangaManager.createChapterById(
                 serieData.dataPath,
                 lastChapter.id,
               );
               break;
-            case 'Comics':
+            case "Comics":
               await comicManager.createChapterById(
                 serieData.dataPath,
                 lastChapterId,
@@ -184,7 +184,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
   );
 
   ipcMain.handle(
-    'chapter:get-next-chapter',
+    "chapter:get-next-chapter",
     async (_event, serieName: string, chapter_id: number) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
@@ -212,7 +212,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
   );
 
   ipcMain.handle(
-    'chapter:get-prev-chapter',
+    "chapter:get-prev-chapter",
     async (_event, serieName: string, chapter_id: number) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
