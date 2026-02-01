@@ -1,12 +1,13 @@
-import path from "path";
-import fse from "fs-extra";
+import path from 'path';
+import fse from 'fs-extra';
 
-import LibrarySystem from "./abstract/LibrarySystem";
-import FileManager from "./FileManager";
-import ImageManager from "./ImageManager";
-import StorageManager from "./StorageManager";
+import LibrarySystem from './abstract/LibrarySystem';
+import FileManager from './FileManager';
+import ImageManager from './ImageManager';
+import StorageManager from './StorageManager';
 
-import { ComicTieIn, TieIn, ComicEdition } from "../types/comic.interfaces";
+import { ComicTieIn, TieIn, ComicEdition } from '../types/comic.interfaces';
+import { checkPrime } from 'crypto';
 
 export default class TieInManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -22,7 +23,7 @@ export default class TieInManager extends LibrarySystem {
       const outputPath = path.join(this.dinamicImages, serieName);
       return await this.imageManager.generateCover(firstChapter, outputPath);
     } catch (e) {
-      throw new Error("Falha em gerar capa da TieIn");
+      throw new Error('Falha em gerar capa da TieIn');
     }
   }
 
@@ -33,11 +34,13 @@ export default class TieInManager extends LibrarySystem {
         tieIn.archivesPath,
       );
 
-      await fse.writeJson(tieIn.dataPath, tieIn, { spaces: 2 });
+      await this.createEditionCovers(tieIn.archivesPath, tieIn.chapters);
 
-      // await this.createEditionCovers(tieIn.archivesPath, tieIn.chapters);
+      tieIn.metadata.isCreated = true;
+
+      await fse.writeJson(tieIn.dataPath, tieIn, { spaces: 2 });
     } catch (error) {
-      console.error("Erro ao criar Tie-In:", error);
+      console.error('Erro ao criar Tie-In:', error);
       throw error;
     }
   }
@@ -51,13 +54,20 @@ export default class TieInManager extends LibrarySystem {
     try {
       await Promise.all(
         comicEdition.map(async (chap, idx) => {
+          const rawName = chap.name;
+          const safeName = this.fileManager.sanitizeDirName(rawName);
+
           const outputPath = path.join(
             this.showcaseImages,
             chap.serieName,
-            chap.name,
+            safeName,
           );
 
-          chap.chapterPath = path.join(this.comicsImages, dirName, chap.name);
+          chap.chapterPath = path.join(
+            this.comicsImages,
+            chap.serieName,
+            safeName,
+          );
 
           if (!chap.archivesPath) {
             console.warn(
@@ -81,29 +91,28 @@ export default class TieInManager extends LibrarySystem {
   public async getTieIn(
     dataPath: string,
     chapter_id: number,
-  ): Promise<string[] | string> {
+  ): Promise<string[]> {
     try {
       const comic = await this.storageManager.readSerieData(dataPath);
 
       if (!comic.chapters || comic.chapters.length === 0) {
-        throw new Error("Nenhum capítulo encontrado.");
+        throw new Error('Nenhum capítulo encontrado.');
       }
 
       const chapter = comic.chapters.find((chap) => chap.id === chapter_id);
 
       if (!chapter || !chapter.chapterPath) {
-        throw new Error("Capítulo não encontrado ou caminho inválido.");
+        throw new Error('Capítulo não encontrado ou caminho inválido.');
       }
 
       const imageFiles = await this.fileManager.searchImages(
         chapter.chapterPath,
       );
+      const validImages = [];
 
-      for (let idx = 0; idx < imageFiles.length; idx++) {
-        const imageFile = imageFiles[idx];
-
-        if (await this.imageManager.isImage(imageFile)) {
-          return [];
+      for (const file of imageFiles) {
+        if (!(await this.imageManager.isImage(file))) {
+          validImages.push(file);
         }
       }
 
@@ -111,53 +120,57 @@ export default class TieInManager extends LibrarySystem {
 
       return processedImages;
     } catch (error) {
-      console.error("Não foi possível encontrar a edição do quadrinho:", error);
+      console.error('Não foi possível encontrar a edição do quadrinho:', error);
       throw error;
     }
   }
 
   public async createChapterById(dataPath: string, chapter_id: number) {
-    const tieInData = (await this.storageManager.readSerieData(
+    const comicData = (await this.storageManager.readSerieData(
       dataPath,
     )) as TieIn;
 
-    if (!tieInData.chapters || !Array.isArray(tieInData.chapters)) {
-      throw new Error("Dados de capítulos indefinidos ou inválidos.");
+    if (!comicData.chapters) {
+      throw new Error('Serie não possui capitulos.');
     }
 
-    const chapterToProcess = tieInData.chapters.find(
+    const editionToProces = comicData.chapters.find(
       (chapter) => chapter.id === chapter_id,
     );
 
-    if (!chapterToProcess) {
-      throw new Error(`Capítulo com id ${chapter_id} não encontrado.`);
+    if (!editionToProces) {
+      throw new Error(`Capitulo com id ${chapter_id} nao foi encontrado.`);
     }
 
-    await this.generateChapter(chapterToProcess);
+    await this.generateChapter(editionToProces);
 
-    chapterToProcess.isDownloaded = "downloaded";
-    tieInData.metadata.lastDownload = chapterToProcess.id;
-    await this.storageManager.updateSerieData(tieInData);
+    editionToProces.isDownloaded = 'downloaded';
+    comicData.metadata.lastDownload = editionToProces.id;
+    await this.storageManager.updateSerieData(comicData);
   }
 
   private async generateChapter(chapter: ComicEdition) {
     const normalized = path.resolve(chapter.archivesPath);
     const ext = path.extname(normalized);
 
+    const rawName = chapter.name;
+    const safeName = this.fileManager.sanitizeDirName(rawName);
+
     const chapterOut = await this.fileManager.buildChapterPath(
       this.comicsImages,
       chapter.serieName,
-      chapter.name,
+      safeName,
     );
 
     try {
-      if (ext === ".pdf") {
+      if (ext === '.pdf') {
         await this.storageManager.convertPdf_overdrive(normalized, chapterOut);
       } else {
         await this.storageManager.extractWith7zip(normalized, chapterOut);
       }
 
       chapter.chapterPath = chapterOut;
+      console.log(chapterOut);
     } catch (e) {
       console.error(`Erro ao processar os capítulos em "${chapter.name}":`, e);
       throw e;
@@ -180,7 +193,7 @@ export default class TieInManager extends LibrarySystem {
       orderComics.map(async (comicPath, idx) => {
         const fileName = path
           .basename(comicPath, path.extname(comicPath))
-          .replaceAll("#", "");
+          .replaceAll('#', '');
         const sanitizedName = this.fileManager.sanitizeFilename(fileName);
 
         return {
@@ -192,7 +205,7 @@ export default class TieInManager extends LibrarySystem {
             serieName,
             fileName,
           ),
-          originalPath: comicPath,
+          archivesPath: comicPath,
         };
       }),
     );
@@ -261,7 +274,7 @@ export default class TieInManager extends LibrarySystem {
       name: child.serieName,
       sanitizedName: safeName,
       archivesPath: child.archivesPath,
-      chaptersPath: path.join(this.imagesFolder, "Quadrinho", child.serieName),
+      chaptersPath: path.join(this.imagesFolder, 'Quadrinho', child.serieName),
       totalChapters,
       dataPath: child.dataPath,
     };
@@ -305,12 +318,12 @@ export default class TieInManager extends LibrarySystem {
       parentId,
       serieName: rawName,
       compiledComic: false,
-      archivesPath: "",
+      archivesPath: '',
       dataPath: path.join(
         this.childSeriesData,
         `${path.basename(subPath)}.json`,
       ),
-      coverImage: "",
+      coverImage: '',
     };
   }
 
@@ -320,19 +333,19 @@ export default class TieInManager extends LibrarySystem {
 
     return {
       id,
-      name: "",
-      sanitizedName: "",
-      archivesPath: "",
-      chaptersPath: "",
+      name: '',
+      sanitizedName: '',
+      archivesPath: '',
+      chaptersPath: '',
       totalChapters: 0,
       chaptersRead: 0,
-      dataPath: "",
-      coverImage: "",
-      literatureForm: "Quadrinho",
+      dataPath: '',
+      coverImage: '',
+      literatureForm: 'Quadrinho',
       chapters: [],
       readingData: {
         lastChapterId: 0,
-        lastReadAt: "",
+        lastReadAt: '',
       },
       metadata: {
         lastDownload: 0,
@@ -340,7 +353,7 @@ export default class TieInManager extends LibrarySystem {
         isCreated: false,
       },
       createdAt,
-      deletedAt: "",
+      deletedAt: '',
       comments: [],
     };
   }
@@ -369,29 +382,67 @@ export default class TieInManager extends LibrarySystem {
       id: 0,
       serieName: serieName,
       name: fileName,
-      coverImage: "",
-      sanitizedName: "",
-      archivesPath: "",
-      chapterPath: "",
+      coverImage: '',
+      sanitizedName: '',
+      archivesPath: '',
+      chapterPath: '',
       createdAt,
       isRead: false,
-      isDownloaded: "not_downloaded",
+      isDownloaded: 'not_downloaded',
       page: {
         lastPageRead: 0,
         favoritePage: 0,
       },
     };
   }
+
+  // public async createEditionCover(chap: ComicEdition) {
+  //   try {
+  //     const rawName = chap.name;
+  //     const safeName = this.fileManager.sanitizeDirName(rawName);
+
+  //     const outputPath = path.join(
+  //       this.showcaseImages,
+  //       chap.serieName,
+  //       safeName,
+  //     );
+
+  //     chap.chapterPath = path.join(
+  //       this.comicsImages,
+  //       chap.serieName,
+  //       chap.name,
+  //     );
+
+  //     if (!chap.archivesPath) {
+  //       console.warn(
+  //         `Arquivo de origem não informado para a edição ${chap.name}. Pulando geração de capa.`,
+  //       );
+  //       return;
+  //     }
+
+  //     chap.coverImage = await this.imageManager.generateCover(
+  //       chap.archivesPath,
+  //       outputPath,
+  //     );
+  //   } catch (e) {
+  //     console.error(`Falha em gerar capa para as edicoes`);
+  //     throw e;
+  //   }
+  // }
 }
 
-(async () => {
-  const tM = new TieInManager();
-  const sT = new StorageManager();
-  const dP =
-    "C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\childSeries\\Poderosos Vingadores 01 a 36 - SQ.json";
-  const tD = (await sT.readSerieData(
-    "C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\childSeries\\Poderosos Vingadores 01 a 36 - SQ.json",
-  )) as TieIn;
+// (async () => {
+//   const tM = new TieInManager();
+//   const sT = new StorageManager();
+//   const dP =
+//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\childSeries\\00 - Versão em CBR - Longa - 134 Edições.json';
+//   const tD = (await sT.readSerieData(dP)) as TieIn;
 
-  console.log(await tM.createTieInSerie(tD));
-})();
+//   if (!tD.chapters) return;
+
+//   const tC = tD.chapters.find((s) => s.id === 27);
+
+//   if (!tC) return;
+
+//   console.log(await tM.createChapterById(dP, 0));
+// })();

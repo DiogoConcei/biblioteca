@@ -1,13 +1,13 @@
-import { IpcMain } from "electron";
-import StorageManager from "../services/StorageManager.ts";
-import CollectionsManager from "../services/CollectionManager";
-import FileManager from "../services/FileManager.ts";
-import ImageManager from "../services/ImageManager.ts";
-import UserManager from "../services/UserManager.ts";
-import TieInManager from "../services/TieInManager.ts";
-import { ComicTieIn, TieIn } from "../types/comic.interfaces.ts";
-import { SerieEditForm } from "../../src/types/series.interfaces.ts";
-import { Literatures } from "../types/electron-auxiliar.interfaces.ts";
+import { IpcMain } from 'electron';
+import StorageManager from '../services/StorageManager.ts';
+import CollectionsManager from '../services/CollectionManager';
+import FileManager from '../services/FileManager.ts';
+import ImageManager from '../services/ImageManager.ts';
+import UserManager from '../services/UserManager.ts';
+import TieInManager from '../services/TieInManager.ts';
+import { ComicTieIn, TieIn } from '../types/comic.interfaces.ts';
+import { SerieEditForm } from '../../src/types/series.interfaces.ts';
+import { Literatures } from '../types/electron-auxiliar.interfaces.ts';
 
 export default function seriesHandlers(ipcMain: IpcMain) {
   const tieIn = new TieInManager();
@@ -17,11 +17,11 @@ export default function seriesHandlers(ipcMain: IpcMain) {
   const fileManager = new FileManager();
   const collectionManager = new CollectionsManager();
 
-  ipcMain.handle("web:readFileAsDataUrl", async (_evt, rawPath: string) => {
+  ipcMain.handle('web:readFileAsDataUrl', async (_evt, rawPath: string) => {
     return await imageManager.readFileAsDataUrl(rawPath);
   });
 
-  ipcMain.handle("serie:get-all", async () => {
+  ipcMain.handle('serie:get-all', async () => {
     try {
       const getData = await storageManager.seriesData();
 
@@ -38,14 +38,14 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         }),
       );
 
-      return { success: true, data: procesData, error: " " };
+      return { success: true, data: procesData, error: ' ' };
     } catch (e) {
       console.error(`Falha em recuperar todas as séries: ${e}`);
-      return { success: false, data: "", error: String(e) };
+      return { success: false, data: '', error: String(e) };
     }
   });
 
-  ipcMain.handle("serie:manga-serie", async (_event, serieName: string) => {
+  ipcMain.handle('serie:manga-serie', async (_event, serieName: string) => {
     try {
       const data = await storageManager.selectMangaData(serieName);
 
@@ -54,14 +54,14 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         coverImage: await imageManager.encodeImage(data.coverImage),
       };
 
-      return { success: true, data: processedData, error: " " };
+      return { success: true, data: processedData, error: ' ' };
     } catch (e) {
-      console.error("Erro ao buscar dados da series:", e);
+      console.error('Erro ao buscar dados da series:', e);
       return { success: false, error: String(e) };
     }
   });
 
-  ipcMain.handle("serie:comic-serie", async (_event, serieName: string) => {
+  ipcMain.handle('serie:comic-serie', async (_event, serieName: string) => {
     try {
       const data = await storageManager.selectComicData(serieName);
 
@@ -69,9 +69,9 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         ? await Promise.all(
             data.chapters.map(async (chapter) => {
               const encodedCover =
-                typeof chapter.coverImage === "string"
+                typeof chapter.coverImage === 'string'
                   ? await imageManager.encodeImage(chapter.coverImage)
-                  : "";
+                  : '';
 
               return {
                 ...chapter,
@@ -86,7 +86,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
             data.childSeries.map(async (tieIn) => {
               const encodedCover = tieIn.coverImage
                 ? await imageManager.encodeImage(tieIn.coverImage)
-                : "";
+                : '';
 
               return {
                 ...tieIn,
@@ -103,19 +103,19 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         childSeries: updatedChildSeries,
       };
 
-      return { success: true, data: processedData, error: "" };
+      return { success: true, data: processedData, error: '' };
     } catch (error) {
-      console.error("Erro ao buscar dados da series:", error);
+      console.error('Erro ao buscar dados da series:', error);
       throw error;
     }
   });
 
-  ipcMain.handle("serie:get-TieIn", async (_event, serieName: string) => {
+  ipcMain.handle('serie:get-TieIn', async (_event, serieName: string) => {
     try {
       const dataPath = await fileManager.getDataPath(serieName);
       const data = await storageManager.selectTieInData(serieName);
 
-      if (!data) throw new Error("Data nao encontrada no Handle");
+      if (!data) throw new Error('Data nao encontrada no Handle');
 
       const updatedChapters = data.chapters
         ? await Promise.all(
@@ -136,14 +136,14 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         chapters: updatedChapters,
       };
 
-      return { success: true, data: processedData, error: "" };
+      return { success: true, data: processedData, error: '' };
     } catch (e) {
       return { success: false, data: null, error: e };
     }
   });
 
   ipcMain.handle(
-    "serie:add-to-collection",
+    'serie:add-to-collection',
     async (_event, dataPath: string, collectionName: string) => {
       try {
         const serieData = (await storageManager.readSerieData(
@@ -176,7 +176,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
   );
 
   ipcMain.handle(
-    "serie:rating",
+    'serie:rating',
     async (_event, dataPath: string, userRating: number) => {
       try {
         const serieData = (await storageManager.readSerieData(
@@ -200,7 +200,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     },
   );
 
-  ipcMain.handle("serie:favorite", async (_event, dataPath: string) => {
+  ipcMain.handle('serie:favorite', async (_event, dataPath: string) => {
     try {
       const serieData = (await storageManager.readSerieData(
         dataPath,
@@ -214,7 +214,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
   });
 
   ipcMain.handle(
-    "serie:recent-read",
+    'serie:recent-read',
     async (_event, dataPath: string, serie_name: string) => {
       try {
         const dPath = serie_name
@@ -233,7 +233,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
   );
 
   ipcMain.handle(
-    "serie:create-TieIn",
+    'serie:create-TieIn',
     async (_event, childSerie: ComicTieIn) => {
       try {
         const data = (await storageManager.readSerieData(
@@ -247,35 +247,14 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         return {
           success: true,
           data: `/TieIn/${encodeURIComponent(data.name)}`,
-          error: "",
+          error: '',
         };
       } catch (e) {
         console.error(`Falha em criar as capas da Tie-In`);
-        return { success: false, error: "falha em gerar Tie-In " };
+        return { success: false, error: 'falha em gerar Tie-In ' };
       }
     },
   );
-
-  ipcMain.handle("serie:edit-serie", async (_event, serieName: string) => {
-    try {
-      const dataResponse = await storageManager.getSerieData(serieName);
-
-      if (!dataResponse.success || !dataResponse.data) {
-        throw new Error("Erro na requisição original");
-      }
-
-      const oldData: Literatures = dataResponse.data as Literatures;
-
-      const newData = {
-        ...oldData,
-        coverImage: await imageManager.encodeImage(oldData.coverImage),
-      };
-
-      return { success: true, data: newData };
-    } catch (e) {
-      console.error(`Falha em encontrar a serie: ${serieName}`);
-    }
-  });
 
   // Esse código por acaso é meu?
   // ipcMain.handle('serie:update-serie', async (_event, data: SerieEditForm) => {

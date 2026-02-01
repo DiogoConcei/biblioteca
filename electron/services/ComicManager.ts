@@ -1,15 +1,15 @@
-import path from "path";
+import path from 'path';
 
-import LibrarySystem from "./abstract/LibrarySystem";
-import FileManager from "./FileManager";
-import StorageManager from "./StorageManager";
-import ImageManager from "./ImageManager";
-import TieInManager from "./TieInManager";
-import CollectionManager from "./CollectionManager";
+import LibrarySystem from './abstract/LibrarySystem';
+import FileManager from './FileManager';
+import StorageManager from './StorageManager';
+import ImageManager from './ImageManager';
+import TieInManager from './TieInManager';
+import CollectionManager from './CollectionManager';
 
-import { Comic, ComicEdition, ComicTieIn } from "../types/comic.interfaces";
+import { Comic, ComicEdition, ComicTieIn } from '../types/comic.interfaces';
 
-import { SerieData, SerieForm } from "../../src/types/series.interfaces";
+import { SerieData, SerieForm } from '../../src/types/series.interfaces';
 
 export default class ComicManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -69,7 +69,7 @@ export default class ComicManager extends LibrarySystem {
       orderComics.map(async (comicPath, idx) => {
         const fileName = path
           .basename(comicPath, path.extname(comicPath))
-          .replaceAll("#", "");
+          .replaceAll('#', '');
         const sanitizedName = this.fileManager.sanitizeFilename(fileName);
 
         return {
@@ -96,7 +96,7 @@ export default class ComicManager extends LibrarySystem {
   ): Promise<ComicEdition> {
     const fileName = path
       .basename(archivePath, path.extname(archivePath))
-      .replaceAll("#", "");
+      .replaceAll('#', '');
     const sanitizedName = this.fileManager.sanitizeFilename(fileName);
 
     return {
@@ -175,7 +175,7 @@ export default class ComicManager extends LibrarySystem {
     )) as Comic;
 
     if (!comicData.chapters) {
-      throw new Error("Serie não possui capitulos.");
+      throw new Error('Serie não possui capitulos.');
     }
 
     const editionToProces = comicData.chapters.find(
@@ -188,7 +188,7 @@ export default class ComicManager extends LibrarySystem {
 
     await this.generateChapter(editionToProces);
 
-    editionToProces.isDownloaded = "downloaded";
+    editionToProces.isDownloaded = 'downloaded';
     comicData.metadata.lastDownload = editionToProces.id;
     await this.storageManager.updateSerieData(comicData);
   }
@@ -201,32 +201,32 @@ export default class ComicManager extends LibrarySystem {
       const comic = await this.storageManager.readSerieData(dataPath);
 
       if (!comic.chapters || comic.chapters.length === 0) {
-        throw new Error("Nenhum capítulo encontrado.");
+        throw new Error('Nenhum capítulo encontrado.');
       }
 
       const chapter = comic.chapters.find((chap) => chap.id === chapter_id);
 
       if (!chapter || !chapter.chapterPath) {
-        throw new Error("Capítulo não encontrado ou caminho inválido.");
+        throw new Error('Capítulo não encontrado ou caminho inválido.');
       }
 
       const imageFiles = await this.fileManager.searchImages(
         chapter.chapterPath,
       );
 
-      for (let idx = 0; idx < imageFiles.length; idx++) {
-        const imageFile = imageFiles[idx];
+      const validImages = [];
 
-        if (!(await this.imageManager.isImage(imageFile))) {
-          return [];
+      for (const file of imageFiles) {
+        if (await this.imageManager.isImage(file)) {
+          validImages.push(file);
         }
       }
 
-      const processedImages = await this.imageManager.encodeImages(imageFiles);
+      const processedImages = await this.imageManager.encodeImages(validImages);
 
       return processedImages;
     } catch (error) {
-      console.error("Não foi possível encontrar a edição do quadrinho:", error);
+      console.error('Não foi possível encontrar a edição do quadrinho:', error);
       throw error;
     }
   }
@@ -241,7 +241,7 @@ export default class ComicManager extends LibrarySystem {
     )) as Comic;
 
     if (!serieData.chapters)
-      throw new Error("Dados do capítulo não encontrandos.");
+      throw new Error('Dados do capítulo não encontrandos.');
 
     const rawChapters = await this.createNewEdition(
       filesPath,
@@ -331,14 +331,17 @@ export default class ComicManager extends LibrarySystem {
     const normalized = path.resolve(chapter.archivesPath);
     const ext = path.extname(normalized);
 
+    const rawName = chapter.name;
+    const safeName = this.fileManager.sanitizeDirName(rawName);
+
     const chapterOut = await this.fileManager.buildChapterPath(
       this.comicsImages,
       chapter.serieName,
-      chapter.name,
+      safeName,
     );
 
     try {
-      if (ext === ".pdf") {
+      if (ext === '.pdf') {
         await this.storageManager.convertPdf_overdrive(normalized, chapterOut);
       } else {
         await this.storageManager.extractWith7zip(normalized, chapterOut);
@@ -401,17 +404,17 @@ export default class ComicManager extends LibrarySystem {
       language: serie.language,
       literatureForm: serie.literatureForm,
       chaptersRead: 0,
-      readingData: { lastChapterId: 1, lastReadAt: "" },
+      readingData: { lastChapterId: 1, lastReadAt: '' },
       chapters: [],
       childSeries: [],
       metadata: {
         status: serie.readingStatus,
         collections: serie.collections,
-        recommendedBy: "",
-        originalOwner: "",
+        recommendedBy: '',
+        originalOwner: '',
         lastDownload: 0,
         rating: 0,
-        isFavorite: serie.collections.includes("Favoritas"),
+        isFavorite: serie.collections.includes('Favoritas'),
         privacy: serie.privacy,
         autoBackup: serie.autoBackup,
         compiledComic: totalChapters ? false : true,
@@ -425,18 +428,19 @@ export default class ComicManager extends LibrarySystem {
 
   private mountEmptyEdition(serieName: string, fileName: string): ComicEdition {
     const createdAt = new Date().toISOString();
+    const safeName = this.fileManager.sanitizeDirName(fileName);
 
     return {
       id: 0,
       serieName: serieName,
-      name: fileName,
-      coverImage: "",
-      sanitizedName: "",
-      archivesPath: "",
-      chapterPath: "",
+      name: safeName,
+      coverImage: '',
+      sanitizedName: '',
+      archivesPath: '',
+      chapterPath: '',
       createdAt,
       isRead: false,
-      isDownloaded: "not_downloaded",
+      isDownloaded: 'not_downloaded',
       page: {
         lastPageRead: 0,
         favoritePage: 0,
@@ -445,39 +449,49 @@ export default class ComicManager extends LibrarySystem {
   }
 }
 
-(async () => {
-  const name = "14 Poderosos Vingadores";
-  const fManager = new FileManager();
-  const cManager = new ComicManager();
+// (async () => {
+//   // const name = '12 A Morte do Capitão America';
+//   const fManager = new FileManager();
+//   const cManager = new ComicManager();
+//   const sT = new StorageManager();
+//   const dataPath =
+//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Comics\\07 - Dinastia M - Completa ( + Tie-ins ).json';
+//   const data = (await sT.readSerieData(dataPath)) as Comic;
+//   if (!data.chapters) return;
 
-  const preData: SerieData = {
-    name,
-    newPath:
-      "C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\user library",
-    oldPath: "C:\\Users\\diogo\\Downloads\\Arquivos\\14 Poderosos Vingadores",
-    sanitizedName: fManager.sanitizeFilename(name),
-    createdAt: new Date().toISOString(),
-  };
+//   // const preData: SerieData = {
+//   //   name,
+//   //   newPath:
+//   //     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\user library',
+//   //   oldPath:
+//   //     'C:\\Users\\diogo\\Downloads\\Arquivos\\12 A Morte do Capitão America',
+//   //   sanitizedName: fManager.sanitizeFilename(name),
+//   //   createdAt: new Date().toISOString(),
+//   // };
 
-  const data: SerieForm = {
-    autoBackup: "Sim",
-    chaptersPath: "",
-    collections: ["Marvel"],
-    cover_path: "C:\\Users\\diogo\\Downloads\\Imagens\\migt.jpg",
-    createdAt: preData.createdAt,
-    deletedAt: "",
-    literatureForm: "Quadrinho",
-    name,
-    oldPath: preData.oldPath,
-    privacy: "Publica",
-    readingStatus: "Pendente",
-    sanitizedName: preData.sanitizedName,
-    tags: [],
-    author: "Desconhecido",
-    genre: "Super Herói",
-    language: "Português",
-    archivesPath: path.join(preData.newPath, preData.name),
-  };
+//   // const data: SerieForm = {
+//   //   autoBackup: 'Sim',
+//   //   chaptersPath: '',
+//   //   collections: ['Marvel'],
+//   //   cover_path: 'C:\\Users\\diogo\\Downloads\\Imagens\\Dream.jpg',
+//   //   createdAt: preData.createdAt,
+//   //   deletedAt: '',
+//   //   literatureForm: 'Quadrinho',
+//   //   name,
+//   //   oldPath: preData.oldPath,
+//   //   privacy: 'Publica',
+//   //   readingStatus: 'Pendente',
+//   //   sanitizedName: preData.sanitizedName,
+//   //   tags: [],
+//   //   author: 'Desconhecido',
+//   //   genre: 'Super Herói',
+//   //   language: 'Português',
+//   //   archivesPath: path.join(preData.newPath, preData.name),
+//   // };
 
-  await cManager.createComicSerie(data);
-})();
+//   data.chapters = await cManager.createEditions(data.name, data.archivesPath);
+//   await cManager.createEditionCovers(data.archivesPath, data.chapters);
+//   await sT.updateSerieData(data);
+
+//   // await cManager.createChapterById(data.dataPath, 29);
+// })();

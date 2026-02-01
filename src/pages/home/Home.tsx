@@ -38,7 +38,6 @@ export default function Home() {
     try {
       const response = await window.electronAPI.upload.processSerie(filePaths);
       const serieData = response.data;
-      console.log(serieData);
       navigate('/local-upload/serie', { state: { serieData } });
     } catch (error) {
       console.error('Erro ao carregar arquivos', error);

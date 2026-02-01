@@ -1,13 +1,12 @@
-import path from "path";
-import sharp from "sharp";
-import mime from "mime-types";
-import { fileTypeFromBuffer } from "file-type";
-import fse from "fs-extra";
-
-import LibrarySystem from "./abstract/LibrarySystem";
-import StorageManager from "./StorageManager.ts";
-import FileManager from "./FileManager";
-import { ComicEdition } from "../types/comic.interfaces.ts";
+import path from 'path';
+import sharp from 'sharp';
+import mime from 'mime-types';
+import { fileTypeFromBuffer } from 'file-type';
+import fse from 'fs-extra';
+import LibrarySystem from './abstract/LibrarySystem';
+import StorageManager from './StorageManager.ts';
+import FileManager from './FileManager';
+import { ComicEdition } from '../types/comic.interfaces.ts';
 
 export default class ImageManager extends LibrarySystem {
   private readonly storageManager: StorageManager = new StorageManager();
@@ -17,16 +16,17 @@ export default class ImageManager extends LibrarySystem {
     imagePath: string,
     finalPath: string,
   ): Promise<string> {
-    const normalizedPath = path.resolve(imagePath);
+    const sanitizedPath = await this.fileManager.normalizeEncoding(imagePath);
+    const normalizedPath = path.resolve(sanitizedPath);
     const parse = path.parse(imagePath);
 
-    if (parse.ext === ".xml") {
+    if (parse.ext === '.xml') {
       return imagePath;
     }
 
     // Acho que HOJE eu faço o processamento da capa duas vezes
     // Isso é algo que tem que ser averiguado
-    if (parse.ext === ".webp" && parse.dir === this.showcaseImages) {
+    if (parse.ext === '.webp' && parse.dir === this.showcaseImages) {
       return normalizedPath;
     }
 
@@ -38,30 +38,31 @@ export default class ImageManager extends LibrarySystem {
 
     try {
       sharp.cache(false);
-
       const destPath = this.fileManager.buildImagePath(
         finalPath,
         parse.name,
-        ".webp",
+        '.webp',
       );
 
       const dir = path.dirname(destPath);
       await fse.ensureDir(dir);
-
       if (await fse.pathExists(destPath)) {
         return destPath;
       }
-
-      if (parse.ext === ".webp") {
+      if (parse.ext === '.webp') {
         return normalizedPath;
       }
 
       imageInstance = sharp(normalizedPath);
 
+      if (!(await fse.pathExists(normalizedPath))) {
+        throw new Error(`Arquivo de origem não existe: ${normalizedPath}`);
+      }
+
       await imageInstance.webp({ quality: 85 }).toFile(destPath);
       return destPath;
     } catch (e) {
-      console.error(`Erro ao validar formato da imagem ${imagePath}:`, e);
+      console.error(`Erro ao normalizar formato da imagem ${imagePath}:`, e);
       throw e;
     } finally {
       if (imageInstance) {
@@ -78,7 +79,7 @@ export default class ImageManager extends LibrarySystem {
       throw new Error(`Formato de imagem não suportado: ${normalizedPath}`);
     }
 
-    if (parse.ext === ".webp") {
+    if (parse.ext === '.webp') {
       return normalizedPath;
     }
 
@@ -88,7 +89,7 @@ export default class ImageManager extends LibrarySystem {
       const finalPath = this.fileManager.buildImagePath(
         parse.dir,
         parse.name,
-        ".webp",
+        '.webp',
       );
 
       sharp.cache(false);
@@ -100,7 +101,7 @@ export default class ImageManager extends LibrarySystem {
 
       return finalPath;
     } catch (e) {
-      console.error("Erro ao normalizar capa:", e);
+      console.error('Erro ao normalizar capa:', e);
       throw e;
     } finally {
       if (imageInstance) {
@@ -108,36 +109,42 @@ export default class ImageManager extends LibrarySystem {
       }
     }
   }
-
   public async readFileAsDataUrl(rawPath: string): Promise<string> {
     const buf = await fse.promises.readFile(rawPath);
-    const mimeType = mime.lookup(rawPath) || "application/octet-stream";
-    return `data:${mimeType};base64,${buf.toString("base64")}`;
+    const mimeType = mime.lookup(rawPath) || 'application/octet-stream';
+    return `data:${mimeType};base64,${buf.toString('base64')}`;
   }
 
+  // chapOut === dirPath
   public async normalizeChapter(dirPath: string): Promise<void> {
     try {
       const entries = await fse.readdir(dirPath, { withFileTypes: true });
 
       const dirs = entries
         .filter((e) => e.isDirectory())
-        .map((d) => path.join(dirPath, d.name));
+        .map((e) => path.join(dirPath, e.name));
 
-      const imageEntries = (
-        await Promise.all(
-          dirs.map((d) => this.storageManager.fixComicDir(d, dirPath)),
-        )
-      ).flat();
+      for (const dir of dirs) {
+        await this.storageManager.fixComicDir(dir, dirPath);
+      }
 
+      const files = await fse.readdir(dirPath, { withFileTypes: true });
       await Promise.all(
-        imageEntries.map((imageEntry) =>
-          this.normalizeImage(imageEntry, dirPath),
-        ),
+        files.map(async (file) => {
+          let filePath = path.join(dirPath, file.name);
+          if (filePath.length > 240) {
+            filePath = await this.fileManager.normalizePath(filePath);
+          }
+
+          if (await this.isImage(filePath)) {
+            await this.normalizeImage(filePath, dirPath);
+          }
+        }),
       );
 
       await this.clearChapter(dirPath);
     } catch (e) {
-      console.error(`Falha em normalizar diretório: ${e}`);
+      console.error(`Falha em normalizar diretorio: ${e}`);
       throw e;
     }
   }
@@ -161,7 +168,7 @@ export default class ImageManager extends LibrarySystem {
         }),
       );
     } catch (e) {
-      console.error("Falha em limpar os arquivos do capítulo:", e);
+      console.error('Falha em limpar os arquivos do capítulo:', e);
     }
   }
 
@@ -171,11 +178,11 @@ export default class ImageManager extends LibrarySystem {
       const type = await fileTypeFromBuffer(buffer);
       if (!type) return false;
       return [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/tiff",
-        "image/gif",
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/tiff',
+        'image/gif',
       ].includes(type.mime);
     } catch {
       return false;
@@ -183,29 +190,30 @@ export default class ImageManager extends LibrarySystem {
   }
 
   public async generateCover(
-    imagePath: string,
+    inputFile: string,
     outputPath: string,
   ): Promise<string> {
-    if (!imagePath) return "";
-    let resultCover: string = "";
-    const ext = path.extname(imagePath);
+    if (!inputFile) return '';
+    let resultCover: string = '';
+    const ext = path.extname(inputFile);
 
     try {
-      if (ext === ".pdf") {
+      if (ext === '.pdf') {
         resultCover = await this.storageManager.extractCoverFromPdf(
-          imagePath,
+          inputFile,
           outputPath,
         );
       } else {
         resultCover = await this.storageManager.extractCoverWith7zip(
-          imagePath,
+          inputFile,
           outputPath,
         );
       }
 
       return await this.normalizeCover(resultCover);
     } catch (e) {
-      throw new Error("Falha em gerar cover");
+      console.error('Falha em gerar capas: ', e);
+      return '';
     }
   }
 
@@ -220,13 +228,13 @@ export default class ImageManager extends LibrarySystem {
             throw new Error(`Arquivo não é uma imagem válida: ${filePath}`);
           }
 
-          return `data:${mimeType};base64,${buffer.toString("base64")}`;
+          return `data:${mimeType};base64,${buffer.toString('base64')}`;
         }),
       );
 
       return codedImages;
     } catch (e) {
-      console.error("Falha em codificar as imagens", e);
+      console.error('Falha em codificar as imagens', e);
       return [];
     }
   }
@@ -240,10 +248,10 @@ export default class ImageManager extends LibrarySystem {
         throw new Error(`Arquivo não é uma imagem válida: ${filePath}`);
       }
 
-      return `data:${mimeType};base64,${buffer.toString("base64")}`;
+      return `data:${mimeType};base64,${buffer.toString('base64')}`;
     } catch (e) {
-      console.error("Falha em codificar as imagens", e);
-      return "";
+      console.error('Falha em codificar as imagens', e);
+      return '';
     }
   }
 
@@ -269,7 +277,7 @@ export default class ImageManager extends LibrarySystem {
       const buffer = await fse.readFile(filePath);
       const type = await fileTypeFromBuffer(buffer);
 
-      if (type?.mime?.startsWith("image/")) {
+      if (type?.mime?.startsWith('image/')) {
         return type.mime;
       }
 

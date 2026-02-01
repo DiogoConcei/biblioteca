@@ -62,9 +62,6 @@ declare global {
         getTieIn: (
           SerieName: string,
         ) => Promise<APIResponse<childSerie | null>>;
-        getSerieData: (
-          serieName: string,
-        ) => Promise<APIResponse<Literatures | null>>;
         createTieIn: (
           childSerie: ComicTieIn,
         ) => Promise<APIResponse<string | null>>;
