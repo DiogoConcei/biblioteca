@@ -95,6 +95,10 @@ export default class TieInManager extends LibrarySystem {
     try {
       const comic = await this.storageManager.readSerieData(dataPath);
 
+      if (!comic) {
+        return [];
+      }
+
       if (!comic.chapters || comic.chapters.length === 0) {
         throw new Error('Nenhum capítulo encontrado.');
       }
@@ -126,7 +130,7 @@ export default class TieInManager extends LibrarySystem {
   }
 
   public async createChapterById(dataPath: string, chapter_id: number) {
-    const comicData = (await this.storageManager.readSerieData(
+    const comicData = (await this.storageManager.readTieInData(
       dataPath,
     )) as TieIn;
 
@@ -146,7 +150,7 @@ export default class TieInManager extends LibrarySystem {
 
     editionToProces.isDownloaded = 'downloaded';
     comicData.metadata.lastDownload = editionToProces.id;
-    await this.storageManager.updateSerieData(comicData);
+    await this.storageManager.writeData(comicData);
   }
 
   private async generateChapter(chapter: ComicEdition) {
@@ -232,7 +236,7 @@ export default class TieInManager extends LibrarySystem {
   public async createTieCovers(dataPath: string): Promise<void> {
     if (!(await this.isCreated(dataPath))) return;
 
-    const tieInData = (await this.storageManager.readSerieData(
+    const tieInData = (await this.storageManager.readTieInData(
       dataPath,
     )) as TieIn;
 
@@ -279,7 +283,7 @@ export default class TieInManager extends LibrarySystem {
       dataPath: child.dataPath,
     };
 
-    await this.storageManager.writeSerieData(tieIn);
+    await this.storageManager.writeData(tieIn);
   }
 
   public async createChilds(

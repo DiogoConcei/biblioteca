@@ -71,7 +71,13 @@ export default class SystemManager extends LibrarySystem {
     const dataPaths = await this.fileManager.getDataPaths();
 
     const rawSeries = await Promise.all(
-      dataPaths.map((rawData) => this.storageManager.readSerieData(rawData)),
+      dataPaths.map(async (rawData) => {
+        let response = await this.storageManager.readSerieData(rawData);
+
+        if (!response) return { id: -1 } as Literatures;
+
+        return response;
+      }),
     );
 
     rawSeries.sort((a, b) => {
@@ -99,7 +105,7 @@ export default class SystemManager extends LibrarySystem {
         item.id = lastId;
         usedIds.add(item.id);
 
-        await this.storageManager.updateSerieData(item);
+        await this.storageManager.writeData(item);
       }
     }
 
@@ -130,7 +136,7 @@ export default class SystemManager extends LibrarySystem {
       }
     }
 
-    await this.storageManager.updateSerieData(serieData);
+    await this.storageManager.writeData(serieData);
   }
 
   public async fixMangaOrder(serieData: Literatures | TieIn) {
@@ -171,7 +177,7 @@ export default class SystemManager extends LibrarySystem {
       };
     });
 
-    await this.storageManager.updateSerieData(serieData);
+    await this.storageManager.writeData(serieData);
   }
 
   public async fixComicOrder(serieData: Literatures | TieIn) {
@@ -212,7 +218,7 @@ export default class SystemManager extends LibrarySystem {
       };
     });
 
-    await this.storageManager.updateSerieData(serieData);
+    await this.storageManager.writeData(serieData);
   }
 }
 

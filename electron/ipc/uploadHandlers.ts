@@ -1,12 +1,12 @@
-import { IpcMain } from "electron";
-import { SerieData, SerieForm } from "../../src/types/series.interfaces.ts";
+import { IpcMain } from 'electron';
+import { SerieData, SerieForm } from '../../src/types/series.interfaces.ts';
 import {
   APIResponse,
   LiteratureChapter,
-} from "../types/electron-auxiliar.interfaces.ts";
-import MangaManager from "../services/MangaManager.ts";
-import StorageManager from "../services/StorageManager.ts";
-import ComicManager from "../services/ComicManager.ts";
+} from '../types/electron-auxiliar.interfaces.ts';
+import MangaManager from '../services/MangaManager.ts';
+import StorageManager from '../services/StorageManager.ts';
+import ComicManager from '../services/ComicManager.ts';
 
 export default function uploadHandlers(ipcMain: IpcMain) {
   const storageManager = new StorageManager();
@@ -14,27 +14,27 @@ export default function uploadHandlers(ipcMain: IpcMain) {
   const mangaManager = new MangaManager();
 
   ipcMain.handle(
-    "upload:process-data",
+    'upload:process-data',
     async (_event, filePaths: unknown): Promise<APIResponse<SerieData[]>> => {
       if (!Array.isArray(filePaths) || filePaths.length === 0) {
         return {
           success: false,
-          error: "Nenhum arquivo foi selecionado para upload.",
+          error: 'Nenhum arquivo foi selecionado para upload.',
         };
       }
 
-      const paths = filePaths.filter((p): p is string => typeof p === "string");
+      const paths = filePaths.filter((p): p is string => typeof p === 'string');
 
       if (!paths.length) {
         return {
           success: false,
-          error: "Os caminhos de arquivos estão inválidos.",
+          error: 'Os caminhos de arquivos estão inválidos.',
         };
       }
 
       try {
         const processed = await Promise.all(
-          paths.map((seriePath) => storageManager.preProcessedData(seriePath)),
+          paths.map((seriePath) => storageManager.processData(seriePath)),
         );
         return { success: true, data: processed };
       } catch (err) {
@@ -44,39 +44,39 @@ export default function uploadHandlers(ipcMain: IpcMain) {
   );
 
   ipcMain.handle(
-    "upload:process-serie",
+    'upload:process-serie',
     async (_event, serieData: SerieForm): Promise<APIResponse<null>> => {
-      if (typeof serieData !== "object" || serieData === null) {
-        return { success: false, error: "Dados da série inválidos." };
+      if (typeof serieData !== 'object' || serieData === null) {
+        return { success: false, error: 'Dados da série inválidos.' };
       }
 
       try {
         switch (serieData.literatureForm) {
-          case "Manga":
+          case 'Manga':
             await mangaManager.createMangaSerie(serieData);
             break;
-          case "Quadrinho":
+          case 'Quadrinho':
             await comicManager.createComicSerie(serieData);
             break;
           default:
-            throw new Error("Tipo de literatura inválido");
+            throw new Error('Tipo de literatura inválido');
         }
 
         return { success: true };
       } catch (err) {
-        console.error("Erro ao criar a série:", err);
+        console.error('Erro ao criar a série:', err);
         return { success: false, error: (err as Error).message };
       }
     },
   );
 
   ipcMain.handle(
-    "upload:process-series",
+    'upload:process-series',
     async (_event, seriesData: SerieForm[]): Promise<APIResponse<void>> => {
       if (!Array.isArray(seriesData)) {
         return {
           success: false,
-          error: "Payload inválido: esperado um array de séries.",
+          error: 'Payload inválido: esperado um array de séries.',
         };
       }
 
@@ -85,21 +85,21 @@ export default function uploadHandlers(ipcMain: IpcMain) {
       for (let i = 0; i < seriesData.length; i++) {
         const s = seriesData[i];
 
-        if (!s || typeof s !== "object") {
+        if (!s || typeof s !== 'object') {
           errors.push({
             index: i,
-            message: "Item inválido (não é um objeto).",
+            message: 'Item inválido (não é um objeto).',
           });
           continue;
         }
 
         try {
           switch (s.literatureForm) {
-            case "Manga":
+            case 'Manga':
               await mangaManager.createMangaSerie(s);
               break;
 
-            case "Quadrinho":
+            case 'Quadrinho':
               await comicManager.createComicSerie(s);
               break;
 
@@ -125,8 +125,8 @@ export default function uploadHandlers(ipcMain: IpcMain) {
           success: false,
           error: `Algumas séries falharam. Exemplos: ${errors
             .slice(0, 5)
-            .map((e) => `#${e.index}(${e.name ?? "—"}): ${e.message}`)
-            .join(" ; ")}`,
+            .map((e) => `#${e.index}(${e.name ?? '—'}): ${e.message}`)
+            .join(' ; ')}`,
         };
       }
 
@@ -135,7 +135,7 @@ export default function uploadHandlers(ipcMain: IpcMain) {
   );
 
   ipcMain.handle(
-    "chapter:upload-chapter",
+    'chapter:upload-chapter',
     async (
       _event,
       filesPath: string[],
@@ -145,20 +145,20 @@ export default function uploadHandlers(ipcMain: IpcMain) {
       let processedFiles: LiteratureChapter[] = [];
 
       switch (literatureForm) {
-        case "Manga":
+        case 'Manga':
           processedFiles = await mangaManager.updateChapters(
             filesPath,
             dataPath,
           );
           break;
-        case "Quadrinho":
+        case 'Quadrinho':
           processedFiles = await comicManager.updateEditions(
             filesPath,
             dataPath,
           );
           break;
         default:
-          throw new Error("Tipo de literature inválido");
+          throw new Error('Tipo de literature inválido');
       }
 
       return { success: true, data: processedFiles };

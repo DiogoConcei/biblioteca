@@ -2,18 +2,25 @@ import LibrarySystem from './abstract/LibrarySystem';
 import FileManager from './FileManager';
 
 import {
-  APIResponse,
   LiteratureChapter,
   Literatures,
   viewData,
 } from '../types/electron-auxiliar.interfaces';
 import { Comic, TieIn } from '../types/comic.interfaces';
 import { Manga } from '../types/manga.interfaces';
+import { SerieData, SerieEditForm } from '../../src/types/series.interfaces';
+
 import fse from 'fs-extra';
 import path from 'path';
-import { SerieData } from '../../src/types/series.interfaces';
+import { randomBytes } from 'crypto';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { createCanvas } from '@napi-rs/canvas';
+import { promisify } from 'util';
+import { exec } from 'child_process';
 
 export default class StorageManager extends LibrarySystem {
+  private readonly SEVEN_ZIP_PATH = 'C:\\Program Files\\7-Zip\\7z';
+  private readonly execAsync = promisify(exec);
   private readonly fileManager: FileManager = new FileManager();
 
   constructor() {
@@ -237,6 +244,292 @@ export default class StorageManager extends LibrarySystem {
     };
   }
 
+  public async extractCoverFromPdf(
+    inputFile: string,
+    outputDir: string,
+  ): Promise<string> {
+    try {
+      await fse.ensureDir(outputDir);
+
+      const data = await fse.readFile(inputFile);
+
+      const loadingTask = pdfjsLib.getDocument({
+        data: new Uint8Array(data),
+        // @ts-ignore
+        disableWorker: true,
+      });
+
+      const pdf = await loadingTask.promise;
+
+      const page = await pdf.getPage(1);
+
+      const scale = 1.5;
+      const viewport = page.getViewport({ scale });
+
+      const canvas = createCanvas(viewport.width, viewport.height);
+      const context = canvas.getContext('2d');
+
+      await page.render({
+        canvas: canvas as unknown as HTMLCanvasElement,
+        canvasContext: context as unknown as CanvasRenderingContext2D,
+        viewport,
+      }).promise;
+
+      const suffix = randomBytes(3).toString('hex');
+      const finalPath = this.fileManager.buildImagePath(
+        outputDir,
+        `cover_${suffix}`,
+        '.jpg',
+      );
+
+      const buffer = canvas.toBuffer('image/jpeg', 0.85);
+      await fse.writeFile(finalPath, buffer);
+
+      return finalPath;
+    } catch (e) {
+      console.error('Falha na conversão de PDF -> Imagem', e);
+      throw e;
+    }
+  }
+
+  public async extractWith7zip(
+    inputFile: string,
+    outputDir: string,
+  ): Promise<void> {
+    try {
+      await fse.mkdir(outputDir, { recursive: true });
+      const extractCmd = `"${this.SEVEN_ZIP_PATH}" x "${inputFile}" -o"${outputDir}" -y`;
+
+      try {
+        await this.execAsync(extractCmd);
+      } catch (err: any) {
+        if (
+          err?.code === 2 &&
+          typeof err.stderr === 'string' &&
+          err.stderr.includes('CRC Failed')
+        ) {
+          console.warn(
+            '⚠️ Extração concluída com erros de CRC. Alguns arquivos podem estar corrompidos.',
+          );
+        } else {
+          throw err;
+        }
+      }
+    } catch (e) {
+      console.error(`Falha em descompactar arquivos: ${e}`);
+      throw e;
+    }
+  }
+
+  public async extractCoverWith7zip(
+    inputFile: string,
+    outputDir: string,
+  ): Promise<string> {
+    try {
+      await fse.mkdir(outputDir, { recursive: true });
+
+      const { stdout } = await this.execAsync(
+        `"${this.SEVEN_ZIP_PATH}" l "${inputFile}"`,
+      );
+
+      const filesInArchive = this.parse7zList(stdout);
+
+      if (filesInArchive.length === 0) {
+        throw new Error('Arquivo compactado está vazio.');
+      }
+
+      const candidateName = this.fileManager.findFirstCoverFile(
+        filesInArchive.map((f) => path.basename(f)),
+      );
+
+      if (!candidateName) {
+        return '';
+      }
+
+      const candidatePath = filesInArchive.find(
+        (f) => path.basename(f) === candidateName,
+      );
+
+      if (!candidatePath) {
+        throw new Error(
+          'Candidato encontrado, mas path interno não localizado.',
+        );
+      }
+
+      const normalizedCandidate = path.normalize(candidatePath);
+
+      if (normalizedCandidate.startsWith('..')) {
+        throw new Error('Path interno inválido no arquivo compactado.');
+      }
+
+      const ext = path.extname(normalizedCandidate);
+      const baseName = path.basename(normalizedCandidate, ext);
+      const safeBase = baseName.replace(/[. ]+$/, '');
+      const suffix = randomBytes(3).toString('hex');
+
+      const finalPath = this.fileManager.buildImagePath(
+        outputDir,
+        `${safeBase}_${suffix}`,
+        ext,
+      );
+
+      try {
+        await this.execAsync(
+          `"${this.SEVEN_ZIP_PATH}" x "${inputFile}" "${normalizedCandidate}" -o"${outputDir}" -y`,
+        );
+      } catch (err: any) {
+        if (
+          err?.code !== 2 ||
+          typeof err.stderr !== 'string' ||
+          !err.stderr.includes('CRC Failed')
+        ) {
+          throw err;
+        }
+      }
+
+      const extractedPath = path.join(outputDir, normalizedCandidate);
+
+      await fse.move(extractedPath, finalPath, { overwrite: true });
+
+      const extractedDir = path.dirname(extractedPath);
+
+      if (extractedDir !== outputDir) {
+        const remaining = await fse.readdir(extractedDir);
+        if (remaining.length === 0) {
+          await fse.remove(extractedDir);
+        }
+      }
+
+      return finalPath;
+    } catch (e) {
+      console.error('❌ Falha ao extrair capa:', e);
+      throw e;
+    }
+  }
+
+  public async patchSerie(data: SerieEditForm): Promise<Literatures | null> {
+    const oldData = await this.readSerieData(data.dataPath);
+
+    if (!oldData) return null;
+
+    const changedFields = Object.fromEntries(
+      (Object.keys(data) as (keyof SerieEditForm)[])
+        .filter((k) => data[k] !== oldData[k])
+        .map((k) => [k, data[k]]),
+    ) as Partial<SerieEditForm>;
+
+    const updated: Literatures = {
+      ...oldData,
+      ...changedFields,
+    } as Literatures;
+
+    if (updated.name !== oldData.name) {
+      await this.fileManager.moveFiles(oldData, updated);
+    }
+
+    return updated;
+  }
+
+  public async patchHelper(updatedData: Literatures, newData: SerieEditForm) {
+    try {
+      const dir = path.dirname(updatedData.dataPath);
+      const newPath = path.join(dir, `${newData.name}.json`);
+      updatedData.dataPath = newPath;
+
+      if (newData.name !== updatedData.name) {
+        await fse.ensureDir(dir);
+        await fse.writeJson(newPath, updatedData, { spaces: 2 });
+      } else {
+        this.writeData(updatedData);
+      }
+    } catch (e) {
+      console.error(`Falha ao finalizar update da série: ${newData.name}`, e);
+    }
+  }
+
+  public async convertPdf_overdrive(
+    inputFile: string,
+    outputDir: string,
+  ): Promise<void> {
+    await fse.ensureDir(outputDir);
+
+    const data = await fse.readFile(inputFile);
+    const pdf = await pdfjsLib.getDocument({
+      data: new Uint8Array(data),
+      // @ts-ignore
+      disableWorker: true,
+    }).promise;
+
+    const scale = 1;
+    const totalPages = pdf.numPages;
+
+    const tasks = Array.from({ length: totalPages }, (_, i) =>
+      this.processPdfPage(pdf, i + 1, outputDir, scale),
+    );
+
+    await Promise.all(tasks);
+  }
+
+  private async processPdfPage(
+    pdf: pdfjsLib.PDFDocumentProxy,
+    pageNum: number,
+    outputDir: string,
+    scale: number,
+  ): Promise<void> {
+    const buffer = await this.renderPdfPageToBuffer(pdf, pageNum, scale);
+    const fileName = this.buildPageFileName(pageNum);
+
+    await fse.writeFile(path.join(outputDir, fileName), buffer);
+  }
+
+  private async renderPdfPageToBuffer(
+    pdf: pdfjsLib.PDFDocumentProxy,
+    pageNum: number,
+    scale: number,
+  ): Promise<Buffer> {
+    const page = await pdf.getPage(pageNum);
+    const viewport = page.getViewport({ scale });
+
+    const canvas = createCanvas(viewport.width, viewport.height);
+    const context = canvas.getContext('2d');
+
+    await page.render({
+      canvas: canvas as unknown as HTMLCanvasElement,
+      canvasContext: context as unknown as CanvasRenderingContext2D,
+      viewport,
+    }).promise;
+
+    return canvas.toBuffer('image/jpeg', 0.85);
+  }
+
+  private buildPageFileName(pageNum: number): string {
+    return `${String(pageNum).padStart(4, '0')}.jpeg`;
+  }
+
+  private parse7zList(output: string): string[] {
+    const lines = output.split('\n');
+    const files: string[] = [];
+    let parsing = false;
+
+    for (const line of lines) {
+      if (line.startsWith('----')) {
+        parsing = !parsing;
+        continue;
+      }
+
+      if (!parsing) continue;
+
+      const parts = line.trim().split(/\s+/);
+      const filePath = parts.slice(5).join(' ');
+
+      if (filePath && !filePath.endsWith('/')) {
+        files.push(filePath);
+      }
+    }
+
+    return files;
+  }
+
   private mountViewData(serie: Literatures): viewData {
     return {
       id: serie.id,
@@ -250,288 +543,12 @@ export default class StorageManager extends LibrarySystem {
   }
 }
 
-// export default class StorageManager extends FileSystem {
-//   private readonly fileManager: FileManager = new FileManager();
-//   private readonly SEVEN_ZIP_PATH = 'C:\\Program Files\\7-Zip\\7z';
-//   private readonly execAsync = promisify(exec);
-
-//   public async patchSerie(data: SerieEditForm): Promise<Literatures[]> {
-//     const oldData = (await this.readSerieData(data.dataPath)) as Literatures;
-
-//     const id = oldData.id;
-//     const updated: Literatures = { ...data, id };
-//     updated.id = id;
-//     const isBase64 = updated.coverImage.startsWith('data:image/');
-
-//     if (isBase64) {
-//       updated.coverImage = oldData.coverImage;
-//     }
-
-//     const rootPath = path.join(
-//       this.imagesFolder,
-//       data.literatureForm,
-//       data.name,
-//     );
-
-//     if (updated.name !== oldData.name) {
-//       await fse.move(oldData.chaptersPath, rootPath);
-
-//       oldData.chapters = updated.chapters;
-
-//       for (let idx = 0; idx < oldData.chapters.length; idx++) {
-//         oldData.chapters[idx].id = idx;
-
-//         const newChapterRoot = path.join(rootPath, oldData.chapters[idx].name);
-//         const oldChapterPath = oldData.chapters[idx].chapterPath;
-
-//         updated.chapters[idx].chapterPath = path.join(
-//           rootPath,
-//           oldData.chapters[idx].name,
-//         );
-
-//         if (await fse.pathExists(oldChapterPath)) {
-//           await fse.move(oldChapterPath, newChapterRoot);
-//         }
-//       }
-//     }
-
-//     updated.totalChapters = updated.chapters.length;
-
-//     return [oldData, updated];
-//   }
-
-//   public async extractCoverFromPdf(
-//     inputFile: string,
-//     outputDir: string,
-//   ): Promise<string> {
-//     try {
-//       const data = await fse.readFile(inputFile);
-
-//       const loadingTask = pdfjsLib.getDocument({
-//         data: new Uint8Array(data),
-//       });
-
-//       const pdf = await loadingTask.promise;
-//       const page = await pdf.getPage(1);
-
-//       const scale = 2;
-//       const viewport = page.getViewport({ scale });
-
-//       const canvas = createCanvas(viewport.width, viewport.height);
-//       const context = canvas.getContext('2d');
-
-//       await page.render({
-//         canvas: canvas as unknown as HTMLCanvasElement,
-//         canvasContext: context as unknown as CanvasRenderingContext2D,
-//         viewport,
-//       }).promise;
-
-//       // ✅ TEMP REALMENTE SEGURO
-//       const tempDir = path.join(os.tmpdir(), `pdf_${randomUUID().slice(0, 8)}`);
-//       await fse.ensureDir(tempDir);
-
-//       const buffer = canvas.toBuffer('image/jpeg');
-//       const tempFilePath = path.join(tempDir, 'cover.jpg');
-
-//       await fse.writeFile(tempFilePath, buffer);
-
-//       // 🔒 destino final
-//       const suffix = randomBytes(3).toString('hex');
-//       const finalPath = this.fileManager.buildImagePath(
-//         outputDir,
-//         `cover_${suffix}`,
-//         '.jpg',
-//       );
-
-//       await fse.ensureDir(path.dirname(finalPath));
-//       await fse.move(tempFilePath, finalPath, { overwrite: true });
-
-//       await fse.remove(tempDir);
-//       return finalPath;
-//     } catch (e) {
-//       console.error('Falha na conversão de PDF -> Imagem', e);
-//       throw e;
-//     }
-//   }
-//   public async convertPdf_overdrive(inputFile: string, outputDir: string) {
-//     await fse.ensureDir(outputDir);
-
-//     const data = await fse.readFile(inputFile);
-//     const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(data) })
-//       .promise;
-
-//     const totalPages = pdf.numPages;
-//     const scale = 1;
-
-//     const tasks: Promise<void>[] = [];
-
-//     for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-//       tasks.push(
-//         (async () => {
-//           const page = await pdf.getPage(pageNum);
-//           const viewport = page.getViewport({ scale });
-
-//           const canvas = createCanvas(viewport.width, viewport.height);
-//           const context = canvas.getContext('2d');
-
-//           await page.render({
-//             canvas: canvas as unknown as HTMLCanvasElement,
-//             canvasContext: context as unknown as CanvasRenderingContext2D,
-//             viewport,
-//           }).promise;
-
-//           const buffer = canvas.toBuffer('image/jpeg');
-//           const fileName = `${String(pageNum).padStart(4, '0')}.jpeg`;
-
-//           await fse.writeFile(path.join(outputDir, fileName), buffer);
-//         })(),
-//       );
-//     }
-
-//     await Promise.all(tasks);
-//   }
-
-//   public async extractCoverWith7zip(inputFile: string, outputDir: string) {
-//     console.log(`📂 Iniciando extração da capa`);
-//     console.log(`   Arquivo de entrada: ${inputFile}`);
-//     console.log(`   Diretório de saída: ${path.resolve(outputDir)}`);
-
-//     try {
-//       const tempDir = path.join(
-//         path.dirname(outputDir),
-//         `temp_${randomUUID()}`,
-//       );
-//       console.log(`📁 Criado diretório temporário: ${tempDir}`);
-
-//       await fse.mkdir(tempDir, { recursive: true });
-
-//       const extractCmd = `"${this.SEVEN_ZIP_PATH}" x "${inputFile}" -o"${tempDir}" -y`;
-//       console.log(`⚡ Executando comando: ${extractCmd}`);
-
-//       try {
-//         await this.execAsync(extractCmd);
-//       } catch (err: any) {
-//         // ✅ Aceita erro de CRC como WARNING
-//         if (
-//           err?.code === 2 &&
-//           typeof err.stderr === 'string' &&
-//           err.stderr.includes('CRC Failed')
-//         ) {
-//           console.warn(
-//             '⚠️ Aviso: CBZ contém arquivos corrompidos (CRC Failed). Continuando com arquivos extraídos...',
-//           );
-//         } else {
-//           throw err; // ❌ erro real → explode
-//         }
-//       }
-
-//       let allFiles = await this.fileManager.getAllFiles(tempDir);
-//       console.log(`🔎 Total de arquivos extraídos: ${allFiles.length}`);
-
-//       if (allFiles.length === 0) {
-//         throw new Error(
-//           '❌ Extração concluída, mas nenhum arquivo foi gerado.',
-//         );
-//       }
-
-//       // 🔐 PASSO CRÍTICO: encurtar paths extraídos ANTES de usar
-//       const safeFiles: string[] = [];
-
-//       for (const filePath of allFiles) {
-//         const safePath = await this.fileManager.ensurSourcePath(filePath);
-//         safeFiles.push(safePath);
-//       }
-
-//       const bestCandidate = this.fileManager.findFirstCoverFile(
-//         safeFiles.map((f) => path.basename(f)),
-//       );
-
-//       if (!bestCandidate) {
-//         console.log(
-//           `🚨 Nenhum candidato válido encontrado para: ${path.basename(inputFile)}`,
-//         );
-//         return '';
-//       }
-
-//       const realPath = safeFiles.find(
-//         (p) => path.basename(p) === bestCandidate,
-//       )!;
-
-//       const ext = path.extname(bestCandidate);
-//       const baseName = path.basename(
-//         bestCandidate,
-//         path.extname(bestCandidate),
-//       );
-//       const suffix = randomBytes(3).toString('hex');
-//       const safeName = baseName.replace(/[. ]+$/, '').concat(`_${suffix}`);
-
-//       const finalPath = this.fileManager.buildImagePath(
-//         outputDir,
-//         safeName,
-//         ext,
-//       );
-
-//       console.log(`✅ Candidato escolhido: ${bestCandidate}`);
-//       console.log(`➡️ Origem: ${realPath}`);
-//       console.log(`➡️ Destino: ${finalPath}`);
-
-//       await fse.move(realPath, finalPath, { overwrite: true });
-
-//       await fse.remove(tempDir);
-//       console.log(`🧹 Diretório temporário removido: ${tempDir}`);
-//       console.log(`🎉 Extração concluída com sucesso!`);
-//       return finalPath;
-//     } catch (e) {
-//       console.error(`❌ Falha em descompactar cover:`, e);
-//       throw e;
-//     }
-//   }
-
-//   public async extractWith7zip(
-//     inputFile: string,
-//     outputDir: string,
-//   ): Promise<void> {
-//     try {
-//       await fse.mkdir(outputDir, { recursive: true });
-//       const extractCmd = `"${this.SEVEN_ZIP_PATH}" x "${inputFile}" -o"${outputDir}" -y`;
-
-//       try {
-//         await this.execAsync(extractCmd);
-//       } catch (err: any) {
-//         if (
-//           err?.code === 2 &&
-//           typeof err.stderr === 'string' &&
-//           err.stderr.includes('CRC Failed')
-//         ) {
-//           console.warn(
-//             '⚠️ Extração concluída com erros de CRC. Alguns arquivos podem estar corrompidos.',
-//           );
-//         } else {
-//           throw err;
-//         }
-//       }
-//     } catch (e) {
-//       console.error(`Falha em descompactar arquivos: ${e}`);
-//       throw e;
-//     }
-//   }
-
-//   public async patchHelper(updatedData: Literatures, newData: SerieEditForm) {
-//     try {
-//       const dir = path.dirname(updatedData.dataPath);
-
-//       const newPath = path.join(dir, `${newData.name}.json`);
-
-//       updatedData.dataPath = newPath;
-
-//       if (newData.name !== updatedData.name) {
-//         await fse.writeJson(newPath, updatedData, { spaces: 2 });
-//         await fse.move(newPath, updatedData.dataPath, { overwrite: true });
-//       } else {
-//         this.updateSerieData(updatedData);
-//       }
-//     } catch (e) {
-//       console.error(`Falha ao finalizar update da serie: ${newData.name}`);
-//     }
-//   }
-// }
+// 01 - Mulher-Hulk 15
+// Vingadores - Os Maiores Herois da Terra 1 de 8 (BR)
+(async () => {
+  const inputFile =
+    'c:\\Users\\diogo\\Downloads\\Case\\01 - Mulher-Hulk 15.cbr';
+  const outputDir = 'C:\\Users\\diogo\\Downloads\\Case';
+  const storage = new StorageManager();
+  await storage.extractCoverWith7zip(inputFile, outputDir);
+})();

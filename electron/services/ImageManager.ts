@@ -272,6 +272,12 @@ export default class ImageManager extends LibrarySystem {
     return encodeChapter;
   }
 
+  // Temporario
+  public async saveNewCover(coverPath: string): Promise<string> {
+    const destPath = path.join(this.showcaseImages, path.basename(coverPath));
+    return await this.normalizeImage(coverPath, destPath);
+  }
+
   private async getMime(filePath: string): Promise<string | null> {
     try {
       const buffer = await fse.readFile(filePath);

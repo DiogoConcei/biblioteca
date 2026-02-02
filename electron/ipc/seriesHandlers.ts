@@ -23,7 +23,11 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('serie:get-all', async () => {
     try {
-      const getData = await storageManager.seriesData();
+      const getData = await storageManager.getViewData();
+
+      if (!getData) {
+        throw new Error('Falha em gerar dados de visualizacao');
+      }
 
       const procesData = await Promise.all(
         getData.map(async (serieData) => {
@@ -166,7 +170,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
           );
         }
 
-        await storageManager.updateSerieData(serieData);
+        await storageManager.writeData(serieData);
         return { success: true };
       } catch (e) {
         console.error(`Falha em adicionar a colecao: ${e}`);
@@ -191,7 +195,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
           return { success: false };
         }
 
-        await storageManager.updateSerieData(serieData);
+        await storageManager.writeData(serieData);
         return { success: true };
       } catch (e) {
         console.error(`Falha em ranquear serie: ${e}`);
@@ -236,9 +240,11 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     'serie:create-TieIn',
     async (_event, childSerie: ComicTieIn) => {
       try {
-        const data = (await storageManager.readSerieData(
-          childSerie.dataPath,
-        )) as TieIn;
+        const data = await storageManager.readTieInData(childSerie.dataPath);
+
+        if (!data) {
+          throw new Error('Dados da Tie-In nao encontrados');
+        }
 
         if (!data.metadata.isCreated) {
           await tieIn.createTieInSerie(data);
@@ -256,36 +262,51 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     },
   );
 
-  // Esse código por acaso é meu?
-  // ipcMain.handle('serie:update-serie', async (_event, data: SerieEditForm) => {
-  //   try {
-  //     if (!data?.dataPath) {
-  //       throw new Error('dataPath inválido');
-  //     }
+  ipcMain.handle(
+    'serie:update-serie',
+    async (_event, editedData: SerieEditForm) => {
+      try {
+        const oldData = await storageManager.readSerieData(editedData.dataPath);
 
-  //     const [serieData, updatedData] = await storageManager.patchSerie(data);
+        if (!oldData) {
+          throw new Error(`Dados antigos não encontrados para a série!`);
+        }
 
-  //     const newCover = await imageManager.generateCover(
-  //       data.name,
-  //       serieData.coverImage,
-  //       updatedData.coverImage,
-  //     );
-  //     updatedData.coverImage = newCover;
+        const updatedData = await storageManager.patchSerie(editedData);
 
-  //     await collectionManager.checkDifferences(serieData, updatedData);
+        if (!updatedData) {
+          throw new Error(
+            `Falha ao atualizar dados da série: ${editedData.name}`,
+          );
+        }
 
-  //     await storageManager.patchHelper(updatedData, data);
-  //     return { success: true };
-  //   } catch (error) {
-  //     console.error('Erro ao atualizar série:', error);
+        const isImageChanged = updatedData.coverImage.startsWith('data:image/');
 
-  //     return {
-  //       success: false,
-  //       error:
-  //         error instanceof Error
-  //           ? error.message
-  //           : 'Erro desconhecido ao atualizar série',
-  //     };
-  //   }
-  // });
+        if (!isImageChanged) {
+          updatedData.coverImage = await imageManager.saveNewCover(
+            updatedData.coverImage,
+          );
+        }
+
+        const oldColl = oldData.metadata.collections;
+        const newColl = updatedData.metadata.collections;
+
+        await collectionManager.updateSerie(updatedData.dataPath);
+
+        await collectionManager.collectionControl(
+          updatedData.dataPath,
+          oldColl,
+          newColl,
+        );
+
+        await storageManager.patchHelper(updatedData, editedData);
+        return { success: true };
+      } catch (e) {
+        return {
+          success: false,
+          error: 'Falha ao salvar dados editados da série',
+        };
+      }
+    },
+  );
 }

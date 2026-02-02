@@ -77,59 +77,63 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
     ) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
+        if (!dataPath) throw new Error('Caminho da série não encontrado');
 
-        let serieData = (await storageManager.readSerieData(
-          dataPath!,
+        const serieData = (await storageManager.readSerieData(
+          dataPath,
         )) as Literatures;
+        if (!serieData?.chapters?.length)
+          throw new Error('Capítulos não encontrados');
 
-        const chapters = serieData.chapters ?? [];
+        let chapterFound = false;
 
-        let chapterUpdated = false;
-
-        const updatedChapters = chapters.map((chapter) => {
+        const updatedChapters = serieData.chapters.map((chapter) => {
           if (chapter.id !== chapter_id) return chapter;
 
-          chapterUpdated = true;
+          chapterFound = true;
 
           const isLastPage = page_number >= totalPages;
 
-          const updatedChapter = {
+          return {
             ...chapter,
             page: {
               ...chapter.page,
               lastPageRead: Math.max(
-                chapter.page.lastPageRead ?? 0,
+                chapter.page?.lastPageRead ?? 0,
                 page_number,
               ),
             },
+            isRead: chapter.isRead || isLastPage,
           };
-
-          if (isLastPage && !chapter.isRead) {
-            updatedChapter.isRead = true;
-            serieData.chaptersRead += 1;
-          }
-
-          if (isLastPage && chapter_id > serieData.readingData.lastChapterId) {
-            serieData.readingData.lastChapterId = chapter_id;
-          }
-
-          return updatedChapter;
         });
 
-        if (!chapterUpdated) {
+        if (!chapterFound)
           return { success: false, error: 'Capítulo não encontrado' };
-        }
 
-        serieData = {
-          ...serieData,
-          chapters: updatedChapters,
+        const updatedReadingData = {
+          ...serieData.readingData,
+          lastChapterId: Math.max(
+            serieData.readingData.lastChapterId ?? 0,
+            chapter_id,
+          ),
         };
 
-        await storageManager.updateSerieData(serieData);
+        const updatedChaptersRead = updatedChapters.filter(
+          (c) => c.isRead,
+        ).length;
+
+        const updatedSerieData: Literatures = {
+          ...serieData,
+          chapters: updatedChapters,
+          chaptersRead: updatedChaptersRead,
+          readingData: updatedReadingData,
+        };
+
+        await storageManager.writeData(updatedSerieData);
 
         return { success: true };
       } catch (e) {
-        console.error(`Erro ao salvar última página lida: ${e}`);
+        console.error('Erro ao salvar última página lida:', e);
         return { success: false, error: String(e) };
       }
     },
@@ -140,6 +144,11 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
     async (_event, dataPath: string) => {
       try {
         const serieData = await storageManager.readSerieData(dataPath);
+
+        if (!serieData) {
+          return { success: false, error: `Falha em recuperar dados` };
+        }
+
         const lastChapterId = serieData.readingData.lastChapterId;
         const literatureForm = fileManager.foundLiteratureForm(dataPath);
         const lastChapter = serieData.chapters?.find(
@@ -192,6 +201,10 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         const dataPath = await fileManager.getDataPath(serieName);
         const serieData = await storageManager.readSerieData(dataPath!);
 
+        if (!serieData) {
+          return { success: false, error: `Falha em recuperar dados` };
+        }
+
         const nextChapter = serieData.chapters?.find(
           (chapter) => chapter.id === chapter_id,
         );
@@ -222,7 +235,11 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
           throw new Error(`dataPath is undefined for serieName: ${serieName}`);
         }
         const serieData = await storageManager.readSerieData(dataPath);
-        const prevChapter = serieData.chapters?.find(
+
+        if (!serieData) {
+          return { success: false, error: `Falha em recuperar dados` };
+        }
+        const prevChapter = serieData.chapters!.find(
           (chapter) => chapter.id === chapter_id,
         );
 

@@ -5,7 +5,10 @@ import pLimit from 'p-limit';
 import { randomUUID } from 'crypto';
 
 import LibrarySystem from './abstract/LibrarySystem';
-import { Literatures } from '../types/electron-auxiliar.interfaces';
+import {
+  LiteratureChapter,
+  Literatures,
+} from '../types/electron-auxiliar.interfaces';
 
 enum ComicCategory {
   NORMAL = 0,
@@ -387,6 +390,37 @@ export default class FileManager extends LibrarySystem {
     }
 
     return finalPath;
+  }
+
+  public async moveFiles(oldData: Literatures, updated: Literatures) {
+    const rootPath = path.join(
+      this.imagesFolder,
+      updated.literatureForm,
+      updated.name,
+    );
+
+    if (!oldData.chapters) return;
+
+    await Promise.all(
+      oldData.chapters.map(async (chapter, idx) => {
+        if (!updated.chapters) return;
+
+        chapter.id = idx;
+
+        const newChapterRoot = path.join(rootPath, chapter.name);
+        const oldChapterPath = chapter.chapterPath;
+
+        updated.chapters[idx].chapterPath = newChapterRoot;
+
+        try {
+          await fse.move(oldChapterPath, newChapterRoot, { overwrite: true });
+        } catch (err: any) {
+          if (err.code !== 'ENOENT') {
+            console.warn(`Falha ao mover capítulo ${chapter.name}:`, err);
+          }
+        }
+      }),
+    );
   }
 
   // Recursivo

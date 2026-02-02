@@ -9,7 +9,7 @@ import CollectionManager from './CollectionManager';
 
 import { Comic, ComicEdition, ComicTieIn } from '../types/comic.interfaces';
 
-import { SerieData, SerieForm } from '../../src/types/series.interfaces';
+import { SerieForm } from '../../src/types/series.interfaces';
 
 export default class ComicManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -190,7 +190,7 @@ export default class ComicManager extends LibrarySystem {
 
     editionToProces.isDownloaded = 'downloaded';
     comicData.metadata.lastDownload = editionToProces.id;
-    await this.storageManager.updateSerieData(comicData);
+    await this.storageManager.writeData(comicData);
   }
 
   public async getComic(
@@ -199,6 +199,10 @@ export default class ComicManager extends LibrarySystem {
   ): Promise<string[]> {
     try {
       const comic = await this.storageManager.readSerieData(dataPath);
+
+      if (!comic) {
+        return [];
+      }
 
       if (!comic.chapters || comic.chapters.length === 0) {
         throw new Error('Nenhum capítulo encontrado.');
@@ -279,7 +283,7 @@ export default class ComicManager extends LibrarySystem {
 
     serieData.chapters = updatedChapters;
     serieData.totalChapters = updatedChapters.length;
-    await this.storageManager.updateSerieData(serieData);
+    await this.storageManager.writeData(serieData);
 
     return await this.imageManager.encodeComic(updatedChapters);
   }
@@ -358,7 +362,7 @@ export default class ComicManager extends LibrarySystem {
 
   private async updateSytem(comicData: Comic, oldPath: string) {
     await this.fileManager.localUpload(comicData, oldPath);
-    await this.storageManager.writeSerieData(comicData);
+    await this.storageManager.writeData(comicData);
     await this.setSerieId(comicData.id + 1);
   }
 

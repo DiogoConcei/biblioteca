@@ -1,14 +1,14 @@
-import path from "path";
+import path from 'path';
 
-import LibrarySystem from "./abstract/LibrarySystem";
-import FileManager from "./FileManager";
-import CollectionManager from "./CollectionManager";
-import ImageManager from "./ImageManager";
-import StorageManager from "./StorageManager";
+import LibrarySystem from './abstract/LibrarySystem';
+import FileManager from './FileManager';
+import CollectionManager from './CollectionManager';
+import ImageManager from './ImageManager';
+import StorageManager from './StorageManager';
 
-import { Manga, MangaChapter } from "../types/manga.interfaces";
+import { Manga, MangaChapter } from '../types/manga.interfaces';
 
-import { SerieForm } from "../../src/types/series.interfaces";
+import { SerieForm } from '../../src/types/series.interfaces';
 
 export default class MangaManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -51,14 +51,18 @@ export default class MangaManager extends LibrarySystem {
     try {
       const manga = await this.storageManager.readSerieData(dataPath);
 
+      if (!manga) {
+        return [];
+      }
+
       if (!manga.chapters || manga.chapters.length === 0) {
-        throw new Error("Nenhum capítulo encontrado.");
+        throw new Error('Nenhum capítulo encontrado.');
       }
 
       const chapter = manga.chapters.find((chap) => chap.id === chapter_id);
 
       if (!chapter || !chapter.chapterPath) {
-        throw new Error("Capítulo não encontrado ou caminho inválido.");
+        throw new Error('Capítulo não encontrado ou caminho inválido.');
       }
 
       const imageFiles = await this.fileManager.searchImages(
@@ -77,7 +81,7 @@ export default class MangaManager extends LibrarySystem {
 
       return processedImages;
     } catch (error) {
-      console.error("Não foi possível encontrar a edição do quadrinho:", error);
+      console.error('Não foi possível encontrar a edição do quadrinho:', error);
       throw error;
     }
   }
@@ -88,7 +92,7 @@ export default class MangaManager extends LibrarySystem {
     )) as Manga;
 
     if (!mangaData.chapters) {
-      throw new Error("Serie não possui capitulos.");
+      throw new Error('Serie não possui capitulos.');
     }
 
     const chapterToProcess = mangaData.chapters.find(
@@ -101,9 +105,9 @@ export default class MangaManager extends LibrarySystem {
 
     await this.generateChapter(chapterToProcess);
 
-    chapterToProcess.isDownloaded = "downloaded";
+    chapterToProcess.isDownloaded = 'downloaded';
     mangaData.metadata.lastDownload = chapterToProcess.id;
-    await this.storageManager.updateSerieData(mangaData);
+    await this.storageManager.writeData(mangaData);
   }
 
   public async createMultipleChapters(dataPath: string, quantity: number) {
@@ -112,7 +116,7 @@ export default class MangaManager extends LibrarySystem {
     )) as Manga;
 
     if (!mangaData.chapters) {
-      throw new Error("Serie não possui capitulos.");
+      throw new Error('Serie não possui capitulos.');
     }
 
     const firstItem = mangaData.metadata.lastDownload;
@@ -129,12 +133,12 @@ export default class MangaManager extends LibrarySystem {
     await Promise.all(
       chaptersToProcess.map(async (chapter) => {
         await this.generateChapter(chapter);
-        chapter.isDownloaded = "downloaded";
+        chapter.isDownloaded = 'downloaded';
         mangaData.metadata.lastDownload = chapter.id;
       }),
     );
 
-    await this.storageManager.updateSerieData(mangaData);
+    await this.storageManager.writeData(mangaData);
   }
 
   public async updateChapters(
@@ -146,13 +150,13 @@ export default class MangaManager extends LibrarySystem {
     )) as Manga;
 
     if (!serieData.chapters)
-      throw new Error("Dados do capítulo não encontrandos.");
+      throw new Error('Dados do capítulo não encontrandos.');
 
     const chapters = await this.createNewChapter(filesPath, serieData.chapters);
 
     serieData.chapters = chapters;
     serieData.totalChapters = chapters.length;
-    await this.storageManager.updateSerieData(serieData);
+    await this.storageManager.writeData(serieData);
 
     return await this.imageManager.encodeComic(chapters);
   }
@@ -206,7 +210,7 @@ export default class MangaManager extends LibrarySystem {
   ): Promise<MangaChapter> {
     const fileName = path
       .basename(archivePath, path.extname(archivePath))
-      .replaceAll("#", "");
+      .replaceAll('#', '');
     const sanitizedName = this.fileManager.sanitizeFilename(fileName);
 
     return {
@@ -233,7 +237,7 @@ export default class MangaManager extends LibrarySystem {
     );
 
     try {
-      if (ext === ".pdf") {
+      if (ext === '.pdf') {
         await this.storageManager.convertPdf_overdrive(normalized, chapterOut);
       } else {
         await this.storageManager.extractWith7zip(normalized, chapterOut);
@@ -250,7 +254,7 @@ export default class MangaManager extends LibrarySystem {
 
   private async updateSytem(mangaData: Manga, oldPath: string) {
     await this.fileManager.localUpload(mangaData, oldPath);
-    await this.storageManager.writeSerieData(mangaData);
+    await this.storageManager.writeData(mangaData);
     await this.setSerieId(mangaData.id + 1);
   }
 
@@ -268,7 +272,7 @@ export default class MangaManager extends LibrarySystem {
       orderChapters.map(async (mangaPath, idx) => {
         const fileName = path
           .basename(mangaPath, path.extname(mangaPath))
-          .replaceAll("#", "");
+          .replaceAll('#', '');
         const sanitizedName = this.fileManager.sanitizeFilename(fileName);
 
         return {
@@ -322,16 +326,16 @@ export default class MangaManager extends LibrarySystem {
       language: serie.language,
       literatureForm: serie.literatureForm,
       chaptersRead: 0,
-      readingData: { lastChapterId: 1, lastReadAt: "" },
+      readingData: { lastChapterId: 1, lastReadAt: '' },
       chapters: [],
       metadata: {
         status: serie.readingStatus,
         collections: serie.collections,
-        recommendedBy: "",
-        originalOwner: "",
+        recommendedBy: '',
+        originalOwner: '',
         lastDownload: 0,
         rating: 0,
-        isFavorite: serie.collections.includes("Favoritas"),
+        isFavorite: serie.collections.includes('Favoritas'),
         privacy: serie.privacy,
         autoBackup: serie.autoBackup,
       },
@@ -349,12 +353,12 @@ export default class MangaManager extends LibrarySystem {
       id: 0,
       serieName: serieName,
       name: fileName,
-      sanitizedName: "",
-      archivesPath: "",
-      chapterPath: "",
+      sanitizedName: '',
+      archivesPath: '',
+      chapterPath: '',
       createdAt,
       isRead: false,
-      isDownloaded: "not_downloaded",
+      isDownloaded: 'not_downloaded',
       page: {
         lastPageRead: 0,
         favoritePage: 0,

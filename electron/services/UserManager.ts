@@ -37,7 +37,7 @@ export default class UserManager extends FileSystem {
 
       serieData.metadata.isFavorite = isFavorite;
 
-      await this.storageManager.updateSerieData(serieData);
+      await this.storageManager.writeData(serieData);
       return true;
     } catch (err) {
       console.error('Erro ao atualizar favoritação de série:', err);
@@ -52,6 +52,10 @@ export default class UserManager extends FileSystem {
   ): Promise<void> {
     try {
       const serieData = await this.storageManager.readSerieData(dataPath);
+
+      if (!serieData) {
+        return;
+      }
 
       if (!serieData.chapters || serieData.chapters.length === 0) {
         console.warn('Série sem capítulos ao tentar marcar leitura.');
@@ -83,7 +87,7 @@ export default class UserManager extends FileSystem {
         }
       }
 
-      await this.storageManager.updateSerieData(serieData);
+      await this.storageManager.writeData(serieData);
     } catch (error) {
       console.error(`Erro ao marcar capítulo como lido: ${error}`);
       throw error;
