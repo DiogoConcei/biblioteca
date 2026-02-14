@@ -1,5 +1,6 @@
 import LibrarySystem from './abstract/LibrarySystem.ts';
 import StorageManager from './StorageManager.ts';
+import ComicManager from './ComicManager.ts';
 import FileManager from './FileManager.ts';
 import fse from 'fs-extra';
 import path from 'path';
@@ -12,10 +13,25 @@ import { Comic, TieIn } from '../types/comic.interfaces.ts';
 export default class SystemManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
   private readonly storageManager: StorageManager = new StorageManager();
+  private readonly comicManager: ComicManager = new ComicManager();
 
   constructor() {
     super();
   }
+
+  // Vital
+  // Regenerar capas -> Fallback de capa padrão escolhida pelo usuário
+
+  // Próxima feature
+  // Ativar ou desativar auto backup
+
+  // Ativar ou desativar privacidade das séries
+
+  // Limpar tags de uma série
+
+  // Limpar todas as tags
+
+  // Limpar coleções
 
   public async getFullScreenConfig(): Promise<boolean> {
     try {
@@ -67,49 +83,55 @@ export default class SystemManager extends LibrarySystem {
     }
   }
 
-  public async fixId(): Promise<void> {
-    const dataPaths = await this.fileManager.getDataPaths();
+  public async fixId(): Promise<boolean> {
+    try {
+      const dataPaths = await this.fileManager.getDataPaths();
 
-    const rawSeries = await Promise.all(
-      dataPaths.map(async (rawData) => {
-        let response = await this.storageManager.readSerieData(rawData);
+      const rawSeries = await Promise.all(
+        dataPaths.map(async (rawData) => {
+          let response = await this.storageManager.readSerieData(rawData);
 
-        if (!response) return { id: -1 } as Literatures;
+          if (!response) return { id: -1 } as Literatures;
 
-        return response;
-      }),
-    );
+          return response;
+        }),
+      );
 
-    rawSeries.sort((a, b) => {
-      if (a.id == null) return 1;
-      if (b.id == null) return -1;
-      return a.id - b.id;
-    });
+      rawSeries.sort((a, b) => {
+        if (a.id == null) return 1;
+        if (b.id == null) return -1;
+        return a.id - b.id;
+      });
 
-    let lastId = -1;
-    const usedIds = new Set<number>();
+      let lastId = -1;
+      const usedIds = new Set<number>();
 
-    for (let i = 0; i < rawSeries.length; i++) {
-      const item = rawSeries[i];
+      for (let i = 0; i < rawSeries.length; i++) {
+        const item = rawSeries[i];
 
-      const isValidNumber =
-        typeof item.id === 'number' &&
-        Number.isFinite(item.id) &&
-        !usedIds.has(item.id);
+        const isValidNumber =
+          typeof item.id === 'number' &&
+          Number.isFinite(item.id) &&
+          !usedIds.has(item.id);
 
-      if (isValidNumber) {
-        usedIds.add(item.id);
-        lastId = Math.max(lastId, item.id);
-      } else {
-        lastId += 1;
-        item.id = lastId;
-        usedIds.add(item.id);
+        if (isValidNumber) {
+          usedIds.add(item.id);
+          lastId = Math.max(lastId, item.id);
+        } else {
+          lastId += 1;
+          item.id = lastId;
+          usedIds.add(item.id);
 
-        await this.storageManager.writeData(item);
+          await this.storageManager.writeData(item);
+        }
       }
-    }
 
-    await this.setSerieId(lastId);
+      await this.setSerieId(lastId);
+      return true;
+    } catch (e) {
+      console.error('Falha em organizar os identificadores');
+      return false;
+    }
   }
 
   public async fixChildSeriePaths(dataPath: string): Promise<void> {
@@ -221,12 +243,3 @@ export default class SystemManager extends LibrarySystem {
     await this.storageManager.writeData(serieData);
   }
 }
-
-// (async () => {
-//   const dataPath =
-//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Comics\\07 - Dinastia M - Completa ( + Tie-ins ).json';
-//   const st = new StorageManager();
-//   const serieD = (await st.readSerieData(dataPath)) as Comic;
-//   const sM = new SystemManager();
-//   await sM.fixComicOrder(serieD);
-// })();

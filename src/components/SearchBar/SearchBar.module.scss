@@ -8,7 +8,7 @@
   gap: $spacing-2;
   margin: $spacing-2;
 
-  .searchLabel {
+  .search-label {
     display: flex;
     align-items: center;
     background-color: $baby-powder;
@@ -16,7 +16,12 @@
     border-radius: $radius-md;
     gap: $spacing-2;
 
-    .searchBar {
+    svg {
+      color: $amethyst;
+      cursor: pointer;
+    }
+
+    .search-bar {
       @include pattern-button;
       padding: $spacing-1;
       font-size: $font-lg;
@@ -29,19 +34,10 @@
         width: 350px;
       }
 
-      &:focus-within {
-        border: 1px solid $border-collor;
-      }
-
       &::placeholder {
         color: $gunmetal;
         font-size: $font-lg;
       }
     }
-  }
-
-  .actIcon {
-    @include interactive-buttons;
-    font-size: $font-lg;
   }
 }

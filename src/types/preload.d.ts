@@ -29,6 +29,10 @@ declare global {
         close: () => Promise<boolean>;
       };
 
+      system: {
+        reorderId: () => Promise<boolean>;
+      };
+
       webUtilities: {
         getPathForFile: (file: File) => string;
         readFileAsDataUrl: (path: string) => string;

@@ -42,6 +42,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     close: () => ipcRenderer.invoke('window:close'),
   },
 
+  system: {
+    reorderId: (): Promise<boolean> => ipcRenderer.invoke('system:reorder-id'),
+  },
+
   webUtilities: {
     getPathForFile: (file: File): string => webUtils.getPathForFile(file),
     readFileAsDataUrl: (path: string) =>

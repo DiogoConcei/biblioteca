@@ -1,6 +1,5 @@
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Tag, Book } from 'lucide-react';
-import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
 import Loading from '../../components/Loading/Loading';
 import DownloadButton from '../../components/DonwloadButton/DownloadButton';
 import Rating from '../../components/Rating/Rating';

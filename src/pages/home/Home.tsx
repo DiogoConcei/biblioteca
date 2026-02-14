@@ -5,12 +5,16 @@ import useSerieStore from '../../store/useSerieStore';
 import useAllSeries from '../../hooks/useAllSeries';
 import Loading from '../../components/Loading/Loading';
 import SearchBar from '../../components/SearchBar/SearchBar';
+import SystemConfig from '../../components/SystemConfig/SystemConfig';
+import { ListFilter } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { Play, Pencil } from 'lucide-react';
 import { viewData } from '../../../electron/types/electron-auxiliar.interfaces';
 import styles from './Home.module.scss';
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState<string>('');
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const setError = useUIStore((state) => state.setError);
   const setSerie = useSerieStore((state) => state.setSerie);
 
@@ -33,10 +37,8 @@ export default function Home() {
       return window.electronAPI.webUtilities.getPathForFile(file);
     });
 
-    console.log(filePaths);
-
     try {
-      const response = await window.electronAPI.upload.processSerie(filePaths);
+      const response = await window.electronAPI.upload.processSeries(filePaths);
       const serieData = response.data;
       navigate('/local-upload/serie', { state: { serieData } });
     } catch (error) {
@@ -97,7 +99,22 @@ export default function Home() {
       onDragOver={handleDrag}
       onDrop={handleDrop}
     >
-      <SearchBar searchInput={searchInput} onSearchChange={searchChange} />
+      <div className={styles.options}>
+        <SearchBar searchInput={searchInput} onSearchChange={searchChange} />
+
+        <button
+          onClick={() => setIsOpen(true)}
+          className={styles['settings-button']}
+        >
+          <Settings size={32} />
+        </button>
+
+        <button>
+          <ListFilter size={32} />
+        </button>
+
+        {isOpen && <SystemConfig setIsOpen={setIsOpen} />}
+      </div>
 
       <div className={styles.content}>
         <div className={styles.seriesContent}>
