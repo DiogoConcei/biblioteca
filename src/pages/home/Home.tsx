@@ -5,7 +5,6 @@ import useSerieStore from '../../store/useSerieStore';
 import useAllSeries from '../../hooks/useAllSeries';
 import Loading from '../../components/Loading/Loading';
 import SearchBar from '../../components/SearchBar/SearchBar';
-import SystemConfig from '../../components/SystemConfig/SystemConfig';
 import { ListFilter } from 'lucide-react';
 import { Settings } from 'lucide-react';
 import { Play, Pencil } from 'lucide-react';
@@ -103,7 +102,7 @@ export default function Home() {
         <SearchBar searchInput={searchInput} onSearchChange={searchChange} />
 
         <button
-          onClick={() => setIsOpen(true)}
+          onClick={() => navigate('/settings')}
           className={styles['settings-button']}
         >
           <Settings size={32} />
@@ -112,8 +111,6 @@ export default function Home() {
         <button>
           <ListFilter size={32} />
         </button>
-
-        {isOpen && <SystemConfig setIsOpen={setIsOpen} />}
       </div>
 
       <div className={styles.content}>

@@ -1,6 +1,6 @@
 import './styles/base.scss';
 
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route, Router } from 'react-router-dom';
 
 import Layout from './pages/layout/Layout';
 import Home from './pages/home/Home';
@@ -10,6 +10,8 @@ import ComicPage from './pages/comicPage/comicPage';
 import TieInPage from './components/TieInPage/TieInPage';
 import Viewer from './pages/viewer/Viewer';
 import EditSerie from './pages/editSerie/EditSerie';
+import SettingsLayout from './pages/layout/SettingsLayout/SettingsLayout';
+import SystemConfig from './components/SystemConfig/SystemConfig';
 import ErrorBoundary from './providers/ErrorBoundary';
 
 const App = () => {
@@ -19,6 +21,11 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
+            <Route path="settings" element={<SettingsLayout />}>
+              <Route index element={<SystemConfig />} />
+              {/* <Route path="backup" element={<BackupSettings />} /> */}
+              {/* <Route path="appearance" element={<AppearanceSettings />} /> */}
+            </Route>
             <Route
               path="edit/serie/:serie_name/:literature_form"
               element={<EditSerie />}
