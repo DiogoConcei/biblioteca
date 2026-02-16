@@ -1,39 +1,30 @@
 import styles from './SettingsLayout.module.scss';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, NavLink } from 'react-router-dom';
 
 export default function SettingsLayout() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
   const sections = [
-    { label: 'Ajustes Rápidos', path: '/settings' },
-    { label: 'Backup', path: '/settings/backup' },
-    { label: 'Aparência', path: '/settings/appearance' },
+    { label: 'Ajustes Rápidos', path: '' },
+    { label: 'Backup', path: 'backup' },
+    { label: 'Aparência', path: 'appearance' },
   ];
 
   return (
     <div className={styles.container}>
       <aside className={styles.sidebar}>
         <ul className={styles.menu}>
-          {sections.map((section) => {
-            const isActive =
-              section.path === '/settings'
-                ? location.pathname === '/settings'
-                : location.pathname.startsWith(section.path);
-
-            return (
-              <li key={section.path}>
-                <button
-                  onClick={() => navigate(section.path)}
-                  className={`${styles.sectionItem} ${
-                    isActive ? styles.active : ''
-                  }`}
-                >
-                  {section.label}
-                </button>
-              </li>
-            );
-          })}
+          {sections.map((section) => (
+            <li key={section.path}>
+              <NavLink
+                to={section.path}
+                end={section.path === ''}
+                className={({ isActive }) =>
+                  `${styles.sectionItem} ${isActive ? styles.active : ''}`
+                }
+              >
+                {section.label}
+              </NavLink>
+            </li>
+          ))}
         </ul>
       </aside>
 

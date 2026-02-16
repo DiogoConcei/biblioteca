@@ -2,7 +2,8 @@ import './styles/base.scss';
 
 import { HashRouter, Routes, Route, Router } from 'react-router-dom';
 
-import Layout from './pages/layout/Layout';
+import Layout from './pages/layout/AppLayout/Layout';
+import SystemConfig from './pages/SettingsPage/SystemConfig';
 import Home from './pages/home/Home';
 import Upload from './pages/upload/Upload';
 import MangaPage from './pages/mangaPage/MangaPage';
@@ -11,7 +12,7 @@ import TieInPage from './components/TieInPage/TieInPage';
 import Viewer from './pages/viewer/Viewer';
 import EditSerie from './pages/editSerie/EditSerie';
 import SettingsLayout from './pages/layout/SettingsLayout/SettingsLayout';
-import SystemConfig from './components/SystemConfig/SystemConfig';
+import BackupSettings from './pages/SettingsPage/BackupSetting/BackupSettings';
 import ErrorBoundary from './providers/ErrorBoundary';
 
 const App = () => {
@@ -23,8 +24,7 @@ const App = () => {
             <Route index element={<Home />} />
             <Route path="settings" element={<SettingsLayout />}>
               <Route index element={<SystemConfig />} />
-              {/* <Route path="backup" element={<BackupSettings />} /> */}
-              {/* <Route path="appearance" element={<AppearanceSettings />} /> */}
+              <Route path="backup" element={<BackupSettings />} />
             </Route>
             <Route
               path="edit/serie/:serie_name/:literature_form"
