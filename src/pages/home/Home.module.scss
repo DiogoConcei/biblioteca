@@ -67,7 +67,7 @@
           .playChapter,
           .editChapter {
             display: flex;
-            @include interactive-buttons;
+            @include interactive-button;
             font-size: 24px;
             color: white;
             background: rgba(0, 0, 0, 0.5);

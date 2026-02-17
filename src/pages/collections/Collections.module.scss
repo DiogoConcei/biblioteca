@@ -1,0 +1,26 @@
+@use '@/styles/variables' as *;
+
+.container {
+  display: flex;
+  background: #1b1a1a;
+  height: 100%;
+  color: $snow;
+
+  .menu {
+    padding: $spacing-3;
+    text-align: center;
+    width: 260px;
+
+    .menu-item {
+      margin: $spacing-2;
+    }
+
+    .add-btn {
+      @include interactive-button;
+      padding: $spacing-2;
+      margin: $spacing-2;
+      color: $indian-red;
+      color: $snow;
+    }
+  }
+}

@@ -4,13 +4,13 @@ export interface Collection {
   name: string;
   description: string;
   coverImage: string;
-  series: SeriesInCollection[];
+  series: SerieInCollection[];
   comments: string[];
   updatedAt: string;
   createdAt: string;
 }
 
-export interface SeriesInCollection {
+export interface SerieInCollection {
   id: number;
   name: string;
   coverImage: string;

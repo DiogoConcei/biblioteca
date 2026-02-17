@@ -1,8 +1,14 @@
 import FileSystem from './abstract/LibrarySystem';
 import CollectionManager from './CollectionManager';
 import StorageManager from './StorageManager';
-import { Collection } from '../../src/types/collections.interfaces';
-import { Literatures } from '../types/electron-auxiliar.interfaces';
+import {
+  Collection,
+  SerieInCollection,
+} from '../../src/types/collections.interfaces';
+import {
+  APIResponse,
+  Literatures,
+} from '../types/electron-auxiliar.interfaces';
 
 export default class UserManager extends FileSystem {
   private readonly collManager: CollectionManager = new CollectionManager();

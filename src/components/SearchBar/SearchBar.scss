@@ -41,7 +41,7 @@
   }
 
   .actIcon {
-    @include interactive-buttons;
+    @include interactive-button;
     font-size: $font-lg;
   }
 }

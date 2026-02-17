@@ -10,7 +10,10 @@ import {
   SerieEditForm,
   SerieForm,
 } from '../src/types/series.interfaces.ts';
-import { Collection } from '../src/types/collections.interfaces.ts';
+import {
+  Collection,
+  SerieInCollection,
+} from '../src/types/collections.interfaces.ts';
 import { ComicTieIn, TieIn } from './types/comic.interfaces.ts';
 
 // --------- Expose some API to the Renderer process ---------
@@ -95,7 +98,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       userRating: number,
     ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('serie:rating', dataPath, userRating),
-    favoriteSerie: (dataPath: string): Promise<APIResponse<void>> =>
+    favoriteSerie: (
+      dataPath: string,
+    ): Promise<APIResponse<SerieInCollection>> =>
       ipcRenderer.invoke('serie:favorite', dataPath),
     recentSerie: (
       dataPath: string,

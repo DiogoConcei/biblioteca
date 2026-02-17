@@ -83,7 +83,7 @@
   }
 
   button {
-    @include interactive-buttons;
+    @include interactive-button;
     color: $snow;
     padding: $spacing-2;
     font-size: $font-lg;

@@ -223,7 +223,7 @@
                 background: $indian-red;
 
                 .remove-tag {
-                  @include interactive-buttons;
+                  @include interactive-button;
                   color: $snow;
                 }
               }
@@ -238,7 +238,7 @@
         width: 300px;
 
         button {
-          @include interactive-buttons;
+          @include interactive-button;
           color: $indian-red;
           padding: $spacing-2;
           border-radius: $radius-md;

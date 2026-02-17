@@ -104,7 +104,7 @@ h1 {
           gap: $spacing-1;
 
           button {
-            @include interactive-buttons;
+            @include interactive-button;
 
             &:hover {
               color: $snow;
@@ -123,14 +123,14 @@ h1 {
 
       .prevBTN,
       .nextBTN {
-        @include interactive-buttons;
+        @include interactive-button;
         color: black;
       }
 
       .prevBTN:disabled,
       .nextBTN:disabled {
         color: #ccc;
-        @include interactive-buttons;
+        @include interactive-button;
       }
 
       .disable {
@@ -146,13 +146,13 @@ h1 {
       }
 
       .active {
-        @include interactive-buttons;
+        @include interactive-button;
         color: black;
         font-size: $font-lg;
       }
 
       .disable {
-        @include interactive-buttons;
+        @include interactive-button;
         color: $snow;
         font-size: $font-lg;
       }
@@ -194,7 +194,7 @@ h1 {
     width: 500px;
 
     button {
-      @include interactive-buttons;
+      @include interactive-button;
       padding: $spacing-2;
       border-radius: $radius-md;
       background: $indian-red;

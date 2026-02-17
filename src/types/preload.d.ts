@@ -69,7 +69,9 @@ declare global {
           dataPath: string,
           collectionName: string,
         ) => Promise<ResAPIResponseponse<void>>;
-        favoriteSerie: (dataPath: string) => Promise<RespAPIResponseonse<void>>;
+        favoriteSerie: (
+          dataPath: string,
+        ) => Promise<APIResponse<SerieInCollection>>;
         recentSerie: (
           dataPath: string,
           serie_name: string,

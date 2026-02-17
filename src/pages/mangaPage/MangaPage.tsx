@@ -1,6 +1,5 @@
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Tag, Book } from 'lucide-react';
-import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
 import Loading from '../../components/Loading/Loading';
 import DownloadButton from '../../components/DonwloadButton/DownloadButton';
 import Rating from '../../components/Rating/Rating';
@@ -9,6 +8,7 @@ import Favorite from '../../components/FavoriteButton/Favorite';
 import ListView from '../../components/ListView/ListView';
 import useCollection from '../../hooks/useCollection';
 import useSerieStore from '../../store/useSerieStore';
+import { useCollectionStore } from '@/store/useCollectionStore';
 import useUIStore from '../../store/useUIStore';
 import { Manga } from 'electron/types/manga.interfaces';
 import useSerie from '../../hooks/useSerie';
@@ -20,10 +20,8 @@ export default function MangaPage() {
   useSerie(serie_name, 'Manga');
   const serie = useSerieStore((state) => state.serie) as Manga;
   const loading = useUIStore((state) => state.loading);
-  const error = useUIStore((state) => state.error);
   const navigate = useNavigate();
-
-  const { favorites, setFavorites, collections } = useCollection();
+  const { favorites, recents } = useCollection();
 
   const orderFav = () => {
     return favorites
@@ -32,13 +30,9 @@ export default function MangaPage() {
   };
 
   const orderRecent = () => {
-    const recentes = collections.find((col) => col.name === 'Recentes');
-
-    if (!recentes || !recentes.series) return [];
-
-    return [...recentes.series]
-      .sort((a, b) => new Date(b.addAt).getTime() - new Date(a.addAt).getTime())
-      .slice(0, 5);
+    return recents
+      ? [...recents.series].sort((a, b) => b.rating - a.rating)
+      : [];
   };
 
   if (loading || !serie || !serie.chapters) {
@@ -106,7 +100,7 @@ export default function MangaPage() {
         <div className={styles.serieActions}>
           <DownloadButton serie={serie} />
 
-          <Favorite serie={serie} setFavorites={setFavorites} />
+          <Favorite serie={serie} />
 
           <CollectionButton dataPath={serie.dataPath} />
 

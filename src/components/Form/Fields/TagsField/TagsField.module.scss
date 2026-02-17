@@ -79,7 +79,7 @@
 }
 
 .removeTag {
-  @include interactive-buttons;
+  @include interactive-button;
   flex-shrink: 0;
   color: $snow;
 }

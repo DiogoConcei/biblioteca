@@ -6,6 +6,7 @@ import ImageManager from '../services/ImageManager.ts';
 import UserManager from '../services/UserManager.ts';
 import TieInManager from '../services/TieInManager.ts';
 import { ComicTieIn, TieIn } from '../types/comic.interfaces.ts';
+import { SerieInCollection } from '../../src/types/collections.interfaces.ts';
 import { SerieEditForm } from '../../src/types/series.interfaces.ts';
 import { Literatures } from '../types/electron-auxiliar.interfaces.ts';
 
@@ -209,8 +210,11 @@ export default function seriesHandlers(ipcMain: IpcMain) {
       const serieData = (await storageManager.readSerieData(
         dataPath,
       )) as Literatures;
+      let newFav: SerieInCollection | null = null;
+      newFav = await collectionManager.mountSerieInfo(serieData.dataPath);
+
       const result = await userManager.favoriteSerie(serieData);
-      return { success: result };
+      return { success: result, data: newFav };
     } catch (e) {
       console.error(`Erro em favoritar serie: ${e}`);
       return { success: false, error: String(e) };

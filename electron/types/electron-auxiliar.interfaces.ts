@@ -1,6 +1,6 @@
-import { Manga, MangaChapter } from "./manga.interfaces";
-import { Comic, ComicEdition } from "./comic.interfaces";
-import { Collection } from "../../src/types/collections.interfaces";
+import { Manga, MangaChapter } from './manga.interfaces';
+import { Comic, ComicEdition } from './comic.interfaces';
+import { Collection } from '../../src/types/collections.interfaces';
 import {
   UseFormRegister,
   FieldError,
@@ -8,8 +8,8 @@ import {
   FieldValues,
   Path,
   UseFormRegisterReturn,
-} from "react-hook-form";
-import { SerieEditForm, SerieForm } from "../../src/types/series.interfaces";
+} from 'react-hook-form';
+import { SerieEditForm, SerieForm } from '../../src/types/series.interfaces';
 
 export type LiteratureChapter = ComicEdition | MangaChapter;
 
@@ -17,19 +17,19 @@ export type LiteraturesAttributes =
   | string
   | number
   | boolean
-  | "Manga"
-  | "Quadrinho"
-  | "Livro"
-  | ""
-  | "Em andamento"
-  | "Completo"
-  | "Pendente"
-  | "Publica"
-  | "Privada"
-  | "Sim"
-  | "Não";
+  | 'Manga'
+  | 'Quadrinho'
+  | 'Livro'
+  | ''
+  | 'Em andamento'
+  | 'Completo'
+  | 'Pendente'
+  | 'Publica'
+  | 'Privada'
+  | 'Sim'
+  | 'Não';
 
-export type DownloadStatus = "not_downloaded" | "downloading" | "downloaded";
+export type DownloadStatus = 'not_downloaded' | 'downloading' | 'downloaded';
 
 export type Literatures = Manga | Comic;
 
@@ -40,7 +40,7 @@ export interface NormalizedSerieData {
   archivesPath: string;
   chaptersPath: string;
   totalChapters: number;
-  status: "Em andamento" | "Completo" | "Pendente" | "";
+  status: 'Em andamento' | 'Completo' | 'Pendente' | '';
   isFavorite: boolean;
   collections: string[];
   recommendedBy?: string;
@@ -55,13 +55,13 @@ export interface viewData {
   chaptersRead: number;
   dataPath: string;
   totalChapters: number;
-  literatureForm: "Manga" | "Quadrinho" | "Livro" | "";
+  literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
 }
 
 export interface AppConfig {
   settings: {
-    reading_mode: "single_page" | "double_page" | "vertical_scroll";
-    zoom: "fit_width" | "fit_height" | "original_size";
+    reading_mode: 'single_page' | 'double_page' | 'vertical_scroll';
+    zoom: 'fit_width' | 'fit_height' | 'original_size';
     ligth_mode: boolean;
     full_screen: boolean;
   };
@@ -76,7 +76,7 @@ export interface APIResponse<T> {
   error?: string;
 }
 
-export type LiteratureForms = "Manga" | "Quadrinho";
+export type LiteratureForms = 'Manga' | 'Quadrinho';
 
 export type LiteratureChapterAttributes = string | number | boolean;
 
@@ -103,7 +103,6 @@ export interface GenericControllerProps<T extends FieldValues = FieldValues> {
 
 export interface FavoriteProps {
   serie: Literatures;
-  setFavorites: React.Dispatch<React.SetStateAction<Collection | undefined>>;
 }
 
 export interface RatingProps {

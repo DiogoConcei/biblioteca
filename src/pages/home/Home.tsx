@@ -36,7 +36,7 @@ export default function Home() {
     console.log(filePaths);
 
     try {
-      const response = await window.electronAPI.upload.processSerie(filePaths);
+      const response = await window.electronAPI.upload.processSeries(filePaths);
       const serieData = response.data;
       navigate('/local-upload/serie', { state: { serieData } });
     } catch (error) {

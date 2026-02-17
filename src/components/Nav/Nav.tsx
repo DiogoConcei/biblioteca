@@ -2,7 +2,7 @@ import useSerieStore from '../../store/useSerieStore';
 import { X, House, Square, Maximize2, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-import './Nav.scss';
+import styles from './Nav.module.scss';
 
 export default function Nav() {
   const resetStates = useSerieStore((state) => state.clearSerie);
@@ -23,20 +23,25 @@ export default function Nav() {
   };
 
   return (
-    <nav className={'TitleBar'}>
-      <ul className="NavBar">
+    <nav className={styles['title-bar']}>
+      <ul className={styles['nav-bar']}>
         <li key="home">
-          <Link to="/" className="link" onClick={resetStates}>
-            <House className="IconHome" color="#8963ba" />
+          <Link to="/" className={styles.link} onClick={resetStates}>
+            <House className={styles['icon-home']} color="#8963ba" />
+          </Link>
+        </li>
+        <li key="collections">
+          <Link to="collections" className={styles.link} onClick={resetStates}>
+            Coleções
           </Link>
         </li>
       </ul>
 
-      <div className="windowBtns">
+      <div className={styles['bar-buttons']}>
         <button
           onClick={minimize}
           aria-label="Minimizar"
-          className="ActionsBtn"
+          className={styles['action-button']}
         >
           <Minus color="#8963ba" />
         </button>
@@ -44,7 +49,7 @@ export default function Nav() {
           <button
             onClick={fullScreen}
             aria-label="Maximizar"
-            className="ActionsBtn"
+            className={styles['action-button']}
           >
             <Maximize2 color="#8963ba" />
           </button>
@@ -52,13 +57,17 @@ export default function Nav() {
           <button
             onClick={fullScreen}
             aria-label="Maximizar"
-            className="ActionsBtn"
+            className={styles['action-button']}
           >
             <Square color="#8963ba" />
           </button>
         )}
 
-        <button onClick={close} aria-label="Fechar" className="ActionsBtn">
+        <button
+          onClick={close}
+          aria-label="Fechar"
+          className={styles['action-button']}
+        >
           <X color="#8963ba" />
         </button>
       </div>

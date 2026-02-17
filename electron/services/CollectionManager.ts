@@ -2,12 +2,15 @@ import fse from 'fs-extra';
 import path from 'path';
 import {
   Collection,
-  SeriesInCollection,
+  SerieInCollection,
 } from '../../src/types/collections.interfaces';
 
 import LibrarySystem from './abstract/LibrarySystem';
 import StorageManager from './StorageManager';
-import { Literatures } from '../types/electron-auxiliar.interfaces';
+import {
+  APIResponse,
+  Literatures,
+} from '../types/electron-auxiliar.interfaces';
 
 export default class CollectionManager extends LibrarySystem {
   private readonly storageManager = new StorageManager();
@@ -190,11 +193,11 @@ export default class CollectionManager extends LibrarySystem {
   public async removeInCollection(
     collectionName: string,
     serieName: string,
-  ): Promise<boolean> {
+  ): Promise<APIResponse<string>> {
     try {
       const collection = await this.getCollection(collectionName);
 
-      if (!collection) return false;
+      if (!collection) return { success: false };
 
       const updatedCollection = {
         ...collection,
@@ -202,10 +205,10 @@ export default class CollectionManager extends LibrarySystem {
       };
 
       await this.updateCollection(updatedCollection);
-      return true;
+      return { success: true };
     } catch (e) {
       console.error('Falha em retirar série da coleção: ', e);
-      return false;
+      return { success: false };
     }
   }
 
@@ -251,7 +254,10 @@ export default class CollectionManager extends LibrarySystem {
   }
 
   // adiciona em uma coleção
-  public async addInCollection(dataPath: string, collectionName: string) {
+  public async addInCollection(
+    dataPath: string,
+    collectionName: string,
+  ): Promise<boolean> {
     try {
       const collection = await this.getCollection(collectionName);
       if (!collection) return false;
@@ -425,7 +431,7 @@ export default class CollectionManager extends LibrarySystem {
     };
   }
 
-  private async mountSerieInfo(dataPath: string): Promise<SeriesInCollection> {
+  public async mountSerieInfo(dataPath: string): Promise<SerieInCollection> {
     const date = new Date().toISOString();
     const serie = (await this.storageManager.readSerieData(
       dataPath,

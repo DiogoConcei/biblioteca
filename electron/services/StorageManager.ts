@@ -542,13 +542,3 @@ export default class StorageManager extends LibrarySystem {
     };
   }
 }
-
-// 01 - Mulher-Hulk 15
-// Vingadores - Os Maiores Herois da Terra 1 de 8 (BR)
-(async () => {
-  const inputFile =
-    'c:\\Users\\diogo\\Downloads\\Case\\01 - Mulher-Hulk 15.cbr';
-  const outputDir = 'C:\\Users\\diogo\\Downloads\\Case';
-  const storage = new StorageManager();
-  await storage.extractCoverWith7zip(inputFile, outputDir);
-})();

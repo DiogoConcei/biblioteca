@@ -4,6 +4,7 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 
 import Layout from './pages/layout/Layout';
 import Home from './pages/home/Home';
+import Collections from './pages/collections/Collections';
 import Upload from './pages/upload/Upload';
 import MangaPage from './pages/mangaPage/MangaPage';
 import ComicPage from './pages/comicPage/comicPage';
@@ -19,6 +20,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
+            <Route path="collections" element={<Collections />} />
             <Route
               path="edit/serie/:serie_name/:literature_form"
               element={<EditSerie />}
