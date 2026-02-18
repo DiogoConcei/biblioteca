@@ -13,6 +13,10 @@ interface CollectionState {
 
   fetchCollections: () => Promise<void>;
   updateFav: (serie: Literatures, isFav: boolean) => Promise<boolean>;
+
+  createCollection: (
+    collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
+  ) => Promise<boolean>;
 }
 
 export const useCollectionStore = create<CollectionState>((set, get) => ({
@@ -73,5 +77,15 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
     } catch {
       return false;
     }
+  },
+
+  createCollection: async (collection) => {
+    const response =
+      await window.electronAPI.collections.createCollection(collection);
+
+    if (!response.success) return false;
+
+    await get().fetchCollections();
+    return true;
   },
 }));

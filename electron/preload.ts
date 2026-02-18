@@ -151,10 +151,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   collections: {
     getCollections: async (): Promise<APIResponse<Collection[]>> =>
       ipcRenderer.invoke('collection:get-all'),
-    createCollection: async (
+    quicklyCreate: async (
       collectionName: string,
+    ): Promise<APIResponse<boolean>> =>
+      ipcRenderer.invoke('collection:quickly-create', collectionName),
+    createCollection: async (
+      collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
     ): Promise<APIResponse<void>> =>
-      ipcRenderer.invoke('collection:create', collectionName),
+      ipcRenderer.invoke('collection:create', collection),
     getFavSeries: async (): Promise<APIResponse<Collection>> =>
       ipcRenderer.invoke('collection:get-all-fav'),
   },

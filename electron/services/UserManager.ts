@@ -32,22 +32,22 @@ export default class UserManager extends FileSystem {
     try {
       const isFavorite = !serieData.metadata.isFavorite;
 
-      if (isFavorite) {
-        await this.collManager.addInCollection(serieData.dataPath, 'favoritos');
-      } else {
-        await this.collManager.removeInCollection(
-          serieData.dataPath,
-          'favoritos',
-        );
-      }
+      const success = isFavorite
+        ? await this.collManager.addInCollection(
+            serieData.dataPath,
+            'favoritos',
+          )
+        : (await this.collManager.removeInCollection('favoritos', serieData.id))
+            .success;
+
+      if (!success) return false;
 
       serieData.metadata.isFavorite = isFavorite;
-
       await this.storageManager.writeData(serieData);
       return true;
     } catch (err) {
       console.error('Erro ao atualizar favoritação de série:', err);
-      throw false;
+      return false;
     }
   }
 

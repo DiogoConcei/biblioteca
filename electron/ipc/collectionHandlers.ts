@@ -2,6 +2,7 @@ import { IpcMain } from 'electron';
 
 import CollectionsManager from '../services/CollectionManager';
 import ImageManager from '../services/ImageManager';
+import { Collection } from '../../src/types/collections.interfaces';
 
 export default function collectionHandlers(ipcMain: IpcMain) {
   const collectionsOperations = new CollectionsManager();
@@ -35,12 +36,28 @@ export default function collectionHandlers(ipcMain: IpcMain) {
   });
 
   ipcMain.handle(
-    'collection:create',
+    'collection:quickly-create',
     async (_event, collectionName: string) => {
       try {
-        await collectionsOperations.quicklyCreate(collectionName);
+        const result =
+          await collectionsOperations.quicklyCreate(collectionName);
+        return { success: result };
       } catch (e) {
-        throw e;
+        console.error(`Falha ao criar coleção: ${e}`);
+        return { success: false, error: String(e) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    'collection:create',
+    async (_event, collection: Omit<Collection, 'createdAt' | 'updatedAt'>) => {
+      try {
+        const result = await collectionsOperations.createCollection(collection);
+        return { success: result };
+      } catch (e) {
+        console.error(`Falha ao criar coleção: ${e}`);
+        return { success: false, error: String(e) };
       }
     },
   );

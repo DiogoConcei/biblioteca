@@ -33,8 +33,6 @@ export default function Home() {
       return window.electronAPI.webUtilities.getPathForFile(file);
     });
 
-    console.log(filePaths);
-
     try {
       const response = await window.electronAPI.upload.processSeries(filePaths);
       const serieData = response.data;

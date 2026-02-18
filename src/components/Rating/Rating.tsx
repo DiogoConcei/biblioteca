@@ -1,81 +1,69 @@
-import { StarOff, Star } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import useAction from '../../hooks/useAction';
-import useCollection from '../../hooks/useCollection';
+import { Star, StarOff } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+
 import { RatingProps } from '../../../electron/types/electron-auxiliar.interfaces';
+import useAction from '../../hooks/useAction';
 import styles from './Rating.module.scss';
 
+const STARS_RATING = [
+  { value: 1, label: '1 - Péssimo' },
+  { value: 2, label: '2 - Horrível' },
+  { value: 3, label: '3 - Regular' },
+  { value: 4, label: '4 - Bom' },
+  { value: 5, label: '5 - Excelente' },
+];
+
 export default function Rating({ serie }: RatingProps) {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
   const { ratingSerie } = useAction();
-  const { setFavorites } = useCollection();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentRating, setCurrentRating] = useState(
+    serie.metadata.rating ?? 0,
+  );
 
   useEffect(() => {
-    if (!serie) return;
-    const value = serie.metadata.rating;
+    setCurrentRating(serie.metadata.rating ?? 0);
+  }, [serie.metadata.rating]);
 
-    if (!value) return;
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (!containerRef.current) return;
 
-    setCurrentRating(value);
+      if (!containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
-  const [currentRating, setCurrentRating] = useState<number>(0);
-
-  const starsRating = [
-    '1 - Péssimo',
-    '2 - Horrível',
-    '3 - Regular',
-    '4 - Bom',
-    '5 - Excelente',
-  ];
-
-  const newRating = async (e: React.MouseEvent, rating: number) => {
-    ratingSerie(e, serie, rating);
-
-    setFavorites((prev) => {
-      if (!prev) return prev;
-
-      const updatedSeries = prev.series.map((serie) => {
-        if (serie.name === serie.name) {
-          return {
-            ...serie,
-            rating: rating,
-          };
-        }
-        return serie;
-      });
-
-      return {
-        ...prev,
-        series: updatedSeries,
-      };
-    });
-
+  const handleNewRating = async (event: React.MouseEvent, rating: number) => {
+    await ratingSerie(event, serie, rating);
     setCurrentRating(rating);
-  };
-
-  const onToggle = () => {
-    setIsOpen(!isOpen);
-    setTimeout(() => {
-      setIsOpen(false);
-    }, 3000);
+    setIsOpen(false);
   };
 
   return (
-    <div>
-      <button className={styles.rating} onClick={onToggle}>
+    <div ref={containerRef}>
+      <button
+        className={styles.rating}
+        onClick={() => setIsOpen((previous) => !previous)}
+        aria-label="Selecionar rating"
+      >
         {currentRating > 0 ? <Star /> : <StarOff />}
       </button>
 
       {isOpen && (
         <ul className={styles['rating-list']}>
-          {starsRating.map((quantity, index) => (
-            <li key={index} className={styles['rating-item']}>
+          {STARS_RATING.map((option) => (
+            <li key={option.value} className={styles['rating-item']}>
               <button
                 className={styles['rating-option']}
-                onClick={async (e) => newRating(e, index)}
+                onClick={(event) => handleNewRating(event, option.value)}
               >
-                {quantity}
+                {option.label}
               </button>
             </li>
           ))}

@@ -109,9 +109,12 @@ declare global {
 
       collections: {
         getCollections: () => Promise<APIResponse<Collection[]>>;
-        createCollection: (
+        quicklyCreate: (
           collectionName: string,
-        ) => Promise<APIResponse<void>>;
+        ) => Promise<APIResponse<boolean>>;
+        createCollection: (
+          collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
+        ) => Promise<APIResponse<boolean>>;
         getFavSeries: () => Promise<APIResponse<Collection>>;
       };
 

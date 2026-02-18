@@ -1,19 +1,19 @@
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 
-import ImageController from "../../components/Form/Fields/ImageController/ImageController";
-import TextInput from "../../components/Form/GenericInputs/TextInput/TextInput";
-import LiteratureField from "../../components/Form/Fields/LiteratureField/LiteratureField";
-import BackupField from "../../components/Form/Fields/BackupField/BackupField";
-import PrivacyField from "../../components/Form/Fields/PrivacyField/PrivacyField";
-import StatusField from "../../components/Form/Fields/StatusField/StatusField";
-import CollectionsField from "../../components/Form/Fields/CollectionsField/CollectionsField";
-import TagsField from "../../components/Form/Fields/TagsField/TagsField";
-import Loading from "../../components/Loading/Loading";
+import ImageController from '../../components/Form/Fields/ImageController/ImageController';
+import TextInput from '../../components/Form/GenericInputs/TextInput/TextInput';
+import LiteratureField from '../../components/Form/Fields/LiteratureField/LiteratureField';
+import BackupField from '../../components/Form/Fields/BackupField/BackupField';
+import PrivacyField from '../../components/Form/Fields/PrivacyField/PrivacyField';
+import StatusField from '../../components/Form/Fields/StatusField/StatusField';
+import CollectionsField from '../../components/Form/Fields/CollectionsField/CollectionsField';
+import TagsField from '../../components/Form/Fields/TagsField/TagsField';
+import Loading from '../../components/Loading/Loading';
 
-import { SerieData, SerieForm } from "../../types/series.interfaces";
-import styles from "./Upload.module.scss";
+import { SerieData, SerieForm } from '../../types/series.interfaces';
+import styles from './Upload.module.scss';
 
 export default function Upload() {
   const location = useLocation();
@@ -23,23 +23,23 @@ export default function Upload() {
     (location.state?.serieData as SerieData[]) ?? [];
 
   const emptyForm: SerieForm = {
-    name: "",
-    sanitizedName: "",
-    genre: "",
-    author: "",
-    cover_path: "",
-    language: "",
-    privacy: "",
-    autoBackup: "",
-    readingStatus: "",
-    literatureForm: "" as SerieForm["literatureForm"],
+    name: '',
+    sanitizedName: '',
+    genre: '',
+    author: '',
+    cover_path: '',
+    language: '',
+    privacy: '',
+    autoBackup: '',
+    readingStatus: '',
+    literatureForm: '' as SerieForm['literatureForm'],
     tags: [],
     collections: [],
-    archivesPath: "",
-    chaptersPath: "",
-    oldPath: "",
-    createdAt: "",
-    deletedAt: "",
+    archivesPath: '',
+    chaptersPath: '',
+    oldPath: '',
+    createdAt: '',
+    deletedAt: '',
   };
 
   const [series, setSeries] = useState<SerieForm[]>(
@@ -63,7 +63,7 @@ export default function Upload() {
     formState: { errors, isValid },
   } = useForm<SerieForm>({
     defaultValues: emptyForm,
-    mode: "onChange",
+    mode: 'onChange',
   });
 
   useEffect(() => {
@@ -107,15 +107,14 @@ export default function Upload() {
     );
 
     if (hasInvalidSerie) {
-      console.warn("Alguma série está incompleta");
+      console.warn('Alguma série está incompleta');
       return;
     }
 
     setIsLoading(true);
     try {
-      console.log("Enviando:", series);
       await window.electronAPI.upload.uploadSeries(series);
-      navigate("/");
+      navigate('/');
     } catch (err) {
       console.error(err);
     } finally {
@@ -130,66 +129,66 @@ export default function Upload() {
 
   return (
     <article>
-      <section className={styles["sec-form"]}>
+      <section className={styles['sec-form']}>
         <h1>
-          Personalizando série ({currentIndex + 1}/{total}):{" "}
-          {currentSerie?.name || "—"}
+          Personalizando série ({currentIndex + 1}/{total}):{' '}
+          {currentSerie?.name || '—'}
         </h1>
 
-        <form onSubmit={handleSubmit(onSubmit)} className={styles["form-view"]}>
-          <div className={styles["image-upload"]}>
+        <form onSubmit={handleSubmit(onSubmit)} className={styles['form-view']}>
+          <div className={styles['image-upload']}>
             <ImageController control={control} name="cover_path" />
           </div>
 
-          <div className={styles["form-container"]}>
-            <div className={styles["text-info"]}>
+          <div className={styles['form-container']}>
+            <div className={styles['text-info']}>
               <TextInput
-                register={register("name", { required: true })}
+                register={register('name', { required: true })}
                 error={errors.name}
                 msg="Nome da série"
               />
               <TextInput
-                register={register("genre", { required: true })}
+                register={register('genre', { required: true })}
                 error={errors.genre}
                 msg="Gênero da série"
               />
               <TextInput
-                register={register("author", { required: true })}
+                register={register('author', { required: true })}
                 error={errors.author}
                 msg="Autor"
               />
               <TextInput
-                register={register("language", { required: true })}
+                register={register('language', { required: true })}
                 error={errors.language}
                 msg="Idioma"
               />
             </div>
 
             <LiteratureField
-              register={register("literatureForm", { required: true })}
+              register={register('literatureForm', { required: true })}
               error={errors.literatureForm}
             />
 
             <TagsField control={control} name="tags" />
 
             <BackupField
-              register={register("autoBackup", { required: true })}
+              register={register('autoBackup', { required: true })}
               error={errors.autoBackup}
             />
 
             <PrivacyField
-              register={register("privacy", { required: true })}
+              register={register('privacy', { required: true })}
               error={errors.privacy}
             />
 
             <StatusField
-              register={register("readingStatus", { required: true })}
+              register={register('readingStatus', { required: true })}
               error={errors.readingStatus}
             />
 
             <CollectionsField control={control} name="collections" />
 
-            <div className={styles["navigation-buttons"]}>
+            <div className={styles['navigation-buttons']}>
               <button
                 type="button"
                 onClick={handlePrev}

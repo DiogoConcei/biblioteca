@@ -24,7 +24,6 @@ export default function Viewer() {
     decode_serie_name,
     Number(chapter_id),
   );
-  console.log(chapter);
   const { position, elementRef } = useDrag(chapter);
   const chapterNavigation = useNavigation(chapter);
   const [scale, setScale] = useState<number>(1);

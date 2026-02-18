@@ -13,6 +13,7 @@ export interface Collection {
 export interface SerieInCollection {
   id: number;
   name: string;
+  description: string;
   coverImage: string;
   archivesPath: string;
   totalChapters: number;

@@ -167,7 +167,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
           await collectionManager.removeInCollection(
             collectionName,
-            serieData.name,
+            serieData.id,
           );
         }
 
@@ -210,6 +210,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
       const serieData = (await storageManager.readSerieData(
         dataPath,
       )) as Literatures;
+
       let newFav: SerieInCollection | null = null;
       newFav = await collectionManager.mountSerieInfo(serieData.dataPath);
 

@@ -174,7 +174,6 @@ export default class TieInManager extends LibrarySystem {
       }
 
       chapter.chapterPath = chapterOut;
-      console.log(chapterOut);
     } catch (e) {
       console.error(`Erro ao processar os capítulos em "${chapter.name}":`, e);
       throw e;
@@ -400,53 +399,37 @@ export default class TieInManager extends LibrarySystem {
     };
   }
 
-  // public async createEditionCover(chap: ComicEdition) {
-  //   try {
-  //     const rawName = chap.name;
-  //     const safeName = this.fileManager.sanitizeDirName(rawName);
+  public async createEditionCover(chap: ComicEdition) {
+    try {
+      const rawName = chap.name;
+      const safeName = this.fileManager.sanitizeDirName(rawName);
 
-  //     const outputPath = path.join(
-  //       this.showcaseImages,
-  //       chap.serieName,
-  //       safeName,
-  //     );
+      const outputPath = path.join(
+        this.showcaseImages,
+        chap.serieName,
+        safeName,
+      );
 
-  //     chap.chapterPath = path.join(
-  //       this.comicsImages,
-  //       chap.serieName,
-  //       chap.name,
-  //     );
+      chap.chapterPath = path.join(
+        this.comicsImages,
+        chap.serieName,
+        chap.name,
+      );
 
-  //     if (!chap.archivesPath) {
-  //       console.warn(
-  //         `Arquivo de origem não informado para a edição ${chap.name}. Pulando geração de capa.`,
-  //       );
-  //       return;
-  //     }
+      if (!chap.archivesPath) {
+        console.warn(
+          `Arquivo de origem não informado para a edição ${chap.name}. Pulando geração de capa.`,
+        );
+        return;
+      }
 
-  //     chap.coverImage = await this.imageManager.generateCover(
-  //       chap.archivesPath,
-  //       outputPath,
-  //     );
-  //   } catch (e) {
-  //     console.error(`Falha em gerar capa para as edicoes`);
-  //     throw e;
-  //   }
-  // }
+      chap.coverImage = await this.imageManager.generateCover(
+        chap.archivesPath,
+        outputPath,
+      );
+    } catch (e) {
+      console.error(`Falha em gerar capa para as edicoes`);
+      throw e;
+    }
+  }
 }
-
-// (async () => {
-//   const tM = new TieInManager();
-//   const sT = new StorageManager();
-//   const dP =
-//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\childSeries\\00 - Versão em CBR - Longa - 134 Edições.json';
-//   const tD = (await sT.readSerieData(dP)) as TieIn;
-
-//   if (!tD.chapters) return;
-
-//   const tC = tD.chapters.find((s) => s.id === 27);
-
-//   if (!tC) return;
-
-//   console.log(await tM.createChapterById(dP, 0));
-// })();

@@ -147,37 +147,3 @@ export default class ValidationManager extends FileSystem {
     }
   }
 }
-
-// (async () => {
-//   const serieName = 'Batman - Cavaleiro Branco';
-//   const chapterId = 1;
-//   const fileManager = new FileManager();
-//   const storageManager = new StorageManager();
-//   const validationManager = new ValidationManager();
-//   const dataPath = await fileManager.getDataPath(serieName);
-
-//   const LiteratureForm = await fileManager.foundLiteratureForm(dataPath);
-//   console.log(LiteratureForm);
-
-//   function isTieIn(data: Literatures | TieIn): data is TieIn {
-//     return (data as TieIn).metadata.isCreated !== undefined;
-//   }
-
-//   function isManga(data: Literatures | TieIn): data is Manga {
-//     return (data as Manga).literatureForm !== undefined;
-//   }
-
-//   const serieData = await storageManager.readSerieData(dataPath);
-
-//   if (isTieIn(serieData)) {
-//     console.log(await validationManager.checkDownload(serieData, chapterId));
-//   } else if (isManga(serieData)) {
-//     console.log(await validationManager.checkDownload(serieData, chapterId));
-//   } else {
-//     console.log(await validationManager.checkDownload(serieData, chapterId));
-//   }
-
-//   // if (!serieData?.chapters) {
-//   //   throw new Error('Erro ao recuperar os dados da série.');
-//   // }
-// })();

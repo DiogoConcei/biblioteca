@@ -117,7 +117,35 @@ export default class CollectionManager extends LibrarySystem {
         return false;
       }
 
-      const newCollection = this.mountCollection(name);
+      const newCollection = this.mountEmptyCollection(name);
+      data.push(newCollection);
+
+      await fse.writeJson(this.appCollections, data, { spaces: 2 });
+      return true;
+    } catch (e) {
+      console.error('Erro ao criar nova coleção: ', e);
+      return false;
+    }
+  }
+
+  public async createCollection(
+    collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
+  ): Promise<boolean> {
+    try {
+      const data = await this.getCollections();
+
+      if (!data) return false;
+
+      const rawName = collection.name.toLocaleLowerCase().trim();
+      const exist = data.some(
+        (col) => col.name.toLocaleLowerCase().trim() == rawName,
+      );
+
+      if (exist || !rawName) {
+        return false;
+      }
+
+      const newCollection = this.mountCollection(collection);
       data.push(newCollection);
 
       await fse.writeJson(this.appCollections, data, { spaces: 2 });
@@ -192,7 +220,7 @@ export default class CollectionManager extends LibrarySystem {
   // remove a série de uma coleção
   public async removeInCollection(
     collectionName: string,
-    serieName: string,
+    serieId: number,
   ): Promise<APIResponse<string>> {
     try {
       const collection = await this.getCollection(collectionName);
@@ -201,7 +229,7 @@ export default class CollectionManager extends LibrarySystem {
 
       const updatedCollection = {
         ...collection,
-        series: collection.series.filter((serie) => serie.name !== serieName),
+        series: collection.series.filter((serie) => serie.id !== serieId),
       };
 
       await this.updateCollection(updatedCollection);
@@ -260,11 +288,21 @@ export default class CollectionManager extends LibrarySystem {
   ): Promise<boolean> {
     try {
       const collection = await this.getCollection(collectionName);
-      if (!collection) return false;
+
+      if (!collection) {
+        return false;
+      }
 
       const serie = await this.mountSerieInfo(dataPath);
 
-      const alreadyExists = collection.series.some((s) => s.id === serie.id);
+      if (!serie) {
+        return false;
+      }
+
+      const alreadyExists = collection.series.some((s) => {
+        const match = s.id === serie.id;
+        return match;
+      });
 
       if (alreadyExists) {
         return false;
@@ -276,9 +314,11 @@ export default class CollectionManager extends LibrarySystem {
       };
 
       await this.updateCollection(update);
+
       return true;
     } catch (e) {
-      console.error('Falha em adicionar a serie à coleção: ', e);
+      console.error('Error while adding serie to collection:', e);
+      console.groupEnd();
       return false;
     }
   }
@@ -417,12 +457,28 @@ export default class CollectionManager extends LibrarySystem {
     }
   }
 
-  private mountCollection(name: string, description?: string): Collection {
+  private mountCollection(
+    collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
+  ): Collection {
+    const date = new Date().toISOString();
+
+    return {
+      name: collection.name.trim(),
+      description: collection.description || '',
+      coverImage: collection.coverImage || '',
+      series: collection.series || [],
+      comments: collection.comments || [],
+      createdAt: date,
+      updatedAt: date,
+    };
+  }
+
+  private mountEmptyCollection(name: string): Collection {
     const date = new Date().toISOString();
 
     return {
       name,
-      description: description || '',
+      description: '',
       coverImage: '',
       series: [],
       comments: [],
@@ -442,6 +498,7 @@ export default class CollectionManager extends LibrarySystem {
       name: serie.name,
       coverImage: serie.coverImage,
       archivesPath: serie.archivesPath,
+      description: '',
       status: serie.metadata.status,
       rating: serie.metadata.rating || 0,
       totalChapters: serie.totalChapters,
@@ -453,7 +510,7 @@ export default class CollectionManager extends LibrarySystem {
 
   public async clearCollection(collectionName: string): Promise<boolean> {
     try {
-      const emptyCollection = await this.mountCollection(collectionName);
+      const emptyCollection = await this.mountEmptyCollection(collectionName);
 
       await this.updateCollection(emptyCollection);
 

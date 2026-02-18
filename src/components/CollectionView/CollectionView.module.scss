@@ -1,0 +1,33 @@
+@use '@/styles/variables' as *;
+
+.wrapper {
+  color: $snow;
+
+  header {
+    margin-bottom: $spacing-4;
+
+    h2 {
+      margin: 0;
+      font-size: $font-3xl;
+    }
+
+    p {
+      margin-top: $spacing-1;
+      color: $baby-powder;
+    }
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: $spacing-3;
+}
+
+.emptyState {
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: $snow;
+}

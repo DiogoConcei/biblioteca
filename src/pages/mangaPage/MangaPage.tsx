@@ -8,7 +8,6 @@ import Favorite from '../../components/FavoriteButton/Favorite';
 import ListView from '../../components/ListView/ListView';
 import useCollection from '../../hooks/useCollection';
 import useSerieStore from '../../store/useSerieStore';
-import { useCollectionStore } from '@/store/useCollectionStore';
 import useUIStore from '../../store/useUIStore';
 import { Manga } from 'electron/types/manga.interfaces';
 import useSerie from '../../hooks/useSerie';
@@ -120,8 +119,8 @@ export default function MangaPage() {
         <div className={styles.favCollection}>
           <h3>Séries Favoritas</h3>
           <ul>
-            {orderFav().map((serie) => (
-              <li key={serie.id}>
+            {orderFav().map((serie, idx) => (
+              <li key={idx}>
                 <Link to={`/Manga/${serie.name}/:${serie.id}`}>
                   <span>{serie.name}</span>
                 </Link>

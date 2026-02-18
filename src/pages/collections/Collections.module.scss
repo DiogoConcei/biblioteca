@@ -1,26 +1,97 @@
 @use '@/styles/variables' as *;
 
 .container {
-  display: flex;
-  background: #1b1a1a;
-  height: 100%;
+  position: relative;
+  min-height: 100%;
+  padding: $spacing-4;
+  background: #06080f;
   color: $snow;
+  overflow: hidden;
+}
 
-  .menu {
-    padding: $spacing-3;
-    text-align: center;
-    width: 260px;
+.stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 20% 30%, #ffffffaa 1px, transparent 1px),
+    radial-gradient(circle at 80% 20%, #ffffff8e 1px, transparent 1px),
+    radial-gradient(circle at 40% 70%, #ffffff80 1px, transparent 1px),
+    radial-gradient(circle at 70% 90%, #ffffff75 1px, transparent 1px),
+    radial-gradient(circle at 10% 80%, #ffffffa6 1px, transparent 1px);
+  background-size:
+    180px 180px,
+    220px 220px,
+    160px 160px,
+    260px 260px,
+    200px 200px;
+  opacity: 0.45;
+  animation: twinkle 8s linear infinite;
+}
 
-    .menu-item {
-      margin: $spacing-2;
-    }
-
-    .add-btn {
-      @include interactive-button;
-      padding: $spacing-2;
-      margin: $spacing-2;
-      color: $indian-red;
-      color: $snow;
-    }
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
   }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.header,
+.layout {
+  position: relative;
+  z-index: 1;
+}
+
+.header {
+  margin-bottom: $spacing-4;
+}
+
+.backButton {
+  @include interactive-button;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid $snow;
+  border-radius: $radius-md;
+  color: $snow;
+  text-decoration: none;
+  background: #0000004d;
+}
+
+.layout {
+  display: flex;
+  gap: $spacing-4;
+}
+
+.viewerArea {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #ffffff1f;
+  border-radius: $radius-lg;
+  background: #00000066;
+  padding: $spacing-4;
+}
+
+.viewerTopBar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: $spacing-3;
+}
+
+.add-btn {
+  @include interactive-button;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid $indian-red;
+  border-radius: $radius-md;
+  background: $strong-indian-red;
+  color: $snow;
+  box-shadow: 0 4px 12px $hover-shining;
 }
