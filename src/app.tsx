@@ -12,6 +12,7 @@ import TieInPage from './components/TieInPage/TieInPage';
 import Viewer from './pages/viewer/Viewer';
 import EditSerie from './pages/editSerie/EditSerie';
 import ErrorBoundary from './providers/ErrorBoundary';
+import SettingsPage from './pages/settings/SettingsPage';
 
 const App = () => {
   return (
@@ -25,6 +26,7 @@ const App = () => {
               path="edit/serie/:serie_name/:literature_form"
               element={<EditSerie />}
             />
+            <Route path="settings" element={<SettingsPage />} />
             <Route path="local-upload/serie" element={<Upload />} />
             <Route path="Manga/:manga_name/:manga_id" element={<MangaPage />} />
             <Route

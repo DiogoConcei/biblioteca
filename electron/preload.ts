@@ -14,6 +14,7 @@ import {
 import {
   Collection,
   SerieInCollection,
+  ScrapedMetadata,
 } from '../src/types/collections.interfaces.ts';
 import { ComicTieIn, TieIn } from './types/comic.interfaces.ts';
 
@@ -44,6 +45,33 @@ contextBridge.exposeInMainWorld('electronAPI', {
     minimize: () => ipcRenderer.invoke('window:minimize'),
     toggleMaximize: () => ipcRenderer.invoke('window:toggle-maximize'),
     close: () => ipcRenderer.invoke('window:close'),
+  },
+
+  system: {
+    createBackup: (options?: {
+      encrypt?: boolean;
+      password?: string;
+      description?: string;
+      includeLargeFiles?: boolean;
+    }) => ipcRenderer.invoke('system:create-backup', options),
+    resetApplication: (options: {
+      level: 'soft' | 'full';
+      backupBefore?: boolean;
+      preserve?: string[];
+    }) => ipcRenderer.invoke('system:reset-application', options),
+    getBackupList: () => ipcRenderer.invoke('system:get-backup-list'),
+    restoreBackup: (backupPath: string) =>
+      ipcRenderer.invoke('system:restore-backup', backupPath),
+    removeBackup: (backupPath: string) =>
+      ipcRenderer.invoke('system:remove-backup', backupPath),
+    getSettings: () => ipcRenderer.invoke('system:get-settings'),
+    setSettings: (settings: Record<string, unknown>) =>
+      ipcRenderer.invoke('system:set-settings', settings),
+    connectDrive: () => ipcRenderer.invoke('system:connect-drive'),
+    disconnectDrive: () => ipcRenderer.invoke('system:disconnect-drive'),
+    exportLogs: () => ipcRenderer.invoke('system:export-logs'),
+    clearLogs: () => ipcRenderer.invoke('system:clear-logs'),
+    createDebugBundle: () => ipcRenderer.invoke('system:create-debug-bundle'),
   },
 
   webUtilities: {
@@ -157,9 +185,45 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ): Promise<APIResponse<boolean>> =>
       ipcRenderer.invoke('collection:quickly-create', collectionName),
     createCollection: async (
-      collection: CreateCollectionDTO,
-    ): Promise<APIResponse<boolean>> =>
+      collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
+    ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('collection:create', collection),
+    deleteCollection: async (
+      collectionName: string,
+    ): Promise<APIResponse<void>> =>
+      ipcRenderer.invoke('collection:delete', collectionName),
+    updateCollection: async (
+      collectionName: string,
+      payload: Partial<Pick<Collection, 'description' | 'coverImage' | 'name'>>,
+    ): Promise<APIResponse<void>> =>
+      ipcRenderer.invoke('collection:update', collectionName, payload),
+    removeSerie: async (
+      collectionName: string,
+      serieId: number,
+      keepEmpty = false,
+    ): Promise<APIResponse<string>> =>
+      ipcRenderer.invoke(
+        'collection:remove-serie',
+        collectionName,
+        serieId,
+        keepEmpty,
+      ),
+    reorderSeries: async (
+      collectionName: string,
+      orderedSeriesIds: number[],
+    ): Promise<APIResponse<void>> =>
+      ipcRenderer.invoke(
+        'collection:reorder-series',
+        collectionName,
+        orderedSeriesIds,
+      ),
+    fetchMetadata: async (
+      title: string,
+      type: 'manga' | 'comic',
+      year?: number,
+      author?: string,
+    ): Promise<APIResponse<ScrapedMetadata>> =>
+      ipcRenderer.invoke('metadata:fetch', title, type, year, author),
     getFavSeries: async (): Promise<APIResponse<Collection>> =>
       ipcRenderer.invoke('collection:get-all-fav'),
   },

@@ -9,6 +9,26 @@ import {
 } from '../types/electron-auxiliar.interfaces.ts';
 import { Comic, TieIn } from '../types/comic.interfaces.ts';
 
+interface LocalSettings {
+  backupAuto: boolean;
+  backupSchedule: { frequency: 'daily' | 'weekly' | 'monthly'; time: string };
+  backupRetention: number;
+  uploadBackupsToDrive: boolean;
+  themeMode: 'light' | 'dark' | 'system';
+  accentColor: string;
+  compactMode: boolean;
+  sendLogsWithBugReport: boolean;
+  driveConnected: boolean;
+}
+
+interface BackupMeta {
+  id: string;
+  path: string;
+  createdAt: string;
+  description?: string;
+  encrypted?: boolean;
+}
+
 export default class SystemManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
   private readonly storageManager: StorageManager = new StorageManager();
@@ -220,13 +240,193 @@ export default class SystemManager extends LibrarySystem {
 
     await this.storageManager.writeData(serieData);
   }
-}
 
-// (async () => {
-//   const dataPath =
-//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Comics\\07 - Dinastia M - Completa ( + Tie-ins ).json';
-//   const st = new StorageManager();
-//   const serieD = (await st.readSerieData(dataPath)) as Comic;
-//   const sM = new SystemManager();
-//   await sM.fixComicOrder(serieD);
-// })();
+  private get backupRoot(): string {
+    return path.join(this.baseStorageFolder, 'backups');
+  }
+
+  private get logsRoot(): string {
+    return path.join(this.baseStorageFolder, 'logs');
+  }
+
+  private getSettingsDefaults(): LocalSettings {
+    return {
+      backupAuto: false,
+      backupSchedule: { frequency: 'weekly', time: '03:00' },
+      backupRetention: 10,
+      uploadBackupsToDrive: false,
+      themeMode: 'system',
+      accentColor: '#8963ba',
+      compactMode: false,
+      sendLogsWithBugReport: false,
+      driveConnected: false,
+    };
+  }
+
+  public async getSettings(): Promise<LocalSettings> {
+    const config = await fse.readJson(this.configFilePath);
+    return { ...this.getSettingsDefaults(), ...(config.settings ?? {}) };
+  }
+
+  public async setSettings(settings: Partial<LocalSettings>): Promise<void> {
+    const config = await fse.readJson(this.configFilePath);
+    const merged = {
+      ...this.getSettingsDefaults(),
+      ...(config.settings ?? {}),
+      ...settings,
+    };
+    config.settings = merged;
+    await fse.writeJson(this.configFilePath, config, { spaces: 2 });
+  }
+
+  public async createBackup(options?: {
+    encrypt?: boolean;
+    description?: string;
+  }): Promise<{ success: boolean; path?: string; error?: string }> {
+    try {
+      await fse.mkdirp(this.backupRoot);
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupFolder = path.join(this.backupRoot, `backup-${timestamp}`);
+      await fse.mkdirp(backupFolder);
+
+      const targetStorage = path.join(backupFolder, 'storage');
+      await fse.copy(this.baseStorageFolder, targetStorage, {
+        filter: (src) =>
+          !src.includes(path.join(this.baseStorageFolder, 'backups')),
+      });
+
+      const metadata: BackupMeta = {
+        id: `backup-${timestamp}`,
+        path: backupFolder,
+        createdAt: new Date().toISOString(),
+        description: options?.description,
+        encrypted: Boolean(options?.encrypt),
+      };
+
+      await fse.writeJson(path.join(backupFolder, 'meta.json'), metadata, {
+        spaces: 2,
+      });
+      await this.applyRetentionPolicy();
+
+      return { success: true, path: backupFolder };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  }
+
+  private async applyRetentionPolicy(): Promise<void> {
+    const settings = await this.getSettings();
+    const backups = await this.getBackupList();
+    if (backups.length <= settings.backupRetention) return;
+
+    const removeCount = backups.length - settings.backupRetention;
+    const sorted = backups.sort(
+      (a, b) => +new Date(a.createdAt) - +new Date(b.createdAt),
+    );
+
+    await Promise.all(
+      sorted.slice(0, removeCount).map((item) => fse.remove(item.path)),
+    );
+  }
+
+  public async getBackupList(): Promise<BackupMeta[]> {
+    if (!(await fse.pathExists(this.backupRoot))) return [];
+
+    const entries = await fse.readdir(this.backupRoot);
+    const backups = await Promise.all(
+      entries.map(async (entry) => {
+        const backupPath = path.join(this.backupRoot, entry);
+        const metaPath = path.join(backupPath, 'meta.json');
+        if (!(await fse.pathExists(metaPath))) return null;
+        return (await fse.readJson(metaPath)) as BackupMeta;
+      }),
+    );
+
+    return backups.filter((item): item is BackupMeta => Boolean(item));
+  }
+
+  public async restoreBackup(backupPath: string): Promise<void> {
+    const sourcePath = path.join(backupPath, 'storage');
+    if (!(await fse.pathExists(sourcePath))) {
+      throw new Error('Backup inválido ou sem pasta de storage');
+    }
+
+    await fse.copy(sourcePath, this.baseStorageFolder, { overwrite: true });
+  }
+
+  public async removeBackup(backupPath: string): Promise<void> {
+    await fse.remove(backupPath);
+  }
+
+  public async resetApplication(options: {
+    level: 'soft' | 'full';
+    preserve?: string[];
+  }): Promise<void> {
+    const preserve = options.preserve ?? [];
+
+    if (options.level === 'soft') {
+      await fse.remove(this.logsRoot);
+      await fse.mkdirp(this.logsRoot);
+      return;
+    }
+
+    const collectionsBackup =
+      preserve.includes('collections') &&
+      (await fse.pathExists(this.appCollections))
+        ? await fse.readJson(this.appCollections)
+        : null;
+
+    await Promise.all([
+      fse.remove(this.dataStorage),
+      fse.remove(this.userLibrary),
+    ]);
+    await fse.mkdirp(this.dataStorage);
+    await fse.mkdirp(this.userLibrary);
+
+    if (collectionsBackup) {
+      await fse.writeJson(this.appCollections, collectionsBackup, {
+        spaces: 2,
+      });
+    }
+  }
+
+  public async setDriveConnection(isConnected: boolean) {
+    await this.setSettings({ driveConnected: isConnected });
+    return { success: true };
+  }
+
+  public async exportLogs() {
+    await fse.mkdirp(this.logsRoot);
+    const outputPath = path.join(this.logsRoot, `logs-${Date.now()}.json`);
+    const report = {
+      generatedAt: new Date().toISOString(),
+      note: 'Export de logs simplificado',
+    };
+    await fse.writeJson(outputPath, report, { spaces: 2 });
+    return { success: true, path: outputPath };
+  }
+
+  public async clearLogs() {
+    await fse.remove(this.logsRoot);
+    await fse.mkdirp(this.logsRoot);
+    return { success: true };
+  }
+
+  public async createDebugBundle() {
+    const outputPath = path.join(
+      this.baseStorageFolder,
+      `debug-bundle-${Date.now()}.json`,
+    );
+    const settings = await this.getSettings();
+    await fse.writeJson(
+      outputPath,
+      {
+        generatedAt: new Date().toISOString(),
+        settings,
+      },
+      { spaces: 2 },
+    );
+
+    return { success: true, path: outputPath };
+  }
+}

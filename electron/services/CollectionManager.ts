@@ -16,6 +16,7 @@ import {
 export default class CollectionManager extends LibrarySystem {
   private readonly storageManager = new StorageManager();
   private readonly fileManager = new FileManager();
+  private static readonly MAX_COLLECTION_ITEMS = 10000;
 
   constructor() {
     super();
@@ -28,6 +29,45 @@ export default class CollectionManager extends LibrarySystem {
     } catch (e) {
       console.error('Erro ao obter coleções: ', e);
       return null;
+    }
+  }
+
+  public async reorderCollectionSeries(
+    collectionName: string,
+    orderedSeriesIds: number[],
+  ): Promise<boolean> {
+    try {
+      const collection = await this.getCollection(collectionName);
+      if (!collection) return false;
+
+      if (orderedSeriesIds.length !== collection.series.length) return false;
+
+      const currentMap = new Map(
+        collection.series.map((serie) => [serie.id, serie]),
+      );
+      const reordered = orderedSeriesIds
+        .map((id, index) => {
+          const found = currentMap.get(id);
+          if (!found) return null;
+
+          return {
+            ...found,
+            position: index + 1,
+          };
+        })
+        .filter(Boolean) as SerieInCollection[];
+
+      if (reordered.length !== collection.series.length) return false;
+
+      await this.updateCollection({
+        ...collection,
+        series: reordered,
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Falha ao reordenar coleção:', error);
+      return false;
     }
   }
 
@@ -266,6 +306,7 @@ export default class CollectionManager extends LibrarySystem {
   public async removeInCollection(
     collectionName: string,
     serieId: number,
+    keepEmpty = false,
   ): Promise<APIResponse<string>> {
     try {
       const collection = await this.getCollection(collectionName);
@@ -274,14 +315,66 @@ export default class CollectionManager extends LibrarySystem {
 
       const updatedCollection = {
         ...collection,
-        series: collection.series.filter((serie) => serie.id !== serieId),
+        series: collection.series
+          .filter((serie) => serie.id !== serieId)
+          .map((serie, index) => ({ ...serie, position: index + 1 })),
       };
+
+      if (!updatedCollection.series.length && !keepEmpty) {
+        await this.removeCollection(collectionName);
+        return { success: true, data: 'deleted-empty-collection' };
+      }
 
       await this.updateCollection(updatedCollection);
       return { success: true };
     } catch (e) {
       console.error('Falha em retirar série da coleção: ', e);
       return { success: false };
+    }
+  }
+
+  public async updateCollectionInfo(
+    collectionName: string,
+    payload: Partial<Pick<Collection, 'description' | 'coverImage' | 'name'>>,
+  ): Promise<boolean> {
+    try {
+      const collection = await this.getCollection(collectionName);
+
+      if (!collection) return false;
+
+      const nextName = payload.name?.trim();
+      if (nextName) {
+        const collections = await this.getCollections();
+        const normalizedName = nextName.toLocaleLowerCase();
+        const hasDuplicate = collections?.some(
+          (col) =>
+            col.name.toLocaleLowerCase() === normalizedName &&
+            col.name !== collectionName,
+        );
+
+        if (hasDuplicate) return false;
+      }
+
+      const updatedCollection: Collection = {
+        ...collection,
+        ...payload,
+        name: nextName || collection.name,
+      };
+
+      const collections = await this.getCollections();
+      if (!collections) return false;
+
+      const updatedData = collections.map((col) =>
+        col.name === collectionName
+          ? { ...updatedCollection, updatedAt: new Date().toISOString() }
+          : col,
+      );
+
+      await fse.writeJson(this.appCollections, updatedData, { spaces: 2 });
+      return true;
+    } catch (error) {
+      console.error('Falha em atualizar coleção:', error);
+      return false;
     }
   }
 
@@ -353,9 +446,21 @@ export default class CollectionManager extends LibrarySystem {
         return false;
       }
 
+      if (collection.series.length >= CollectionManager.MAX_COLLECTION_ITEMS) {
+        return false;
+      }
+
+      const description =
+        serie.description || `Série ${serie.name} sem descrição local.`;
+      const positionedSerie = {
+        ...serie,
+        description,
+        position: collection.series.length + 1,
+      };
+
       const update = {
         ...collection,
-        series: [...collection.series, serie],
+        series: [...collection.series, positionedSerie],
       };
 
       await this.updateCollection(update);
@@ -395,14 +500,17 @@ export default class CollectionManager extends LibrarySystem {
       const updates = targetCollections.map((col) => {
         const updatedCol = {
           ...col,
-          series: [...col.series, serie],
+          series: [
+            ...col.series,
+            { ...serie, position: col.series.length + 1 },
+          ],
           updatedAt: new Date().toISOString(),
         };
 
-        return updatedCol;
+        return this.updateCollection(updatedCol);
       });
 
-      // await Promise.all(updates);
+      await Promise.all(updates);
 
       return true;
     } catch (e) {
@@ -550,6 +658,7 @@ export default class CollectionManager extends LibrarySystem {
       recommendedBy: serie.metadata.recommendedBy || '',
       originalOwner: serie.metadata.originalOwner || '',
       addAt: date,
+      position: 0,
     };
   }
 

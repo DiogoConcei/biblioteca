@@ -8,6 +8,12 @@
   background: #00000057;
   padding: $spacing-3;
   min-height: 180px;
+  cursor: grab;
+}
+
+.dragOver {
+  border-color: $baby-powder;
+  box-shadow: 0 0 0 2px #ffffff33;
 }
 
 .cover {
@@ -22,6 +28,9 @@
   h3 {
     margin: 0 0 $spacing-2;
     color: $snow;
+    display: flex;
+    align-items: center;
+    gap: $spacing-1;
   }
 
   p {

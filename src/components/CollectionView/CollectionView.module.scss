@@ -2,19 +2,109 @@
 
 .wrapper {
   color: $snow;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
 
-  header {
-    margin-bottom: $spacing-4;
+.header h2 {
+  margin: 0;
+}
 
-    h2 {
-      margin: 0;
-      font-size: $font-3xl;
-    }
+.header p {
+  margin: $spacing-1 0 0;
+  color: $baby-powder;
+}
 
-    p {
-      margin-top: $spacing-1;
-      color: $baby-powder;
-    }
+.toggleViewBtn {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  border: 1px solid #ffffff33;
+  background: transparent;
+  color: $snow;
+  border-radius: $radius-sm;
+  padding: $spacing-1 $spacing-2;
+}
+
+.focusedWrapper {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.navButton {
+  border: 1px solid #ffffff33;
+  background: transparent;
+  color: $snow;
+  border-radius: 999px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+}
+
+.focusedViewport {
+  min-height: 520px;
+  border: 1px solid #ffffff21;
+  border-radius: $radius-md;
+  background: #00000057;
+  overflow: hidden;
+  position: relative;
+}
+
+.focusedCard {
+  display: grid;
+  grid-template-columns: minmax(220px, 340px) 1fr;
+  gap: $spacing-4;
+  padding: $spacing-4;
+  align-items: center;
+}
+
+.focusedCover {
+  width: 100%;
+  max-width: 340px;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: $radius-sm;
+  border: 1px solid #ffffff24;
+  justify-self: center;
+}
+
+.focusedInfo {
+  h2 {
+    margin: 0;
+    outline: none;
+  }
+
+  p {
+    color: $baby-powder;
+    line-height: 1.6;
+  }
+}
+
+.meta {
+  display: inline-block;
+  opacity: 0.75;
+  margin-bottom: $spacing-1;
+}
+
+.actions {
+  display: flex;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+
+  button {
+    border: 1px solid #ffffff33;
+    background: transparent;
+    color: $snow;
+    border-radius: $radius-sm;
+    padding: $spacing-1 $spacing-2;
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-1;
   }
 }
 
@@ -24,10 +114,54 @@
   gap: $spacing-3;
 }
 
+.slideFromRight {
+  animation: slideFromRight 300ms ease-out;
+}
+
+.slideFromLeft {
+  animation: slideFromLeft 300ms ease-out;
+}
+
+@keyframes slideFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(48px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-48px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .emptyState {
   min-height: 260px;
   display: grid;
   place-items: center;
   text-align: center;
   color: $snow;
+}
+
+@media (max-width: 980px) {
+  .focusedWrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .navButton {
+    justify-self: center;
+  }
+
+  .focusedCard {
+    grid-template-columns: 1fr;
+  }
 }

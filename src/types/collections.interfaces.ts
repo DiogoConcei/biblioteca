@@ -5,12 +5,28 @@ export interface CreateCollectionDTO
   seriesCoverId?: number | null;
 }
 
+export interface ScrapedMetadata {
+  title: string;
+  altTitles?: string[];
+  description: string;
+  authors?: string[];
+  artists?: string[];
+  genres?: string[];
+  publishedAt?: string;
+  status?: 'ongoing' | 'completed' | 'unknown';
+  coverUrl?: string;
+  source: string;
+  scrapedAt: string;
+}
+
 export interface Collection {
+  id?: string;
   name: string;
   description: string;
   coverImage: string;
   series: SerieInCollection[];
   comments: string[];
+  includeInAutoBackup?: boolean;
   updatedAt: string;
   createdAt: string;
 }
@@ -27,4 +43,10 @@ export interface SerieInCollection {
   originalOwner: string;
   rating: number;
   addAt: string;
+  position: number;
+}
+
+export interface MetadataPayload {
+  description: string;
+  source: 'xml' | 'scrapper';
 }

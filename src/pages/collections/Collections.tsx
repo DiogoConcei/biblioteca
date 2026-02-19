@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, CirclePlus } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import useCollection from '@/hooks/useCollection';
 
@@ -15,9 +15,18 @@ import styles from './Collections.module.scss';
 const SPECIAL_COLLECTIONS = new Set(['Favoritos', 'Recentes']);
 
 export default function Collections() {
-  const { collections, createCollection } = useCollection();
+  const navigate = useNavigate();
+  const {
+    collections,
+    createCollection,
+    deleteCollection,
+    removeSerie,
+    reorderSeries,
+  } = useCollection();
+
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [activeSerieIndex, setActiveSerieIndex] = useState(0);
 
   const visibleCollections = useMemo(
     () =>
@@ -34,6 +43,7 @@ export default function Collections() {
   const nextCollection = useCallback(() => {
     if (!visibleCollections.length) return;
     setActiveIndex((prev) => (prev + 1) % visibleCollections.length);
+    setActiveSerieIndex(0);
   }, [visibleCollections.length]);
 
   const prevCollection = useCallback(() => {
@@ -42,6 +52,7 @@ export default function Collections() {
       (prev) =>
         (prev - 1 + visibleCollections.length) % visibleCollections.length,
     );
+    setActiveSerieIndex(0);
   }, [visibleCollections.length]);
 
   const onCreateCollection = async (
@@ -58,6 +69,16 @@ export default function Collections() {
       return current;
     });
   }, [visibleCollections]);
+
+  useEffect(() => {
+    const total = activeCollection?.series.length ?? 0;
+
+    setActiveSerieIndex((current) => {
+      if (!total) return 0;
+      if (current >= total) return total - 1;
+      return current;
+    });
+  }, [activeCollection?.name, activeCollection?.series.length]);
 
   useEffect(() => {
     const handleKeys = (event: KeyboardEvent) => {
@@ -91,13 +112,25 @@ export default function Collections() {
         <CollectionsMenu
           collections={visibleCollections}
           activeIndex={activeIndex}
-          onSelect={setActiveIndex}
+          onSelect={(index) => {
+            setActiveIndex(index);
+            setActiveSerieIndex(0);
+          }}
           onPrev={prevCollection}
           onNext={nextCollection}
         />
 
         <main className={styles.viewerArea}>
           <div className={styles.viewerTopBar}>
+            {activeCollection && (
+              <button
+                className={styles['add-btn']}
+                onClick={() => deleteCollection(activeCollection.name)}
+                aria-label="Remover coleção ativa"
+              >
+                Excluir coleção
+              </button>
+            )}
             <button
               className={styles['add-btn']}
               onClick={() => setIsOpen(true)}
@@ -108,7 +141,24 @@ export default function Collections() {
             </button>
           </div>
 
-          <CollectionView activeCollection={activeCollection} />
+          <CollectionView
+            collection={activeCollection}
+            activeIndex={activeSerieIndex}
+            onChangeIndex={setActiveSerieIndex}
+            onOpenReader={(seriesId) => {
+              const serie = activeCollection?.series.find(
+                (item) => item.id === seriesId,
+              );
+              if (!serie) return;
+              navigate(
+                `/${encodeURIComponent(serie.name)}/${serie.id}/Capitulo/1/1/false`,
+              );
+            }}
+            onRemoveFromCollection={async (collectionName, serieId) => {
+              await removeSerie(collectionName, serieId);
+            }}
+            onReorderSeries={reorderSeries}
+          />
         </main>
       </div>
 

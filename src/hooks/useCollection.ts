@@ -11,6 +11,10 @@ export default function useCollection() {
     fetchCollections,
     updateFav,
     createCollection,
+    updateCollection,
+    deleteCollection,
+    removeSerie,
+    reorderSeries,
   } = useCollectionStore();
 
   useEffect(() => {
@@ -24,5 +28,9 @@ export default function useCollection() {
     updateFav,
     setFav,
     createCollection,
+    updateCollection,
+    deleteCollection,
+    removeSerie,
+    reorderSeries,
   };
 }

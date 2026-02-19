@@ -8,7 +8,12 @@ import {
   APIResponse,
   LiteratureChapter,
 } from '../../electron/types/electron-auxiliar.interfaces.js';
-import { SerieData } from './series.interfaces.ts';
+import { SerieData, SerieEditForm, SerieForm } from './series.interfaces.ts';
+import {
+  Collection,
+  SerieInCollection,
+  ScrapedMetadata,
+} from './collections.interfaces';
 
 declare global {
   interface Window {
@@ -113,9 +118,71 @@ declare global {
           collectionName: string,
         ) => Promise<APIResponse<boolean>>;
         createCollection: (
-          collection: CreateCollectionDTO,
+          collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
         ) => Promise<APIResponse<boolean>>;
+        deleteCollection: (
+          collectionName: string,
+        ) => Promise<APIResponse<void>>;
+        updateCollection: (
+          collectionName: string,
+          payload: Partial<
+            Pick<Collection, 'description' | 'coverImage' | 'name'>
+          >,
+        ) => Promise<APIResponse<void>>;
+        removeSerie: (
+          collectionName: string,
+          serieId: number,
+          keepEmpty?: boolean,
+        ) => Promise<APIResponse<string>>;
+        reorderSeries: (
+          collectionName: string,
+          orderedSeriesIds: number[],
+        ) => Promise<APIResponse<void>>;
+        fetchMetadata: (
+          title: string,
+          type: 'manga' | 'comic',
+          year?: number,
+          author?: string,
+        ) => Promise<APIResponse<ScrapedMetadata>>;
         getFavSeries: () => Promise<APIResponse<Collection>>;
+      };
+
+      system: {
+        createBackup: (options?: {
+          encrypt?: boolean;
+          password?: string;
+          description?: string;
+          includeLargeFiles?: boolean;
+        }) => Promise<APIResponse<undefined> & { path?: string }>;
+        resetApplication: (options: {
+          level: 'soft' | 'full';
+          backupBefore?: boolean;
+          preserve?: string[];
+        }) => Promise<APIResponse<void>>;
+        getBackupList: () => Promise<
+          APIResponse<
+            Array<{
+              id: string;
+              path: string;
+              createdAt: string;
+              description?: string;
+              encrypted?: boolean;
+            }>
+          >
+        >;
+        restoreBackup: (backupPath: string) => Promise<APIResponse<void>>;
+        removeBackup: (backupPath: string) => Promise<APIResponse<void>>;
+        getSettings: () => Promise<APIResponse<Record<string, unknown>>>;
+        setSettings: (
+          settings: Record<string, unknown>,
+        ) => Promise<APIResponse<void>>;
+        connectDrive: () => Promise<APIResponse<void>>;
+        disconnectDrive: () => Promise<APIResponse<void>>;
+        exportLogs: () => Promise<APIResponse<undefined> & { path?: string }>;
+        clearLogs: () => Promise<APIResponse<void>>;
+        createDebugBundle: () => Promise<
+          APIResponse<undefined> & { path?: string }
+        >;
       };
 
       userAction: {

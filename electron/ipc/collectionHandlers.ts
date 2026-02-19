@@ -19,13 +19,13 @@ export default function collectionHandlers(ipcMain: IpcMain) {
       const codedCollections = await Promise.all(
         collections.map(async (col) => ({
           ...col,
-          coverImage: await imageManager.encodeImage(col.coverImage),
-
           series: await Promise.all(
-            col.series.map(async (serie) => ({
-              ...serie,
-              coverImage: await imageManager.encodeImage(serie.coverImage),
-            })),
+            [...col.series]
+              .sort((a, b) => (a.position || 0) - (b.position || 0))
+              .map(async (serie) => ({
+                ...serie,
+                coverImage: await imageManager.encodeImage(serie.coverImage),
+              })),
           ),
         })),
       );
@@ -59,6 +59,114 @@ export default function collectionHandlers(ipcMain: IpcMain) {
         return { success: result };
       } catch (e) {
         console.error(`Falha ao criar coleção: ${e}`);
+        return { success: false, error: String(e) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    'collection:delete',
+    async (_event, collectionName: string) => {
+      try {
+        const result =
+          await collectionsOperations.removeCollection(collectionName);
+        return { success: result };
+      } catch (e) {
+        return { success: false, error: String(e) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    'collection:update',
+    async (
+      _event,
+      collectionName: string,
+      payload: Partial<Pick<Collection, 'description' | 'coverImage' | 'name'>>,
+    ) => {
+      try {
+        const result = await collectionsOperations.updateCollectionInfo(
+          collectionName,
+          payload,
+        );
+
+        return { success: result };
+      } catch (e) {
+        return { success: false, error: String(e) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    'collection:remove-serie',
+    async (
+      _event,
+      collectionName: string,
+      serieId: number,
+      keepEmpty = false,
+    ) => {
+      return collectionsOperations.removeInCollection(
+        collectionName,
+        serieId,
+        keepEmpty,
+      );
+    },
+  );
+
+  ipcMain.handle(
+    'collection:reorder-series',
+    async (_event, collectionName: string, orderedSeriesIds: number[]) => {
+      try {
+        const result = await collectionsOperations.reorderCollectionSeries(
+          collectionName,
+          orderedSeriesIds,
+        );
+
+        return { success: result };
+      } catch (e) {
+        return { success: false, error: String(e) };
+      }
+    },
+  );
+
+  //  scrapper
+  ipcMain.handle(
+    'metadata:fetch',
+    async (
+      _event,
+      title: string,
+      type: MetadataType,
+      year?: number,
+      author?: string,
+    ) => {
+      try {
+        if (!title?.trim()) {
+          return { success: false, error: 'Título é obrigatório.' };
+        }
+
+        if (type !== 'manga' && type !== 'comic') {
+          return {
+            success: false,
+            error: 'Tipo inválido. Use manga ou comic.',
+          };
+        }
+
+        const metadata = await metadataScraper.fetchMetadata({
+          title,
+          type,
+          year,
+          author,
+        });
+
+        if (!metadata) {
+          return {
+            success: false,
+            error: 'Nenhum metadado confiável encontrado.',
+          };
+        }
+
+        return { success: true, data: metadata };
+      } catch (e) {
         return { success: false, error: String(e) };
       }
     },

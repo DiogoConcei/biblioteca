@@ -1,8 +1,5 @@
 import { create } from 'zustand';
-import {
-  Collection,
-  CreateCollectionDTO,
-} from '../types/collections.interfaces';
+import { Collection } from '../types/collections.interfaces';
 import { Literatures } from '../../electron/types/electron-auxiliar.interfaces';
 
 interface CollectionState {
@@ -19,6 +16,20 @@ interface CollectionState {
 
   createCollection: (
     collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
+  ) => Promise<boolean>;
+  updateCollection: (
+    name: string,
+    payload: Partial<Pick<Collection, 'description' | 'coverImage' | 'name'>>,
+  ) => Promise<boolean>;
+  deleteCollection: (name: string) => Promise<boolean>;
+  removeSerie: (
+    collectionName: string,
+    serieId: number,
+    keepEmpty?: boolean,
+  ) => Promise<boolean>;
+  reorderSeries: (
+    collectionName: string,
+    orderedSeriesIds: number[],
   ) => Promise<boolean>;
 }
 
@@ -42,14 +53,26 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
     }),
 
   fetchCollections: async () => {
-    const response = await window.electronAPI.collections.getCollections();
+    try {
+      const response = await window.electronAPI.collections.getCollections();
 
-    if (response.success && response.data) {
-      set({
-        collections: response.data,
-        favorites: response.data.find((c) => c.name === 'Favoritos') ?? null,
-        recents: response.data.find((c) => c.name === 'Recentes') ?? null,
-      });
+      if (response.success && response.data) {
+        const allCollections: Collection[] = response.data;
+        // Atualiza lista completa e views derivadas
+        set({ collections: allCollections });
+        // atualiza favoritos/recents a partir da lista
+        set({
+          favorites:
+            allCollections.find((collect) => collect.name === 'Favoritas') ??
+            null,
+          recents:
+            allCollections.find((collect) => collect.name === 'Recentes') ??
+            null,
+        });
+      }
+    } catch (error) {
+      // opcional: log de erro
+      console.error('fetchCollections error', error);
     }
   },
 
@@ -59,14 +82,28 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
         serie.dataPath,
       );
 
-      if (!response.success) return false;
+      if (!response.success || !response.data) return false;
+
+      const favoriteSerie = response.data; // 👈 garante tipo definido
 
       set((state) => {
         if (!state.favorites) return state;
 
-        const updatedSeries = isFav
-          ? [...state.favorites.series, response.data]
-          : state.favorites.series.filter((s) => s.id !== serie.id);
+        const currentSeries = state.favorites.series ?? [];
+
+        let updatedSeries: typeof currentSeries;
+
+        if (isFav) {
+          const alreadyExists = currentSeries.some(
+            (s) => s.id === favoriteSerie.id,
+          );
+
+          updatedSeries = alreadyExists
+            ? currentSeries
+            : [...currentSeries, favoriteSerie];
+        } else {
+          updatedSeries = currentSeries.filter((s) => s.id !== serie.id);
+        }
 
         return {
           favorites: {
@@ -77,18 +114,86 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
       });
 
       return true;
-    } catch {
+    } catch (error) {
+      console.error('updateFav error', error);
       return false;
     }
   },
 
-  createCollection: async (collection: CreateCollectionDTO) => {
-    const response =
-      await window.electronAPI.collections.createCollection(collection);
+  createCollection: async (collection) => {
+    try {
+      const response =
+        await window.electronAPI.collections.createCollection(collection);
 
-    if (!response.success) return false;
+      if (!response.success) return false;
 
-    await get().fetchCollections();
-    return true;
+      await get().fetchCollections();
+      return true;
+    } catch (err) {
+      console.error('createCollection error', err);
+      return false;
+    }
+  },
+
+  updateCollection: async (name, payload) => {
+    try {
+      const response = await window.electronAPI.collections.updateCollection(
+        name,
+        payload,
+      );
+
+      if (!response.success) return false;
+      await get().fetchCollections();
+      return true;
+    } catch (err) {
+      console.error('updateCollection error', err);
+      return false;
+    }
+  },
+
+  deleteCollection: async (name) => {
+    try {
+      const response =
+        await window.electronAPI.collections.deleteCollection(name);
+      if (!response.success) return false;
+      await get().fetchCollections();
+      return true;
+    } catch (err) {
+      console.error('deleteCollection error', err);
+      return false;
+    }
+  },
+
+  removeSerie: async (collectionName, serieId, keepEmpty = false) => {
+    try {
+      const response = await window.electronAPI.collections.removeSerie(
+        collectionName,
+        serieId,
+        keepEmpty,
+      );
+
+      if (!response.success) return false;
+      await get().fetchCollections();
+      return true;
+    } catch (err) {
+      console.error('removeSerie error', err);
+      return false;
+    }
+  },
+
+  reorderSeries: async (collectionName, orderedSeriesIds) => {
+    try {
+      const response = await window.electronAPI.collections.reorderSeries(
+        collectionName,
+        orderedSeriesIds,
+      );
+
+      if (!response.success) return false;
+      await get().fetchCollections();
+      return true;
+    } catch (err) {
+      console.error('reorderSeries error', err);
+      return false;
+    }
   },
 }));

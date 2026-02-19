@@ -124,7 +124,7 @@ export default function CreateCollection({
     const now = new Date().toISOString();
 
     return watchedSelected
-      .map((sel) => {
+      .map((sel, index) => {
         const meta = selectableSeries.find((ser) => ser.id === sel.id);
         if (!meta) return null;
         return {
@@ -139,6 +139,7 @@ export default function CreateCollection({
           originalOwner: '',
           rating: sel.rating ?? 0,
           addAt: now,
+          position: index + 1,
         } as SerieInCollection;
       })
       .filter(Boolean) as SerieInCollection[];

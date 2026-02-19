@@ -1,5 +1,5 @@
 import useSerieStore from '../../store/useSerieStore';
-import { X, House, Square, Maximize2, Minus } from 'lucide-react';
+import { X, House, Square, Maximize2, Minus, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import styles from './Nav.module.scss';
@@ -33,6 +33,11 @@ export default function Nav() {
         <li key="collections">
           <Link to="collections" className={styles.link} onClick={resetStates}>
             Coleções
+          </Link>
+        </li>
+        <li key="settings">
+          <Link to="settings" className={styles.link} onClick={resetStates}>
+            <Settings size={16} color="#8963ba" /> Configurações
           </Link>
         </li>
       </ul>
