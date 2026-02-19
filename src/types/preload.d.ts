@@ -40,6 +40,7 @@ declare global {
       };
 
       upload: {
+        processSerie: (filePath: string[]) => APIResponse<SerieData>;
         processSeries: (
           filePaths: string[],
         ) => Promise<APIResponse<SerieData[]>>;

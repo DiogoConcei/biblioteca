@@ -120,7 +120,7 @@ export default class CollectionManager extends LibrarySystem {
       if (!data) return null;
 
       const favorites = data.find(
-        (col) => col.name.toLocaleLowerCase().trim() === 'favoritos',
+        (col) => col.name.toLocaleLowerCase().trim() === 'Favoritos',
       );
       return favorites || null;
     } catch (e) {

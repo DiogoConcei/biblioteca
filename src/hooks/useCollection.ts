@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import { useCollectionStore } from '../store/useCollectionStore';
+import Favorite from '@/components/FavoriteButton/Favorite';
 
 export default function useCollection() {
   const {

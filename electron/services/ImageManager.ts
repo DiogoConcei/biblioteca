@@ -250,7 +250,7 @@ export default class ImageManager extends LibrarySystem {
 
       return `data:${mimeType};base64,${buffer.toString('base64')}`;
     } catch (e) {
-      console.error('Falha em codificar as imagens', e);
+      console.error('Falha em codificar a imagem', e);
       return '';
     }
   }

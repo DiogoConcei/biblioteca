@@ -37,7 +37,7 @@ export default function Nav() {
         </li>
         <li key="settings">
           <Link to="settings" className={styles.link} onClick={resetStates}>
-            <Settings size={16} color="#8963ba" /> Configurações
+            Configurações
           </Link>
         </li>
       </ul>

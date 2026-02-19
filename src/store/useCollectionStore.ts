@@ -43,7 +43,9 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
   setFav: (allCollections) =>
     set({
       favorites:
-        allCollections.find((collect) => collect.name === 'Favoritas') ?? null,
+        allCollections.find(
+          (collect) => collect.name.trim().toLocaleLowerCase() === 'Favoritos',
+        ) ?? null,
     }),
 
   setRecents: (allCollections) =>
@@ -58,12 +60,10 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
 
       if (response.success && response.data) {
         const allCollections: Collection[] = response.data;
-        // Atualiza lista completa e views derivadas
         set({ collections: allCollections });
-        // atualiza favoritos/recents a partir da lista
         set({
           favorites:
-            allCollections.find((collect) => collect.name === 'Favoritas') ??
+            allCollections.find((collect) => collect.name === 'Favoritos') ??
             null,
           recents:
             allCollections.find((collect) => collect.name === 'Recentes') ??
@@ -71,7 +71,6 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
         });
       }
     } catch (error) {
-      // opcional: log de erro
       console.error('fetchCollections error', error);
     }
   },
@@ -84,7 +83,7 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
 
       if (!response.success || !response.data) return false;
 
-      const favoriteSerie = response.data; // 👈 garante tipo definido
+      const favoriteSerie = response.data;
 
       set((state) => {
         if (!state.favorites) return state;

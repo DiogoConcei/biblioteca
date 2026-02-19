@@ -222,7 +222,6 @@ export default function CollectionView({
                 />
 
                 <div className={styles.focusedInfo}>
-                  <span className={styles.meta}>#{safeIndex + 1}</span>
                   <h2 tabIndex={-1} ref={titleRef}>
                     {activeSerie.name}
                   </h2>

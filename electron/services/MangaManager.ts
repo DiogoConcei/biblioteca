@@ -335,7 +335,7 @@ export default class MangaManager extends LibrarySystem {
         originalOwner: '',
         lastDownload: 0,
         rating: 0,
-        isFavorite: serie.collections.includes('Favoritas'),
+        isFavorite: serie.collections.includes('Favoritos'),
         privacy: serie.privacy,
         autoBackup: serie.autoBackup,
       },

@@ -34,7 +34,7 @@ export default function Home() {
     });
 
     try {
-      const response = await window.electronAPI.upload.processSeries(filePaths);
+      const response = await window.electronAPI.upload.processSerie(filePaths);
       const serieData = response.data;
       navigate('/local-upload/serie', { state: { serieData } });
     } catch (error) {

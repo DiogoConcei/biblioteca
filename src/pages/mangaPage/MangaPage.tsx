@@ -22,6 +22,7 @@ export default function MangaPage() {
   const navigate = useNavigate();
   const { favorites, recents } = useCollection();
 
+  console.log();
   const orderFav = () => {
     return favorites
       ? [...favorites.series].sort((a, b) => b.rating - a.rating)
