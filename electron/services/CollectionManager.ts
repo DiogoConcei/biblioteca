@@ -4,9 +4,10 @@ import {
   Collection,
   SerieInCollection,
 } from '../../src/types/collections.interfaces';
-
+import { CreateCollectionDTO } from '../../src/types/collections.interfaces';
 import LibrarySystem from './abstract/LibrarySystem';
 import StorageManager from './StorageManager';
+import FileManager from './FileManager';
 import {
   APIResponse,
   Literatures,
@@ -14,6 +15,7 @@ import {
 
 export default class CollectionManager extends LibrarySystem {
   private readonly storageManager = new StorageManager();
+  private readonly fileManager = new FileManager();
 
   constructor() {
     super();
@@ -129,26 +131,49 @@ export default class CollectionManager extends LibrarySystem {
   }
 
   public async createCollection(
-    collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
+    collection: CreateCollectionDTO,
   ): Promise<boolean> {
     try {
       const data = await this.getCollections();
-
       if (!data) return false;
 
       const rawName = collection.name.toLocaleLowerCase().trim();
+
       const exist = data.some(
-        (col) => col.name.toLocaleLowerCase().trim() == rawName,
+        (col) => col.name.toLocaleLowerCase().trim() === rawName,
       );
 
       if (exist || !rawName) {
         return false;
       }
 
+      // 🔹 Monta as séries primeiro
+      collection.series = await Promise.all(
+        collection.series.map((s) => this.mountSerieInCollection(s)),
+      );
+
+      // 🔹 Resolve coverImage se for baseada em série
+      if (collection.seriesCoverId) {
+        const serieForCover = collection.series.find(
+          (s) => s.id === collection.seriesCoverId,
+        );
+
+        if (!serieForCover) {
+          console.error('seriesCoverId inválido');
+          return false;
+        }
+
+        collection.coverImage = serieForCover.coverImage;
+      }
+
+      // 🔹 Remove campo auxiliar (se não fizer parte do model)
+      delete collection.seriesCoverId;
+
       const newCollection = this.mountCollection(collection);
       data.push(newCollection);
 
       await fse.writeJson(this.appCollections, data, { spaces: 2 });
+
       return true;
     } catch (e) {
       console.error('Erro ao criar nova coleção: ', e);
@@ -188,6 +213,26 @@ export default class CollectionManager extends LibrarySystem {
     } catch (e) {
       console.error('Falha ao remover a coleção: ', e);
       return false;
+    }
+  }
+
+  private async mountSerieInCollection(
+    serie: SerieInCollection,
+  ): Promise<SerieInCollection> {
+    try {
+      const dataPath = await this.fileManager.getDataPath(serie.name);
+      const serieData = await this.storageManager.readSerieData(dataPath);
+
+      if (!serieData) {
+        throw new Error('The code is broken');
+      }
+
+      return {
+        ...serie,
+        coverImage: serieData.coverImage,
+      };
+    } catch (e) {
+      throw e;
     }
   }
 

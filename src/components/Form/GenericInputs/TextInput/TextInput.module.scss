@@ -1,6 +1,6 @@
 @use '@/styles/variables' as *;
 
-input[type='text'] {
+.genericInput {
   @include pattern-button;
   font-size: $font-2xl;
   color: $snow;

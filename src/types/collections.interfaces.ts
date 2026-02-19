@@ -1,5 +1,10 @@
 import { Status } from '../../electron/types/manga.interfaces';
 
+export interface CreateCollectionDTO
+  extends Omit<Collection, 'createdAt' | 'updatedAt'> {
+  seriesCoverId?: number | null;
+}
+
 export interface Collection {
   name: string;
   description: string;

@@ -15,95 +15,139 @@
   max-height: 88vh;
   overflow: auto;
   background: $gunmetal;
-  color: $snow;
-  border: 1px solid $border-collor;
   border-radius: $radius-lg;
+  border: 1px solid $amethyst;
   padding: $spacing-5;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
-
-  input,
-  textarea,
-  select {
-    margin-top: $spacing-1;
-    width: 100%;
-    border-radius: $radius-sm;
-    border: 1px solid #ffffff26;
-    background: #ffffff12;
-    color: $snow;
-    padding: $spacing-2;
-  }
-
-  textarea {
-    min-height: 80px;
-    resize: vertical;
-  }
-}
-
-.coverSection,
-.seriesSection {
-  border: 1px solid #ffffff26;
-  border-radius: $radius-md;
-  padding: $spacing-3;
-}
-
-.coverType {
-  display: flex;
-  gap: $spacing-4;
-  margin: $spacing-2 0;
+  gap: $spacing-2;
 
   label {
     display: flex;
     align-items: center;
-    gap: $spacing-1;
+    gap: $spacing-3;
+    font-size: $font-lg;
+
+    &:first-child {
+      margin-top: $spacing-4;
+    }
   }
-}
 
-.seriesSection {
-  ul {
-    list-style: none;
-    margin: $spacing-2 0 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-2;
-  }
-}
-
-.serieItem {
-  border: 1px solid #ffffff20;
-  border-radius: $radius-sm;
-  padding: $spacing-2;
-}
-
-.serieName {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-}
-
-.serieMeta {
-  margin-top: $spacing-2;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: $spacing-2;
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: $spacing-2;
-
-  button {
+  input[type='text'] {
     @include interactive-button;
-    border-radius: $radius-sm;
-    border: 1px solid #ffffff40;
+    padding: $spacing-2;
+    border-radius: $radius-md;
     color: $snow;
-    background: #ffffff1b;
-    padding: $spacing-2 $spacing-3;
+    border: 1px solid $amethyst;
+
+    &::placeholder {
+      color: #ccc;
+    }
+  }
+
+  .areaLabel {
+    align-items: start;
+    margin-top: 0;
+    padding: 0;
+    flex-flow: column nowrap;
+
+    textarea {
+      width: 80%;
+      height: 180px;
+      border-radius: $radius-md;
+      padding: $spacing-3;
+      border: 1px solid $amethyst;
+      background: $gunmetal;
+    }
   }
 }
+
+// .form {
+//   display: flex;
+//   flex-direction: column;
+//   gap: $spacing-3;
+
+//   input,
+//   textarea,
+//   select {
+//     margin-top: $spacing-1;
+//     width: 100%;
+//     border-radius: $radius-sm;
+//     border: 1px solid #ffffff26;
+//     background: #ffffff12;
+//     color: $snow;
+//     padding: $spacing-2;
+//   }
+
+//   textarea {
+//     min-height: 80px;
+//     resize: vertical;
+//   }
+// }
+
+// .coverSection,
+// .seriesSection {
+//   border: 1px solid #ffffff26;
+//   border-radius: $radius-md;
+//   padding: $spacing-3;
+// }
+
+// .coverType {
+//   display: flex;
+//   gap: $spacing-4;
+//   margin: $spacing-2 0;
+
+//   label {
+//     display: flex;
+//     align-items: center;
+//     gap: $spacing-1;
+//   }
+// }
+
+// .seriesSection {
+//   ul {
+//     list-style: none;
+//     margin: $spacing-2 0 0;
+//     padding: 0;
+//     display: flex;
+//     flex-direction: column;
+//     gap: $spacing-2;
+//   }
+// }
+
+// .serieItem {
+//   border: 1px solid #ffffff20;
+//   border-radius: $radius-sm;
+//   padding: $spacing-2;
+// }
+
+// .serieName {
+//   display: flex;
+//   align-items: center;
+//   gap: $spacing-2;
+// }
+
+// .serieMeta {
+//   margin-top: $spacing-2;
+//   display: grid;
+//   grid-template-columns: repeat(2, minmax(0, 1fr));
+//   gap: $spacing-2;
+// }
+
+// .actions {
+//   display: flex;
+//   justify-content: flex-end;
+//   gap: $spacing-2;
+
+//   button {
+//     @include interactive-button;
+//     border-radius: $radius-sm;
+//     border: 1px solid #ffffff40;
+//     color: $snow;
+//     background: #ffffff1b;
+//     padding: $spacing-2 $spacing-3;
+//   }
+// }

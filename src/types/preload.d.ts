@@ -1,7 +1,7 @@
 export {};
 
 import { childSerie, ComicTieIn } from 'electron/types/comic.interfaces.js';
-
+import { CreateCollectionDTO } from './collections.interfaces.js';
 import {
   Literatures,
   viewData,
@@ -113,7 +113,7 @@ declare global {
           collectionName: string,
         ) => Promise<APIResponse<boolean>>;
         createCollection: (
-          collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
+          collection: CreateCollectionDTO,
         ) => Promise<APIResponse<boolean>>;
         getFavSeries: () => Promise<APIResponse<Collection>>;
       };

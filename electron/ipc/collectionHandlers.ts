@@ -19,6 +19,8 @@ export default function collectionHandlers(ipcMain: IpcMain) {
       const codedCollections = await Promise.all(
         collections.map(async (col) => ({
           ...col,
+          coverImage: await imageManager.encodeImage(col.coverImage),
+
           series: await Promise.all(
             col.series.map(async (serie) => ({
               ...serie,

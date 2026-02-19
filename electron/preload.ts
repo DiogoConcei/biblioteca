@@ -1,4 +1,5 @@
 import { ipcRenderer, contextBridge, webUtils } from 'electron';
+import { CreateCollectionDTO } from '../src/types/collections.interfaces.ts';
 import {
   APIResponse,
   viewData,
@@ -156,8 +157,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ): Promise<APIResponse<boolean>> =>
       ipcRenderer.invoke('collection:quickly-create', collectionName),
     createCollection: async (
-      collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
-    ): Promise<APIResponse<void>> =>
+      collection: CreateCollectionDTO,
+    ): Promise<APIResponse<boolean>> =>
       ipcRenderer.invoke('collection:create', collection),
     getFavSeries: async (): Promise<APIResponse<Collection>> =>
       ipcRenderer.invoke('collection:get-all-fav'),

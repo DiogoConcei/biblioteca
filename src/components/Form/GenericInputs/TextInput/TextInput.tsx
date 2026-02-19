@@ -1,5 +1,5 @@
-import { FormTextInputProps } from "electron/types/electron-auxiliar.interfaces";
-import "./TextInput.scss";
+import { FormTextInputProps } from 'electron/types/electron-auxiliar.interfaces';
+import styles from './TextInput.module.scss';
 
 export default function TextInput({
   register,
@@ -8,7 +8,12 @@ export default function TextInput({
 }: FormTextInputProps) {
   return (
     <div>
-      <input type="text" {...register} placeholder={msg} />
+      <input
+        type="text"
+        {...register}
+        placeholder={msg}
+        className={styles.genericInput}
+      />
       {error && <p>{error.message}</p>}
     </div>
   );

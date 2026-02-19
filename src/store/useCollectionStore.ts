@@ -1,5 +1,8 @@
 import { create } from 'zustand';
-import { Collection } from '../types/collections.interfaces';
+import {
+  Collection,
+  CreateCollectionDTO,
+} from '../types/collections.interfaces';
 import { Literatures } from '../../electron/types/electron-auxiliar.interfaces';
 
 interface CollectionState {
@@ -79,7 +82,7 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
     }
   },
 
-  createCollection: async (collection) => {
+  createCollection: async (collection: CreateCollectionDTO) => {
     const response =
       await window.electronAPI.collections.createCollection(collection);
 

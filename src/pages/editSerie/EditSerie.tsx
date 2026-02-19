@@ -62,7 +62,7 @@ export default function EditSerie() {
   const setLoading = useUIStore((state) => state.setLoading);
   const error = useUIStore((state) => state.error);
   const setError = useUIStore((state) => state.setError);
-  const { setFavorites } = useCollection();
+  const { setFav } = useCollection();
   const { handlePage, pageNumbers, totalPages, currentItems, currentPage } =
     usePagination();
 
@@ -186,7 +186,7 @@ export default function EditSerie() {
             <ImageController control={control} name={'coverImage'} />
           </div>
           <div className={styles.actionButtons}>
-            <Favorite serie={serie} setFavorites={setFavorites} />
+            <Favorite serie={serie} />
             <Rating serie={serie} />
             <CollectionButton dataPath={serie.dataPath} />
           </div>
@@ -194,32 +194,27 @@ export default function EditSerie() {
         <div className={styles.mainInfo}>
           <div className={styles['text-info']}>
             <TextInput
-              name="name"
-              register={register}
+              register={register('name', { required: true })}
               error={errors.name}
-              msg={'Nome da série'}
+              msg="Nome da série"
             />
             <TextInput
-              name="genre"
-              register={register}
+              register={register('genre', { required: true })}
               error={errors.genre}
               msg={'Gênero da série'}
             />
             <TextInput
-              name="author"
-              register={register}
+              register={register('author', { required: true })}
               error={errors.author}
-              msg={'Autor'}
+              msg="Autor"
             />
             <TextInput
-              name="language"
-              register={register}
+              register={register('language', { required: true })}
               error={errors.language}
-              msg={'Idioma'}
+              msg="Idioma"
             />
             <TextInput
-              name="chaptersRead"
-              register={register}
+              register={register('chaptersRead', { required: true })}
               error={errors.chaptersRead}
               msg={'Quantidade de capítulos lidos'}
             />
@@ -325,21 +320,18 @@ export default function EditSerie() {
             /> */}
 
             <BackupField
-              name="metadata.autoBackup"
-              register={register}
-              error={errors.metadata?.autoBackup}
+              register={register('metadata.autoBackup', { required: true })}
+              error={errors.metadata!.autoBackup}
             />
 
             <StatusField
-              name="metadata.status"
-              register={register}
+              register={register('metadata.status', { required: true })}
               error={errors.metadata?.status}
             />
 
             <PrivacyField
-              name="metadata.privacy"
-              register={register}
-              error={errors.metadata?.privacy}
+              register={register('metadata.privacy', { required: true })}
+              error={errors.metadata!.privacy}
             />
 
             <CollectionsField control={control} name="metadata.collections" />
