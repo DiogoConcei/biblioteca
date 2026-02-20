@@ -229,9 +229,11 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         const dPath = serie_name
           ? await fileManager.getDataPath(serie_name)
           : dataPath;
+
         const serieData = (await storageManager.readSerieData(
           dPath,
         )) as Literatures;
+
         const result = await userManager.addToRecents(serieData);
         return { success: result };
       } catch (e) {

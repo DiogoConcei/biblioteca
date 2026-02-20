@@ -269,8 +269,7 @@ export default class FileManager extends LibrarySystem {
 
     const staticLength = resolvedDir.length + path.sep.length + ext.length;
 
-    let maxBaseLength = max - staticLength;
-
+    const maxBaseLength = max - staticLength;
     if (maxBaseLength < min) {
       const fallback = randomUUID().slice(0, min);
       return path.join(resolvedDir, fallback + ext);
@@ -358,7 +357,7 @@ export default class FileManager extends LibrarySystem {
 
     const staticLength = resolvedBase.length + path.sep.length * 2;
 
-    let remaining = max - staticLength;
+    const remaining = max - staticLength;
 
     if (remaining <= min * 2) {
       const s = randomUUID().slice(0, min);

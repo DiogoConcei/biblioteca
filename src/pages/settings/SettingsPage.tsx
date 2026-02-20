@@ -4,6 +4,7 @@ import {
   AppSettings,
   BackupFrequency,
   BackupMeta,
+  ComicCoverRegenerationProgress,
 } from '../../types/settings.interfaces';
 import styles from './SettingsPage.module.scss';
 
@@ -41,11 +42,34 @@ export default function SettingsPage() {
   const [confirmResetInput, setConfirmResetInput] = useState('');
   const [showResetModal, setShowResetModal] = useState(false);
   const [operationLogs, setOperationLogs] = useState<string[]>([]);
+  const [coverRegenProgress, setCoverRegenProgress] =
+    useState<ComicCoverRegenerationProgress | null>(null);
 
   const canConfirmReset = useMemo(
     () => (resetType === 'full' ? confirmResetInput.trim() === 'RESET' : true),
     [confirmResetInput, resetType],
   );
+
+  useEffect(() => {
+    const handleProgress = (_event: unknown, payload: unknown) => {
+      if (!payload || typeof payload !== 'object') return;
+
+      const progress = payload as ComicCoverRegenerationProgress;
+      setCoverRegenProgress(progress);
+    };
+
+    window.electronAPI.on(
+      'system:comic-cover-regeneration-progress',
+      handleProgress,
+    );
+
+    return () => {
+      window.electronAPI.off(
+        'system:comic-cover-regeneration-progress',
+        handleProgress,
+      );
+    };
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -179,6 +203,47 @@ export default function SettingsPage() {
 
       return prev.filter((item) => item !== field);
     });
+  };
+
+  const handleRegenerateComicCovers = async () => {
+    setBusyAction('regenerate-covers');
+    setCoverRegenProgress({
+      total: 0,
+      processed: 0,
+      regenerated: 0,
+      skipped: 0,
+      failed: 0,
+    });
+    appendLog('Iniciando regeneração global de capas dos quadrinhos...');
+
+    try {
+      const result = await systemManager.regenerateComicCovers();
+      appendLog(
+        `Regeneração finalizada: ${result.regenerated} regeneradas, ${result.skipped} íntegras, ${result.failed} falhas.`,
+      );
+
+      if (result.failed > 0) {
+        const firstFailure = result.failures[0];
+        setToast({
+          type: 'error',
+          message: `Processo concluído com falhas (${result.failed}). Exemplo: ${firstFailure?.comic ?? 'N/A'} - ${firstFailure?.reason ?? ''}`,
+        });
+      } else {
+        setToast({
+          type: 'success',
+          message: `Processo concluído. ${result.regenerated} capas regeneradas com sucesso.`,
+        });
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Falha ao regenerar capas dos quadrinhos';
+      appendLog(message);
+      setToast({ type: 'error', message });
+    } finally {
+      setBusyAction(null);
+    }
   };
 
   return (
@@ -484,6 +549,36 @@ export default function SettingsPage() {
           >
             Criar debug bundle
           </button>
+
+          <button
+            type="button"
+            onClick={() => void handleRegenerateComicCovers()}
+            disabled={busyAction === 'regenerate-covers'}
+            aria-label="Regerar todas as capas dos quadrinhos"
+          >
+            {busyAction === 'regenerate-covers'
+              ? 'Regenerando capas...'
+              : 'Regerar todas as capas dos quadrinhos'}
+          </button>
+
+          {coverRegenProgress && (
+            <div className={styles.progressBlock}>
+              <strong>Progresso da regeneração</strong>
+              <progress
+                max={Math.max(coverRegenProgress.total, 1)}
+                value={coverRegenProgress.processed}
+              />
+              <small>
+                {coverRegenProgress.processed}/{coverRegenProgress.total} •
+                Regeneradas: {coverRegenProgress.regenerated} • Íntegras:{' '}
+                {coverRegenProgress.skipped} • Falhas:{' '}
+                {coverRegenProgress.failed}
+              </small>
+              {coverRegenProgress.currentComic && (
+                <small>Atual: {coverRegenProgress.currentComic}</small>
+              )}
+            </div>
+          )}
         </article>
 
         <article className={`${styles.card} ${styles.danger}`}>

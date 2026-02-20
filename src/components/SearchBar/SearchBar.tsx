@@ -1,19 +1,22 @@
-import './SearchBar.scss';
+import styles from './SearchBar.module.scss';
 import { ListFilter, Search } from 'lucide-react';
 
-import { SearchBarProps } from '../../types/components.interfaces.ts';
+import { SearchBarProps } from '../../types/components.interfaces';
 
-export default function SearchBar({ searchInput, onSearchChange }: SearchBarProps) {
+export default function SearchBar({
+  searchInput,
+  onSearchChange,
+}: SearchBarProps) {
   return (
-    <div className="search-config">
-      <label htmlFor="search" className="searchLabel">
+    <div className={styles['search-config']}>
+      <label htmlFor="search" className={styles['search-label']}>
         <input
           id="search"
           type="text"
           onChange={onSearchChange}
           value={searchInput}
           placeholder="Pesquisar"
-          className="searchBar"
+          className={styles['search-bar']}
         />
         <Search color="#8963ba" className="actIcon" />
       </label>

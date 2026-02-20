@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { List } from 'lucide-react';
 import { CollectionButtonProps } from '../../types/components.interfaces';
 import useCollection from '../../hooks/useCollection';
@@ -32,7 +32,7 @@ export default function CollectionButton({ dataPath }: CollectionButtonProps) {
             <li key={collection.name} className={styles['dropdown-item']}>
               <button
                 className={styles['dropdown-option']}
-                onClick={(e) => addToCollection(e, collection.name, dataPath)}
+                onClick={() => addToCollection(dataPath, collection.name)}
               >
                 {collection.name}
               </button>

@@ -480,6 +480,7 @@ export default class CollectionManager extends LibrarySystem {
 
       const description =
         serie.description || `Série ${serie.name} sem descrição local.`;
+
       const positionedSerie = {
         ...serie,
         description,

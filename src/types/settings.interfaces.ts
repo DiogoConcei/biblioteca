@@ -1,6 +1,24 @@
 export type BackupFrequency = 'daily' | 'weekly' | 'monthly';
 export type ThemeMode = 'light' | 'dark' | 'system';
 
+export interface ComicCoverRegenerationProgress {
+  total: number;
+  processed: number;
+  currentComic?: string;
+  regenerated: number;
+  skipped: number;
+  failed: number;
+}
+
+export interface ComicCoverRegenerationResult {
+  total: number;
+  processed: number;
+  regenerated: number;
+  skipped: number;
+  failed: number;
+  failures: Array<{ comic: string; reason: string }>;
+}
+
 export interface BackupMeta {
   id: string;
   path: string;

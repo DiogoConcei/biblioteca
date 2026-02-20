@@ -1,4 +1,4 @@
-import { dialog, IpcMain } from 'electron';
+import { BrowserWindow, dialog, IpcMain } from 'electron';
 import SystemManager from '../services/SystemManager';
 
 export default function systemHandlers(ipcMain: IpcMain) {
@@ -7,6 +7,23 @@ export default function systemHandlers(ipcMain: IpcMain) {
   ipcMain.handle('system:create-backup', async (_event, options) => {
     try {
       return await systemManager.createBackup(options);
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('system:regenerate-comic-covers', async () => {
+    try {
+      const data = await systemManager.regenerateComicCovers((progress) => {
+        for (const window of BrowserWindow.getAllWindows()) {
+          window.webContents.send(
+            'system:comic-cover-regeneration-progress',
+            progress,
+          );
+        }
+      });
+
+      return { success: true, data };
     } catch (error) {
       return { success: false, error: String(error) };
     }

@@ -5,6 +5,7 @@ import {
   CreateBackupOptions,
   ResetApplicationOptions,
   SystemResult,
+  ComicCoverRegenerationResult,
 } from '../types/settings.interfaces';
 
 const DEFAULT_RETRIES = 3;
@@ -212,6 +213,25 @@ export default function useSystemManager() {
     return response;
   }, []);
 
+  const regenerateComicCovers = useCallback(async () => {
+    const response = await withRetry<
+      SystemResult<ComicCoverRegenerationResult>
+    >(
+      async () =>
+        window.electronAPI.system.regenerateComicCovers() as Promise<
+          SystemResult<ComicCoverRegenerationResult>
+        >,
+    );
+
+    if (!response.success || !response.data) {
+      throw new Error(
+        response.error ?? 'Falha ao regenerar capas de quadrinhos',
+      );
+    }
+
+    return response.data;
+  }, []);
+
   return {
     createBackup,
     getBackupList,
@@ -225,5 +245,6 @@ export default function useSystemManager() {
     connectDrive,
     disconnectDrive,
     createDebugBundle,
+    regenerateComicCovers,
   };
 }

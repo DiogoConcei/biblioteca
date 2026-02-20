@@ -16,7 +16,10 @@ interface CollectionState {
 
   fetchCollections: () => Promise<void>;
   updateFav: (serie: Literatures, isFav: boolean) => Promise<boolean>;
-
+  addToCollection: (
+    dataPath: string,
+    collectionName: string,
+  ) => Promise<boolean>;
   createCollection: (collection: CreateCollectionDTO) => Promise<boolean>;
   updateCollection: (
     name: string,
@@ -50,7 +53,7 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
     set({
       favorites:
         allCollections.find(
-          (collect) => collect.name.trim().toLocaleLowerCase() === 'Favoritos',
+          (collect) => collect.name.trim().toLocaleLowerCase() === 'favoritos',
         ) ?? null,
     }),
 
@@ -236,6 +239,22 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
       return true;
     } catch (err) {
       console.error('updateSerieBackground error', err);
+      return false;
+    }
+  },
+
+  addToCollection: async (dataPath, collectionName) => {
+    try {
+      const response = await window.electronAPI.series.serieToCollection(
+        dataPath,
+        collectionName,
+      );
+
+      if (!response.success) return false;
+      await get().fetchCollections();
+      return true;
+    } catch (error) {
+      console.error('addToCollection error', error);
       return false;
     }
   },

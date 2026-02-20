@@ -14,6 +14,10 @@ import {
   SerieInCollection,
   ScrapedMetadata,
 } from './collections.interfaces';
+import {
+  ComicCoverRegenerationResult,
+  SystemResult,
+} from './settings.interfaces';
 
 declare global {
   interface Window {
@@ -190,6 +194,9 @@ declare global {
           APIResponse<undefined> & { path?: string }
         >;
         pickImage: () => Promise<APIResponse<string | null>>;
+        regenerateComicCovers: () => Promise<
+          SystemResult<ComicCoverRegenerationResult>
+        >;
       };
 
       userAction: {

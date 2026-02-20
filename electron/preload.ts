@@ -72,6 +72,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     exportLogs: () => ipcRenderer.invoke('system:export-logs'),
     clearLogs: () => ipcRenderer.invoke('system:clear-logs'),
     createDebugBundle: () => ipcRenderer.invoke('system:create-debug-bundle'),
+    regenerateComicCovers: () =>
+      ipcRenderer.invoke('system:regenerate-comic-covers'),
     pickImage: () => ipcRenderer.invoke('system:pick-image'),
   },
 

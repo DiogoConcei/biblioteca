@@ -116,7 +116,8 @@ export default function downloadHandlers(ipcMain: IpcMain) {
             await comicManager.createChapterById(dataPath, chapter_id);
             break;
           case 'childSeries':
-            await comicManager.createChapterById(dataPath, chapter_id);
+            await tieManager.createChapterById(dataPath, chapter_id);
+            break;
           default:
             break;
         }

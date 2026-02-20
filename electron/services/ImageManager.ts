@@ -255,6 +255,23 @@ export default class ImageManager extends LibrarySystem {
     }
   }
 
+  public async isImageHealthy(filePath: string): Promise<boolean> {
+    try {
+      if (!(await fse.pathExists(filePath))) {
+        return false;
+      }
+
+      if (!(await this.isImage(filePath))) {
+        return false;
+      }
+
+      const metadata = await sharp(filePath).metadata();
+      return Boolean(metadata.width && metadata.height);
+    } catch {
+      return false;
+    }
+  }
+
   public async encodeComic(chapters: ComicEdition[]): Promise<ComicEdition[]> {
     const encodeChapter = await Promise.all(
       chapters.map(async (ch) => {

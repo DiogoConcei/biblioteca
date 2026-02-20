@@ -10,6 +10,7 @@ export default function useCollection() {
     setFav,
     fetchCollections,
     updateFav,
+    addToCollection,
     createCollection,
     updateCollection,
     deleteCollection,
@@ -34,5 +35,6 @@ export default function useCollection() {
     removeSerie,
     reorderSeries,
     updateSerieBackground,
+    addToCollection,
   };
 }

@@ -14,29 +14,28 @@ export default function userHandlers(ipcMain: IpcMain) {
           ? await fileManager.getDataPath(serieName)
           : dataPath;
 
-        const literatureForm = await fileManager.foundLiteratureForm(sDPath);
-
-        const serieData = await storageManager.readSerieData(sDPath);
+        const [literatureForm, serieData] = await Promise.all([
+          fileManager.foundLiteratureForm(sDPath),
+          storageManager.readSerieData(sDPath),
+        ]);
 
         if (!serieData) {
-          return { success: false, error: `Falha em recuperar dados` };
+          return { success: false, error: 'Falha em recuperar dados' };
         }
 
-        let serieLink;
+        let serieLink: string | null = null;
 
-        switch (literatureForm) {
-          case 'Comics':
-            serieLink = `/${serieData.literatureForm}/${serieData.name}/${serieData.id}`;
-          case 'Mangas':
-            serieLink = `/${serieData.literatureForm}/${serieData.name}/${serieData.id}`;
-            return { success: true, data: serieLink };
-          case 'childSeries':
-            serieLink = `/TieIn/${encodeURI(serieData.name)}`;
-            return { success: true, data: serieLink };
-
-          default:
-            break;
+        if (literatureForm === 'childSeries') {
+          serieLink = `/TieIn/${encodeURIComponent(serieData.name)}`;
+        } else if (['Comics', 'Mangas'].includes(literatureForm)) {
+          serieLink = `/${serieData.literatureForm}/${serieData.name}/${serieData.id}`;
         }
+
+        if (!serieLink) {
+          return { success: false, error: 'Tipo de literatura inválido' };
+        }
+
+        return { success: true, data: serieLink };
       } catch (e) {
         console.error(
           `Falha em criar url de retorno para pagina individual: ${e}`,
