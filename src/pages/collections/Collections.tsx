@@ -21,6 +21,7 @@ export default function Collections() {
     createCollection,
     deleteCollection,
     removeSerie,
+    updateSerieBackground,
     reorderSeries,
   } = useCollection();
 
@@ -39,6 +40,39 @@ export default function Collections() {
   );
 
   const activeCollection = visibleCollections[activeIndex] ?? null;
+  const activeSerie = activeCollection?.series[activeSerieIndex] ?? null;
+  const activeBackground = activeSerie?.backgroundImage ?? null;
+
+  // background state
+  const [bgLoaded, setBgLoaded] = useState(false);
+  const [bgIsPortrait, setBgIsPortrait] = useState(false);
+  const [bgError, setBgError] = useState(false);
+
+  // reset background flags when changing activeBackground
+  useEffect(() => {
+    setBgLoaded(false);
+    setBgIsPortrait(false);
+    setBgError(false);
+
+    if (!activeBackground) return;
+
+    const img = new Image();
+    img.src = activeBackground;
+
+    img.onload = () => {
+      setBgIsPortrait(img.naturalHeight > img.naturalWidth);
+      setBgLoaded(true);
+      setBgError(false);
+    };
+
+    img.onerror = () => {
+      setBgLoaded(false);
+      setBgIsPortrait(false);
+      setBgError(true);
+    };
+
+    // no cleanup necessary for Image object
+  }, [activeBackground]);
 
   const nextCollection = useCallback(() => {
     if (!visibleCollections.length) return;
@@ -98,9 +132,35 @@ export default function Collections() {
   }, [nextCollection, prevCollection]);
 
   return (
-    <section className={styles.container}>
-      <div className={styles.stars} />
+    <section
+      className={[
+        styles.container,
+        activeBackground && bgLoaded && !bgError ? styles.hasBackground : '',
+      ].join(' ')}
+    >
+      {/* BACKGROUND LAYER */}
+      <div className={styles.backgroundContainer} aria-hidden>
+        {!activeBackground && <div className={styles.stars} />}
 
+        {activeBackground && !bgError && (
+          <img
+            className={[
+              styles.bgImg,
+              bgLoaded ? styles.loaded : '',
+              bgIsPortrait ? styles.portrait : '',
+            ].join(' ')}
+            src={activeBackground}
+            alt=""
+            onLoad={() => setBgLoaded(true)}
+            draggable={false}
+          />
+        )}
+
+        {/* fallback overlay for contrast */}
+        {activeBackground && <div className={styles.backgroundOverlay} />}
+      </div>
+
+      {/* PAGE CONTENT */}
       <header className={styles.header}>
         <Link to="/" className={styles.backButton}>
           <ArrowLeft />
@@ -158,6 +218,9 @@ export default function Collections() {
               await removeSerie(collectionName, serieId);
             }}
             onReorderSeries={reorderSeries}
+            onUpdateSerieBackground={async (collectionName, serieId, path) => {
+              await updateSerieBackground(collectionName, serieId, path);
+            }}
           />
         </main>
       </div>

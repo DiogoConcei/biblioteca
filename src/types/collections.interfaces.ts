@@ -38,6 +38,7 @@ export interface SerieInCollection {
   archivesPath: string;
   totalChapters: number;
   status: Status;
+  backgroundImage?: string | null;
   recommendedBy: string;
   originalOwner: string;
   rating: number;

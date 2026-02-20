@@ -32,6 +32,11 @@ interface CollectionState {
     collectionName: string,
     orderedSeriesIds: number[],
   ) => Promise<boolean>;
+  updateSerieBackground: (
+    collectionName: string,
+    serieId: number,
+    path: string | null,
+  ) => Promise<boolean>;
 }
 
 export const useCollectionStore = create<CollectionState>((set, get) => ({
@@ -198,6 +203,39 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
       return true;
     } catch (err) {
       console.error('reorderSeries error', err);
+      return false;
+    }
+  },
+
+  updateSerieBackground: async (collectionName, serieId, path) => {
+    try {
+      const response =
+        await window.electronAPI.collections.updateSerieBackground(
+          collectionName,
+          serieId,
+          path,
+        );
+
+      if (!response.success) return false;
+
+      set((state) => ({
+        collections: state.collections.map((collection) =>
+          collection.name !== collectionName
+            ? collection
+            : {
+                ...collection,
+                series: collection.series.map((serie) =>
+                  serie.id === serieId
+                    ? { ...serie, backgroundImage: path }
+                    : serie,
+                ),
+              },
+        ),
+      }));
+
+      return true;
+    } catch (err) {
+      console.error('updateSerieBackground error', err);
       return false;
     }
   },

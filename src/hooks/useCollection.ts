@@ -15,6 +15,7 @@ export default function useCollection() {
     deleteCollection,
     removeSerie,
     reorderSeries,
+    updateSerieBackground,
   } = useCollectionStore();
 
   useEffect(() => {
@@ -32,5 +33,6 @@ export default function useCollection() {
     deleteCollection,
     removeSerie,
     reorderSeries,
+    updateSerieBackground,
   };
 }

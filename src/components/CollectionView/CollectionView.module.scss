@@ -151,6 +151,33 @@
   color: $snow;
 }
 
+.hiddenInput {
+  display: none;
+}
+
+.backgroundPreviewBox {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+
+  img {
+    width: 90px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: $radius-sm;
+    border: 1px solid #ffffff33;
+  }
+
+  button {
+    @include interactive-button;
+    border: 1px solid #ffffff33;
+    background: #0000004d;
+    color: $snow;
+    border-radius: $radius-sm;
+    padding: $spacing-1 $spacing-2;
+  }
+}
+
 @media (max-width: 980px) {
   .focusedWrapper {
     grid-template-columns: 1fr;

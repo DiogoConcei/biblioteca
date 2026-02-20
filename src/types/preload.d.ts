@@ -139,6 +139,11 @@ declare global {
           collectionName: string,
           orderedSeriesIds: number[],
         ) => Promise<APIResponse<void>>;
+        updateSerieBackground: (
+          collectionName: string,
+          serieId: number,
+          path: string | null,
+        ) => Promise<APIResponse<void>>;
         fetchMetadata: (
           title: string,
           type: 'manga' | 'comic',
@@ -184,6 +189,7 @@ declare global {
         createDebugBundle: () => Promise<
           APIResponse<undefined> & { path?: string }
         >;
+        pickImage: () => Promise<APIResponse<string | null>>;
       };
 
       userAction: {

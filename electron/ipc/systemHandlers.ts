@@ -1,4 +1,4 @@
-import { IpcMain } from 'electron';
+import { dialog, IpcMain } from 'electron';
 import SystemManager from '../services/SystemManager';
 
 export default function systemHandlers(ipcMain: IpcMain) {
@@ -16,6 +16,25 @@ export default function systemHandlers(ipcMain: IpcMain) {
     try {
       const data = await systemManager.getBackupList();
       return { success: true, data };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('system:pick-image', async () => {
+    try {
+      const result = await dialog.showOpenDialog({
+        properties: ['openFile'],
+        filters: [
+          { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] },
+        ],
+      });
+
+      if (result.canceled || !result.filePaths.length) {
+        return { success: true, data: null };
+      }
+
+      return { success: true, data: result.filePaths[0] };
     } catch (error) {
       return { success: false, error: String(error) };
     }

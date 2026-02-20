@@ -170,6 +170,34 @@ export default class CollectionManager extends LibrarySystem {
     }
   }
 
+  public async updateSerieBackground(
+    collectionName: string,
+    serieId: number,
+    backgroundImage: string | null,
+  ): Promise<boolean> {
+    try {
+      const collection = await this.getCollection(collectionName);
+      if (!collection) return false;
+
+      const serieExists = collection.series.some(
+        (serie) => serie.id === serieId,
+      );
+      if (!serieExists) return false;
+
+      const updatedCollection: Collection = {
+        ...collection,
+        series: collection.series.map((serie) =>
+          serie.id === serieId ? { ...serie, backgroundImage } : serie,
+        ),
+      };
+
+      return this.updateCollection(updatedCollection);
+    } catch (error) {
+      console.error('Falha ao atualizar background da série:', error);
+      return false;
+    }
+  }
+
   public async createCollection(
     collection: CreateCollectionDTO,
   ): Promise<boolean> {
@@ -651,6 +679,7 @@ export default class CollectionManager extends LibrarySystem {
       coverImage: serie.coverImage,
       archivesPath: serie.archivesPath,
       description: '',
+      backgroundImage: null,
       status: serie.metadata.status,
       rating: serie.metadata.rating || 0,
       totalChapters: serie.totalChapters,
@@ -709,7 +738,10 @@ export default class CollectionManager extends LibrarySystem {
       const updatedCols: Collection[] = toUpdate.map((col) => {
         const updatedSeries = col.series.map((serie) => {
           if (serie.id === updatedSerie.id) {
-            return updatedSerie;
+            return {
+              ...updatedSerie,
+              backgroundImage: serie.backgroundImage ?? null,
+            };
           }
 
           return serie;

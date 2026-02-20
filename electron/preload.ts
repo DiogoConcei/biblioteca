@@ -72,6 +72,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     exportLogs: () => ipcRenderer.invoke('system:export-logs'),
     clearLogs: () => ipcRenderer.invoke('system:clear-logs'),
     createDebugBundle: () => ipcRenderer.invoke('system:create-debug-bundle'),
+    pickImage: () => ipcRenderer.invoke('system:pick-image'),
   },
 
   webUtilities: {
@@ -216,6 +217,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
         'collection:reorder-series',
         collectionName,
         orderedSeriesIds,
+      ),
+    updateSerieBackground: async (
+      collectionName: string,
+      serieId: number,
+      path: string | null,
+    ): Promise<APIResponse<void>> =>
+      ipcRenderer.invoke(
+        'collection:update-serie-background',
+        collectionName,
+        serieId,
+        path,
       ),
     fetchMetadata: async (
       title: string,

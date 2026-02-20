@@ -36,6 +36,9 @@ export default function collectionHandlers(ipcMain: IpcMain) {
               .map(async (serie) => ({
                 ...serie,
                 coverImage: await imageManager.encodeImage(serie.coverImage),
+                backgroundImage: serie.backgroundImage
+                  ? await imageManager.encodeImage(serie.backgroundImage)
+                  : null,
               })),
           ),
         })),
@@ -70,6 +73,28 @@ export default function collectionHandlers(ipcMain: IpcMain) {
         return { success: result };
       } catch (e) {
         console.error(`Falha ao criar coleção: ${e}`);
+        return { success: false, error: String(e) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    'collection:update-serie-background',
+    async (
+      _event,
+      collectionName: string,
+      serieId: number,
+      backgroundImage: string | null,
+    ) => {
+      try {
+        const result = await collectionsOperations.updateSerieBackground(
+          collectionName,
+          serieId,
+          backgroundImage,
+        );
+
+        return { success: result };
+      } catch (e) {
         return { success: false, error: String(e) };
       }
     },

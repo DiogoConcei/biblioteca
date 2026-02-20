@@ -6,7 +6,14 @@ import {
   useRef,
   useState,
 } from 'react';
-import { ChevronLeft, ChevronRight, LayoutGrid, Trash2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  ImagePlus,
+  LayoutGrid,
+  Trash2,
+  X,
+} from 'lucide-react';
 
 import { Collection } from '@/types/collections.interfaces';
 
@@ -26,6 +33,11 @@ export type FocusedCollectionViewProps = {
     collectionName: string,
     orderedSeriesIds: number[],
   ) => Promise<boolean>;
+  onUpdateSerieBackground?: (
+    collectionName: string,
+    serieId: number,
+    path: string | null,
+  ) => Promise<void>;
 };
 
 export default function CollectionView({
@@ -35,6 +47,7 @@ export default function CollectionView({
   onOpenReader,
   onRemoveFromCollection,
   onReorderSeries,
+  onUpdateSerieBackground,
 }: FocusedCollectionViewProps) {
   const [showAll, setShowAll] = useState(false);
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -42,6 +55,12 @@ export default function CollectionView({
     Record<number, string>
   >({});
   const titleRef = useRef<HTMLHeadingElement | null>(null);
+
+  const [backgroundPreview, setBackgroundPreview] = useState<string | null>(
+    null,
+  );
+  const [backgroundPath, setBackgroundPath] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const orderedSeries = useMemo(
     () =>
@@ -72,6 +91,11 @@ export default function CollectionView({
   );
 
   useEffect(() => {
+    setBackgroundPreview(null);
+    setBackgroundPath(null);
+  }, [activeSerie?.id]);
+
+  useEffect(() => {
     const loadMetadata = async () => {
       const missing = orderedSeries.filter(
         (serie) => !serie.description?.trim(),
@@ -95,9 +119,37 @@ export default function CollectionView({
     void loadMetadata();
   }, [orderedSeries]);
 
-  useEffect(() => {
-    titleRef.current?.focus();
-  }, [safeIndex]);
+  const pickImagePath = async () => {
+    const bridge = (
+      window as Window & {
+        electron?: {
+          dialog?: { openFile?: () => Promise<string | null> };
+        };
+      }
+    ).electron;
+
+    if (bridge?.dialog?.openFile) {
+      const pickedPath = await bridge.dialog.openFile();
+      return pickedPath || null;
+    }
+
+    const response = await window.electronAPI.system.pickImage();
+    return response.success ? (response.data ?? null) : null;
+  };
+
+  const onPickBackground = async () => {
+    const pickedPath = await pickImagePath();
+
+    if (pickedPath) {
+      const dataUrl =
+        await window.electronAPI.webUtilities.readFileAsDataUrl(pickedPath);
+      setBackgroundPath(pickedPath);
+      setBackgroundPreview(dataUrl || null);
+      return;
+    }
+
+    fileInputRef.current?.click();
+  };
 
   useEffect(() => {
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
@@ -234,6 +286,28 @@ export default function CollectionView({
                   </p>
 
                   <div className={styles.actions}>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className={styles.hiddenInput}
+                      onChange={async (event) => {
+                        const file = event.target.files?.[0];
+                        if (!file) return;
+
+                        const path =
+                          window.electronAPI.webUtilities.getPathForFile(file);
+                        if (!path) return;
+
+                        const dataUrl =
+                          await window.electronAPI.webUtilities.readFileAsDataUrl(
+                            path,
+                          );
+
+                        setBackgroundPath(path);
+                        setBackgroundPreview(dataUrl || null);
+                      }}
+                    />
                     <button
                       type="button"
                       onClick={() => onOpenReader(activeSerie.id)}
@@ -248,7 +322,42 @@ export default function CollectionView({
                     >
                       <Trash2 size={16} /> Remover da coleção
                     </button>
+                    <button type="button" onClick={onPickBackground}>
+                      <ImagePlus size={16} /> Editar Background
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onUpdateSerieBackground?.(
+                          collection.name,
+                          activeSerie.id,
+                          null,
+                        )
+                      }
+                    >
+                      <X size={16} /> Remover background
+                    </button>
                   </div>
+
+                  {backgroundPreview && backgroundPath && (
+                    <div className={styles.backgroundPreviewBox}>
+                      <img src={backgroundPreview} alt="Prévia do background" />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await onUpdateSerieBackground?.(
+                            collection.name,
+                            activeSerie.id,
+                            backgroundPath,
+                          );
+                          setBackgroundPreview(null);
+                          setBackgroundPath(null);
+                        }}
+                      >
+                        Confirmar background
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
