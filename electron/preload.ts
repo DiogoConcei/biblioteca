@@ -185,7 +185,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ): Promise<APIResponse<boolean>> =>
       ipcRenderer.invoke('collection:quickly-create', collectionName),
     createCollection: async (
-      collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
+      collection: CreateCollectionDTO,
     ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('collection:create', collection),
     deleteCollection: async (

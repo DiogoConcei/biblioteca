@@ -3,7 +3,10 @@ import { IpcMain } from 'electron';
 import CollectionsManager from '../services/CollectionManager';
 import MetadataManager from '../services/MetadataManager';
 import ImageManager from '../services/ImageManager';
-import { Collection } from '../../src/types/collections.interfaces';
+import {
+  Collection,
+  CreateCollectionDTO,
+} from '../../src/types/collections.interfaces';
 
 export type MetadataType = 'manga' | 'comic';
 
@@ -61,7 +64,7 @@ export default function collectionHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle(
     'collection:create',
-    async (_event, collection: Omit<Collection, 'createdAt' | 'updatedAt'>) => {
+    async (_event, collection: CreateCollectionDTO) => {
       try {
         const result = await collectionsOperations.createCollection(collection);
         return { success: result };

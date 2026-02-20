@@ -25,7 +25,6 @@ export interface Collection {
   description: string;
   coverImage: string;
   series: SerieInCollection[];
-  comments: string[];
   includeInAutoBackup?: boolean;
   updatedAt: string;
   createdAt: string;

@@ -56,7 +56,7 @@ export default function MangaPage() {
     navigate(`${lastChapterUrl}`);
   };
 
-  const tags = [...serie.tags].sort((a, b) => a.localeCompare(b)).slice(0, 5);
+  const tags = [...serie.tags].sort((a, b) => a.localeCompare(b)).slice(0, 2);
 
   return (
     <main className={styles.mangaPage}>

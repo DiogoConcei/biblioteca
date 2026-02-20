@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Controller,
   SubmitHandler,
@@ -8,19 +8,19 @@ import {
 } from 'react-hook-form';
 
 import useAllSeries from '@/hooks/useAllSeries';
-import { Collection, SerieInCollection } from '@/types/collections.interfaces';
+import {
+  Collection,
+  CreateCollectionDTO,
+  SerieInCollection,
+} from '@/types/collections.interfaces';
 import { Status } from '../../../electron/types/manga.interfaces';
 import styles from './CreateCollection.module.scss';
+import ImageController from '../Form/Fields/ImageController/ImageController';
 
 interface CreateCollectionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (
-    // OBS: agora espera que o backend aceite seriesCoverId quando coverType === 'series'
-    collection: Omit<Collection, 'createdAt' | 'updatedAt'> & {
-      seriesCoverId?: number | null;
-    },
-  ) => Promise<void>;
+  onCreate: (collection: CreateCollectionDTO) => Promise<void>;
 }
 
 interface SelectedSerieData {
@@ -32,11 +32,10 @@ interface SelectedSerieData {
 interface CreateCollectionFormValues {
   name: string;
   description: string;
-  comments: string;
   coverType: 'external' | 'series';
-  externalCover: string;
-  seriesCoverId: string; // agora guarda o id (string) da série escolhida como capa
-  selectedSeries: SelectedSerieData[]; // array -> evita problemas com FieldPath dinâmicos
+  coverImage: string; // usado apenas para preview / upload
+  seriesCoverId: string; // id selecionado quando coverType === 'series'
+  selectedSeries: SelectedSerieData[];
 }
 
 const STATUS_OPTIONS: Status[] = ['', 'Em andamento', 'Completo', 'Pendente'];
@@ -44,9 +43,8 @@ const STATUS_OPTIONS: Status[] = ['', 'Em andamento', 'Completo', 'Pendente'];
 const defaultValues: CreateCollectionFormValues = {
   name: '',
   description: '',
-  comments: '',
   coverType: 'external',
-  externalCover: '',
+  coverImage: '',
   seriesCoverId: '',
   selectedSeries: [],
 };
@@ -56,6 +54,8 @@ export default function CreateCollection({
   onClose,
   onCreate,
 }: CreateCollectionModalProps) {
+  const [openRating, setOpenRating] = useState<boolean>(false);
+  const [openStatus, setOpenStatus] = useState<boolean>(false);
   const series = useAllSeries();
   const selectableSeries = useMemo(() => series ?? [], [series]);
 
@@ -69,10 +69,9 @@ export default function CreateCollection({
     formState: { isSubmitting },
   } = useForm<CreateCollectionFormValues>({
     defaultValues,
-    mode: 'onChange',
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { append, remove } = useFieldArray({
     control,
     name: 'selectedSeries',
   });
@@ -83,19 +82,45 @@ export default function CreateCollection({
   }) ?? []) as SelectedSerieData[];
 
   const coverType = watch('coverType');
+  const selectedCoverId = watch('seriesCoverId');
 
-  // Sempre limpe o campo de capa incompatível ao trocar o tipo de cover
+  /**
+   * Monta lista das séries selecionadas com seus dados completos
+   */
+  const selectedSeriesList = useMemo(() => {
+    return watchedSelected
+      .map((s) => ({
+        ...s,
+        meta: selectableSeries.find((ser) => ser.id === s.id),
+      }))
+      .filter((s) => s.meta) as (SelectedSerieData & {
+      meta: (typeof selectableSeries)[number];
+    })[];
+  }, [watchedSelected, selectableSeries]);
+
+  /**
+   * Se for capa de série, JOGA SÓ NO CAMPO de preview (coverImage) para exibir no ImageController.
+   * Importante: isso NÃO significa que vamos salvar o base64 no backend — o onSubmit decide o payload.
+   */
   useEffect(() => {
-    if (coverType === 'external') {
-      setValue('seriesCoverId', '');
-    } else {
-      setValue('externalCover', '');
-    }
-  }, [coverType, setValue]);
+    if (coverType !== 'series') return;
 
-  // Toggle: adiciona ou remove da fieldArray com índices seguros
+    const selected = selectedSeriesList.find(
+      (s) => String(s.meta.id) === selectedCoverId,
+    );
+
+    if (!selected) return;
+
+    // Meta.coverImage é base64 vindo do banco — usamos só para preview.
+    setValue('coverImage', selected.meta.coverImage);
+  }, [coverType, selectedCoverId, selectedSeriesList, setValue]);
+
+  /**
+   * Adiciona ou remove série da coleção
+   */
   const toggleSerie = (serieId: number) => {
     const idx = watchedSelected.findIndex((s) => s.id === serieId);
+
     if (idx >= 0) {
       remove(idx);
       return;
@@ -108,18 +133,9 @@ export default function CreateCollection({
     });
   };
 
-  // Lista de dados completos (para mostrar nome/capa/etc) das séries que estão selecionadas
-  const selectedSeriesList = useMemo(() => {
-    return watchedSelected
-      .map((s) => ({
-        ...s,
-        meta: selectableSeries.find((ser) => ser.id === s.id),
-      }))
-      .filter((s) => s.meta) as (SelectedSerieData & {
-      meta: (typeof selectableSeries)[number];
-    })[];
-  }, [watchedSelected, selectableSeries]);
-
+  /**
+   * Constrói estrutura final de séries
+   */
   const buildCollectionSeries = (): SerieInCollection[] => {
     const now = new Date().toISOString();
 
@@ -127,10 +143,11 @@ export default function CreateCollection({
       .map((sel, index) => {
         const meta = selectableSeries.find((ser) => ser.id === sel.id);
         if (!meta) return null;
+
         return {
           id: meta.id,
           name: meta.name,
-          coverImage: '', // backend deve preencher a URL/path correto
+          coverImage: '',
           description: '',
           archivesPath: meta.dataPath,
           totalChapters: meta.totalChapters,
@@ -150,12 +167,12 @@ export default function CreateCollection({
   ) => {
     if (!values.name.trim()) return;
 
-    // coverImage permanece apenas quando for external; quando for series,
-    // enviamos seriesCoverId para o backend escolher a imagem correta.
-    const coverImage =
-      values.coverType === 'external' ? values.externalCover.trim() : '';
-
-    const seriesCoverId =
+    // --- NOVA LÓGICA: decidir payload final enviado ao backend ---
+    // Se external: envie coverImage (pode ser path salvo pelo ImageController ou data: url),
+    // Se series: envie null/'' em coverImage e só envie seriesCoverId (number).
+    const coverImageToSend =
+      values.coverType === 'external' ? values.coverImage : '';
+    const seriesCoverIdToSend =
       values.coverType === 'series' && values.seriesCoverId
         ? Number(values.seriesCoverId)
         : null;
@@ -163,21 +180,16 @@ export default function CreateCollection({
     await onCreate({
       name: values.name.trim(),
       description: values.description.trim(),
-      coverImage,
-      // campo extra para backend: id da série escolhida como capa (se houver)
-      seriesCoverId,
-      comments: values.comments
-        .split('\n')
-        .map((c) => c.trim())
-        .filter(Boolean),
+      coverImage: coverImageToSend,
+      // agora enviamos explicitamente o id da série (ou null)
+      seriesCoverId: seriesCoverIdToSend,
       series: buildCollectionSeries(),
-    } as any); // cast por segurança caso o tipo Collection não tenha seriesCoverId
+    } as any);
 
     reset(defaultValues);
     onClose();
   };
 
-  // não renderiza se modal fechado
   if (!isOpen) return null;
 
   return (
@@ -189,156 +201,212 @@ export default function CreateCollection({
       }}
     >
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <h2>Criar coleção</h2>
-
         <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-          <label>
-            Nome da coleção
-            <input
-              {...register('name', { required: true })}
-              placeholder="Ex.: Isekai favoritos"
-            />
-          </label>
+          {/* ImageController continua recebendo 'coverImage' para exibir preview */}
+          <ImageController control={control} name="coverImage" />
 
-          <label>
-            Descrição
-            <textarea
-              {...register('description')}
-              placeholder="Descreva o objetivo da coleção"
-            />
-          </label>
+          <div className={styles.inputArea}>
+            <label>
+              Nome da coleção
+              <input
+                {...register('name', { required: true })}
+                placeholder="Ex.: Isekai favoritos"
+                type="text"
+              />
+            </label>
 
-          <label>
-            Comentários (um por linha)
-            <textarea
-              {...register('comments')}
-              placeholder="Ex.: Ler no fim de semana"
-            />
-          </label>
+            <div className={styles.coverSection}>
+              <div className={styles.coverType}>
+                <span>Capa</span>
 
-          <div className={styles.coverSection}>
-            <span>Capa da coleção</span>
-            <div className={styles.coverType}>
-              <label>
                 <input
                   type="radio"
                   value="external"
+                  id="TypeCoverExternal"
                   {...register('coverType')}
                 />
-                URL externa
-              </label>
-              <label>
-                <input type="radio" value="series" {...register('coverType')} />
-                Capa de uma série selecionada
-              </label>
+                <label htmlFor="TypeCoverExternal">upload de capa</label>
+
+                <input
+                  type="radio"
+                  value="series"
+                  id="TypeCoverInternal"
+                  {...register('coverType')}
+                />
+                <label htmlFor="TypeCoverInternal">
+                  a partir de série selecionada
+                </label>
+              </div>
+
+              {coverType === 'series' && (
+                <div className={styles.seriesCoverOptions}>
+                  {selectedSeriesList.map((sel) => (
+                    <div key={sel.id}>
+                      <input
+                        type="radio"
+                        id={`seriesCover-${sel.id}`}
+                        value={String(sel.meta.id)}
+                        {...register('seriesCoverId')}
+                      />
+                      <label htmlFor={`seriesCover-${sel.id}`}>
+                        {sel.meta.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {coverType === 'external' ? (
-              <input {...register('externalCover')} placeholder="https://..." />
-            ) : (
-              <select {...register('seriesCoverId')}>
-                <option value="">Selecione uma capa</option>
-                {/* agora o value é o id da série (string) */}
-                {selectedSeriesList.map((sel) => (
-                  <option key={sel.id} value={String(sel.meta.id)}>
-                    {sel.meta.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
+            <div className={styles.seriesSection}>
+              <h3>Séries da coleção</h3>
+              <ul>
+                {selectableSeries.map((serie) => {
+                  const isSelected = watchedSelected.some(
+                    (s) => s.id === serie.id,
+                  );
+                  const selIndex = watchedSelected.findIndex(
+                    (s) => s.id === serie.id,
+                  );
 
-          <div className={styles.seriesSection}>
-            <h3>Séries da coleção</h3>
-            <ul>
-              {selectableSeries.map((serie) => {
-                const isSelected = watchedSelected.some(
-                  (s) => s.id === serie.id,
-                );
-                const selIndex = watchedSelected.findIndex(
-                  (s) => s.id === serie.id,
-                );
-
-                return (
-                  <li key={serie.id} className={styles.serieItem}>
-                    <label className={styles.serieName}>
+                  return (
+                    <li
+                      key={serie.id}
+                      className={`${styles.serieItem} ${
+                        isSelected ? styles.active : ''
+                      }`}
+                    >
+                      <label
+                        htmlFor={`${serie.id}_${serie.name}`}
+                        className={styles.serieName}
+                      >
+                        {serie.name}
+                      </label>
                       <input
                         type="checkbox"
                         checked={isSelected}
+                        id={`${serie.id}_${serie.name}`}
                         onChange={() => toggleSerie(serie.id)}
                       />
-                      {serie.name}
-                    </label>
 
-                    {isSelected && selIndex >= 0 && (
-                      <div className={styles.serieMeta}>
-                        <label>
-                          Rating
-                          <Controller
-                            control={control}
-                            name={`selectedSeries.${selIndex}.rating` as const}
-                            render={({ field }) => (
-                              <select
-                                value={field.value ?? 0}
-                                onChange={(e) =>
-                                  field.onChange(Number(e.target.value))
-                                }
-                              >
-                                {Array.from({ length: 11 }).map((_, i) => (
-                                  <option key={i} value={i}>
-                                    {i}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
-                          />
-                        </label>
-
-                        <label>
-                          Status
-                          <Controller
-                            control={control}
-                            name={`selectedSeries.${selIndex}.status` as const}
-                            render={({ field }) => (
-                              <select
-                                value={field.value ?? ''}
-                                onChange={(e) =>
-                                  field.onChange(e.target.value as Status)
-                                }
-                              >
-                                {STATUS_OPTIONS.map((status) => (
-                                  <option
-                                    key={status || 'empty'}
-                                    value={status}
+                      {isSelected && selIndex >= 0 && (
+                        <div className={styles.serieMeta}>
+                          <label>
+                            Rating
+                            <Controller
+                              control={control}
+                              name={
+                                `selectedSeries.${selIndex}.rating` as const
+                              }
+                              render={({ field }) => (
+                                <div className={styles.customSelect}>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setOpenRating((prev) => !prev)
+                                    }
+                                    className={styles.selectTrigger}
                                   >
-                                    {status || 'Sem status'}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
-                          />
-                        </label>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+                                    {field.value ?? 0}
+                                  </button>
 
-          <div className={styles.actions}>
-            <button
-              type="button"
-              onClick={() => {
-                reset(defaultValues);
-                onClose();
-              }}
-            >
-              Cancelar
-            </button>
-            <button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Salvando...' : 'Criar coleção'}
-            </button>
+                                  {openRating && (
+                                    <ul className={styles.selectDropdown}>
+                                      {Array.from({ length: 6 }).map((_, i) => (
+                                        <li
+                                          key={i}
+                                          onClick={() => {
+                                            field.onChange(i);
+                                            setOpenRating(false);
+                                          }}
+                                          className={
+                                            field.value === i
+                                              ? styles.activeOption
+                                              : ''
+                                          }
+                                        >
+                                          {i}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                              )}
+                            />
+                          </label>
+
+                          <label>
+                            Status
+                            <Controller
+                              control={control}
+                              name={
+                                `selectedSeries.${selIndex}.status` as const
+                              }
+                              render={({ field }) => (
+                                <div className={styles.customSelect}>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setOpenStatus((prev) => !prev)
+                                    }
+                                    className={styles.selectTrigger}
+                                  >
+                                    {field.value || 'Sem status'}
+                                  </button>
+
+                                  {openStatus && (
+                                    <ul className={styles.selectDropdown}>
+                                      {STATUS_OPTIONS.map((status) => (
+                                        <li
+                                          key={status || 'empty'}
+                                          onClick={() => {
+                                            field.onChange(status);
+                                            setOpenStatus(false);
+                                          }}
+                                          className={
+                                            field.value === status
+                                              ? styles.activeOption
+                                              : ''
+                                          }
+                                        >
+                                          {status || 'Sem status'}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                              )}
+                            />
+                          </label>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
+            <label className={styles.areaLabel}>
+              Descrição
+              <textarea
+                {...register('description')}
+                placeholder="Descrição da coleção"
+              />
+            </label>
+
+            <div className={styles.actions}>
+              <button
+                type="button"
+                onClick={() => {
+                  reset(defaultValues);
+                  onClose();
+                }}
+              >
+                Cancelar
+              </button>
+              <button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Salvando...' : 'Criar coleção'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

@@ -22,8 +22,16 @@
 
 .form {
   display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: $spacing-4;
+
+  .inputArea {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
+  }
 
   label {
     display: flex;
@@ -31,20 +39,17 @@
     gap: $spacing-3;
     font-size: $font-lg;
 
-    &:first-child {
-      margin-top: $spacing-4;
-    }
-  }
+    input[type='text'] {
+      @include interactive-button;
+      padding: $spacing-1;
+      border-radius: $radius-md;
+      color: $snow;
+      border: 1px solid $amethyst;
 
-  input[type='text'] {
-    @include interactive-button;
-    padding: $spacing-2;
-    border-radius: $radius-md;
-    color: $snow;
-    border: 1px solid $amethyst;
-
-    &::placeholder {
-      color: #ccc;
+      &::placeholder {
+        font-size: $font-base;
+        color: #ccc;
+      }
     }
   }
 
@@ -55,99 +60,176 @@
     flex-flow: column nowrap;
 
     textarea {
-      width: 80%;
+      width: 100%;
       height: 180px;
+      color: $snow;
       border-radius: $radius-md;
       padding: $spacing-3;
       border: 1px solid $amethyst;
       background: $gunmetal;
     }
   }
+
+  .coverSection {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-3;
+    span {
+      font-size: $font-lg;
+    }
+
+    .coverType {
+      display: flex;
+      align-items: baseline;
+      gap: $spacing-3;
+
+      input[type='radio'] {
+        display: none;
+
+        &:checked + label {
+          background-color: $amethyst;
+          color: $snow;
+        }
+      }
+
+      label {
+        font-size: $font-base;
+        padding: $spacing-1;
+        border: 2px solid $amethyst;
+        border-radius: $radius-md;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+    }
+
+    .seriesCoverOptions {
+      display: flex;
+      gap: $spacing-3;
+      padding: $spacing-3;
+      max-height: 300px;
+      input[type='radio'] {
+        display: none;
+
+        &:checked + label {
+          background-color: $amethyst;
+          color: $snow;
+        }
+      }
+
+      label {
+        font-size: $font-base;
+        padding: $spacing-1;
+        border: 2px solid $amethyst;
+        border-radius: $radius-md;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+    }
+  }
+
+  .seriesSection {
+    ul {
+      list-style: none;
+      margin: $spacing-2 0 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-2;
+    }
+
+    .serieItem {
+      border: 2px solid $amethyst;
+      border-radius: $radius-md;
+      padding: $spacing-2;
+      transition: all 0.3s ease;
+
+      &:has(input:checked) {
+        background-color: $amethyst;
+        color: $snow;
+      }
+    }
+
+    .serieName {
+      padding: $spacing-1;
+      border-radius: $radius-md;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    input[type='checkbox'] {
+      display: none;
+
+      &:checked + label {
+        background-color: $amethyst;
+        color: $snow;
+      }
+    }
+
+    .serieMeta {
+      margin-top: $spacing-2;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: $spacing-2;
+
+      .customSelect {
+        position: relative;
+        text-align: center;
+        width: 100%;
+        max-width: 200px;
+
+        .selectTrigger {
+          width: 100%;
+          padding: $spacing-1;
+          border-radius: $radius-sm $radius-sm 0px 0px;
+          background: $gunmetal;
+          color: $snow;
+          cursor: pointer;
+        }
+
+        .selectDropdown {
+          gap: 2px;
+          position: absolute;
+          margin-top: 0;
+          background: $gunmetal;
+          border-top: 0;
+          list-style: none;
+          padding: 0;
+          z-index: 10;
+
+          li {
+            padding: $spacing-1;
+            cursor: pointer;
+            transition: 0.2s;
+
+            &:hover {
+              background: $amethyst;
+            }
+          }
+
+          .activeOption {
+            background: $amethyst;
+          }
+        }
+
+        button {
+          @include interactive-button;
+        }
+      }
+    }
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-start;
+    gap: $spacing-2;
+    margin-top: $spacing-2;
+
+    button {
+      @include interactive-button;
+      border-radius: $radius-sm;
+      border: 1px solid $amethyst;
+      color: $snow;
+      padding: $spacing-2 $spacing-3;
+    }
+  }
 }
-
-// .form {
-//   display: flex;
-//   flex-direction: column;
-//   gap: $spacing-3;
-
-//   input,
-//   textarea,
-//   select {
-//     margin-top: $spacing-1;
-//     width: 100%;
-//     border-radius: $radius-sm;
-//     border: 1px solid #ffffff26;
-//     background: #ffffff12;
-//     color: $snow;
-//     padding: $spacing-2;
-//   }
-
-//   textarea {
-//     min-height: 80px;
-//     resize: vertical;
-//   }
-// }
-
-// .coverSection,
-// .seriesSection {
-//   border: 1px solid #ffffff26;
-//   border-radius: $radius-md;
-//   padding: $spacing-3;
-// }
-
-// .coverType {
-//   display: flex;
-//   gap: $spacing-4;
-//   margin: $spacing-2 0;
-
-//   label {
-//     display: flex;
-//     align-items: center;
-//     gap: $spacing-1;
-//   }
-// }
-
-// .seriesSection {
-//   ul {
-//     list-style: none;
-//     margin: $spacing-2 0 0;
-//     padding: 0;
-//     display: flex;
-//     flex-direction: column;
-//     gap: $spacing-2;
-//   }
-// }
-
-// .serieItem {
-//   border: 1px solid #ffffff20;
-//   border-radius: $radius-sm;
-//   padding: $spacing-2;
-// }
-
-// .serieName {
-//   display: flex;
-//   align-items: center;
-//   gap: $spacing-2;
-// }
-
-// .serieMeta {
-//   margin-top: $spacing-2;
-//   display: grid;
-//   grid-template-columns: repeat(2, minmax(0, 1fr));
-//   gap: $spacing-2;
-// }
-
-// .actions {
-//   display: flex;
-//   justify-content: flex-end;
-//   gap: $spacing-2;
-
-//   button {
-//     @include interactive-button;
-//     border-radius: $radius-sm;
-//     border: 1px solid #ffffff40;
-//     color: $snow;
-//     background: #ffffff1b;
-//     padding: $spacing-2 $spacing-3;
-//   }
-// }

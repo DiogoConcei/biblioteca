@@ -1,5 +1,8 @@
 import { create } from 'zustand';
-import { Collection } from '../types/collections.interfaces';
+import {
+  Collection,
+  CreateCollectionDTO,
+} from '../types/collections.interfaces';
 import { Literatures } from '../../electron/types/electron-auxiliar.interfaces';
 
 interface CollectionState {
@@ -14,9 +17,7 @@ interface CollectionState {
   fetchCollections: () => Promise<void>;
   updateFav: (serie: Literatures, isFav: boolean) => Promise<boolean>;
 
-  createCollection: (
-    collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
-  ) => Promise<boolean>;
+  createCollection: (collection: CreateCollectionDTO) => Promise<boolean>;
   updateCollection: (
     name: string,
     payload: Partial<Pick<Collection, 'description' | 'coverImage' | 'name'>>,
@@ -152,6 +153,11 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
 
   deleteCollection: async (name) => {
     try {
+      const cleanedName = name.trim().toLocaleLowerCase();
+
+      if (cleanedName === 'favoritos' || cleanedName === 'recentes')
+        return false;
+
       const response =
         await window.electronAPI.collections.deleteCollection(name);
       if (!response.success) return false;

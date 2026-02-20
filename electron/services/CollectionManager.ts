@@ -620,7 +620,7 @@ export default class CollectionManager extends LibrarySystem {
       description: collection.description || '',
       coverImage: collection.coverImage || '',
       series: collection.series || [],
-      comments: collection.comments || [],
+
       createdAt: date,
       updatedAt: date,
     };
@@ -634,7 +634,6 @@ export default class CollectionManager extends LibrarySystem {
       description: '',
       coverImage: '',
       series: [],
-      comments: [],
       updatedAt: date,
       createdAt: date,
     };
