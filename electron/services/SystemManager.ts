@@ -2,6 +2,7 @@ import LibrarySystem from './abstract/LibrarySystem.ts';
 import StorageManager from './StorageManager.ts';
 import FileManager from './FileManager.ts';
 import ImageManager from './ImageManager.ts';
+import TieInManager from './TieInManager.ts';
 import fse from 'fs-extra';
 import path from 'path';
 import {
@@ -52,6 +53,7 @@ export default class SystemManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
   private readonly storageManager: StorageManager = new StorageManager();
   private readonly imageManager: ImageManager = new ImageManager();
+  private readonly tieManager: TieInManager = new TieInManager();
 
   constructor() {
     super();
@@ -793,4 +795,81 @@ export default class SystemManager extends LibrarySystem {
 
     return { success: true, path: outputPath };
   }
+
+  public async regenCover() {
+    const serieData = await this.storageManager.readTieInData(
+      'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\childSeries\\2 Evento Principal - Invasão Secreta.json',
+    );
+
+    if (!serieData) {
+      throw new Error(`Falha em encontrar dados da serie`);
+    }
+
+    const tieEditions = serieData.chapters;
+
+    if (!tieEditions) {
+      throw new Error(`Serie nao possui edicoes`);
+    }
+
+    tieEditions.map(async (tie) => {
+      const rawName = tie.name;
+      const safeDirName = this.fileManager
+        .sanitizeDirName(rawName)
+        .replaceAll('_', '')
+        .replaceAll('-', '');
+
+      const outputPath = path.join(
+        this.showcaseImages,
+        serieData.name,
+        safeDirName,
+      );
+
+      tie.chapterPath = path.join(
+        this.comicsImages,
+        serieData.name,
+        this.fileManager
+          .sanitizeDirName(tie.name)
+          .replaceAll('_', '')
+          .replaceAll('-', ''),
+      );
+
+      if (!tie.archivesPath) {
+        console.warn(
+          `Arquivo de origem não informado para a edição ${tie.name}. Pulando geração de capa.`,
+        );
+        return;
+      }
+
+      // inputFile tie.archivesPath;
+      // outputPath outputPath;
+
+      if (!tie.archivesPath) return '';
+      let resultCover: string = '';
+      const ext = path.extname(tie.archivesPath);
+
+      try {
+        if (ext === '.pdf') {
+          resultCover = await this.storageManager.extractCoverFromPdf(
+            tie.archivesPath,
+            outputPath,
+          );
+        } else {
+          // resultCover = await this.storageManager.extractCoverWith7zip(
+          //   tie.archivesPath,
+          //   outputPath,
+          // );
+        }
+
+        //     return await this.imageManager.normalizeCover(resultCover);
+      } catch (e) {
+        console.error('Falha em gerar capas: ', e);
+        return '';
+      }
+    });
+  }
 }
+
+(async () => {
+  const systemManager = new SystemManager();
+  await systemManager.regenCover();
+})();

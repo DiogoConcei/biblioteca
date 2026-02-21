@@ -188,7 +188,7 @@ export default class FileManager extends LibrarySystem {
 
       .replaceAll(/[. ]+$/g, '')
       .replaceAll('#', '')
-      .replace('.pdf', '')
+      .replaceAll('.pdf', '')
       .trim();
   }
 
@@ -214,7 +214,7 @@ export default class FileManager extends LibrarySystem {
 
   public sanitizeImageName(name: string): string {
     return this.sanitizeFilename(name)
-      .slice(0, 15)
+      .slice(0, 4)
       .concat(`_${randomUUID().slice(0, 3)}`);
   }
 

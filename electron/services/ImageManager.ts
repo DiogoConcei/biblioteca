@@ -6,11 +6,14 @@ import fse from 'fs-extra';
 import LibrarySystem from './abstract/LibrarySystem';
 import StorageManager from './StorageManager.ts';
 import FileManager from './FileManager';
+import MediaArchiveAdapter from './MediaAdapter.ts';
 import { ComicEdition } from '../types/comic.interfaces.ts';
 
 export default class ImageManager extends LibrarySystem {
   private readonly storageManager: StorageManager = new StorageManager();
   private readonly fileManager: FileManager = new FileManager();
+  private readonly mediaArchiveAdapter: MediaArchiveAdapter =
+    new MediaArchiveAdapter();
 
   public async normalizeImage(
     imagePath: string,
@@ -198,19 +201,21 @@ export default class ImageManager extends LibrarySystem {
     const ext = path.extname(inputFile);
 
     try {
-      if (ext === '.pdf') {
-        resultCover = await this.storageManager.extractCoverFromPdf(
-          inputFile,
-          outputPath,
+      const result = await this.mediaArchiveAdapter.extractCover({
+        inputPath: inputFile,
+        outputDir: outputPath,
+      });
+
+      if (!result.success || !result.coverPath) {
+        console.warn(
+          'Falha em gerar capa (adapter):',
+          result.error,
+          result.metadata,
         );
-      } else {
-        resultCover = await this.storageManager.extractCoverWith7zip(
-          inputFile,
-          outputPath,
-        );
+        return '';
       }
 
-      return await this.normalizeCover(resultCover);
+      return result.coverPath;
     } catch (e) {
       console.error('Falha em gerar capas: ', e);
       return '';

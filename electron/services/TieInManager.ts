@@ -399,6 +399,7 @@ export default class TieInManager extends LibrarySystem {
     };
   }
 
+  // Criado para regen
   public async createEditionCover(chap: ComicEdition) {
     try {
       const rawName = chap.name;

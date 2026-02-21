@@ -1,6 +1,6 @@
 import LibrarySystem from './abstract/LibrarySystem';
 import FileManager from './FileManager';
-
+import MediaArchiveAdapter from './MediaAdapter';
 import {
   LiteratureChapter,
   Literatures,
@@ -12,6 +12,7 @@ import { SerieData, SerieEditForm } from '../../src/types/series.interfaces';
 
 import fse from 'fs-extra';
 import path from 'path';
+import os from 'os';
 import { randomBytes } from 'crypto';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { createCanvas } from '@napi-rs/canvas';
@@ -22,6 +23,8 @@ export default class StorageManager extends LibrarySystem {
   private readonly SEVEN_ZIP_PATH = 'C:\\Program Files\\7-Zip\\7z';
   private readonly execAsync = promisify(exec);
   private readonly fileManager: FileManager = new FileManager();
+  private readonly mediaArchiveAdapter: MediaArchiveAdapter =
+    new MediaArchiveAdapter();
 
   constructor() {
     super();
@@ -249,43 +252,16 @@ export default class StorageManager extends LibrarySystem {
     outputDir: string,
   ): Promise<string> {
     try {
-      await fse.ensureDir(outputDir);
-
-      const data = await fse.readFile(inputFile);
-
-      const loadingTask = pdfjsLib.getDocument({
-        data: new Uint8Array(data),
-        // @ts-ignore
-        disableWorker: true,
+      const result = await this.mediaArchiveAdapter.extractCover({
+        inputPath: inputFile,
+        outputDir,
       });
 
-      const pdf = await loadingTask.promise;
+      if (!result.success || !result.coverPath) {
+        throw new Error(result.error ?? 'Falha ao extrair capa de PDF.');
+      }
 
-      const page = await pdf.getPage(1);
-
-      const scale = 1.5;
-      const viewport = page.getViewport({ scale });
-
-      const canvas = createCanvas(viewport.width, viewport.height);
-      const context = canvas.getContext('2d');
-
-      await page.render({
-        canvas: canvas as unknown as HTMLCanvasElement,
-        canvasContext: context as unknown as CanvasRenderingContext2D,
-        viewport,
-      }).promise;
-
-      const suffix = randomBytes(3).toString('hex');
-      const finalPath = this.fileManager.buildImagePath(
-        outputDir,
-        `cover_${suffix}`,
-        '.jpg',
-      );
-
-      const buffer = canvas.toBuffer('image/jpeg', 0.85);
-      await fse.writeFile(finalPath, buffer);
-
-      return finalPath;
+      return result.coverPath;
     } catch (e) {
       console.error('Falha na conversão de PDF -> Imagem', e);
       throw e;
@@ -325,86 +301,18 @@ export default class StorageManager extends LibrarySystem {
     inputFile: string,
     outputDir: string,
   ): Promise<string> {
-    try {
-      await fse.mkdir(outputDir, { recursive: true });
+    const result = await this.mediaArchiveAdapter.extractCover({
+      inputPath: inputFile,
+      outputDir,
+    });
 
-      const { stdout } = await this.execAsync(
-        `"${this.SEVEN_ZIP_PATH}" l "${inputFile}"`,
+    if (!result.success || !result.coverPath) {
+      throw new Error(
+        result.error ?? 'Falha ao extrair capa do arquivo compactado.',
       );
-
-      const filesInArchive = this.parse7zList(stdout);
-
-      if (filesInArchive.length === 0) {
-        throw new Error('Arquivo compactado está vazio.');
-      }
-
-      const candidateName = this.fileManager.findFirstCoverFile(
-        filesInArchive.map((f) => path.basename(f)),
-      );
-
-      if (!candidateName) {
-        return '';
-      }
-
-      const candidatePath = filesInArchive.find(
-        (f) => path.basename(f) === candidateName,
-      );
-
-      if (!candidatePath) {
-        throw new Error(
-          'Candidato encontrado, mas path interno não localizado.',
-        );
-      }
-
-      const normalizedCandidate = path.normalize(candidatePath);
-
-      if (normalizedCandidate.startsWith('..')) {
-        throw new Error('Path interno inválido no arquivo compactado.');
-      }
-
-      const ext = path.extname(normalizedCandidate);
-      const baseName = path.basename(normalizedCandidate, ext);
-      const safeBase = baseName.replace(/[. ]+$/, '');
-      const suffix = randomBytes(3).toString('hex');
-
-      const finalPath = this.fileManager.buildImagePath(
-        outputDir,
-        `${safeBase}_${suffix}`,
-        ext,
-      );
-
-      try {
-        await this.execAsync(
-          `"${this.SEVEN_ZIP_PATH}" x "${inputFile}" "${normalizedCandidate}" -o"${outputDir}" -y`,
-        );
-      } catch (err: any) {
-        if (
-          err?.code !== 2 ||
-          typeof err.stderr !== 'string' ||
-          !err.stderr.includes('CRC Failed')
-        ) {
-          throw err;
-        }
-      }
-
-      const extractedPath = path.join(outputDir, normalizedCandidate);
-
-      await fse.move(extractedPath, finalPath, { overwrite: true });
-
-      const extractedDir = path.dirname(extractedPath);
-
-      if (extractedDir !== outputDir) {
-        const remaining = await fse.readdir(extractedDir);
-        if (remaining.length === 0) {
-          await fse.remove(extractedDir);
-        }
-      }
-
-      return finalPath;
-    } catch (e) {
-      console.error('❌ Falha ao extrair capa:', e);
-      throw e;
     }
+
+    return result.coverPath;
   }
 
   public async patchSerie(data: SerieEditForm): Promise<Literatures | null> {
@@ -504,30 +412,6 @@ export default class StorageManager extends LibrarySystem {
 
   private buildPageFileName(pageNum: number): string {
     return `${String(pageNum).padStart(4, '0')}.jpeg`;
-  }
-
-  private parse7zList(output: string): string[] {
-    const lines = output.split('\n');
-    const files: string[] = [];
-    let parsing = false;
-
-    for (const line of lines) {
-      if (line.startsWith('----')) {
-        parsing = !parsing;
-        continue;
-      }
-
-      if (!parsing) continue;
-
-      const parts = line.trim().split(/\s+/);
-      const filePath = parts.slice(5).join(' ');
-
-      if (filePath && !filePath.endsWith('/')) {
-        files.push(filePath);
-      }
-    }
-
-    return files;
   }
 
   private mountViewData(serie: Literatures): viewData {
