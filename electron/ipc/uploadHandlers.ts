@@ -36,7 +36,7 @@ export default function uploadHandlers(ipcMain: IpcMain) {
         const processed = await Promise.all(
           paths.map((seriePath) => storageManager.processData(seriePath)),
         );
-        return { success: true, data: processed };
+        return { success: true, data: [] };
       } catch (err) {
         return { success: false, error: (err as Error).message };
       }

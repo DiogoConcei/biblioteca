@@ -1,6 +1,7 @@
 import FileSystem from './abstract/LibrarySystem';
 import CollectionManager from './CollectionManager';
 import StorageManager from './StorageManager';
+import ComicManager from './ComicManager';
 import {
   Collection,
   SerieInCollection,
@@ -99,4 +100,14 @@ export default class UserManager extends FileSystem {
       throw error;
     }
   }
+
+  // public async manageHistory(serieData: Literatures) {
+  //   if ('childSeries' in serieData) {
+  //     // Se não tem capítulos
+  //     if(!serieData.chapters) {
+  //       // vai redirecionar para a primeira Tie In com status de "em andamento"
+  //       serieData.childSeries.m
+  //     }
+  //   }
+  // }
 }

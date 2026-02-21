@@ -261,6 +261,8 @@ export default class ImageManager extends LibrarySystem {
 
   public async encodeImage(filePath: string): Promise<string> {
     try {
+      if (!filePath) return '';
+
       const buffer = await fse.readFile(filePath);
       const mimeType = await this.getMime(filePath);
 
@@ -270,7 +272,7 @@ export default class ImageManager extends LibrarySystem {
 
       return `data:${mimeType};base64,${buffer.toString('base64')}`;
     } catch (e) {
-      console.error('Falha em codificar as imagens', e);
+      console.error('Falha em codificar a imagem', e);
       return '';
     }
   }

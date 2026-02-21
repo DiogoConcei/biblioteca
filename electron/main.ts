@@ -97,12 +97,14 @@ async function ensureAppFolders() {
         {
           name: 'Favoritos',
           description: 'Minhas séries favoritas.',
+          coverImage: '',
           series: [],
           updatedAt: new Date().toISOString(),
         },
         {
           name: 'Recentes',
           description: 'Séries lidas recentemente',
+          coverImage: '',
           series: [],
           comments: [],
           updatedAt: new Date().toISOString(),

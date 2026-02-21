@@ -22,26 +22,32 @@ export default function collectionHandlers(ipcMain: IpcMain) {
       if (!collections) {
         throw new Error('Falha em recuperar as colecoes');
       }
-      const codedCollections = await Promise.all(
-        collections.map(async (col) => ({
-          ...col,
-          coverImage:
-            col.name === 'Recentes' || col.name === 'Favoritos'
-              ? col.coverImage
-              : await imageManager.encodeImage(col.coverImage),
 
-          series: await Promise.all(
-            [...col.series]
-              .sort((a, b) => (a.position || 0) - (b.position || 0))
-              .map(async (serie) => ({
-                ...serie,
-                coverImage: await imageManager.encodeImage(serie.coverImage),
-                backgroundImage: serie.backgroundImage
-                  ? await imageManager.encodeImage(serie.backgroundImage)
-                  : null,
-              })),
-          ),
-        })),
+      const codedCollections = await Promise.all(
+        collections.map(async (collection) => {
+          const updatedSeries = [];
+
+          for (const serie of collection.series) {
+            const encodedCover = await imageManager.encodeImage(
+              serie.coverImage,
+            );
+
+            updatedSeries.push({
+              ...serie,
+              coverImage: encodedCover,
+            });
+          }
+
+          const encodedCollectionCover = await imageManager.encodeImage(
+            collection.coverImage,
+          );
+
+          return {
+            ...collection,
+            coverImage: encodedCollectionCover,
+            series: updatedSeries,
+          };
+        }),
       );
 
       return { success: true, data: codedCollections };

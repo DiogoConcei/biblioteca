@@ -321,17 +321,17 @@ export default function EditSerie() {
 
             <BackupField
               register={register('metadata.autoBackup', { required: true })}
-              error={errors.metadata!.autoBackup}
+              error={errors.metadata?.autoBackup}
             />
 
             <StatusField
-              register={register('metadata.status', { required: true })}
+              register={register('metadata.status')}
               error={errors.metadata?.status}
             />
 
             <PrivacyField
               register={register('metadata.privacy', { required: true })}
-              error={errors.metadata!.privacy}
+              error={errors.metadata?.privacy}
             />
 
             <CollectionsField control={control} name="metadata.collections" />

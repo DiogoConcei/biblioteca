@@ -12,6 +12,7 @@ import styles from './Home.module.scss';
 export default function Home() {
   const [searchInput, setSearchInput] = useState<string>('');
   const setError = useUIStore((state) => state.setError);
+  const setLoading = useUIStore((state) => state.setLoading);
   const setSerie = useSerieStore((state) => state.setSerie);
 
   const loading = useUIStore((state) => state.loading);
@@ -66,6 +67,7 @@ export default function Home() {
     serie: viewData,
   ) => {
     e.preventDefault();
+    setLoading(true);
 
     const response = await window.electronAPI.chapters.acessLastRead(
       serie.dataPath,
@@ -80,6 +82,7 @@ export default function Home() {
 
     if (lastChapterUrl) {
       navigate(lastChapterUrl);
+      setLoading(false);
     } else {
       setError('URL do último capítulo não encontrada.');
     }

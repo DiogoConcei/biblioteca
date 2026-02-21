@@ -915,8 +915,3 @@ export default class SystemManager extends LibrarySystem {
     await this.storageManager.writeData(serieData);
   }
 }
-
-// (async () => {
-//   const systemManager = new SystemManager();
-//   await systemManager.regenCover();
-// })();
