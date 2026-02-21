@@ -7,7 +7,7 @@ import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
 import Loading from '../../components/Loading/Loading';
 import PageControl from '../../components/PageControl/PageControl';
 import { LoaderCircle } from 'lucide-react';
-import { ChapterView } from '../../../electron/types/electron-auxiliar.interfaces';
+import { ChapterView } from '@/types/components.interfaces';
 import useUIStore from '../../store/useUIStore';
 import { useParams } from 'react-router-dom';
 import './Viewer.scss';

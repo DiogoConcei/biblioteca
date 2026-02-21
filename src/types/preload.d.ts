@@ -1,5 +1,10 @@
 export {};
 
+import {
+  childSerie,
+  ComicTieIn,
+  TieIn,
+} from 'electron/types/comic.interfaces.js';
 import { childSerie, ComicTieIn } from 'electron/types/comic.interfaces.js';
 import { CreateCollectionDTO } from './collections.interfaces.js';
 import {
@@ -106,7 +111,7 @@ declare global {
         ) => Promise<APIResponse<void>>;
         acessLastRead: (
           serieName: string,
-        ) => Promise<APIResponse<[string, Literatures]>>;
+        ) => Promise<APIResponse<[string, Literatures | TieIn]>>;
         getNextChapter: (
           serieName: string,
           chapter_id: number,

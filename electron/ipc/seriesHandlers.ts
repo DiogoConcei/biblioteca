@@ -211,7 +211,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         dataPath,
       )) as Literatures;
 
-      let newFav: SerieInCollection | null = null;
+      let newFav: SerieInCollection;
       newFav = await collectionManager.mountSerieInfo(serieData.dataPath);
 
       const result = await userManager.favoriteSerie(serieData);
@@ -226,13 +226,18 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     'serie:recent-read',
     async (_event, dataPath: string, serie_name: string) => {
       try {
-        const dPath = serie_name
-          ? await fileManager.getDataPath(serie_name)
-          : dataPath;
+        // dataPath
+        let pathData: string;
 
-        const serieData = (await storageManager.readSerieData(
-          dPath,
-        )) as Literatures;
+        if (serie_name) {
+          pathData = await fileManager.getDataPath(serie_name);
+        } else {
+          pathData = dataPath;
+        }
+
+        const serieData = await storageManager.readData(pathData);
+
+        if (!serieData) return { success: false };
 
         const result = await userManager.addToRecents(serieData);
         return { success: result };

@@ -1,37 +1,7 @@
 import { Manga, MangaChapter } from './manga.interfaces';
 import { Comic, ComicEdition } from './comic.interfaces';
 import { Collection } from '../../src/types/collections.interfaces';
-import {
-  UseFormRegister,
-  FieldError,
-  Control,
-  FieldValues,
-  Path,
-  UseFormRegisterReturn,
-} from 'react-hook-form';
-import { SerieEditForm, SerieForm } from '../../src/types/series.interfaces';
-
-export type LiteratureChapter = ComicEdition | MangaChapter;
-
-export type LiteraturesAttributes =
-  | string
-  | number
-  | boolean
-  | 'Manga'
-  | 'Quadrinho'
-  | 'Livro'
-  | ''
-  | 'Em andamento'
-  | 'Completo'
-  | 'Pendente'
-  | 'Publica'
-  | 'Privada'
-  | 'Sim'
-  | 'Não';
-
-export type DownloadStatus = 'not_downloaded' | 'downloading' | 'downloaded';
-
-export type Literatures = Manga | Comic;
+import { TieIn } from './comic.interfaces';
 
 export interface NormalizedSerieData {
   id: number;
@@ -58,6 +28,32 @@ export interface viewData {
   literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
 }
 
+export type Literatures = Manga | Comic;
+
+export type LiteratureChapter = ComicEdition | MangaChapter;
+
+export type LiteratureForms = 'Manga' | 'Quadrinho';
+
+export type LiteratureChapterAttributes = string | number | boolean;
+
+export type LiteraturesAttributes =
+  | string
+  | number
+  | boolean
+  | 'Manga'
+  | 'Quadrinho'
+  | 'Livro'
+  | ''
+  | 'Em andamento'
+  | 'Completo'
+  | 'Pendente'
+  | 'Publica'
+  | 'Privada'
+  | 'Sim'
+  | 'Não';
+
+export type ReadableSerie = Literatures | TieIn;
+
 export interface AppConfig {
   settings: {
     reading_mode: 'single_page' | 'double_page' | 'vertical_scroll';
@@ -76,48 +72,12 @@ export interface APIResponse<T> {
   error?: string;
 }
 
-export type LiteratureForms = 'Manga' | 'Quadrinho';
-
-export type LiteratureChapterAttributes = string | number | boolean;
-
-export interface FormTextInputProps {
-  msg: string;
-  register: UseFormRegisterReturn;
-  error?: FieldError;
+export interface LastReadCandidate {
+  serie: ReadableSerie;
+  chapterId: number;
+  lastPageRead: number;
+  isRead: boolean;
+  timestamp: number;
 }
 
-export interface FormInputProps {
-  register: UseFormRegisterReturn;
-  error?: FieldError;
-}
-
-export interface FormControllerProps<T extends FieldValues = FieldValues> {
-  control: Control<SerieEditForm>;
-  label?: string;
-}
-
-export interface GenericControllerProps<T extends FieldValues = FieldValues> {
-  control: Control<T>;
-  name: Path<T>;
-}
-
-export interface FavoriteProps {
-  serie: Literatures;
-}
-
-export interface RatingProps {
-  serie: Literatures;
-}
-
-export interface ChapterView {
-  id: number;
-  serieName: string;
-  chapterName: string;
-  isLoading: boolean;
-  isDownloaded: DownloadStatus;
-  pages: string[];
-  quantityPages: number;
-  currentPage: number;
-  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-}
+export type Status = 'Em andamento' | 'Completo' | 'Pendente' | '';

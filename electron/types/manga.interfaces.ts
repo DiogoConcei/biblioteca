@@ -1,5 +1,3 @@
-export type Status = 'Em andamento' | 'Completo' | 'Pendente' | '';
-
 export interface Manga {
   id: number;
   name: string;

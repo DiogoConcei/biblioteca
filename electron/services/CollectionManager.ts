@@ -12,6 +12,7 @@ import {
   APIResponse,
   Literatures,
 } from '../types/electron-auxiliar.interfaces';
+import { TieIn } from '../types/comic.interfaces';
 
 export default class CollectionManager extends LibrarySystem {
   private readonly storageManager = new StorageManager();
@@ -113,7 +114,7 @@ export default class CollectionManager extends LibrarySystem {
       return null;
     }
   }
-  //   Avaliar a necessidade
+
   public async getFavorites(): Promise<Collection | null> {
     try {
       const data = await this.getCollections();
@@ -128,7 +129,52 @@ export default class CollectionManager extends LibrarySystem {
       return null;
     }
   }
-  //   Atualmente utilizada
+
+  public async addLastRead(serie: Literatures | TieIn): Promise<boolean> {
+    const collection = await this.getLastRead();
+
+    if (!collection) {
+      return false;
+    }
+
+    const newSerie = await this.mountEmptySerieInfo(serie);
+
+    if (!newSerie) {
+      return false;
+    }
+
+    const alreadyExists = collection.series.some((s) => {
+      const match = s.id === newSerie.id;
+      return match;
+    });
+
+    if (alreadyExists) {
+      return false;
+    }
+
+    if (collection.series.length >= CollectionManager.MAX_COLLECTION_ITEMS) {
+      return false;
+    }
+
+    const description =
+      newSerie.description || `Série ${newSerie.name} sem descrição local.`;
+
+    const positionedSerie = {
+      ...newSerie,
+      description,
+      position: collection.series.length + 1,
+    };
+
+    const update = {
+      ...collection,
+      series: [...collection.series, positionedSerie],
+    };
+
+    await this.updateCollection(update);
+
+    return true;
+  }
+
   public async getLastRead(): Promise<Collection | null> {
     try {
       const data = await this.getCollections();
@@ -284,62 +330,16 @@ export default class CollectionManager extends LibrarySystem {
     }
   }
 
-  private async mountSerieInCollection(
-    serie: SerieInCollection,
-  ): Promise<SerieInCollection> {
-    try {
-      const dataPath = await this.fileManager.getDataPath(serie.name);
-      const serieData = await this.storageManager.readSerieData(dataPath);
-
-      if (!serieData) {
-        throw new Error('The code is broken');
-      }
-
-      return {
-        ...serie,
-        coverImage: serieData.coverImage,
-      };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  private async updateCollection(collection: Collection): Promise<boolean> {
-    try {
-      const collections = await this.getCollections();
-      const newDate = new Date().toISOString();
-
-      if (!collections) return false;
-
-      const updatedData = collections.map((col) => {
-        if (col.name === collection.name) {
-          return {
-            ...collection,
-            updatedAt: newDate,
-          };
-        }
-
-        return col;
-      });
-
-      await fse.writeJson(this.appCollections, updatedData, { spaces: 2 });
-      return true;
-    } catch (e) {
-      console.error('Falha em atualizar a coleção: ', e);
-      return false;
-    }
-  }
-
   // remove a série de uma coleção
   public async removeInCollection(
     collectionName: string,
     serieId: number,
     keepEmpty = false,
-  ): Promise<APIResponse<string>> {
+  ): Promise<boolean> {
     try {
       const collection = await this.getCollection(collectionName);
 
-      if (!collection) return { success: false };
+      if (!collection) return false;
 
       const updatedCollection = {
         ...collection,
@@ -348,16 +348,11 @@ export default class CollectionManager extends LibrarySystem {
           .map((serie, index) => ({ ...serie, position: index + 1 })),
       };
 
-      if (!updatedCollection.series.length && !keepEmpty) {
-        await this.removeCollection(collectionName);
-        return { success: true, data: 'deleted-empty-collection' };
-      }
-
       await this.updateCollection(updatedCollection);
-      return { success: true };
+      return true;
     } catch (e) {
       console.error('Falha em retirar série da coleção: ', e);
-      return { success: false };
+      return false;
     }
   }
 
@@ -639,35 +634,6 @@ export default class CollectionManager extends LibrarySystem {
     }
   }
 
-  private mountCollection(
-    collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
-  ): Collection {
-    const date = new Date().toISOString();
-
-    return {
-      name: collection.name.trim(),
-      description: collection.description || '',
-      coverImage: collection.coverImage || '',
-      series: collection.series || [],
-
-      createdAt: date,
-      updatedAt: date,
-    };
-  }
-
-  private mountEmptyCollection(name: string): Collection {
-    const date = new Date().toISOString();
-
-    return {
-      name,
-      description: '',
-      coverImage: '',
-      series: [],
-      updatedAt: date,
-      createdAt: date,
-    };
-  }
-
   public async mountSerieInfo(dataPath: string): Promise<SerieInCollection> {
     const date = new Date().toISOString();
     const serie = (await this.storageManager.readSerieData(
@@ -730,12 +696,10 @@ export default class CollectionManager extends LibrarySystem {
 
       if (!collections) return false;
 
-      // Collections que tem a série
       const toUpdate = collections.filter((col) =>
         col.series.some((serie) => serie.id === updatedSerie.id),
       );
 
-      // Atualizando a série em cada collection
       const updatedCols: Collection[] = toUpdate.map((col) => {
         const updatedSeries = col.series.map((serie) => {
           if (serie.id === updatedSerie.id) {
@@ -763,5 +727,102 @@ export default class CollectionManager extends LibrarySystem {
       console.error('Falha em atualizar dados da série: ', e);
       return false;
     }
+  }
+
+  private mountCollection(
+    collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
+  ): Collection {
+    const date = new Date().toISOString();
+
+    return {
+      name: collection.name.trim(),
+      description: collection.description || '',
+      coverImage: collection.coverImage || '',
+      series: collection.series || [],
+
+      createdAt: date,
+      updatedAt: date,
+    };
+  }
+
+  private mountEmptyCollection(name: string): Collection {
+    const date = new Date().toISOString();
+
+    return {
+      name,
+      description: '',
+      coverImage: '',
+      series: [],
+      updatedAt: date,
+      createdAt: date,
+    };
+  }
+
+  private async mountSerieInCollection(
+    serie: SerieInCollection,
+  ): Promise<SerieInCollection> {
+    try {
+      const dataPath = await this.fileManager.getDataPath(serie.name);
+      const serieData = await this.storageManager.readSerieData(dataPath);
+
+      if (!serieData) {
+        throw new Error('The code is broken');
+      }
+
+      return {
+        ...serie,
+        coverImage: serieData.coverImage,
+      };
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  private async updateCollection(collection: Collection): Promise<boolean> {
+    try {
+      const collections = await this.getCollections();
+      const newDate = new Date().toISOString();
+
+      if (!collections) return false;
+
+      const updatedData = collections.map((col) => {
+        if (col.name === collection.name) {
+          return {
+            ...collection,
+            updatedAt: newDate,
+          };
+        }
+
+        return col;
+      });
+
+      await fse.writeJson(this.appCollections, updatedData, { spaces: 2 });
+      return true;
+    } catch (e) {
+      console.error('Falha em atualizar a coleção: ', e);
+      return false;
+    }
+  }
+
+  private async mountEmptySerieInfo(
+    serie: Literatures | TieIn,
+  ): Promise<SerieInCollection> {
+    const date = new Date().toISOString();
+
+    return {
+      id: serie.id,
+      name: serie.name,
+      coverImage: serie.coverImage,
+      archivesPath: serie.archivesPath,
+      description: '',
+      backgroundImage: null,
+      status: serie.metadata.status,
+      rating: serie.metadata.rating || 0,
+      totalChapters: serie.totalChapters,
+      recommendedBy: serie.metadata.recommendedBy || '',
+      originalOwner: serie.metadata.originalOwner || '',
+      addAt: date,
+      position: 0,
+    };
   }
 }

@@ -7,7 +7,6 @@ import ImageManager from './ImageManager';
 import StorageManager from './StorageManager';
 
 import { ComicTieIn, TieIn, ComicEdition } from '../types/comic.interfaces';
-import { checkPrime } from 'crypto';
 
 export default class TieInManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -358,6 +357,10 @@ export default class TieInManager extends LibrarySystem {
         lastDownload: 0,
         isFavorite: false,
         isCreated: false,
+        status: 'Pendente',
+        originalOwner: '',
+        recommendedBy: '',
+        rating: 0,
       },
       createdAt,
       deletedAt: '',

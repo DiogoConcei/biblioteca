@@ -1,4 +1,4 @@
-import { Status } from '../../electron/types/manga.interfaces';
+import { Status } from 'electron/types/electron-auxiliar.interfaces';
 
 export interface CreateCollectionDTO
   extends Omit<Collection, 'createdAt' | 'updatedAt'> {

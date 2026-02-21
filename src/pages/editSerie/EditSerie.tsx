@@ -220,95 +220,101 @@ export default function EditSerie() {
             />
             <TagsField control={control} name={'tags'} />
 
-            <div className={styles.Control}>
-              <h2>Capítulos</h2>
+            {serie.chapters && serie.chapters.length > 0 ? (
+              <div className={styles.Control}>
+                <h2>Capítulos</h2>
 
-              <ul className={styles.chaptersList}>
-                {currentItems.map((chapter, idx) => (
-                  <div key={chapter.id}>
-                    <li
-                      className={`${styles.chapter} ${
-                        chapter.isRead ? styles.read : styles.unread
-                      }`}
-                    >
-                      <span className={styles.chapterName}>{chapter.name}</span>
+                <ul className={styles.chaptersList}>
+                  {currentItems.map((chapter, idx) => (
+                    <div key={chapter.id}>
+                      <li
+                        className={`${styles.chapter} ${
+                          chapter.isRead ? styles.read : styles.unread
+                        }`}
+                      >
+                        <span className={styles.chapterName}>
+                          {chapter.name}
+                        </span>
 
-                      <div className={styles.actionButtons}>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            isRead(e, chapter);
-                          }}
-                        >
-                          {chapter.isRead ? (
-                            <Eye size={26} strokeWidth={1} />
-                          ) : (
-                            <EyeOff size={26} strokeWidth={1} />
-                          )}
-                        </button>
+                        <div className={styles.actionButtons}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              isRead(e, chapter);
+                            }}
+                          >
+                            {chapter.isRead ? (
+                              <Eye size={26} strokeWidth={1} />
+                            ) : (
+                              <EyeOff size={26} strokeWidth={1} />
+                            )}
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={(e) => delChapter(e, chapter)}
-                        >
-                          <Trash />
-                        </button>
-                      </div>
-                    </li>
-                  </div>
-                ))}
-              </ul>
+                          <button
+                            type="button"
+                            onClick={(e) => delChapter(e, chapter)}
+                          >
+                            <Trash />
+                          </button>
+                        </div>
+                      </li>
+                    </div>
+                  ))}
+                </ul>
 
-              <div className={styles.ControlBtns} aria-label="Paginação">
-                <button
-                  type="button"
-                  className={styles.prevBTN}
-                  onClick={() => handlePage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  aria-disabled={currentPage === 1}
-                >
-                  <ChevronLeft />
-                </button>
-
-                {pageNumbers.map((pageNumber) => (
+                <div className={styles.ControlBtns} aria-label="Paginação">
                   <button
-                    key={pageNumber}
                     type="button"
-                    onClick={() => handlePage(pageNumber)}
-                    className={
-                      pageNumber === currentPage
-                        ? styles.active
-                        : styles.disable
-                    }
-                    aria-current={
-                      pageNumber === currentPage ? 'page' : undefined
-                    }
+                    className={styles.prevBTN}
+                    onClick={() => handlePage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    aria-disabled={currentPage === 1}
                   >
-                    {pageNumber}
+                    <ChevronLeft />
                   </button>
-                ))}
 
-                <button
-                  className={styles.nextBTN}
-                  type="button"
-                  onClick={() => handlePage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  aria-disabled={currentPage === totalPages}
-                >
-                  <ChevronRight />
-                </button>
-              </div>
+                  {pageNumbers.map((pageNumber) => (
+                    <button
+                      key={pageNumber}
+                      type="button"
+                      onClick={() => handlePage(pageNumber)}
+                      className={
+                        pageNumber === currentPage
+                          ? styles.active
+                          : styles.disable
+                      }
+                      aria-current={
+                        pageNumber === currentPage ? 'page' : undefined
+                      }
+                    >
+                      {pageNumber}
+                    </button>
+                  ))}
 
-              <div className={styles['form-actions']}>
-                <button type="button" onClick={() => navigate('/')}>
-                  Cancelar
-                </button>
-                <button type="reset" onClick={() => reset()}>
-                  Limpar
-                </button>
-                <button type="submit">Salvar</button>
+                  <button
+                    className={styles.nextBTN}
+                    type="button"
+                    onClick={() => handlePage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    aria-disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight />
+                  </button>
+                </div>
               </div>
+            ) : (
+              <></>
+            )}
+
+            <div className={styles['form-actions']}>
+              <button type="button" onClick={() => navigate('/')}>
+                Cancelar
+              </button>
+              <button type="reset" onClick={() => reset()}>
+                Limpar
+              </button>
+              <button type="submit">Salvar</button>
             </div>
           </div>
           <div className={styles.checkInfo}>

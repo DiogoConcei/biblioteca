@@ -1,15 +1,24 @@
 import { Manga } from '../../electron/types/manga.interfaces';
 import {
+  FieldError,
+  Control,
+  FieldValues,
+  Path,
+  UseFormRegisterReturn,
+} from 'react-hook-form';
+import {
   Literatures,
   LiteraturesAttributes,
   LiteratureChapterAttributes,
-  ChapterView,
 } from '../../electron/types/electron-auxiliar.interfaces';
+import { SerieEditForm } from './series.interfaces';
 import { SerieForm, SerieData } from './series.interfaces';
 
 export interface OnlySerieProp {
   manga: Literatures;
 }
+
+export type DownloadStatus = 'not_downloaded' | 'downloading' | 'downloaded';
 
 export interface ChaptersInfoProp {
   manga: Manga;
@@ -19,6 +28,19 @@ export interface ChaptersInfoProp {
     path: string,
     newValue: LiteratureChapterAttributes,
   ) => void;
+}
+
+export interface ChapterView {
+  id: number;
+  serieName: string;
+  chapterName: string;
+  isLoading: boolean;
+  isDownloaded: DownloadStatus;
+  pages: string[];
+  quantityPages: number;
+  currentPage: number;
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export interface PageControlProps {
@@ -113,4 +135,33 @@ export interface SerieActionProps {
 export interface ErrorScreenProps {
   serieName?: string;
   error: string;
+}
+
+export interface FormTextInputProps {
+  msg: string;
+  register: UseFormRegisterReturn;
+  error?: FieldError;
+}
+
+export interface FormInputProps {
+  register: UseFormRegisterReturn;
+  error?: FieldError;
+}
+
+export interface FormControllerProps<T extends FieldValues = FieldValues> {
+  control: Control<SerieEditForm>;
+  label?: string;
+}
+
+export interface GenericControllerProps<T extends FieldValues = FieldValues> {
+  control: Control<T>;
+  name: Path<T>;
+}
+
+export interface FavoriteProps {
+  serie: Literatures;
+}
+
+export interface RatingProps {
+  serie: Literatures;
 }

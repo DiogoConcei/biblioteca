@@ -22,7 +22,6 @@ export default function MangaPage() {
   const navigate = useNavigate();
   const { favorites, recents } = useCollection();
 
-  console.log();
   const orderFav = () => {
     return favorites
       ? [...favorites.series].sort((a, b) => b.rating - a.rating)
@@ -46,14 +45,15 @@ export default function MangaPage() {
     event.preventDefault();
     const response = await window.electronAPI.chapters.acessLastRead(dataPath);
 
-    if (!response.success) {
+    if (!response.success || !response.data) {
       console.error(`Erro ao acessar último capítulo lido: ${response.error}`);
       return;
     }
 
-    const lastChapterUrl = response.data;
+    const [lastChapterUrl, serieData] = response.data;
 
-    navigate(`${lastChapterUrl}`);
+    useSerieStore.getState().setSerie(serieData);
+    navigate(lastChapterUrl);
   };
 
   const tags = [...serie.tags].sort((a, b) => a.localeCompare(b)).slice(0, 2);

@@ -914,4 +914,35 @@ export default class SystemManager extends LibrarySystem {
 
     await this.storageManager.writeData(serieData);
   }
+
+  public async regenTieInCover() {
+    const seriesPath = await Promise.all(
+      (await fse.readdir(this.childSeriesData, { withFileTypes: true })).map(
+        (childPath) => path.join(this.childSeriesData, childPath.name),
+      ),
+    );
+
+    for (let idx = 0; idx < seriesPath.length; idx++) {
+      const seriePath = seriesPath[idx];
+      const serieData = await this.storageManager.readTieInData(seriePath);
+
+      if (!serieData) return;
+
+      if (serieData.coverImage == '') {
+        serieData.coverImage = await this.tieManager.createChildCover(
+          serieData.name,
+          serieData.archivesPath,
+        );
+      }
+
+      await this.storageManager.writeData(serieData);
+    }
+  }
 }
+
+// (async () => {
+//   const systemManager = new SystemManager();
+//   await systemManager.regenCover(
+//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\childSeries\\1 Invasão Secreta - A Infiltração.json',
+//   );
+// })();

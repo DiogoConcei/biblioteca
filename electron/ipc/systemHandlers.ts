@@ -12,22 +12,22 @@ export default function systemHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle('system:regenerate-comic-covers', async () => {
-    try {
-      const data = await systemManager.regenerateComicCovers((progress) => {
-        for (const window of BrowserWindow.getAllWindows()) {
-          window.webContents.send(
-            'system:comic-cover-regeneration-progress',
-            progress,
-          );
-        }
-      });
+  // ipcMain.handle('system:regenerate-comic-covers', async () => {
+  //   try {
+  //     const data = await systemManager.regenerateComicCovers((progress) => {
+  //       for (const window of BrowserWindow.getAllWindows()) {
+  //         window.webContents.send(
+  //           'system:comic-cover-regeneration-progress',
+  //           progress,
+  //         );
+  //       }
+  //     });
 
-      return { success: true, data };
-    } catch (error) {
-      return { success: false, error: String(error) };
-    }
-  });
+  //     return { success: true, data };
+  //   } catch (error) {
+  //     return { success: false, error: String(error) };
+  //   }
+  // });
 
   ipcMain.handle('system:get-backup-list', async () => {
     try {

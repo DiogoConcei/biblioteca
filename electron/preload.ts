@@ -166,7 +166,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ),
     acessLastRead: async (
       serieName: string,
-    ): Promise<APIResponse<[string, Literatures]>> =>
+    ): Promise<APIResponse<[string, Literatures | TieIn]>> =>
       ipcRenderer.invoke('chapter:acess-last-read', serieName),
     getNextChapter: async (
       serieName: string,
