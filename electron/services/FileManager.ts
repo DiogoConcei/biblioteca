@@ -212,6 +212,27 @@ export default class FileManager extends LibrarySystem {
     return safePath;
   }
 
+  public async safeRename(filePath: string) {
+    const dirName = path.dirname(filePath);
+    const entry = (await fse.readdir(dirName, { withFileTypes: true })).map(
+      (file) => path.join(dirName, file.name),
+    );
+
+    // console.log(entry);
+
+    // await Promise.all(
+    // entry.map(async (file) => {
+    // if (await fse.existsSync(file)) {
+    // const parsed = path.parse(file);
+    // const newName = this.sanitizeImageName(parsed.base).concat(
+    // parsed.ext,
+    // );
+    // console.log(newName);
+    // }
+    // }),
+    // );
+  }
+
   public sanitizeImageName(name: string): string {
     return this.sanitizeFilename(name)
       .slice(0, 4)
@@ -439,6 +460,14 @@ export default class FileManager extends LibrarySystem {
   }
 
   public findFirstCoverFile(fileNames: string[]): string | null {
+    // console.log('📂 findFirstCoverFile recebeu:', fileNames.length, 'arquivos');
+    const ignoredByExtension: string[] = [];
+
+    if (!fileNames || fileNames.length === 0) {
+      console.log('❌ fileNames está vazio ou undefined');
+      return null;
+    }
+
     const imageExtensionRegex = /\.(jpg|jpeg|png|gif|webp)$/i;
 
     const zerosOnlyCandidates: string[] = [];
@@ -461,19 +490,33 @@ export default class FileManager extends LibrarySystem {
     ];
 
     for (const name of fileNames) {
-      if (!imageExtensionRegex.test(name)) continue;
+      if (!name) {
+        console.log('🚨 Nome inválido detectado:', name);
+        continue;
+      }
+
+      if (!imageExtensionRegex.test(name)) {
+        ignoredByExtension.push(name);
+        continue;
+      }
 
       const baseName = name.replace(imageExtensionRegex, '').toLowerCase();
 
       if (coverKeywords.some((keyword) => baseName.includes(keyword))) {
+        // console.log('🎯 Keyword detectada:', name);
         namedCoverCandidates.push(name);
       }
 
       const lastDigitsMatch = baseName.match(/(\d+)(?!.*\d)/);
-      if (!lastDigitsMatch) continue;
+
+      if (!lastDigitsMatch) {
+        console.log('⚠️ Sem número no final:', name);
+        continue;
+      }
 
       const digits = lastDigitsMatch[1];
       const numericValue = parseInt(digits, 10);
+
       allWithNumbers.push({ name, num: numericValue });
 
       if (/^0+$/.test(digits)) {
@@ -484,6 +527,13 @@ export default class FileManager extends LibrarySystem {
         fallbackCandidates.push(name);
       }
     }
+
+    // console.log('Resumo:');
+    // console.log('zerosOnly:', zerosOnlyCandidates.length);
+    // console.log('zeroThenOne:', zeroThenOneCandidates.length);
+    // console.log('namedCover:', namedCoverCandidates.length);
+    // console.log('fallback:', fallbackCandidates.length);
+    // console.log('allWithNumbers:', allWithNumbers.length);
 
     if (zerosOnlyCandidates.length > 0) {
       return zerosOnlyCandidates[0];
@@ -505,10 +555,22 @@ export default class FileManager extends LibrarySystem {
       const smallest = allWithNumbers.reduce((min, curr) =>
         curr.num < min.num ? curr : min,
       );
-      console.log(
-        `⚠️ Nenhum critério específico bateu, usando menor número como fallback: ${smallest.name} (número: ${smallest.num})`,
-      );
+
+      // console.log(
+      //   `⚠️ Fallback menor número: ${smallest.name} (${smallest.num})`,
+      // );
+
       return smallest.name;
+    }
+
+    // console.log('💀 RETORNANDO NULL — nenhum candidato válido encontrado');
+    // console.log('Arquivos recebidos foram:', fileNames);
+
+    if (ignoredByExtension.length > 0) {
+      console.log('⛔ Arquivos ignorados por extensão:');
+      ignoredByExtension.forEach((file, index) => {
+        console.log(`   ${index + 1}. ${file}`);
+      });
     }
 
     return null;

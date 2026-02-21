@@ -3,6 +3,7 @@ import StorageManager from './StorageManager.ts';
 import FileManager from './FileManager.ts';
 import ImageManager from './ImageManager.ts';
 import TieInManager from './TieInManager.ts';
+import ComicManager from './ComicManager.ts';
 import fse from 'fs-extra';
 import path from 'path';
 import {
@@ -54,6 +55,7 @@ export default class SystemManager extends LibrarySystem {
   private readonly storageManager: StorageManager = new StorageManager();
   private readonly imageManager: ImageManager = new ImageManager();
   private readonly tieManager: TieInManager = new TieInManager();
+  private readonly comicManager: ComicManager = new ComicManager();
 
   constructor() {
     super();
@@ -154,349 +156,349 @@ export default class SystemManager extends LibrarySystem {
     await this.setSerieId(lastId);
   }
 
-  private async resolveCoverSourceArchive(
-    candidatePath: string,
-  ): Promise<string> {
-    if (!candidatePath) return '';
+  // private async resolveCoverSourceArchive(
+  //   candidatePath: string,
+  // ): Promise<string> {
+  //   if (!candidatePath) return '';
 
-    const normalizedPath = path.resolve(candidatePath);
+  //   const normalizedPath = path.resolve(candidatePath);
 
-    if (!(await fse.pathExists(normalizedPath))) {
-      return '';
-    }
+  //   if (!(await fse.pathExists(normalizedPath))) {
+  //     return '';
+  //   }
 
-    const stats = await fse.stat(normalizedPath);
+  //   const stats = await fse.stat(normalizedPath);
 
-    if (stats.isFile()) {
-      return normalizedPath;
-    }
+  //   if (stats.isFile()) {
+  //     return normalizedPath;
+  //   }
 
-    if (!stats.isDirectory()) {
-      return '';
-    }
+  //   if (!stats.isDirectory()) {
+  //     return '';
+  //   }
 
-    return this.fileManager.findFirstChapter(normalizedPath);
-  }
+  //   return this.fileManager.findFirstChapter(normalizedPath);
+  // }
 
-  private async regenerateSingleCover(
-    input: {
-      owner: string;
-      label: string;
-      currentCover: string;
-      sourceArchive: string;
-      outputDir: string;
-    },
-    progress: ComicCoverRegenerationProgress,
-    failures: Array<{ comic: string; reason: string }>,
-  ): Promise<string> {
-    const isInvalid = await this.isCoverInvalid(input.currentCover);
+  // private async regenerateSingleCover(
+  //   input: {
+  //     owner: string;
+  //     label: string;
+  //     currentCover: string;
+  //     sourceArchive: string;
+  //     outputDir: string;
+  //   },
+  //   progress: ComicCoverRegenerationProgress,
+  //   failures: Array<{ comic: string; reason: string }>,
+  // ): Promise<string> {
+  //   const isInvalid = await this.isCoverInvalid(input.currentCover);
 
-    if (!isInvalid) {
-      progress.skipped += 1;
-      return input.currentCover;
-    }
+  //   if (!isInvalid) {
+  //     progress.skipped += 1;
+  //     return input.currentCover;
+  //   }
 
-    if (!input.sourceArchive) {
-      progress.failed += 1;
-      failures.push({
-        comic: input.owner,
-        reason: `${input.label}: sem arquivo de origem para regenerar capa`,
-      });
-      return input.currentCover;
-    }
+  //   if (!input.sourceArchive) {
+  //     progress.failed += 1;
+  //     failures.push({
+  //       comic: input.owner,
+  //       reason: `${input.label}: sem arquivo de origem para regenerar capa`,
+  //     });
+  //     return input.currentCover;
+  //   }
 
-    try {
-      const generatedCover = await this.withRetry(
-        () =>
-          this.imageManager.generateCover(input.sourceArchive, input.outputDir),
-        3,
-        300,
-      );
+  //   try {
+  //     const generatedCover = await this.withRetry(
+  //       () =>
+  //         this.imageManager.generateCover(input.sourceArchive, input.outputDir),
+  //       3,
+  //       300,
+  //     );
 
-      if (!generatedCover || (await this.isCoverInvalid(generatedCover))) {
-        throw new Error('capa gerada inválida');
-      }
+  //     if (!generatedCover || (await this.isCoverInvalid(generatedCover))) {
+  //       throw new Error('capa gerada inválida');
+  //     }
 
-      progress.regenerated += 1;
-      return generatedCover;
-    } catch (error) {
-      progress.failed += 1;
-      failures.push({
-        comic: input.owner,
-        reason: `${input.label}: ${error instanceof Error ? error.message : String(error)}`,
-      });
-      return input.currentCover;
-    }
-  }
+  //     progress.regenerated += 1;
+  //     return generatedCover;
+  //   } catch (error) {
+  //     progress.failed += 1;
+  //     failures.push({
+  //       comic: input.owner,
+  //       reason: `${input.label}: ${error instanceof Error ? error.message : String(error)}`,
+  //     });
+  //     return input.currentCover;
+  //   }
+  // }
 
-  private async isCoverInvalid(coverPath: string): Promise<boolean> {
-    if (!coverPath || typeof coverPath !== 'string') {
-      return true;
-    }
+  // private async isCoverInvalid(coverPath: string): Promise<boolean> {
+  //   if (!coverPath || typeof coverPath !== 'string') {
+  //     return true;
+  //   }
 
-    const normalizedPath = path.resolve(coverPath);
+  //   const normalizedPath = path.resolve(coverPath);
 
-    if (!(await fse.pathExists(normalizedPath))) {
-      return true;
-    }
+  //   if (!(await fse.pathExists(normalizedPath))) {
+  //     return true;
+  //   }
 
-    const stats = await fse.stat(normalizedPath);
-    if (!stats.isFile() || stats.size === 0) {
-      return true;
-    }
+  //   const stats = await fse.stat(normalizedPath);
+  //   if (!stats.isFile() || stats.size === 0) {
+  //     return true;
+  //   }
 
-    return !(await this.imageManager.isImageHealthy(normalizedPath));
-  }
+  //   return !(await this.imageManager.isImageHealthy(normalizedPath));
+  // }
 
-  private async withRetry<T>(
-    operation: () => Promise<T>,
-    attempts = 3,
-    delayMs = 250,
-  ): Promise<T> {
-    let lastError: unknown;
+  // private async withRetry<T>(
+  //   operation: () => Promise<T>,
+  //   attempts = 3,
+  //   delayMs = 250,
+  // ): Promise<T> {
+  //   let lastError: unknown;
 
-    for (let attempt = 1; attempt <= attempts; attempt++) {
-      try {
-        return await operation();
-      } catch (error) {
-        lastError = error;
+  //   for (let attempt = 1; attempt <= attempts; attempt++) {
+  //     try {
+  //       return await operation();
+  //     } catch (error) {
+  //       lastError = error;
 
-        if (attempt === attempts) {
-          break;
-        }
+  //       if (attempt === attempts) {
+  //         break;
+  //       }
 
-        await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
-      }
-    }
+  //       await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
+  //     }
+  //   }
 
-    throw lastError instanceof Error
-      ? lastError
-      : new Error('Falha desconhecida ao executar operação com retry');
-  }
+  //   throw lastError instanceof Error
+  //     ? lastError
+  //     : new Error('Falha desconhecida ao executar operação com retry');
+  // }
 
-  public async regenerateComicCovers(
-    onProgress?: (progress: ComicCoverRegenerationProgress) => void,
-  ): Promise<ComicCoverRegenerationResult> {
-    const jsonFiles = (await this.foundFiles(this.comicsData)).filter((file) =>
-      file.toLowerCase().endsWith('.json'),
-    );
+  // public async regenerateComicCovers(
+  //   onProgress?: (progress: ComicCoverRegenerationProgress) => void,
+  // ): Promise<ComicCoverRegenerationResult> {
+  //   const jsonFiles = (await this.foundFiles(this.comicsData)).filter((file) =>
+  //     file.toLowerCase().endsWith('.json'),
+  //   );
 
-    const progress: ComicCoverRegenerationProgress = {
-      total: jsonFiles.length,
-      processed: 0,
-      regenerated: 0,
-      skipped: 0,
-      failed: 0,
-    };
+  //   const progress: ComicCoverRegenerationProgress = {
+  //     total: jsonFiles.length,
+  //     processed: 0,
+  //     regenerated: 0,
+  //     skipped: 0,
+  //     failed: 0,
+  //   };
 
-    const failures: Array<{ comic: string; reason: string }> = [];
+  //   const failures: Array<{ comic: string; reason: string }> = [];
 
-    const emitProgress = (comicName?: string) => {
-      onProgress?.({
-        ...progress,
-        currentComic: comicName,
-      });
-    };
+  //   const emitProgress = (comicName?: string) => {
+  //     onProgress?.({
+  //       ...progress,
+  //       currentComic: comicName,
+  //     });
+  //   };
 
-    emitProgress();
+  //   emitProgress();
 
-    for (const dataPath of jsonFiles) {
-      let comicName = path.basename(dataPath, path.extname(dataPath));
+  //   for (const dataPath of jsonFiles) {
+  //     let comicName = path.basename(dataPath, path.extname(dataPath));
 
-      try {
-        const serieData = (await this.storageManager.readSerieData(
-          dataPath,
-        )) as Comic | null;
+  //     try {
+  //       const serieData = (await this.storageManager.readSerieData(
+  //         dataPath,
+  //       )) as Comic | null;
 
-        if (!serieData) {
-          throw new Error('JSON inválido ou inacessível');
-        }
+  //       if (!serieData) {
+  //         throw new Error('JSON inválido ou inacessível');
+  //       }
 
-        comicName = serieData.name;
+  //       comicName = serieData.name;
 
-        let hasSerieChanges = false;
+  //       let hasSerieChanges = false;
 
-        const archiveFromChapters = serieData.chapters?.find(
-          (chapter) => chapter.archivesPath && chapter.archivesPath.length > 0,
-        )?.archivesPath;
+  //       const archiveFromChapters = serieData.chapters?.find(
+  //         (chapter) => chapter.archivesPath && chapter.archivesPath.length > 0,
+  //       )?.archivesPath;
 
-        const mainSourceArchive = await this.resolveCoverSourceArchive(
-          archiveFromChapters || serieData.archivesPath,
-        );
+  //       const mainSourceArchive = await this.resolveCoverSourceArchive(
+  //         archiveFromChapters || serieData.archivesPath,
+  //       );
 
-        const updatedMainCover = await this.regenerateSingleCover(
-          {
-            owner: comicName,
-            label: 'capa principal',
-            currentCover: serieData.coverImage,
-            sourceArchive: mainSourceArchive,
-            outputDir: path.join(this.showcaseImages, serieData.name),
-          },
-          progress,
-          failures,
-        );
+  //       const updatedMainCover = await this.regenerateSingleCover(
+  //         {
+  //           owner: comicName,
+  //           label: 'capa principal',
+  //           currentCover: serieData.coverImage,
+  //           sourceArchive: mainSourceArchive,
+  //           outputDir: path.join(this.showcaseImages, serieData.name),
+  //         },
+  //         progress,
+  //         failures,
+  //       );
 
-        if (updatedMainCover !== serieData.coverImage) {
-          serieData.coverImage = updatedMainCover;
-          hasSerieChanges = true;
-        }
+  //       if (updatedMainCover !== serieData.coverImage) {
+  //         serieData.coverImage = updatedMainCover;
+  //         hasSerieChanges = true;
+  //       }
 
-        if (serieData.chapters?.length) {
-          for (const chapter of serieData.chapters) {
-            const chapterSourceArchive = await this.resolveCoverSourceArchive(
-              chapter.archivesPath,
-            );
+  //       if (serieData.chapters?.length) {
+  //         for (const chapter of serieData.chapters) {
+  //           const chapterSourceArchive = await this.resolveCoverSourceArchive(
+  //             chapter.archivesPath,
+  //           );
 
-            const updatedChapterCover = await this.regenerateSingleCover(
-              {
-                owner: comicName,
-                label: `edição ${chapter.name}`,
-                currentCover: chapter.coverImage ?? '',
-                sourceArchive: chapterSourceArchive,
-                outputDir: path.join(
-                  this.showcaseImages,
-                  chapter.serieName,
-                  chapter.name,
-                ),
-              },
-              progress,
-              failures,
-            );
+  //           const updatedChapterCover = await this.regenerateSingleCover(
+  //             {
+  //               owner: comicName,
+  //               label: `edição ${chapter.name}`,
+  //               currentCover: chapter.coverImage ?? '',
+  //               sourceArchive: chapterSourceArchive,
+  //               outputDir: path.join(
+  //                 this.showcaseImages,
+  //                 chapter.serieName,
+  //                 chapter.name,
+  //               ),
+  //             },
+  //             progress,
+  //             failures,
+  //           );
 
-            if (updatedChapterCover !== (chapter.coverImage ?? '')) {
-              chapter.coverImage = updatedChapterCover;
-              hasSerieChanges = true;
-            }
-          }
-        }
+  //           if (updatedChapterCover !== (chapter.coverImage ?? '')) {
+  //             chapter.coverImage = updatedChapterCover;
+  //             hasSerieChanges = true;
+  //           }
+  //         }
+  //       }
 
-        if (serieData.childSeries?.length) {
-          for (const child of serieData.childSeries) {
-            const tieInSourceArchive = await this.resolveCoverSourceArchive(
-              child.archivesPath,
-            );
+  //       if (serieData.childSeries?.length) {
+  //         for (const child of serieData.childSeries) {
+  //           const tieInSourceArchive = await this.resolveCoverSourceArchive(
+  //             child.archivesPath,
+  //           );
 
-            const updatedTieInCover = await this.regenerateSingleCover(
-              {
-                owner: comicName,
-                label: `tie-in ${child.serieName}`,
-                currentCover: child.coverImage,
-                sourceArchive: tieInSourceArchive,
-                outputDir: path.join(this.showcaseImages, child.serieName),
-              },
-              progress,
-              failures,
-            );
+  //           const updatedTieInCover = await this.regenerateSingleCover(
+  //             {
+  //               owner: comicName,
+  //               label: `tie-in ${child.serieName}`,
+  //               currentCover: child.coverImage,
+  //               sourceArchive: tieInSourceArchive,
+  //               outputDir: path.join(this.showcaseImages, child.serieName),
+  //             },
+  //             progress,
+  //             failures,
+  //           );
 
-            if (updatedTieInCover !== child.coverImage) {
-              child.coverImage = updatedTieInCover;
-              hasSerieChanges = true;
-            }
+  //           if (updatedTieInCover !== child.coverImage) {
+  //             child.coverImage = updatedTieInCover;
+  //             hasSerieChanges = true;
+  //           }
 
-            if (child.dataPath) {
-              const tieInData = await this.storageManager.readTieInData(
-                child.dataPath,
-              );
+  //           if (child.dataPath) {
+  //             const tieInData = await this.storageManager.readTieInData(
+  //               child.dataPath,
+  //             );
 
-              if (tieInData) {
-                let hasTieInChanges = false;
+  //             if (tieInData) {
+  //               let hasTieInChanges = false;
 
-                const tieInDataSource = await this.resolveCoverSourceArchive(
-                  tieInData.archivesPath,
-                );
+  //               const tieInDataSource = await this.resolveCoverSourceArchive(
+  //                 tieInData.archivesPath,
+  //               );
 
-                const updatedTieInMainCover = await this.regenerateSingleCover(
-                  {
-                    owner: comicName,
-                    label: `tie-in ${tieInData.name} (principal)`,
-                    currentCover: tieInData.coverImage,
-                    sourceArchive: tieInDataSource,
-                    outputDir: path.join(this.showcaseImages, tieInData.name),
-                  },
-                  progress,
-                  failures,
-                );
+  //               const updatedTieInMainCover = await this.regenerateSingleCover(
+  //                 {
+  //                   owner: comicName,
+  //                   label: `tie-in ${tieInData.name} (principal)`,
+  //                   currentCover: tieInData.coverImage,
+  //                   sourceArchive: tieInDataSource,
+  //                   outputDir: path.join(this.showcaseImages, tieInData.name),
+  //                 },
+  //                 progress,
+  //                 failures,
+  //               );
 
-                if (updatedTieInMainCover !== tieInData.coverImage) {
-                  tieInData.coverImage = updatedTieInMainCover;
-                  hasTieInChanges = true;
-                }
+  //               if (updatedTieInMainCover !== tieInData.coverImage) {
+  //                 tieInData.coverImage = updatedTieInMainCover;
+  //                 hasTieInChanges = true;
+  //               }
 
-                if (tieInData.chapters?.length) {
-                  for (const tieChapter of tieInData.chapters) {
-                    const tieChapterSource =
-                      await this.resolveCoverSourceArchive(
-                        tieChapter.archivesPath,
-                      );
+  //               if (tieInData.chapters?.length) {
+  //                 for (const tieChapter of tieInData.chapters) {
+  //                   const tieChapterSource =
+  //                     await this.resolveCoverSourceArchive(
+  //                       tieChapter.archivesPath,
+  //                     );
 
-                    const updatedTieChapterCover =
-                      await this.regenerateSingleCover(
-                        {
-                          owner: comicName,
-                          label: `tie-in ${tieInData.name} / edição ${tieChapter.name}`,
-                          currentCover: tieChapter.coverImage ?? '',
-                          sourceArchive: tieChapterSource,
-                          outputDir: path.join(
-                            this.showcaseImages,
-                            tieChapter.serieName,
-                            tieChapter.name,
-                          ),
-                        },
-                        progress,
-                        failures,
-                      );
+  //                   const updatedTieChapterCover =
+  //                     await this.regenerateSingleCover(
+  //                       {
+  //                         owner: comicName,
+  //                         label: `tie-in ${tieInData.name} / edição ${tieChapter.name}`,
+  //                         currentCover: tieChapter.coverImage ?? '',
+  //                         sourceArchive: tieChapterSource,
+  //                         outputDir: path.join(
+  //                           this.showcaseImages,
+  //                           tieChapter.serieName,
+  //                           tieChapter.name,
+  //                         ),
+  //                       },
+  //                       progress,
+  //                       failures,
+  //                     );
 
-                    if (
-                      updatedTieChapterCover !== (tieChapter.coverImage ?? '')
-                    ) {
-                      tieChapter.coverImage = updatedTieChapterCover;
-                      hasTieInChanges = true;
-                    }
-                  }
-                }
+  //                   if (
+  //                     updatedTieChapterCover !== (tieChapter.coverImage ?? '')
+  //                   ) {
+  //                     tieChapter.coverImage = updatedTieChapterCover;
+  //                     hasTieInChanges = true;
+  //                   }
+  //                 }
+  //               }
 
-                if (hasTieInChanges) {
-                  const tiePersisted =
-                    await this.storageManager.writeData(tieInData);
+  //               if (hasTieInChanges) {
+  //                 const tiePersisted =
+  //                   await this.storageManager.writeData(tieInData);
 
-                  if (!tiePersisted) {
-                    throw new Error(
-                      `Falha ao persistir alterações do tie-in ${tieInData.name}`,
-                    );
-                  }
-                }
-              }
-            }
-          }
-        }
+  //                 if (!tiePersisted) {
+  //                   throw new Error(
+  //                     `Falha ao persistir alterações do tie-in ${tieInData.name}`,
+  //                   );
+  //                 }
+  //               }
+  //             }
+  //           }
+  //         }
+  //       }
 
-        if (hasSerieChanges) {
-          const persisted = await this.storageManager.writeData(serieData);
+  //       if (hasSerieChanges) {
+  //         const persisted = await this.storageManager.writeData(serieData);
 
-          if (!persisted) {
-            throw new Error('Falha ao persistir JSON atualizado da série');
-          }
-        }
-      } catch (error) {
-        failures.push({
-          comic: comicName,
-          reason: error instanceof Error ? error.message : String(error),
-        });
-      } finally {
-        progress.processed += 1;
-        emitProgress(comicName);
-      }
-    }
+  //         if (!persisted) {
+  //           throw new Error('Falha ao persistir JSON atualizado da série');
+  //         }
+  //       }
+  //     } catch (error) {
+  //       failures.push({
+  //         comic: comicName,
+  //         reason: error instanceof Error ? error.message : String(error),
+  //       });
+  //     } finally {
+  //       progress.processed += 1;
+  //       emitProgress(comicName);
+  //     }
+  //   }
 
-    return {
-      total: progress.total,
-      processed: progress.processed,
-      regenerated: progress.regenerated,
-      skipped: progress.skipped,
-      failed: progress.failed,
-      failures,
-    };
-  }
+  //   return {
+  //     total: progress.total,
+  //     processed: progress.processed,
+  //     regenerated: progress.regenerated,
+  //     skipped: progress.skipped,
+  //     failed: progress.failed,
+  //     failures,
+  //   };
+  // }
 
   public async fixChildSeriePaths(dataPath: string): Promise<void> {
     const serieData = (await this.storageManager.readSerieData(
@@ -796,10 +798,8 @@ export default class SystemManager extends LibrarySystem {
     return { success: true, path: outputPath };
   }
 
-  public async regenCover() {
-    const serieData = await this.storageManager.readTieInData(
-      'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\childSeries\\2 Evento Principal - Invasão Secreta.json',
-    );
+  public async regenCover(dataPath: string) {
+    const serieData = await this.storageManager.readTieInData(dataPath);
 
     if (!serieData) {
       throw new Error(`Falha em encontrar dados da serie`);
@@ -811,65 +811,112 @@ export default class SystemManager extends LibrarySystem {
       throw new Error(`Serie nao possui edicoes`);
     }
 
-    tieEditions.map(async (tie) => {
-      const rawName = tie.name;
-      const safeDirName = this.fileManager
-        .sanitizeDirName(rawName)
-        .replaceAll('_', '')
-        .replaceAll('-', '');
-
-      const outputPath = path.join(
-        this.showcaseImages,
-        serieData.name,
-        safeDirName,
-      );
-
-      tie.chapterPath = path.join(
-        this.comicsImages,
-        serieData.name,
-        this.fileManager
-          .sanitizeDirName(tie.name)
+    await Promise.all(
+      tieEditions.map(async (tie) => {
+        const rawName = tie.name;
+        const safeDirName = this.fileManager
+          .sanitizeDirName(rawName)
           .replaceAll('_', '')
-          .replaceAll('-', ''),
-      );
+          .replaceAll('-', '');
 
-      if (!tie.archivesPath) {
-        console.warn(
-          `Arquivo de origem não informado para a edição ${tie.name}. Pulando geração de capa.`,
+        const outputPath = path.join(
+          this.showcaseImages,
+          serieData.name,
+          safeDirName,
         );
-        return;
-      }
 
-      // inputFile tie.archivesPath;
-      // outputPath outputPath;
+        tie.chapterPath = path.join(
+          this.comicsImages,
+          serieData.name,
+          this.fileManager
+            .sanitizeDirName(tie.name)
+            .replaceAll('_', '')
+            .replaceAll('-', ''),
+        );
 
-      if (!tie.archivesPath) return '';
-      let resultCover: string = '';
-      const ext = path.extname(tie.archivesPath);
-
-      try {
-        if (ext === '.pdf') {
-          resultCover = await this.storageManager.extractCoverFromPdf(
-            tie.archivesPath,
-            outputPath,
+        if (!tie.archivesPath) {
+          console.warn(
+            `Arquivo de origem não informado para a edição ${tie.name}. Pulando geração de capa.`,
           );
-        } else {
-          // resultCover = await this.storageManager.extractCoverWith7zip(
-          //   tie.archivesPath,
-          //   outputPath,
-          // );
+          return;
         }
 
-        //     return await this.imageManager.normalizeCover(resultCover);
-      } catch (e) {
-        console.error('Falha em gerar capas: ', e);
-        return '';
-      }
-    });
+        // inputFile tie.archivesPath;
+        // outputPath outputPath;
+
+        if (!tie.archivesPath) return '';
+        let resultCover: string | null = '';
+        const ext = path.extname(tie.archivesPath);
+
+        try {
+          if (ext === '.pdf') {
+            resultCover = await this.storageManager.extractCoverFromPdf(
+              tie.archivesPath,
+              outputPath,
+            );
+          } else {
+            await this.storageManager.extractWith7zip(
+              tie.archivesPath,
+              outputPath,
+            );
+
+            const entries = await fse.readdir(outputPath, {
+              withFileTypes: true,
+            });
+
+            const dirs = entries.filter((e) => e.isDirectory());
+            const imageFiles = entries.filter(
+              (e) => e.isFile() && /\.(jpe?g|png|webp)$/i.test(e.name),
+            );
+
+            if (dirs.length === 1 && imageFiles.length === 0) {
+              const brokenPath = path.join(outputPath, dirs[0].name);
+
+              console.log(
+                '🛠 Estrutura aninhada detectada. Corrigindo:',
+                brokenPath,
+              );
+
+              await this.storageManager.fixComicDir(brokenPath, outputPath);
+            }
+
+            const entriesTwo = await Promise.all(
+              (await fse.readdir(outputPath, { withFileTypes: true })).map(
+                async (file) => path.join(outputPath, file.name),
+              ),
+            );
+
+            resultCover = this.fileManager.findFirstCoverFile(entriesTwo);
+
+            if (!resultCover) return;
+
+            const parsed = path.parse(resultCover);
+            const newName = this.fileManager
+              .sanitizeImageName(parsed.name)
+              .concat(parsed.ext);
+
+            await fse.rename(resultCover, path.join(outputPath, newName));
+            resultCover = path.join(outputPath, newName);
+          }
+
+          if (resultCover) {
+            resultCover = await this.imageManager.normalizeCover(resultCover);
+            await this.imageManager.clearChapter(outputPath);
+          }
+
+          tie.coverImage = resultCover;
+        } catch (e) {
+          console.error('');
+          return '';
+        }
+      }),
+    );
+
+    await this.storageManager.writeData(serieData);
   }
 }
 
-(async () => {
-  const systemManager = new SystemManager();
-  await systemManager.regenCover();
-})();
+// (async () => {
+//   const systemManager = new SystemManager();
+//   await systemManager.regenCover();
+// })();

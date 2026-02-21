@@ -57,10 +57,15 @@ export default class TieInManager extends LibrarySystem {
           const rawName = chap.name;
           const safeName = this.fileManager.sanitizeDirName(rawName);
 
+          const safeDirName = this.fileManager
+            .sanitizeDirName(rawName)
+            .replaceAll('_', '')
+            .replaceAll('-', '');
+
           const outputPath = path.join(
             this.showcaseImages,
-            chap.serieName,
-            safeName,
+            chap.name,
+            safeDirName,
           );
 
           chap.chapterPath = path.join(
@@ -246,7 +251,6 @@ export default class TieInManager extends LibrarySystem {
       return;
     }
 
-    const safeName = this.fileManager.sanitizeFilename(tieInData.name);
     const outputPath = path.join(this.dinamicImages, tieInData.name);
 
     await Promise.all(
@@ -403,12 +407,15 @@ export default class TieInManager extends LibrarySystem {
   public async createEditionCover(chap: ComicEdition) {
     try {
       const rawName = chap.name;
-      const safeName = this.fileManager.sanitizeDirName(rawName);
+      const safeDirName = this.fileManager
+        .sanitizeDirName(rawName)
+        .replaceAll('_', '')
+        .replaceAll('-', '');
 
       const outputPath = path.join(
         this.showcaseImages,
         chap.serieName,
-        safeName,
+        safeDirName,
       );
 
       chap.chapterPath = path.join(

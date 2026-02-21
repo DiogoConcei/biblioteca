@@ -6,14 +6,11 @@ import fse from 'fs-extra';
 import LibrarySystem from './abstract/LibrarySystem';
 import StorageManager from './StorageManager.ts';
 import FileManager from './FileManager';
-import MediaArchiveAdapter from './MediaAdapter.ts';
 import { ComicEdition } from '../types/comic.interfaces.ts';
 
 export default class ImageManager extends LibrarySystem {
   private readonly storageManager: StorageManager = new StorageManager();
   private readonly fileManager: FileManager = new FileManager();
-  private readonly mediaArchiveAdapter: MediaArchiveAdapter =
-    new MediaArchiveAdapter();
 
   public async normalizeImage(
     imagePath: string,
@@ -192,6 +189,7 @@ export default class ImageManager extends LibrarySystem {
     }
   }
 
+  // Aqui é onde tem que ter o fallback
   public async generateCover(
     inputFile: string,
     outputPath: string,
@@ -201,21 +199,38 @@ export default class ImageManager extends LibrarySystem {
     const ext = path.extname(inputFile);
 
     try {
-      const result = await this.mediaArchiveAdapter.extractCover({
-        inputPath: inputFile,
-        outputDir: outputPath,
-      });
-
-      if (!result.success || !result.coverPath) {
-        console.warn(
-          'Falha em gerar capa (adapter):',
-          result.error,
-          result.metadata,
+      if (ext === '.pdf') {
+        resultCover = await this.storageManager.extractCoverFromPdf(
+          inputFile,
+          outputPath,
         );
-        return '';
+      } else {
+        try {
+          resultCover = await this.storageManager.extractCoverWith7zip(
+            inputFile,
+            outputPath,
+          );
+
+          if (!resultCover) {
+            throw new Error('Nenhuma capa encontrada');
+          }
+        } catch (err) {
+          console.warn('⚠️ Falha na extração principal:', err);
+
+          await this.storageManager.cleanupExtractedCover(outputPath);
+
+          resultCover = await this.storageManager.safeExtract(
+            inputFile,
+            outputPath,
+          );
+        }
       }
 
-      return result.coverPath;
+      const normalized = await this.normalizeCover(resultCover);
+
+      await this.clearChapter(outputPath);
+
+      return normalized;
     } catch (e) {
       console.error('Falha em gerar capas: ', e);
       return '';
@@ -255,25 +270,8 @@ export default class ImageManager extends LibrarySystem {
 
       return `data:${mimeType};base64,${buffer.toString('base64')}`;
     } catch (e) {
-      console.error('Falha em codificar a imagem', e);
+      console.error('Falha em codificar as imagens', e);
       return '';
-    }
-  }
-
-  public async isImageHealthy(filePath: string): Promise<boolean> {
-    try {
-      if (!(await fse.pathExists(filePath))) {
-        return false;
-      }
-
-      if (!(await this.isImage(filePath))) {
-        return false;
-      }
-
-      const metadata = await sharp(filePath).metadata();
-      return Boolean(metadata.width && metadata.height);
-    } catch {
-      return false;
     }
   }
 

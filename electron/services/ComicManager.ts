@@ -121,12 +121,19 @@ export default class ComicManager extends LibrarySystem {
 
     try {
       await Promise.all(
-        comicEdition.map(async (chap, idx) => {
+        comicEdition.map(async (chap) => {
+          const rawName = chap.name;
+          const safeDirName = this.fileManager
+            .sanitizeDirName(rawName)
+            .replaceAll('_', '')
+            .replaceAll('-', '');
+
           const outputPath = path.join(
             this.showcaseImages,
-            chap.serieName,
             chap.name,
+            safeDirName,
           );
+
           chap.chapterPath = path.join(this.comicsImages, dirName, chap.name);
 
           if (!chap.archivesPath) {
