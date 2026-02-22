@@ -32,6 +32,12 @@ export default function collectionHandlers(ipcMain: IpcMain) {
               serie.coverImage,
             );
 
+            if (serie.backgroundImage) {
+              serie.backgroundImage = await imageManager.encodeImage(
+                serie.backgroundImage,
+              );
+            }
+
             updatedSeries.push({
               ...serie,
               coverImage: encodedCover,
@@ -93,10 +99,13 @@ export default function collectionHandlers(ipcMain: IpcMain) {
       backgroundImage: string | null,
     ) => {
       try {
+        let normalizedImage: string | null =
+          await imageManager.uploadBackground(backgroundImage);
+
         const result = await collectionsOperations.updateSerieBackground(
           collectionName,
           serieId,
-          backgroundImage,
+          normalizedImage,
         );
 
         return { success: result };

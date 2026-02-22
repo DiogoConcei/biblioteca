@@ -12,18 +12,23 @@
 
 .modal {
   width: min(900px, 92vw);
-  max-height: 88vh;
+  max-height: 90vh;
+  width: 55vw;
   overflow: auto;
   background: $gunmetal;
   border-radius: $radius-lg;
   border: 1px solid $amethyst;
   padding: $spacing-5;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .form {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
   justify-content: flex-start;
   gap: $spacing-4;
 
@@ -38,12 +43,15 @@
     align-items: center;
     gap: $spacing-3;
     font-size: $font-lg;
+    width: 100%;
+    white-space: nowrap;
 
     input[type='text'] {
       @include interactive-button;
       padding: $spacing-1;
       border-radius: $radius-md;
       color: $snow;
+      width: 100%;
       border: 1px solid $amethyst;
 
       &::placeholder {
@@ -74,6 +82,9 @@
     display: flex;
     flex-direction: column;
     gap: $spacing-3;
+    padding: $spacing-1;
+    width: 100%;
+
     span {
       font-size: $font-lg;
     }
@@ -82,6 +93,7 @@
       display: flex;
       align-items: baseline;
       gap: $spacing-3;
+      width: 100%;
 
       input[type='radio'] {
         display: none;
@@ -99,14 +111,29 @@
         border-radius: $radius-md;
         transition: all 0.3s ease;
         cursor: pointer;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
       }
     }
 
     .seriesCoverOptions {
       display: flex;
+      flex-flow: row wrap;
       gap: $spacing-3;
       padding: $spacing-3;
-      max-height: 300px;
+      max-height: 100px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      border: 1px solid $amethyst;
+      border-radius: $radius-sm;
+
+      &::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
+      }
+
       input[type='radio'] {
         display: none;
 
@@ -123,97 +150,6 @@
         border-radius: $radius-md;
         transition: all 0.3s ease;
         cursor: pointer;
-      }
-    }
-  }
-
-  .seriesSection {
-    ul {
-      list-style: none;
-      margin: $spacing-2 0 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: $spacing-2;
-    }
-
-    .serieItem {
-      border: 2px solid $amethyst;
-      border-radius: $radius-md;
-      padding: $spacing-2;
-      transition: all 0.3s ease;
-
-      &:has(input:checked) {
-        background-color: $amethyst;
-        color: $snow;
-      }
-    }
-
-    .serieName {
-      padding: $spacing-1;
-      border-radius: $radius-md;
-      transition: all 0.3s ease;
-      cursor: pointer;
-    }
-
-    input[type='checkbox'] {
-      display: none;
-
-      &:checked + label {
-        background-color: $amethyst;
-        color: $snow;
-      }
-    }
-
-    .serieMeta {
-      margin-top: $spacing-2;
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: $spacing-2;
-
-      .customSelect {
-        position: relative;
-        text-align: center;
-        width: 100%;
-        max-width: 200px;
-
-        .selectTrigger {
-          width: 100%;
-          padding: $spacing-1;
-          border-radius: $radius-sm $radius-sm 0px 0px;
-          background: $gunmetal;
-          color: $snow;
-          cursor: pointer;
-        }
-
-        .selectDropdown {
-          gap: 2px;
-          position: absolute;
-          margin-top: 0;
-          background: $gunmetal;
-          border-top: 0;
-          list-style: none;
-          padding: 0;
-          z-index: 10;
-
-          li {
-            padding: $spacing-1;
-            cursor: pointer;
-            transition: 0.2s;
-
-            &:hover {
-              background: $amethyst;
-            }
-          }
-
-          .activeOption {
-            background: $amethyst;
-          }
-        }
-
-        button {
-          @include interactive-button;
-        }
       }
     }
   }
@@ -231,5 +167,63 @@
       color: $snow;
       padding: $spacing-2 $spacing-3;
     }
+  }
+}
+
+.seriesSection {
+  display: flex;
+  gap: $spacing-3;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 550px;
+}
+
+.seriesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: $spacing-3;
+  overflow-y: auto;
+  padding-right: $spacing-1;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.serieCard {
+  @include interactive-button;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $radius-md;
+  background: rgba(255, 255, 255, 0.04);
+  color: $snow;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-2;
+  cursor: pointer;
+  transition: transform 160ms ease;
+  padding: $spacing-2;
+
+  &:hover {
+    background: $amethyst;
+    outline: none;
+  }
+
+  img {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: $radius-sm;
+  }
+
+  span {
+    text-align: center;
+    font-size: $font-sm;
+    line-height: 1.25;
+  }
+
+  &.active {
+    border-color: $amethyst; // cor do destaque
+    background-color: $amethyst;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
 }

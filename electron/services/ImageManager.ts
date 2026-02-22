@@ -71,6 +71,14 @@ export default class ImageManager extends LibrarySystem {
     }
   }
 
+  public async uploadBackground(
+    imagePath: string | null,
+  ): Promise<string | null> {
+    if (!imagePath) return null;
+
+    return await this.normalizeImage(imagePath, this.backgroundImages);
+  }
+
   public async normalizeCover(coverPath: string): Promise<string> {
     const normalizedPath = path.resolve(coverPath);
     const parse = path.parse(normalizedPath);
@@ -109,6 +117,7 @@ export default class ImageManager extends LibrarySystem {
       }
     }
   }
+
   public async readFileAsDataUrl(rawPath: string): Promise<string> {
     const buf = await fse.promises.readFile(rawPath);
     const mimeType = mime.lookup(rawPath) || 'application/octet-stream';

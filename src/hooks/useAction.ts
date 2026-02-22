@@ -6,6 +6,7 @@ import {
   Literatures,
 } from '../../electron/types/electron-auxiliar.interfaces';
 import { useNavigate } from 'react-router-dom';
+import { viewData } from '../../electron/types/electron-auxiliar.interfaces';
 import useDownload from './useDownload';
 
 export default function useAction() {
@@ -18,6 +19,7 @@ export default function useAction() {
   const setError = useUIStore((state) => state.setError);
   const { downloadIndividual } = useDownload();
   const navigate = useNavigate();
+  const setSerie = useSerieStore((state) => state.setSerie);
 
   async function ratingSerie(
     e: React.MouseEvent,
@@ -101,6 +103,32 @@ export default function useAction() {
     }
   }
 
+  const lastChapter = async (
+    e: React.MouseEvent<HTMLButtonElement | SVGElement>,
+    serieId: number,
+  ) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const response = await window.electronAPI.chapters.acessLastRead(serieId);
+
+    if (!response.success || !response.data) {
+      setLoading(false);
+      return setError(`${response.error}`);
+    }
+
+    const [lastChapterUrl, serieData] = response.data;
+    setSerie(serieData);
+
+    if (lastChapterUrl) {
+      navigate(lastChapterUrl);
+      setLoading(false);
+    } else {
+      setLoading(false);
+      setError('URL do último capítulo não encontrada.');
+    }
+  };
+
   const openTieIn = async (tieIn: ComicTieIn) => {
     setLoading(true);
 
@@ -118,5 +146,5 @@ export default function useAction() {
     navigate(url!);
   };
 
-  return { ratingSerie, markAsRead, openChapter, openTieIn };
+  return { ratingSerie, markAsRead, openChapter, openTieIn, lastChapter };
 }

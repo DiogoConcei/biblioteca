@@ -51,41 +51,41 @@ export default function ImageController<T extends Record<string, any>>({
       return;
     }
 
-    if (isAbsolutePathOrFileUrl(value)) {
-      const api = getElectronAPI();
-      const readFn =
-        api?.readFileAsDataUrl ??
-        api?.webUtilities?.readFileAsDataUrl ??
-        api?.fs?.readFileAsDataUrl ??
-        undefined;
+    // if (isAbsolutePathOrFileUrl(value)) {
+    //   const api = getElectronAPI();
+    //   const readFn =
+    //     api?.readFileAsDataUrl ??
+    //     api?.webUtilities?.readFileAsDataUrl ??
+    //     api?.fs?.readFileAsDataUrl ??
+    //     undefined;
 
-      if (!readFn) {
-        console.warn(
-          'Nenhuma função readFileAsDataUrl disponível no preload; preview desabilitado para paths locais.',
-        );
-        setPreviewSrc(undefined);
-        return;
-      }
+    //   if (!readFn) {
+    //     console.warn(
+    //       'Nenhuma função readFileAsDataUrl disponível no preload; preview desabilitado para paths locais.',
+    //     );
+    //     setPreviewSrc(undefined);
+    //     return;
+    //   }
 
-      const myRequestId = ++requestIdRef.current;
-      setPreviewSrc(undefined);
+    //   const myRequestId = ++requestIdRef.current;
+    //   setPreviewSrc(undefined);
 
-      (async () => {
-        try {
-          const rawPath = value.startsWith('file://')
-            ? decodeURI(value.replace(/^file:\/+/, ''))
-            : value;
-          const dataUrl: string = await readFn(rawPath);
-          if (requestIdRef.current !== myRequestId) return;
-          setPreviewSrc(dataUrl);
-        } catch (err) {
-          console.error('Erro ao ler arquivo no main para preview:', err);
-          if (requestIdRef.current === myRequestId) setPreviewSrc(undefined);
-        }
-      })();
+    //   (async () => {
+    //     try {
+    //       const rawPath = value.startsWith('file://')
+    //         ? decodeURI(value.replace(/^file:\/+/, ''))
+    //         : value;
+    //       const dataUrl: string = await readFn(rawPath);
+    //       if (requestIdRef.current !== myRequestId) return;
+    //       setPreviewSrc(dataUrl);
+    //     } catch (err) {
+    //       console.error('Erro ao ler arquivo no main para preview:', err);
+    //       if (requestIdRef.current === myRequestId) setPreviewSrc(undefined);
+    //     }
+    //   })();
 
-      return;
-    }
+    //   return;
+    // }
 
     setPreviewSrc(undefined);
   }, [field.value]);

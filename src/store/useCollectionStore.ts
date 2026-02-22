@@ -2,8 +2,17 @@ import { create } from 'zustand';
 import {
   Collection,
   CreateCollectionDTO,
+  SerieInCollection,
 } from '../types/collections.interfaces';
 import { Literatures } from '../../electron/types/electron-auxiliar.interfaces';
+
+interface AddToCollectionInput {
+  id: number;
+  name: string;
+  coverImage: string;
+  dataPath: string;
+  totalChapters: number;
+}
 
 interface CollectionState {
   collections: Collection[] | [];
@@ -19,6 +28,7 @@ interface CollectionState {
   addToCollection: (
     dataPath: string,
     collectionName: string,
+    serieData?: AddToCollectionInput,
   ) => Promise<boolean>;
   createCollection: (collection: CreateCollectionDTO) => Promise<boolean>;
   updateCollection: (
@@ -42,220 +52,553 @@ interface CollectionState {
   ) => Promise<boolean>;
 }
 
-export const useCollectionStore = create<CollectionState>((set, get) => ({
-  collections: [],
-  favorites: null,
-  recents: null,
+/* ============================
+   Utilities relacionados a imagens / paths
+   ============================ */
 
-  setCollections: (allCollections) => set({ collections: allCollections }),
+const isDataUrl = (value: string) => value.startsWith('data:');
+const isRemoteUrl = (value: string) => /^https?:\/\//i.test(value);
+const isFileUrl = (value: string) => value.startsWith('file://');
+const isAbsolutePath = (value: string) =>
+  /^[a-zA-Z]:[\\/]/.test(value) || value.startsWith('/');
 
-  setFav: (allCollections) =>
-    set({
-      favorites:
-        allCollections.find(
-          (collect) => collect.name.trim().toLocaleLowerCase() === 'favoritos',
-        ) ?? null,
-    }),
+const normalizeLocalPath = (value: string) => {
+  // Remove prefix file:/// ou file:// e decode
+  if (!isFileUrl(value)) return value;
+  return decodeURI(value.replace('file:///', '').replace('file://', ''));
+};
 
-  setRecents: (allCollections) =>
-    set({
-      recents:
-        allCollections.find((collect) => collect.name === 'Recentes') ?? null,
-    }),
+/**
+ * Converte um path local (file://...) para dataURL para que o frontend
+ * possa exibir a imagem imediatamente. Se já for data: ou http(s) devolve como está.
+ * Retorna string|null (null significa "sem imagem").
+ */
+const ensureDisplayableImage = async (image: string | null | undefined) => {
+  if (!image) return null;
+  if (isDataUrl(image) || isRemoteUrl(image)) return image;
+  if (!isFileUrl(image) && !isAbsolutePath(image)) return image;
 
-  fetchCollections: async () => {
-    try {
-      const response = await window.electronAPI.collections.getCollections();
+  const normalizedPath = normalizeLocalPath(image);
+  try {
+    const dataUrl =
+      await window.electronAPI.webUtilities.readFileAsDataUrl(normalizedPath);
+    return dataUrl || image;
+  } catch (err) {
+    return image;
+  }
+};
 
-      if (response.success && response.data) {
-        const allCollections: Collection[] = response.data;
-        set({ collections: allCollections });
-        set({
-          favorites:
-            allCollections.find((collect) => collect.name === 'Favoritos') ??
-            null,
-          recents:
-            allCollections.find((collect) => collect.name === 'Recentes') ??
-            null,
-        });
-      }
-    } catch (error) {
-      console.error('fetchCollections error', error);
-    }
-  },
-
-  updateFav: async (serie, isFav) => {
-    try {
-      const response = await window.electronAPI.series.favoriteSerie(
-        serie.dataPath,
+/**
+ * Normaliza coverImage / backgroundImage de todas as séries em todas as collections.
+ * Útil quando buscamos collections do backend — transformamos paths locais em dataURLs.
+ */
+const normalizeCollectionsImages = async (collections: Collection[]) => {
+  const normalizedCollections = await Promise.all(
+    collections.map(async (collection) => {
+      const normalizedSeries = await Promise.all(
+        collection.series.map(async (serie) => {
+          const coverImage =
+            (await ensureDisplayableImage(serie.coverImage)) ?? '';
+          const backgroundImage = await ensureDisplayableImage(
+            serie.backgroundImage,
+          );
+          return {
+            ...serie,
+            coverImage,
+            backgroundImage,
+          };
+        }),
       );
 
-      if (!response.success || !response.data) return false;
+      return {
+        ...collection,
+        series: normalizedSeries,
+      };
+    }),
+  );
 
-      const favoriteSerie = response.data;
+  return normalizedCollections;
+};
 
-      set((state) => {
-        if (!state.favorites) return state;
+/* ============================
+   Funções auxiliares de estado
+   ============================ */
 
-        const currentSeries = state.favorites.series ?? [];
+const getSpecialCollections = (collections: Collection[]) => ({
+  favorites:
+    collections.find((collect) => collect.name === 'Favoritos') ?? null,
+  recents: collections.find((collect) => collect.name === 'Recentes') ?? null,
+});
 
-        let updatedSeries: typeof currentSeries;
+/**
+ * Gera um objeto SerieInCollection otimista (quando adicionamos uma série localmente
+ * antes de confirmar com o backend).
+ */
+const makeOptimisticSerie = (
+  collection: Collection,
+  input: AddToCollectionInput,
+): SerieInCollection => {
+  const now = new Date().toISOString();
+  const highestPosition = Math.max(
+    0,
+    ...collection.series.map((serie) => serie.position || 0),
+  );
 
-        if (isFav) {
-          const alreadyExists = currentSeries.some(
-            (s) => s.id === favoriteSerie.id,
+  return {
+    id: input.id,
+    name: input.name,
+    description: '',
+    coverImage: input.coverImage,
+    archivesPath: input.dataPath,
+    totalChapters: input.totalChapters,
+    status: '',
+    recommendedBy: '',
+    originalOwner: '',
+    rating: 0,
+    addAt: now,
+    position: highestPosition + 1,
+  };
+};
+
+/* ============================
+   STORE (Zustand) - versão explícita
+   ============================ */
+
+export const useCollectionStore = create<CollectionState>((set, get) => {
+  /**
+   * Helper pequeno para sempre atualizar favorites/recents junto com collections.
+   * Mantém tudo coerente (evita repetir a lógica em cada função).
+   */
+  const setCollectionsState = (collections: Collection[]) => {
+    const specials = getSpecialCollections(collections);
+    set({
+      collections,
+      favorites: specials.favorites,
+      recents: specials.recents,
+    });
+  };
+
+  return {
+    collections: [],
+    favorites: null,
+    recents: null,
+
+    /* ================
+       Setters simples
+       ================ */
+
+    setCollections: (allCollections) => {
+      // Recebe um array novo e atualiza favorites/recents automaticamente.
+      setCollectionsState(allCollections);
+    },
+
+    setFav: (allCollections) => {
+      const favorites =
+        allCollections.find(
+          (collect) => collect.name.trim().toLocaleLowerCase() === 'favoritos',
+        ) ?? null;
+      set({ favorites });
+    },
+
+    setRecents: (allCollections) => {
+      const recents =
+        allCollections.find((collect) => collect.name === 'Recentes') ?? null;
+      set({ recents });
+    },
+
+    /* ================
+       fetchCollections
+       ================ */
+
+    fetchCollections: async () => {
+      // 1) Chama backend
+      try {
+        const response = await window.electronAPI.collections.getCollections();
+
+        // 2) Se sucesso, normaliza imagens e seta estado
+        if (response.success && response.data) {
+          const normalizedCollections = await normalizeCollectionsImages(
+            response.data,
           );
+          setCollectionsState(normalizedCollections);
+        }
+      } catch (error) {
+        // Logamos, mas não alteramos estado local
+        console.error('fetchCollections error', error);
+      }
+    },
 
-          updatedSeries = alreadyExists
-            ? currentSeries
-            : [...currentSeries, favoriteSerie];
-        } else {
-          updatedSeries = currentSeries.filter((s) => s.id !== serie.id);
+    /* ================
+       updateFav
+       ================ */
+
+    updateFav: async (serie, isFav) => {
+      // 1) Pedimos ao backend para alternar favorito (ele nos devolve a série favorita atualizada).
+      try {
+        const response = await window.electronAPI.series.favoriteSerie(
+          serie.dataPath,
+        );
+
+        if (!response.success || !response.data) {
+          return false;
         }
 
+        const favoriteSerie = response.data;
+
+        // 2) Atualiza apenas a collection 'Favoritos' no estado (imutável)
+        set((state) => {
+          // Se não existe a collection "Favoritos" no estado, não fazemos nada.
+          if (!state.favorites) return state;
+
+          const currentSeries = state.favorites.series ?? [];
+
+          const updatedSeries = isFav
+            ? currentSeries.some((s) => s.id === favoriteSerie.id)
+              ? currentSeries
+              : [...currentSeries, favoriteSerie]
+            : currentSeries.filter((s) => s.id !== serie.id);
+
+          return {
+            favorites: {
+              ...state.favorites,
+              series: updatedSeries,
+            },
+          };
+        });
+
+        return true;
+      } catch (error) {
+        console.error('updateFav error', error);
+        return false;
+      }
+    },
+
+    /* ================
+       createCollection
+       ================ */
+
+    createCollection: async (collection) => {
+      // Padrão otimista: guardamos estado anterior, aplicamos colec. otimista, chamamos backend, rollback se necessário.
+      const previous = get().collections;
+
+      const now = new Date().toISOString();
+      const optimisticCollection: Collection = {
+        ...collection,
+        id: `optimistic-${Date.now()}`,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      const next = [...previous, optimisticCollection];
+
+      // Aplica na UI imediatamente
+      setCollectionsState(next);
+
+      // Chama backend
+      try {
+        const response =
+          await window.electronAPI.collections.createCollection(collection);
+
+        if (!response.success) {
+          // Rollback
+          setCollectionsState(previous);
+          return false;
+        }
+
+        // Sucesso: mantemos estado (idealmente backend retornaria a collection real; aqui simplificamos)
+        return true;
+      } catch (error) {
+        // Em erro de rede: rollback
+        setCollectionsState(previous);
+        return false;
+      }
+    },
+
+    /* ================
+       updateCollection
+       ================ */
+
+    updateCollection: async (name, payload) => {
+      const previous = get().collections;
+
+      // Calcula novo estado (aplica updatedAt)
+      const next = previous.map((collection) =>
+        collection.name !== name
+          ? collection
+          : {
+              ...collection,
+              ...payload,
+              updatedAt: new Date().toISOString(),
+            },
+      );
+
+      setCollectionsState(next);
+
+      try {
+        const response = await window.electronAPI.collections.updateCollection(
+          name,
+          payload,
+        );
+
+        if (!response.success) {
+          setCollectionsState(previous);
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        setCollectionsState(previous);
+        return false;
+      }
+    },
+
+    /* ================
+       deleteCollection
+       ================ */
+
+    deleteCollection: async (name) => {
+      const cleanedName = name.trim().toLocaleLowerCase();
+      if (cleanedName === 'favoritos' || cleanedName === 'recentes') {
+        // Não permitimos deletar essas especiais
+        return false;
+      }
+
+      const previous = get().collections;
+      const next = previous.filter((collection) => collection.name !== name);
+
+      setCollectionsState(next);
+
+      try {
+        const response =
+          await window.electronAPI.collections.deleteCollection(name);
+
+        if (!response.success) {
+          setCollectionsState(previous);
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        setCollectionsState(previous);
+        return false;
+      }
+    },
+
+    /* ================
+       removeSerie
+       ================ */
+
+    removeSerie: async (collectionName, serieId, keepEmpty = false) => {
+      const previous = get().collections;
+
+      const next = previous.map((collection) => {
+        if (collection.name !== collectionName) return collection;
+
+        const filtered = collection.series.filter((s) => s.id !== serieId);
+
         return {
-          favorites: {
-            ...state.favorites,
-            series: updatedSeries,
-          },
+          ...collection,
+          series: filtered,
+          updatedAt: new Date().toISOString(),
         };
       });
 
-      return true;
-    } catch (error) {
-      console.error('updateFav error', error);
-      return false;
-    }
-  },
+      setCollectionsState(next);
 
-  createCollection: async (collection) => {
-    try {
-      const response =
-        await window.electronAPI.collections.createCollection(collection);
-
-      if (!response.success) return false;
-
-      await get().fetchCollections();
-      return true;
-    } catch (err) {
-      console.error('createCollection error', err);
-      return false;
-    }
-  },
-
-  updateCollection: async (name, payload) => {
-    try {
-      const response = await window.electronAPI.collections.updateCollection(
-        name,
-        payload,
-      );
-
-      if (!response.success) return false;
-      await get().fetchCollections();
-      return true;
-    } catch (err) {
-      console.error('updateCollection error', err);
-      return false;
-    }
-  },
-
-  deleteCollection: async (name) => {
-    try {
-      const cleanedName = name.trim().toLocaleLowerCase();
-
-      if (cleanedName === 'favoritos' || cleanedName === 'recentes')
-        return false;
-
-      const response =
-        await window.electronAPI.collections.deleteCollection(name);
-      if (!response.success) return false;
-      await get().fetchCollections();
-      return true;
-    } catch (err) {
-      console.error('deleteCollection error', err);
-      return false;
-    }
-  },
-
-  removeSerie: async (collectionName, serieId, keepEmpty = false) => {
-    try {
-      const response = await window.electronAPI.collections.removeSerie(
-        collectionName,
-        serieId,
-        keepEmpty,
-      );
-
-      if (!response.success) return false;
-      await get().fetchCollections();
-      return true;
-    } catch (err) {
-      console.error('removeSerie error', err);
-      return false;
-    }
-  },
-
-  reorderSeries: async (collectionName, orderedSeriesIds) => {
-    try {
-      const response = await window.electronAPI.collections.reorderSeries(
-        collectionName,
-        orderedSeriesIds,
-      );
-
-      if (!response.success) return false;
-      await get().fetchCollections();
-      return true;
-    } catch (err) {
-      console.error('reorderSeries error', err);
-      return false;
-    }
-  },
-
-  updateSerieBackground: async (collectionName, serieId, path) => {
-    try {
-      const response =
-        await window.electronAPI.collections.updateSerieBackground(
+      try {
+        const response = await window.electronAPI.collections.removeSerie(
           collectionName,
           serieId,
-          path,
+          keepEmpty,
         );
 
-      if (!response.success) return false;
+        if (!response.success) {
+          setCollectionsState(previous);
+          return false;
+        }
 
-      set((state) => ({
-        collections: state.collections.map((collection) =>
-          collection.name !== collectionName
-            ? collection
-            : {
-                ...collection,
-                series: collection.series.map((serie) =>
-                  serie.id === serieId
-                    ? { ...serie, backgroundImage: path }
-                    : serie,
-                ),
-              },
-        ),
-      }));
+        return true;
+      } catch (error) {
+        setCollectionsState(previous);
+        return false;
+      }
+    },
 
-      return true;
-    } catch (err) {
-      console.error('updateSerieBackground error', err);
-      return false;
-    }
-  },
+    /* ================
+       reorderSeries
+       ================ */
 
-  addToCollection: async (dataPath, collectionName) => {
-    try {
-      const response = await window.electronAPI.series.serieToCollection(
-        dataPath,
-        collectionName,
-      );
+    reorderSeries: async (collectionName, orderedSeriesIds) => {
+      const previous = get().collections;
 
-      if (!response.success) return false;
-      await get().fetchCollections();
-      return true;
-    } catch (error) {
-      console.error('addToCollection error', error);
-      return false;
-    }
-  },
-}));
+      const next = previous.map((collection) => {
+        if (collection.name !== collectionName) return collection;
+
+        // Monta novo array respeitando a ordem passada
+        const reordered: SerieInCollection[] = [];
+        orderedSeriesIds.forEach((id, index) => {
+          const found = collection.series.find((s) => s.id === id);
+          if (!found) return;
+          reordered.push({ ...found, position: index + 1 });
+        });
+
+        return {
+          ...collection,
+          series: reordered,
+          updatedAt: new Date().toISOString(),
+        };
+      });
+
+      setCollectionsState(next);
+
+      try {
+        const response = await window.electronAPI.collections.reorderSeries(
+          collectionName,
+          orderedSeriesIds,
+        );
+
+        if (!response.success) {
+          setCollectionsState(previous);
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        setCollectionsState(previous);
+        return false;
+      }
+    },
+
+    /* ================
+       updateSerieBackground
+       ================
+       Observação: a interface aceitou (collectionName, serieId, path).
+       Internamente nós tentamos transformar `path` em um preview (dataURL) para mostrar
+       imediatamente na UI quando for um arquivo local.
+    */
+
+    updateSerieBackground: async (collectionName, serieId, path) => {
+      const previous = get().collections;
+
+      // tentamos gerar um preview imediatamente (se path for local => dataURL)
+      let previewImage: string | null = null;
+
+      try {
+        previewImage = await ensureDisplayableImage(path ?? null);
+      } catch {
+        previewImage = path ?? null;
+      }
+
+      const next = previous.map((collection) => {
+        if (collection.name !== collectionName) return collection;
+
+        const updatedSeries = collection.series.map((serie) =>
+          serie.id === serieId
+            ? {
+                ...serie,
+                backgroundImage: previewImage,
+              }
+            : serie,
+        );
+
+        return {
+          ...collection,
+          series: updatedSeries,
+          updatedAt: new Date().toISOString(),
+        };
+      });
+
+      setCollectionsState(next);
+
+      try {
+        const response =
+          await window.electronAPI.collections.updateSerieBackground(
+            collectionName,
+            serieId,
+            path,
+          );
+
+        if (!response.success) {
+          // rollback
+          setCollectionsState(previous);
+          return false;
+        }
+
+        // Se backend aceitar, mantemos o estado (backend poderia devolver valor real — aqui assumimos sucesso)
+        return true;
+      } catch (error) {
+        setCollectionsState(previous);
+        return false;
+      }
+    },
+
+    /* ================
+       addToCollection
+       ================ */
+
+    addToCollection: async (dataPath, collectionName, serieData) => {
+      // Se o chamador não forneceu `serieData`, tentamos encontrar nos collections já carregados.
+      const cachedSerie = get()
+        .collections.flatMap((collection) => collection.series)
+        .find((serie) => serie.archivesPath === dataPath);
+
+      const sourceSerie: AddToCollectionInput | null = serieData
+        ? serieData
+        : cachedSerie
+          ? {
+              id: cachedSerie.id,
+              name: cachedSerie.name,
+              coverImage: cachedSerie.coverImage,
+              dataPath: cachedSerie.archivesPath,
+              totalChapters: cachedSerie.totalChapters,
+            }
+          : null;
+
+      if (!sourceSerie) {
+        // Não temos informações suficientes para adicionar
+        return false;
+      }
+
+      const previous = get().collections;
+
+      // Construímos próximo estado adicionando uma série "otimista"
+      const next = previous.map((collection) => {
+        if (collection.name !== collectionName) return collection;
+
+        const exists = collection.series.some((s) => s.id === sourceSerie.id);
+        if (exists) return collection;
+
+        const optimisticSerie = makeOptimisticSerie(collection, sourceSerie);
+
+        return {
+          ...collection,
+          series: [...collection.series, optimisticSerie],
+          updatedAt: new Date().toISOString(),
+        };
+      });
+
+      // Atualiza UI agora
+      setCollectionsState(next);
+
+      // Chama backend que adiciona série à collection
+      try {
+        const response = await window.electronAPI.series.serieToCollection(
+          dataPath,
+          collectionName,
+        );
+
+        if (!response.success) {
+          // rollback
+          setCollectionsState(previous);
+          return false;
+        }
+
+        // sucesso
+        return true;
+      } catch (error) {
+        setCollectionsState(previous);
+        return false;
+      }
+    },
+  };
+});

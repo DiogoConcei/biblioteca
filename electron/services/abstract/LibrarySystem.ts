@@ -26,6 +26,11 @@ export default abstract class LibrarySystem {
     'images files',
   );
 
+  protected readonly backgroundImages: string = path.join(
+    this.imagesFolder,
+    'background images',
+  );
+
   protected readonly jsonFolder: string = path.join(
     this.dataStorage,
     'json files',

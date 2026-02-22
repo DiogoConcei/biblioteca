@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, CirclePlus } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, CirclePlus, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import useCollection from '@/hooks/useCollection';
+import useAllSeries from '@/hooks/useAllSeries';
+import useAction from '@/hooks/useAction';
 
 import CreateCollection from '@/components/CreateCollection/CreateCollection';
 import { Collection } from '@/types/collections.interfaces';
@@ -15,7 +17,8 @@ import styles from './Collections.module.scss';
 const SPECIAL_COLLECTIONS = new Set(['Favoritos', 'Recentes']);
 
 export default function Collections() {
-  const navigate = useNavigate();
+  const { lastChapter } = useAction();
+
   const {
     collections,
     createCollection,
@@ -23,12 +26,14 @@ export default function Collections() {
     removeSerie,
     updateSerieBackground,
     reorderSeries,
+    addToCollection,
   } = useCollection();
+  const allSeries = useAllSeries();
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [activeSerieIndex, setActiveSerieIndex] = useState(0);
-
+  const [isAddSerieOpen, setIsAddSerieOpen] = useState<boolean>(false);
   const visibleCollections = useMemo(
     () =>
       collections.filter(
@@ -42,6 +47,16 @@ export default function Collections() {
   const activeCollection = visibleCollections[activeIndex] ?? null;
   const activeSerie = activeCollection?.series[activeSerieIndex] ?? null;
   const activeBackground = activeSerie?.backgroundImage ?? null;
+
+  const selectableSeries = useMemo(() => {
+    if (!allSeries || !activeCollection) return [];
+
+    const existingSeriesIds = new Set(
+      activeCollection.series.map((serie) => serie.id),
+    );
+
+    return allSeries.filter((serie) => !existingSeriesIds.has(serie.id));
+  }, [activeCollection, allSeries]);
 
   // background state
   const [bgLoaded, setBgLoaded] = useState(false);
@@ -183,14 +198,24 @@ export default function Collections() {
         <main className={styles.viewerArea}>
           <div className={styles.viewerTopBar}>
             {activeCollection && (
-              <button
-                className={styles['add-btn']}
-                onClick={() => deleteCollection(activeCollection.name)}
-                aria-label="Remover coleção ativa"
-              >
-                Excluir coleção
-              </button>
+              <>
+                <button
+                  className={styles['add-btn']}
+                  onClick={() => setIsAddSerieOpen(true)}
+                  aria-label="Adicionar série na coleção ativa"
+                >
+                  Adicionar Série
+                </button>
+                <button
+                  className={styles['add-btn']}
+                  onClick={() => deleteCollection(activeCollection.name)}
+                  aria-label="Remover coleção ativa"
+                >
+                  Excluir coleção
+                </button>
+              </>
             )}
+
             <button
               className={styles['add-btn']}
               onClick={() => setIsOpen(true)}
@@ -205,21 +230,22 @@ export default function Collections() {
             collection={activeCollection}
             activeIndex={activeSerieIndex}
             onChangeIndex={setActiveSerieIndex}
-            onOpenReader={(seriesId) => {
-              const serie = activeCollection?.series.find(
-                (item) => item.id === seriesId,
-              );
-              if (!serie) return;
-              navigate(
-                `/${encodeURIComponent(serie.name)}/${serie.id}/Capitulo/1/1/false`,
-              );
+            onOpenReader={(e, serieId) => {
+              if (!serieId) return;
+
+              lastChapter(e, serieId);
             }}
             onRemoveFromCollection={async (collectionName, serieId) => {
-              await removeSerie(collectionName, serieId);
+              return removeSerie(collectionName, serieId);
             }}
             onReorderSeries={reorderSeries}
-            onUpdateSerieBackground={async (collectionName, serieId, path) => {
-              await updateSerieBackground(collectionName, serieId, path);
+            onUpdateSerieBackground={async (
+              collectionName,
+              serieId,
+              path,
+              previewImage,
+            ) => {
+              return updateSerieBackground(collectionName, serieId, path);
             }}
           />
         </main>
@@ -229,7 +255,65 @@ export default function Collections() {
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         onCreate={onCreateCollection}
+        series={allSeries}
       />
+
+      {isAddSerieOpen && activeCollection && (
+        <div
+          className={styles.seriesModalOverlay}
+          onClick={() => setIsAddSerieOpen(false)}
+        >
+          <div
+            className={styles.seriesModal}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className={styles.seriesModalHeader}>
+              <h3>Adicionar Série</h3>
+              <button
+                type="button"
+                className={styles.closeButton}
+                onClick={() => setIsAddSerieOpen(false)}
+                aria-label="Fechar modal"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className={styles.seriesGrid}>
+              {selectableSeries.map((serie) => (
+                <button
+                  key={serie.id}
+                  type="button"
+                  className={styles.serieCard}
+                  onClick={async () => {
+                    const added = await addToCollection(
+                      serie.dataPath,
+                      activeCollection.name,
+                      {
+                        id: serie.id,
+                        name: serie.name,
+                        coverImage: serie.coverImage,
+                        dataPath: serie.dataPath,
+                        totalChapters: serie.totalChapters,
+                      },
+                    );
+
+                    if (added) {
+                      setIsAddSerieOpen(false);
+                    }
+                  }}
+                >
+                  <img
+                    src={serie.coverImage}
+                    alt={`Capa da série ${serie.name}`}
+                  />
+                  <span>{serie.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

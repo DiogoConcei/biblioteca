@@ -7,6 +7,7 @@ import { downloadButtonProps } from '../../types/components.interfaces';
 
 import useSerieStore from '../../store/useSerieStore';
 import useUIStore from '../../store/useUIStore';
+import useClickOutside from '../../hooks/useClickOutside';
 import styles from './DownloadButton.module.scss';
 
 export default function DownloadButton({ serie }: downloadButtonProps) {
@@ -15,6 +16,10 @@ export default function DownloadButton({ serie }: downloadButtonProps) {
   const setError = useUIStore((state) => state.setError);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const updateChapter = useSerieStore((state) => state.updateChapter);
+  const containerRef = useClickOutside<HTMLDivElement>(
+    () => setIsOpen(false),
+    isOpen,
+  );
 
   const { downloadMultipleChapters } = useDownload();
 
@@ -65,21 +70,24 @@ export default function DownloadButton({ serie }: downloadButtonProps) {
   }
 
   return (
-    <div>
+    <div ref={containerRef}>
       <button
         className={`${styles.download} ${isOpen ? styles.open : ''}`}
         onClick={onToggle}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
       >
         <Download />
         Download
       </button>
 
       {isOpen && (
-        <ul className={styles['dropdown-list']}>
+        <ul className={styles['dropdown-list']} role="menu">
           {options.map((quantity) => (
-            <li key={quantity} className={styles['dropdown-item']}>
+            <li key={quantity} className={styles['dropdown-item']} role="none">
               <button
                 className={styles['dropdown-option']}
+                role="menuitem"
                 onClick={() => onSelect(quantity)}
               >
                 {quantity}

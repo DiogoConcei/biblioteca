@@ -15,30 +15,9 @@ import {
   X,
 } from 'lucide-react';
 
-import { Collection } from '@/types/collections.interfaces';
-
+import { FocusedCollectionViewProps } from '../../types/components.interfaces';
 import CollectionSeriesCard from '../CollectionsSerieCard/CollectionsSerieCard';
 import styles from './CollectionView.module.scss';
-
-export type FocusedCollectionViewProps = {
-  collection: Collection | null;
-  activeIndex: number;
-  onChangeIndex?: (index: number) => void;
-  onOpenReader: (seriesId: number) => void;
-  onRemoveFromCollection: (
-    collectionName: string,
-    serieId: number,
-  ) => Promise<void>;
-  onReorderSeries?: (
-    collectionName: string,
-    orderedSeriesIds: number[],
-  ) => Promise<boolean>;
-  onUpdateSerieBackground?: (
-    collectionName: string,
-    serieId: number,
-    path: string | null,
-  ) => Promise<void>;
-};
 
 export default function CollectionView({
   collection,
@@ -310,7 +289,7 @@ export default function CollectionView({
                     />
                     <button
                       type="button"
-                      onClick={() => onOpenReader(activeSerie.id)}
+                      onClick={(e) => onOpenReader(e, activeSerie.id)}
                     >
                       Abrir leitura
                     </button>
@@ -327,13 +306,13 @@ export default function CollectionView({
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
-                        onUpdateSerieBackground?.(
+                      onClick={async () => {
+                        await onUpdateSerieBackground?.(
                           collection.name,
                           activeSerie.id,
                           null,
-                        )
-                      }
+                        );
+                      }}
                     >
                       <X size={16} /> Remover background
                     </button>
@@ -345,13 +324,17 @@ export default function CollectionView({
                       <button
                         type="button"
                         onClick={async () => {
-                          await onUpdateSerieBackground?.(
+                          const updated = await onUpdateSerieBackground?.(
                             collection.name,
                             activeSerie.id,
                             backgroundPath,
+                            backgroundPreview,
                           );
-                          setBackgroundPreview(null);
-                          setBackgroundPath(null);
+
+                          if (updated) {
+                            setBackgroundPreview(null);
+                            setBackgroundPath(null);
+                          }
                         }}
                       >
                         Confirmar background

@@ -11,8 +11,12 @@ import {
   LiteraturesAttributes,
   LiteratureChapterAttributes,
 } from '../../electron/types/electron-auxiliar.interfaces';
+import { Collection } from './collections.interfaces';
 import { SerieEditForm } from './series.interfaces';
 import { SerieForm, SerieData } from './series.interfaces';
+import { Status } from '../../electron/types/electron-auxiliar.interfaces';
+import { viewData } from '../../electron/types/electron-auxiliar.interfaces';
+import { CreateCollectionDTO } from './collections.interfaces';
 
 export interface OnlySerieProp {
   manga: Literatures;
@@ -124,6 +128,13 @@ export interface FormTagProps {
 
 export interface CollectionButtonProps {
   dataPath: string;
+  serieData?: {
+    id: number;
+    name: string;
+    coverImage: string;
+    dataPath: string;
+    totalChapters: number;
+  };
 }
 
 export interface SerieActionProps {
@@ -164,4 +175,50 @@ export interface FavoriteProps {
 
 export interface RatingProps {
   serie: Literatures;
+}
+
+export type FocusedCollectionViewProps = {
+  collection: Collection | null;
+  activeIndex: number;
+  onChangeIndex?: (index: number) => void;
+  onOpenReader: (
+    e: React.MouseEvent<HTMLButtonElement | SVGElement>,
+    serieId: number,
+  ) => void;
+  onRemoveFromCollection: (
+    collectionName: string,
+    serieId: number,
+  ) => Promise<boolean>;
+  onReorderSeries?: (
+    collectionName: string,
+    orderedSeriesIds: number[],
+  ) => Promise<boolean>;
+  onUpdateSerieBackground?: (
+    collectionName: string,
+    serieId: number,
+    path: string | null,
+    previewImage?: string | null,
+  ) => Promise<boolean>;
+};
+
+export interface CreateCollectionModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreate: (collection: CreateCollectionDTO) => Promise<void>;
+  series: viewData[] | null;
+}
+
+export interface SelectedSerieData {
+  id: number;
+  rating: number;
+  status: Status;
+}
+
+export interface CreateCollectionFormValues {
+  name: string;
+  description: string;
+  coverType: 'external' | 'series';
+  coverImage: string; // usado apenas para preview / upload
+  seriesCoverId: string; // id selecionado quando coverType === 'series'
+  selectedSeries: SelectedSerieData[];
 }

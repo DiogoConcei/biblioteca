@@ -7,38 +7,15 @@ import {
   useWatch,
 } from 'react-hook-form';
 
-import useAllSeries from '@/hooks/useAllSeries';
-import {
-  Collection,
-  CreateCollectionDTO,
-  SerieInCollection,
-} from '@/types/collections.interfaces';
-import { Status } from '../../../electron/types/manga.interfaces';
+import { SerieInCollection } from '@/types/collections.interfaces';
+import { Status } from 'electron/types/electron-auxiliar.interfaces';
 import styles from './CreateCollection.module.scss';
 import ImageController from '../Form/Fields/ImageController/ImageController';
-
-interface CreateCollectionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onCreate: (collection: CreateCollectionDTO) => Promise<void>;
-}
-
-interface SelectedSerieData {
-  id: number;
-  rating: number;
-  status: Status;
-}
-
-interface CreateCollectionFormValues {
-  name: string;
-  description: string;
-  coverType: 'external' | 'series';
-  coverImage: string; // usado apenas para preview / upload
-  seriesCoverId: string; // id selecionado quando coverType === 'series'
-  selectedSeries: SelectedSerieData[];
-}
-
-const STATUS_OPTIONS: Status[] = ['', 'Em andamento', 'Completo', 'Pendente'];
+import {
+  CreateCollectionModalProps,
+  CreateCollectionFormValues,
+  SelectedSerieData,
+} from '../../types/components.interfaces';
 
 const defaultValues: CreateCollectionFormValues = {
   name: '',
@@ -53,10 +30,10 @@ export default function CreateCollection({
   isOpen,
   onClose,
   onCreate,
+  series,
 }: CreateCollectionModalProps) {
   const [openRating, setOpenRating] = useState<boolean>(false);
   const [openStatus, setOpenStatus] = useState<boolean>(false);
-  const series = useAllSeries();
   const selectableSeries = useMemo(() => series ?? [], [series]);
 
   const {
@@ -238,7 +215,7 @@ export default function CreateCollection({
                 </label>
               </div>
 
-              {coverType === 'series' && (
+              {coverType === 'series' && selectedSeriesList.length > 0 && (
                 <div className={styles.seriesCoverOptions}>
                   {selectedSeriesList.map((sel) => (
                     <div key={sel.id}>
@@ -259,130 +236,31 @@ export default function CreateCollection({
 
             <div className={styles.seriesSection}>
               <h3>Séries da coleção</h3>
-              <ul>
+
+              <div className={styles.seriesGrid}>
                 {selectableSeries.map((serie) => {
                   const isSelected = watchedSelected.some(
                     (s) => s.id === serie.id,
                   );
-                  const selIndex = watchedSelected.findIndex(
-                    (s) => s.id === serie.id,
-                  );
 
                   return (
-                    <li
+                    <button
                       key={serie.id}
-                      className={`${styles.serieItem} ${
+                      type="button"
+                      className={`${styles.serieCard} ${
                         isSelected ? styles.active : ''
                       }`}
+                      onClick={() => toggleSerie(serie.id)}
                     >
-                      <label
-                        htmlFor={`${serie.id}_${serie.name}`}
-                        className={styles.serieName}
-                      >
-                        {serie.name}
-                      </label>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        id={`${serie.id}_${serie.name}`}
-                        onChange={() => toggleSerie(serie.id)}
+                      <img
+                        src={serie.coverImage}
+                        alt={`Capa da série ${serie.name}`}
                       />
-
-                      {isSelected && selIndex >= 0 && (
-                        <div className={styles.serieMeta}>
-                          <label>
-                            Rating
-                            <Controller
-                              control={control}
-                              name={
-                                `selectedSeries.${selIndex}.rating` as const
-                              }
-                              render={({ field }) => (
-                                <div className={styles.customSelect}>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setOpenRating((prev) => !prev)
-                                    }
-                                    className={styles.selectTrigger}
-                                  >
-                                    {field.value ?? 0}
-                                  </button>
-
-                                  {openRating && (
-                                    <ul className={styles.selectDropdown}>
-                                      {Array.from({ length: 6 }).map((_, i) => (
-                                        <li
-                                          key={i}
-                                          onClick={() => {
-                                            field.onChange(i);
-                                            setOpenRating(false);
-                                          }}
-                                          className={
-                                            field.value === i
-                                              ? styles.activeOption
-                                              : ''
-                                          }
-                                        >
-                                          {i}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  )}
-                                </div>
-                              )}
-                            />
-                          </label>
-
-                          <label>
-                            Status
-                            <Controller
-                              control={control}
-                              name={
-                                `selectedSeries.${selIndex}.status` as const
-                              }
-                              render={({ field }) => (
-                                <div className={styles.customSelect}>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setOpenStatus((prev) => !prev)
-                                    }
-                                    className={styles.selectTrigger}
-                                  >
-                                    {field.value || 'Sem status'}
-                                  </button>
-
-                                  {openStatus && (
-                                    <ul className={styles.selectDropdown}>
-                                      {STATUS_OPTIONS.map((status) => (
-                                        <li
-                                          key={status || 'empty'}
-                                          onClick={() => {
-                                            field.onChange(status);
-                                            setOpenStatus(false);
-                                          }}
-                                          className={
-                                            field.value === status
-                                              ? styles.activeOption
-                                              : ''
-                                          }
-                                        >
-                                          {status || 'Sem status'}
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  )}
-                                </div>
-                              )}
-                            />
-                          </label>
-                        </div>
-                      )}
-                    </li>
+                      <span>{serie.name}</span>
+                    </button>
                   );
                 })}
-              </ul>
+              </div>
             </div>
 
             <label className={styles.areaLabel}>

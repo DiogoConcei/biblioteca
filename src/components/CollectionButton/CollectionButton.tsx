@@ -4,7 +4,10 @@ import { CollectionButtonProps } from '../../types/components.interfaces';
 import useCollection from '../../hooks/useCollection';
 import styles from './CollectionButton.module.scss';
 
-export default function CollectionButton({ dataPath }: CollectionButtonProps) {
+export default function CollectionButton({
+  dataPath,
+  serieData,
+}: CollectionButtonProps) {
   const { collections, addToCollection } = useCollection();
   const [isAdd, setIsAdd] = useState<boolean>(false);
 
@@ -32,7 +35,9 @@ export default function CollectionButton({ dataPath }: CollectionButtonProps) {
             <li key={collection.name} className={styles['dropdown-item']}>
               <button
                 className={styles['dropdown-option']}
-                onClick={() => addToCollection(dataPath, collection.name)}
+                onClick={() =>
+                  addToCollection(dataPath, collection.name, serieData)
+                }
               >
                 {collection.name}
               </button>

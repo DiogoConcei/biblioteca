@@ -939,10 +939,3 @@ export default class SystemManager extends LibrarySystem {
     }
   }
 }
-
-// (async () => {
-//   const systemManager = new SystemManager();
-//   await systemManager.regenCover(
-//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\childSeries\\1 Invasão Secreta - A Infiltração.json',
-//   );
-// })();

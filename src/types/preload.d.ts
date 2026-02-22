@@ -83,7 +83,7 @@ declare global {
         serieToCollection: (
           dataPath: string,
           collectionName: string,
-        ) => Promise<ResAPIResponseponse<void>>;
+        ) => Promise<APIResponse<void>>;
         favoriteSerie: (
           dataPath: string,
         ) => Promise<APIResponse<SerieInCollection>>;
@@ -110,7 +110,7 @@ declare global {
           totalPages: number,
         ) => Promise<APIResponse<void>>;
         acessLastRead: (
-          serieName: string,
+          serieId: number,
         ) => Promise<APIResponse<[string, Literatures | TieIn]>>;
         getNextChapter: (
           serieName: string,

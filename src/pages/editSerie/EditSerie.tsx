@@ -188,7 +188,7 @@ export default function EditSerie() {
           <div className={styles.actionButtons}>
             <Favorite serie={serie} />
             <Rating serie={serie} />
-            <CollectionButton dataPath={serie.dataPath} />
+            <CollectionButton dataPath={serie.dataPath} serieData={serie} />
           </div>
         </div>
         <div className={styles.mainInfo}>

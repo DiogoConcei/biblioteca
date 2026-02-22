@@ -12,6 +12,7 @@ import useUIStore from '../../store/useUIStore';
 import { Manga } from 'electron/types/manga.interfaces';
 import useSerie from '../../hooks/useSerie';
 import styles from './MangaPage.module.scss';
+import useAction from '@/hooks/useAction';
 
 export default function MangaPage() {
   const { manga_name: rawSerieName } = useParams<{ manga_name: string }>();
@@ -21,6 +22,7 @@ export default function MangaPage() {
   const loading = useUIStore((state) => state.loading);
   const navigate = useNavigate();
   const { favorites, recents } = useCollection();
+  const { lastChapter } = useAction();
 
   const orderFav = () => {
     return favorites
@@ -37,24 +39,6 @@ export default function MangaPage() {
   if (loading || !serie || !serie.chapters) {
     return <Loading />;
   }
-
-  const lastRead = async (
-    event: React.MouseEvent<HTMLButtonElement>,
-    dataPath: string,
-  ) => {
-    event.preventDefault();
-    const response = await window.electronAPI.chapters.acessLastRead(dataPath);
-
-    if (!response.success || !response.data) {
-      console.error(`Erro ao acessar último capítulo lido: ${response.error}`);
-      return;
-    }
-
-    const [lastChapterUrl, serieData] = response.data;
-
-    useSerieStore.getState().setSerie(serieData);
-    navigate(lastChapterUrl);
-  };
 
   const tags = [...serie.tags].sort((a, b) => a.localeCompare(b)).slice(0, 2);
 
@@ -102,11 +86,10 @@ export default function MangaPage() {
 
           <Favorite serie={serie} />
 
-          <CollectionButton dataPath={serie.dataPath} />
-
+          <CollectionButton dataPath={serie.dataPath} serieData={serie} />
           <button
             className={styles.reading}
-            onClick={(event) => lastRead(event, serie.dataPath)}
+            onClick={(e) => lastChapter(e, serie.id)}
           >
             <Book />
             Continuar

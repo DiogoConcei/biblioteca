@@ -139,45 +139,43 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
     },
   );
 
-  ipcMain.handle(
-    'chapter:acess-last-read',
-    async (_event, dataPath: string) => {
-      try {
-        const candidate = await userManager.resolveLastReadCandidate(dataPath);
+  ipcMain.handle('chapter:acess-last-read', async (_event, serieId: number) => {
+    try {
+      const candidate =
+        await userManager.resolveLastReadCandidateBySerieId(serieId);
 
-        if (!candidate) {
-          return {
-            success: false,
-            error: 'Nenhum capítulo disponível para abrir nesta série.',
-          };
-        }
-
-        const chapter = candidate.serie.chapters?.find(
-          (item) => item.id === candidate.chapterId,
-        );
-
-        if (!chapter) {
-          return {
-            success: false,
-            error: 'Capítulo final não encontrado para a série selecionada.',
-          };
-        }
-
-        const url = userManager.mountChapterUrl(
-          candidate.serie,
-          chapter.id,
-          chapter.name,
-          candidate.lastPageRead,
-          candidate.isRead,
-        );
-
-        return { success: true, data: [url, candidate.serie] };
-      } catch (e) {
-        console.error(`Erro ao acessar último capítulo lido: ${e}`);
-        return { success: false, error: String(e) };
+      if (!candidate) {
+        return {
+          success: false,
+          error: 'Nenhum capítulo disponível para abrir nesta série.',
+        };
       }
-    },
-  );
+
+      const chapter = candidate.serie.chapters?.find(
+        (item) => item.id === candidate.chapterId,
+      );
+
+      if (!chapter) {
+        return {
+          success: false,
+          error: 'Capítulo final não encontrado para a série selecionada.',
+        };
+      }
+
+      const url = userManager.mountChapterUrl(
+        candidate.serie,
+        chapter.id,
+        chapter.name,
+        candidate.lastPageRead,
+        candidate.isRead,
+      );
+
+      return { success: true, data: [url, candidate.serie] };
+    } catch (e) {
+      console.error(`Erro ao acessar último capítulo lido: ${e}`);
+      return { success: false, error: String(e) };
+    }
+  });
 
   ipcMain.handle(
     'chapter:get-next-chapter',

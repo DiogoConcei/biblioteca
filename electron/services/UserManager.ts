@@ -6,17 +6,34 @@ import {
   LastReadCandidate,
 } from '../types/electron-auxiliar.interfaces';
 import { Comic, TieIn } from '../types/comic.interfaces';
-import {
-  APIResponse,
-  Literatures,
-} from '../types/electron-auxiliar.interfaces';
+import FileManager from './FileManager';
+import { Literatures } from '../types/electron-auxiliar.interfaces';
 
 export default class UserManager extends FileSystem {
   private readonly collManager: CollectionManager = new CollectionManager();
   private readonly storageManager: StorageManager = new StorageManager();
+  private readonly fileManager: FileManager = new FileManager();
 
   constructor() {
     super();
+  }
+
+  public async resolveLastReadCandidateBySerieId(
+    serieId: number,
+  ): Promise<LastReadCandidate | null> {
+    const dataPaths = await this.fileManager.getDataPaths();
+
+    for (const dataPath of dataPaths) {
+      const serieData = await this.storageManager.readData(dataPath);
+
+      if (!serieData || serieData.id !== serieId) {
+        continue;
+      }
+
+      return this.resolveLastReadCandidate(dataPath);
+    }
+
+    return null;
   }
 
   public async addToRecents(serieData: Literatures | TieIn): Promise<boolean> {

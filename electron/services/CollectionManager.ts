@@ -228,6 +228,7 @@ export default class CollectionManager extends LibrarySystem {
       const serieExists = collection.series.some(
         (serie) => serie.id === serieId,
       );
+
       if (!serieExists) return false;
 
       const updatedCollection: Collection = {

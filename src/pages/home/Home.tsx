@@ -6,14 +6,12 @@ import useAllSeries from '../../hooks/useAllSeries';
 import Loading from '../../components/Loading/Loading';
 import SearchBar from '../../components/SearchBar/SearchBar';
 import { Play, Pencil } from 'lucide-react';
-import { viewData } from '../../../electron/types/electron-auxiliar.interfaces';
 import styles from './Home.module.scss';
+import useAction from '@/hooks/useAction';
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState<string>('');
-  const setError = useUIStore((state) => state.setError);
-  const setLoading = useUIStore((state) => state.setLoading);
-  const setSerie = useSerieStore((state) => state.setSerie);
+  const { lastChapter } = useAction();
 
   const loading = useUIStore((state) => state.loading);
   const clearSerie = useSerieStore((state) => state.clearSerie);
@@ -62,32 +60,6 @@ export default function Home() {
     );
   });
 
-  const lastChapter = async (
-    e: React.MouseEvent<HTMLButtonElement | SVGElement>,
-    serie: viewData,
-  ) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const response = await window.electronAPI.chapters.acessLastRead(
-      serie.dataPath,
-    );
-
-    if (!response.success || !response.data)
-      return setError(`${response.error}`);
-
-    const lastChapterUrl = response.data[0];
-    const serieData = response.data[1];
-    setSerie(serieData);
-
-    if (lastChapterUrl) {
-      navigate(lastChapterUrl);
-      setLoading(false);
-    } else {
-      setError('URL do último capítulo não encontrada.');
-    }
-  };
-
   if (loading || !series) {
     return <Loading />;
   }
@@ -127,7 +99,7 @@ export default function Home() {
                   <button
                     className={styles.playChapter}
                     aria-label={`Excluir série ${serie.name}`}
-                    onClick={(e) => lastChapter(e, serie)}
+                    onClick={(e) => lastChapter(e, serie.id)}
                   >
                     <Play size={'24'} />
                   </button>
