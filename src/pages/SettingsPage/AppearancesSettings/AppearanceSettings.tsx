@@ -1,7 +1,7 @@
+import useSystem from '@/hooks/useSystem';
 import { useState } from 'react';
 
 import { AppSettings } from '@/types/settings.interfaces';
-import useSystem from '@/hooks/useSystem';
 
 import styles from './AppearanceSettings.module.scss';
 
@@ -26,6 +26,7 @@ export default function AppearanceSettings() {
   } | null>(null);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [operationLogs, setOperationLogs] = useState<string[]>([]);
+
   const appendLog = (message: string) => {
     setOperationLogs((prev) =>
       [new Date().toLocaleTimeString() + ' • ' + message, ...prev].slice(0, 10),
@@ -38,6 +39,7 @@ export default function AppearanceSettings() {
     try {
       await systemManager.setSettings(partial);
       setToast({ type: 'success', message: 'Configuração salva com sucesso.' });
+      appendLog('Preferências visuais atualizadas.');
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Erro ao salvar configuração';
@@ -48,8 +50,11 @@ export default function AppearanceSettings() {
 
   return (
     <article className={styles.card}>
-      <h2>Tema / Aparência</h2>
-      <p>Ajuste modo de tema, cor principal e espaçamento.</p>
+      <header className={styles.header}>
+        <h2>Tema / Aparência</h2>
+        <p>Ajuste modo de tema, cor principal e espaçamento.</p>
+      </header>
+
       <div className={styles.form}>
         <label>
           Tema
@@ -78,7 +83,7 @@ export default function AppearanceSettings() {
             aria-label="Cor de destaque"
           />
         </label>
-        <label>
+        <label className={styles.checkboxLabel}>
           <input
             type="checkbox"
             checked={settings.compactMode}
@@ -90,6 +95,23 @@ export default function AppearanceSettings() {
           Modo compacto
         </label>
       </div>
+
+      {toast && (
+        <p className={`${styles.toast} ${styles[toast.type]}`}>
+          {toast.message}
+        </p>
+      )}
+
+      {operationLogs.length > 0 && (
+        <section className={styles.logs}>
+          <h3>Histórico</h3>
+          <ul>
+            {operationLogs.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </section>
+      )}
     </article>
   );
 }

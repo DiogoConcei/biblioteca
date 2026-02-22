@@ -1,0 +1,103 @@
+@use '@/styles/variables' as *;
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-4;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: $radius-lg;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.03),
+    rgba(137, 99, 186, 0.08)
+  );
+  color: $snow;
+}
+
+.header {
+  h2 {
+    font-size: $font-2xl;
+    margin-bottom: $spacing-1;
+  }
+
+  p {
+    color: rgba(255, 255, 255, 0.75);
+  }
+}
+
+.form {
+  display: grid;
+  gap: $spacing-3;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-1;
+    font-size: $font-base;
+  }
+
+  select,
+  input[type='color'] {
+    min-height: 42px;
+    border-radius: $radius-md;
+    border: 1px solid rgba(137, 99, 186, 0.6);
+    background-color: rgba(0, 0, 0, 0.18);
+    color: $snow;
+    padding: $spacing-1 $spacing-2;
+  }
+
+  input[type='color'] {
+    width: 100%;
+    padding: 0.4rem;
+  }
+}
+
+.checkboxLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+
+  input[type='checkbox'] {
+    accent-color: $amethyst;
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.toast {
+  padding: $spacing-2;
+  border-radius: $radius-md;
+  font-size: $font-sm;
+  border: 1px solid transparent;
+}
+
+.success {
+  background: rgba(94, 186, 137, 0.15);
+  border-color: rgba(94, 186, 137, 0.35);
+}
+
+.error {
+  background: rgba(232, 107, 107, 0.15);
+  border-color: rgba(232, 107, 107, 0.35);
+}
+
+.logs {
+  h3 {
+    font-size: $font-lg;
+    margin-bottom: $spacing-1;
+  }
+
+  ul {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-1;
+  }
+
+  li {
+    font-size: $font-sm;
+    color: rgba(255, 255, 255, 0.8);
+    border-left: 2px solid rgba(137, 99, 186, 0.7);
+    padding-left: $spacing-2;
+  }
+}

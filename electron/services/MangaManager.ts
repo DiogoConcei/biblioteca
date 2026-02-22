@@ -255,7 +255,6 @@ export default class MangaManager extends LibrarySystem {
   private async updateSytem(mangaData: Manga, oldPath: string) {
     await this.fileManager.localUpload(mangaData, oldPath);
     await this.storageManager.writeData(mangaData);
-    await this.setSerieId(mangaData.id + 1);
   }
 
   private async createChapters(
@@ -303,7 +302,7 @@ export default class MangaManager extends LibrarySystem {
   }
 
   private async mountEmptyManga(serie: SerieForm): Promise<Manga> {
-    const nextId = (await this.getSerieId()) + 1;
+    const nextId = await this.consumeNextSerieId();
     const [dirEntries, totalChapters] = await this.fileManager.searchChapters(
       serie.oldPath,
     );

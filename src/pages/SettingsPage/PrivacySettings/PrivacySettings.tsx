@@ -1,6 +1,4 @@
-import { useState, useMemo } from 'react';
-
-import useUIStore from '@/store/useUIStore';
+import { useState } from 'react';
 
 import useSystem from '@/hooks/useSystem';
 
@@ -29,73 +27,12 @@ export default function Privacy() {
   } | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [operationLogs, setOperationLogs] = useState<string[]>([]);
-  const [showResetModal, setShowResetModal] = useState(false);
-  const [resetType, setResetType] = useState<'soft' | 'full'>('soft');
-  const [backupBeforeReset, setBackupBeforeReset] = useState(true);
-  const [preserve, setPreserve] = useState<string[]>([]);
-  const [confirmResetInput, setConfirmResetInput] = useState('');
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
-
-  const canConfirmReset = useMemo(
-    () => (resetType === 'full' ? confirmResetInput.trim() === 'RESET' : true),
-    [confirmResetInput, resetType],
-  );
 
   const appendLog = (message: string) => {
     setOperationLogs((prev) =>
       [new Date().toLocaleTimeString() + ' • ' + message, ...prev].slice(0, 10),
     );
-  };
-
-  const isLoading = useUIStore((s) => s.loading);
-
-  const onPreserveChange = (field: string, checked: boolean) => {
-    setPreserve((prev) => {
-      if (checked) {
-        return [...new Set([...prev, field])];
-      }
-
-      return prev.filter((item) => item !== field);
-    });
-  };
-
-  const handleReset = async () => {
-    if (!canConfirmReset) {
-      setToast({
-        type: 'error',
-        message: 'Digite RESET para confirmar reset completo.',
-      });
-      return;
-    }
-
-    setBusyAction('reset');
-    appendLog(`Executando reset ${resetType}...`);
-
-    try {
-      if (backupBeforeReset) {
-        appendLog('Criando backup pré-reset...');
-        await systemManager.createBackup({
-          description: 'Backup automático pré-reset',
-        });
-      }
-
-      await systemManager.resetApplication({
-        level: resetType,
-        backupBefore: backupBeforeReset,
-        preserve,
-      });
-
-      appendLog('Reset finalizado com sucesso.');
-      setToast({ type: 'success', message: 'Reset aplicado com sucesso.' });
-      setShowResetModal(false);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Falha ao resetar';
-      appendLog(message);
-      setToast({ type: 'error', message });
-    } finally {
-      setBusyAction(null);
-    }
   };
 
   const persistSettings = async (partial: Partial<AppSettings>) => {
@@ -104,6 +41,7 @@ export default function Privacy() {
     try {
       await systemManager.setSettings(partial);
       setToast({ type: 'success', message: 'Configuração salva com sucesso.' });
+      appendLog('Preferências de privacidade atualizadas.');
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Erro ao salvar configuração';
@@ -112,41 +50,97 @@ export default function Privacy() {
     }
   };
 
+  const handleExportLogs = async () => {
+    setBusyAction('export');
+    try {
+      await systemManager.exportLogs();
+      setToast({ type: 'success', message: 'Logs exportados com sucesso.' });
+      appendLog('Logs exportados.');
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Falha ao exportar logs';
+      setToast({ type: 'error', message });
+      appendLog(message);
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const handleClearLogs = async () => {
+    setBusyAction('clear');
+    try {
+      await systemManager.clearLogs();
+      setToast({ type: 'success', message: 'Logs limpos com sucesso.' });
+      appendLog('Logs locais removidos.');
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Falha ao limpar logs';
+      setToast({ type: 'error', message });
+      appendLog(message);
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
   return (
     <article className={styles.card}>
-      <h2>Privacidade & Logs</h2>
-      <p>
-        Exporte logs, limpe dados de diagnóstico e controle envio de bug report.
-      </p>
+      <header className={styles.header}>
+        <h2>Privacidade & Logs</h2>
+        <p>
+          Exporte logs, limpe dados de diagnóstico e controle envio de bug
+          report.
+        </p>
+      </header>
+
       <div className={styles.actions}>
         <button
           type="button"
-          onClick={() => void systemManager.exportLogs()}
+          onClick={() => void handleExportLogs()}
+          disabled={busyAction !== null}
           aria-label="Exportar logs"
         >
-          Exportar logs
+          {busyAction === 'export' ? 'Exportando...' : 'Exportar logs'}
         </button>
         <button
           type="button"
-          onClick={() => void systemManager.clearLogs()}
+          onClick={() => void handleClearLogs()}
+          disabled={busyAction !== null}
           aria-label="Limpar logs"
         >
-          Limpar logs
+          {busyAction === 'clear' ? 'Limpando...' : 'Limpar logs'}
         </button>
-        <label>
-          <input
-            type="checkbox"
-            checked={settings.sendLogsWithBugReport}
-            onChange={(e) =>
-              void persistSettings({
-                sendLogsWithBugReport: e.target.checked,
-              })
-            }
-            aria-label="Enviar logs com bug report"
-          />
-          Enviar logs anexados ao bug report
-        </label>
       </div>
+
+      <label className={styles.checkboxLabel}>
+        <input
+          type="checkbox"
+          checked={settings.sendLogsWithBugReport}
+          onChange={(e) =>
+            void persistSettings({
+              sendLogsWithBugReport: e.target.checked,
+            })
+          }
+          aria-label="Enviar logs com bug report"
+        />
+        Enviar logs anexados ao bug report
+      </label>
+
+      {toast && (
+        <p className={`${styles.toast} ${styles[toast.type]}`}>
+          {toast.message}
+        </p>
+      )}
+
+      {operationLogs.length > 0 && (
+        <section className={styles.logs}>
+          <h3>Histórico</h3>
+          <ul>
+            {operationLogs.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </section>
+      )}
     </article>
   );
 }

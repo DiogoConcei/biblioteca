@@ -348,6 +348,59 @@ export default class SystemManager extends LibrarySystem {
     return { ...this.getSettingsDefaults(), ...(config.settings ?? {}) };
   }
 
+  public async removeBackup(backupPath: string): Promise<void> {
+    await fse.remove(backupPath);
+  }
+
+  public async restoreBackup(backupPath: string): Promise<void> {
+    const sourcePath = path.join(backupPath, 'storage');
+    if (!(await fse.pathExists(sourcePath))) {
+      throw new Error('Backup inválido ou sem pasta de storage');
+    }
+
+    await fse.copy(sourcePath, this.baseStorageFolder, { overwrite: true });
+  }
+
+  public async setDriveConnection(isConnected: boolean) {
+    await this.setSettings({ driveConnected: isConnected });
+    return { success: true };
+  }
+
+  public async createDebugBundle() {
+    const outputPath = path.join(
+      this.baseStorageFolder,
+      `debug-bundle-${Date.now()}.json`,
+    );
+    const settings = await this.getSettings();
+    await fse.writeJson(
+      outputPath,
+      {
+        generatedAt: new Date().toISOString(),
+        settings,
+      },
+      { spaces: 2 },
+    );
+
+    return { success: true, path: outputPath };
+  }
+
+  public async exportLogs() {
+    await fse.mkdirp(this.logsFolder);
+    const outputPath = path.join(this.logsFolder, `logs-${Date.now()}.json`);
+    const report = {
+      generatedAt: new Date().toISOString(),
+      note: 'Export de logs simplificado',
+    };
+    await fse.writeJson(outputPath, report, { spaces: 2 });
+    return { success: true, path: outputPath };
+  }
+
+  public async clearLogs() {
+    await fse.remove(this.logsFolder);
+    await fse.mkdirp(this.logsFolder);
+    return { success: true };
+  }
+
   public async getBackupList(): Promise<BackupMeta[]> {
     if (!(await fse.pathExists(this.backupFolder))) return [];
 

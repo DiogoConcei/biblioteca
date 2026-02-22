@@ -1,14 +1,5 @@
-import { BrowserWindow, IpcMain } from 'electron';
+import { BrowserWindow, IpcMain, dialog } from 'electron';
 import SystemManager from '../services/SystemManager.ts';
-import StorageManager from '../services/StorageManager.ts';
-import CollectionsManager from '../services/CollectionManager';
-import FileManager from '../services/FileManager.ts';
-import ImageManager from '../services/ImageManager.ts';
-import UserManager from '../services/UserManager.ts';
-import TieInManager from '../services/TieInManager.ts';
-import { ComicTieIn, TieIn } from '../types/comic.interfaces.ts';
-import { SerieEditForm } from '../../src/types/series.interfaces.ts';
-import { Literatures } from '../types/electron-auxiliar.interfaces.ts';
 
 export default function systemHandlers(ipcMain: IpcMain) {
   const systemManager = new SystemManager();
@@ -60,6 +51,68 @@ export default function systemHandlers(ipcMain: IpcMain) {
     try {
       await systemManager.setSettings(settings);
       return { success: true };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('system:get-settings', async () => {
+    try {
+      const data = await systemManager.getSettings();
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle(
+    'system:restore-backup',
+    async (_event, backupPath: string) => {
+      try {
+        await systemManager.restoreBackup(backupPath);
+        return { success: true };
+      } catch (error) {
+        return { success: false, error: String(error) };
+      }
+    },
+  );
+
+  ipcMain.handle('system:remove-backup', async (_event, backupPath: string) => {
+    try {
+      await systemManager.removeBackup(backupPath);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('system:connect-drive', async () =>
+    systemManager.setDriveConnection(true),
+  );
+
+  ipcMain.handle('system:disconnect-drive', async () =>
+    systemManager.setDriveConnection(false),
+  );
+  ipcMain.handle('system:export-logs', async () => systemManager.exportLogs());
+  ipcMain.handle('system:clear-logs', async () => systemManager.clearLogs());
+  ipcMain.handle('system:create-debug-bundle', async () =>
+    systemManager.createDebugBundle(),
+  );
+
+  ipcMain.handle('system:pick-image', async () => {
+    try {
+      const result = await dialog.showOpenDialog({
+        properties: ['openFile'],
+        filters: [
+          { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] },
+        ],
+      });
+
+      if (result.canceled || !result.filePaths.length) {
+        return { success: true, data: null };
+      }
+
+      return { success: true, data: result.filePaths[0] };
     } catch (error) {
       return { success: false, error: String(error) };
     }

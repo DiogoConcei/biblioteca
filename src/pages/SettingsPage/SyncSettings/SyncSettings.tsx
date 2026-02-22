@@ -21,6 +21,7 @@ const defaultSettings: AppSettings = {
 export default function SyncSettings() {
   const systemManager = useSystem();
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+  const [busyAction, setBusyAction] = useState<string | null>(null);
 
   const [toast, setToast] = useState<{
     type: 'success' | 'error';
@@ -35,12 +36,36 @@ export default function SyncSettings() {
     );
   };
 
+  const handleDriveConnection = async () => {
+    setBusyAction('drive');
+
+    try {
+      if (settings.driveConnected) {
+        await systemManager.disconnectDrive();
+        await persistSettings({ driveConnected: false });
+        appendLog('Google Drive desconectado.');
+      } else {
+        await systemManager.connectDrive();
+        await persistSettings({ driveConnected: true });
+        appendLog('Google Drive conectado.');
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Erro ao conectar com o Drive';
+      setToast({ type: 'error', message });
+      appendLog(message);
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
   const persistSettings = async (partial: Partial<AppSettings>) => {
     const next = { ...settings, ...partial };
     setSettings(next);
     try {
       await systemManager.setSettings(partial);
       setToast({ type: 'success', message: 'Configuração salva com sucesso.' });
+      appendLog('Configuração de sincronização atualizada.');
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Erro ao salvar configuração';
@@ -50,31 +75,29 @@ export default function SyncSettings() {
   };
   return (
     <article className={styles.card}>
-      <h2>Sincronização / Cloud</h2>
-      <p>Conecte o Google Drive para sincronizar backups.</p>
+      <header className={styles.header}>
+        <h2>Sincronização / Cloud</h2>
+        <p>Conecte o Google Drive para sincronizar backups.</p>
+      </header>
+
       <div className={styles.actions}>
         <button
           type="button"
-          onClick={async () => {
-            if (settings.driveConnected) {
-              await systemManager.disconnectDrive();
-              void persistSettings({ driveConnected: false });
-              return;
-            }
-
-            await systemManager.connectDrive();
-            void persistSettings({ driveConnected: true });
-          }}
+          disabled={busyAction !== null}
+          onClick={() => void handleDriveConnection()}
           aria-label="Conectar ou desconectar Google Drive"
         >
-          {settings.driveConnected
-            ? 'Desconectar Drive'
-            : 'Conectar Google Drive'}
+          {busyAction === 'drive'
+            ? 'Processando...'
+            : settings.driveConnected
+              ? 'Desconectar Drive'
+              : 'Conectar Google Drive'}
         </button>
-        <label>
+        <label className={styles.checkboxLabel}>
           <input
             type="checkbox"
             checked={settings.uploadBackupsToDrive}
+            disabled={!settings.driveConnected}
             onChange={(e) =>
               void persistSettings({
                 uploadBackupsToDrive: e.target.checked,
@@ -85,6 +108,23 @@ export default function SyncSettings() {
           Enviar backups automaticamente ao Drive
         </label>
       </div>
+
+      {toast && (
+        <p className={`${styles.toast} ${styles[toast.type]}`}>
+          {toast.message}
+        </p>
+      )}
+
+      {operationLogs.length > 0 && (
+        <section className={styles.logs}>
+          <h3>Histórico</h3>
+          <ul>
+            {operationLogs.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </section>
+      )}
     </article>
   );
 }

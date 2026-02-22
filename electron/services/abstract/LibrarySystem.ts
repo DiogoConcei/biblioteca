@@ -125,6 +125,20 @@ export default abstract class LibrarySystem {
     }
   }
 
+  public async consumeNextSerieId(): Promise<number> {
+    try {
+      const currentId = await this.getSerieId();
+      const nextId = currentId + 1;
+
+      await this.setSerieId(nextId);
+
+      return nextId;
+    } catch (e) {
+      console.error(`Erro ao consumir o próximo ID: ${e}`);
+      throw e;
+    }
+  }
+
   public async setSerieId(newId: number): Promise<void> {
     try {
       let data: Partial<AppConfig>;
