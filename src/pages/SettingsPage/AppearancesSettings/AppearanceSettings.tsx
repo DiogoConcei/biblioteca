@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { AppSettings } from '@/types/settings.interfaces';
 import useSystem from '@/hooks/useSystem';
 
-import styles from './Appearance.module.scss';
+import styles from './AppearanceSettings.module.scss';
 
 const defaultSettings: AppSettings = {
   backupAuto: false,

@@ -1,20 +1,13 @@
 import { useState, useMemo } from 'react';
 
-import useUIStore from '../../../store/useUIStore';
 import useSystem from '@/hooks/useSystem';
 
-import {
-  AppSettings,
-  BackupFrequency,
-  BackupMeta,
-  ComicCoverRegenerationProgress,
-} from '@/types/settings.interfaces';
+import { ComicCoverRegenerationProgress } from '@/types/settings.interfaces';
 import styles from './SystemConfig.module.scss';
 
 export default function SystemConfig() {
   const systemManager = useSystem();
 
-  const [status, setStatus] = useState('Carregando configurações...');
   const [toast, setToast] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -22,6 +15,13 @@ export default function SystemConfig() {
   const [busyAction, setBusyAction] = useState<string | null>(null);
 
   const [resetType, setResetType] = useState<'soft' | 'full'>('soft');
+  const resetOptions: ('soft' | 'full')[] = ['soft', 'full'];
+  const backupOptions = [
+    'collections',
+    'favorites',
+    'credentials',
+    'scraper cache',
+  ];
   const [backupBeforeReset, setBackupBeforeReset] = useState(true);
   const [preserve, setPreserve] = useState<string[]>([]);
   const [confirmResetInput, setConfirmResetInput] = useState('');
@@ -29,6 +29,7 @@ export default function SystemConfig() {
   const [operationLogs, setOperationLogs] = useState<string[]>([]);
   const [coverRegenProgress, setCoverRegenProgress] =
     useState<ComicCoverRegenerationProgress | null>(null);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
 
   const canConfirmReset = useMemo(
     () => (resetType === 'full' ? confirmResetInput.trim() === 'RESET' : true),
@@ -40,8 +41,6 @@ export default function SystemConfig() {
       [new Date().toLocaleTimeString() + ' • ' + message, ...prev].slice(0, 10),
     );
   };
-
-  const isLoading = useUIStore((s) => s.loading);
 
   const handleRegenerateComicCovers = async () => {
     setBusyAction('regenerate-covers');
@@ -134,8 +133,8 @@ export default function SystemConfig() {
   };
 
   return (
-    <section>
-      <article className={styles.card}>
+    <section className={styles.card}>
+      <article className={styles.diagnostic}>
         <h2>Ações de manutenção e diagnotisco de suporte</h2>
 
         <button
@@ -176,50 +175,68 @@ export default function SystemConfig() {
         )}
       </article>
 
-      <article className={`${styles.card} ${styles.danger}`}>
+      <article className={`${styles.danger}`}>
         <h2>Reset / Restaurar</h2>
         <p>Operações destrutivas: revise as opções antes de confirmar.</p>
         <div className={styles.form}>
-          <label>
-            Tipo de reset
-            <select
-              value={resetType}
-              onChange={(e) => setResetType(e.target.value as 'soft' | 'full')}
-              aria-label="Tipo de reset"
+          <div className={styles.resetArea}>
+            <label>Tipo de reset</label>
+
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className={styles.resetTypes}
             >
-              <option value="soft">Soft reset (cache e temporários)</option>
-              <option value="full">Full reset (dados locais)</option>
-            </select>
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={backupBeforeReset}
-              onChange={(e) => setBackupBeforeReset(e.target.checked)}
-              aria-label="Criar backup antes do reset"
-            />
-            Criar backup automaticamente antes do reset
-          </label>
-          {['collections', 'favorites', 'credentials', 'scraper cache'].map(
-            (item) => (
-              <label key={item}>
+              {resetType === 'soft'
+                ? 'Soft (cache e temporário)'
+                : 'Full (dados locais)'}
+            </button>
+
+            {isOpen && (
+              <ul className={styles['dropdown-list']}>
+                {resetOptions.map((type) => (
+                  <li key={type} className={styles['dropdown-item']}>
+                    <button
+                      className={styles['dropdown-option']}
+                      onClick={() => {
+                        setResetType(type);
+                        setIsOpen(false);
+                      }}
+                    >
+                      {type}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className={styles.backupOptions}>
+            <label className="mainLabel">
+              Criar backup automaticamente antes do reset
+            </label>
+
+            {backupOptions.map((item) => (
+              <div key={item} className={styles.checkboxWrapper}>
                 <input
                   type="checkbox"
+                  id={`preserve_${item}`}
                   checked={preserve.includes(item)}
                   onChange={(e) => onPreserveChange(item, e.target.checked)}
-                  aria-label={`Preservar ${item}`}
                 />
-                Preservar {item}
-              </label>
-            ),
-          )}
-          <button
-            type="button"
-            onClick={() => setShowResetModal(true)}
-            aria-label="Abrir confirmação de reset"
-          >
-            Revisar e confirmar reset
-          </button>
+
+                <label htmlFor={`preserve_${item}`}>
+                  <span>Preservar {item}</span>
+                </label>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => setShowResetModal(true)}
+              aria-label="Abrir confirmação de reset"
+            >
+              Revisar e confirmar reset
+            </button>
+          </div>{' '}
         </div>
       </article>
 
@@ -248,6 +265,7 @@ export default function SystemConfig() {
                 />
               </label>
             )}
+
             <div className={styles.actions}>
               <button
                 type="button"

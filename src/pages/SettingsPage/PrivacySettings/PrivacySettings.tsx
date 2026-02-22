@@ -4,7 +4,7 @@ import useUIStore from '@/store/useUIStore';
 
 import useSystem from '@/hooks/useSystem';
 
-import styles from './Privacy.module.scss';
+import styles from './PrivacySettings.module.scss';
 
 import { AppSettings } from '@/types/settings.interfaces';
 

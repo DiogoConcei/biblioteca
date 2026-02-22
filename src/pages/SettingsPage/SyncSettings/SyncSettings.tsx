@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import useSystem from '@/hooks/useSystem';
 
-import styles from './Sync.module.scss';
+import styles from './SyncSettings.module.scss';
 
 import { AppSettings } from '@/types/settings.interfaces';
 
