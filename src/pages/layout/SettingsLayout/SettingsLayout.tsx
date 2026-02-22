@@ -6,6 +6,8 @@ export default function SettingsLayout() {
     { label: 'Ajustes Rápidos', path: '' },
     { label: 'Backup', path: 'backup' },
     { label: 'Aparência', path: 'appearance' },
+    { label: 'Privacidade', path: 'privacy' },
+    { label: 'Sincronização', path: 'sync' },
   ];
 
   return (

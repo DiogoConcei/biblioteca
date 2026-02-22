@@ -3,7 +3,7 @@ import './styles/base.scss';
 import { HashRouter, Routes, Route, Router } from 'react-router-dom';
 
 import Layout from './pages/layout/AppLayout/Layout';
-import SystemConfig from './pages/SettingsPage/SystemConfig';
+import SystemConfig from './pages/SettingsPage/SystemSettings/SystemConfig';
 import Home from './pages/home/Home';
 import Upload from './pages/upload/Upload';
 import MangaPage from './pages/mangaPage/MangaPage';
@@ -12,8 +12,11 @@ import TieInPage from './components/TieInPage/TieInPage';
 import Viewer from './pages/viewer/Viewer';
 import EditSerie from './pages/editSerie/EditSerie';
 import SettingsLayout from './pages/layout/SettingsLayout/SettingsLayout';
-import BackupSettings from './pages/SettingsPage/BackupSetting/BackupSettings';
+import BackupSettings from './pages/SettingsPage/BackupSettings/BackupSettings';
 import ErrorBoundary from './providers/ErrorBoundary';
+import AppearanceSettings from './pages/SettingsPage/AppearancesSettings/AppearanceSettings';
+import PrivacySettings from './pages/SettingsPage/PrivacySettings/PrivacySettings';
+import SyncSettings from './pages/SettingsPage/SyncSettings/SyncSettings';
 
 const App = () => {
   return (
@@ -25,6 +28,9 @@ const App = () => {
             <Route path="settings" element={<SettingsLayout />}>
               <Route index element={<SystemConfig />} />
               <Route path="backup" element={<BackupSettings />} />
+              <Route path="appearance" element={<AppearanceSettings />} />
+              <Route path="privacy" element={<PrivacySettings />} />
+              <Route path="sync" element={<SyncSettings />} />
             </Route>
             <Route
               path="edit/serie/:serie_name/:literature_form"
