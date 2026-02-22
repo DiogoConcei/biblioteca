@@ -43,7 +43,33 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   system: {
-    reorderId: (): Promise<boolean> => ipcRenderer.invoke('system:reorder-id'),
+    createBackup: (options?: {
+      encrypt?: boolean;
+      password?: string;
+      description?: string;
+      includeLargeFiles?: boolean;
+    }) => ipcRenderer.invoke('system:create-backup', options),
+    resetApplication: (options: {
+      level: 'soft' | 'full';
+      backupBefore?: boolean;
+      preserve?: string[];
+    }) => ipcRenderer.invoke('system:reset-application', options),
+    getBackupList: () => ipcRenderer.invoke('system:get-backup-list'),
+    restoreBackup: (backupPath: string) =>
+      ipcRenderer.invoke('system:restore-backup', backupPath),
+    removeBackup: (backupPath: string) =>
+      ipcRenderer.invoke('system:remove-backup', backupPath),
+    getSettings: () => ipcRenderer.invoke('system:get-settings'),
+    setSettings: (settings: Record<string, unknown>) =>
+      ipcRenderer.invoke('system:set-settings', settings),
+    connectDrive: () => ipcRenderer.invoke('system:connect-drive'),
+    disconnectDrive: () => ipcRenderer.invoke('system:disconnect-drive'),
+    exportLogs: () => ipcRenderer.invoke('system:export-logs'),
+    clearLogs: () => ipcRenderer.invoke('system:clear-logs'),
+    createDebugBundle: () => ipcRenderer.invoke('system:create-debug-bundle'),
+    regenerateComicCovers: () =>
+      ipcRenderer.invoke('system:regenerate-comic-covers'),
+    pickImage: () => ipcRenderer.invoke('system:pick-image'),
   },
 
   webUtilities: {

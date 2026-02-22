@@ -14,12 +14,20 @@ export default function systemHandlers(ipcMain: IpcMain) {
   const systemManager = new SystemManager();
   // Auto backup
 
-  ipcMain.handle('system:reorder-id', async (_event) => {
+  ipcMain.handle('system:create-backup', async (_event, options) => {
     try {
-      return await systemManager.fixId();
-    } catch (e) {
-      console.error(`Falha na requisicao `);
-      return false;
+      return await systemManager.createBackup(options);
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('system:reset-application', async (_event, options) => {
+    try {
+      await systemManager.resetApplication(options);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: String(error) };
     }
   });
 }

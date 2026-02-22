@@ -1,10 +1,20 @@
 import path from 'path';
 import fse from 'fs-extra';
-import { AppConfig } from '../../types/electron-auxiliar.interfaces';
+import { AppConfig } from '../../types/settings.interfaces';
 
 export default abstract class LibrarySystem {
   readonly baseStorageFolder: string =
     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage';
+
+  protected readonly backupFolder: string = path.join(
+    this.baseStorageFolder,
+    'backups',
+  );
+
+  protected readonly logsFolder: string = path.join(
+    this.baseStorageFolder,
+    'logs',
+  );
 
   protected readonly dataStorage: string = path.join(
     this.baseStorageFolder,

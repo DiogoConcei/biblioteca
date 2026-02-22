@@ -110,3 +110,23 @@ export interface ChapterView {
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
+
+export interface BackupMeta {
+  id: string;
+  path: string;
+  createdAt: string;
+  description?: string;
+  encrypted?: boolean;
+}
+
+export interface LocalSettings {
+  backupAuto: boolean;
+  backupSchedule: { frequency: 'daily' | 'weekly' | 'monthly'; time: string };
+  backupRetention: number;
+  uploadBackupsToDrive: boolean;
+  themeMode: 'light' | 'dark' | 'system';
+  accentColor: string;
+  compactMode: boolean;
+  sendLogsWithBugReport: boolean;
+  driveConnected: boolean;
+}

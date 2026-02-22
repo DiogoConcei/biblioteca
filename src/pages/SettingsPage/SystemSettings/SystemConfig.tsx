@@ -101,7 +101,6 @@ export default function SystemConfig() {
       });
       return;
     }
-
     setBusyAction('reset');
     appendLog(`Executando reset ${resetType}...`);
 
@@ -113,6 +112,7 @@ export default function SystemConfig() {
         });
       }
 
+      console.log('executou aqui 3');
       await systemManager.resetApplication({
         level: resetType,
         backupBefore: backupBeforeReset,
@@ -236,7 +236,7 @@ export default function SystemConfig() {
             >
               Revisar e confirmar reset
             </button>
-          </div>{' '}
+          </div>
         </div>
       </article>
 
