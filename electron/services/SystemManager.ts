@@ -31,7 +31,15 @@ export default class SystemManager extends LibrarySystem {
     }
 
     if (options.level === 'full') {
-      await fse.remove(this.baseStorageFolder);
+      const contents = await fse.readdir(this.baseStorageFolder);
+
+      for (const item of contents) {
+        const fullPath = path.join(this.baseStorageFolder, item);
+
+        if (fullPath !== this.backupFolder) {
+          await fse.remove(fullPath);
+        }
+      }
       await this.fileManager.regenAppFolders();
     }
 
@@ -67,12 +75,12 @@ export default class SystemManager extends LibrarySystem {
 
       const targetStorage = path.join(backupFolder, 'storage');
 
-      await fse.copy(this.baseStorageFolder, targetStorage, {
-        filter: (src) => {
-          console.log('Copiando:', src);
-          return !src.includes(path.join(this.baseStorageFolder, 'backups'));
-        },
-      });
+      await fse.copy(this.dataStorage, path.join(targetStorage, 'data store'));
+      await fse.copy(this.configFolder, path.join(targetStorage, 'config'));
+      await fse.copy(
+        this.userLibrary,
+        path.join(targetStorage, 'user library'),
+      );
 
       const metadata: BackupMeta = {
         id: `backup-${timestamp}`,
