@@ -1,4 +1,4 @@
-import { IpcMain } from 'electron';
+import { BrowserWindow, IpcMain } from 'electron';
 import SystemManager from '../services/SystemManager.ts';
 import StorageManager from '../services/StorageManager.ts';
 import CollectionsManager from '../services/CollectionManager';
@@ -12,7 +12,6 @@ import { Literatures } from '../types/electron-auxiliar.interfaces.ts';
 
 export default function systemHandlers(ipcMain: IpcMain) {
   const systemManager = new SystemManager();
-  // Auto backup
 
   ipcMain.handle('system:create-backup', async (_event, options) => {
     try {
@@ -26,6 +25,23 @@ export default function systemHandlers(ipcMain: IpcMain) {
     try {
       await systemManager.resetApplication(options);
       return { success: true };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('system:regenerate-comic-covers', async () => {
+    try {
+      const data = await systemManager.regenerateComicCovers((progress) => {
+        for (const window of BrowserWindow.getAllWindows()) {
+          window.webContents.send(
+            'system:comic-cover-regeneration-progress',
+            progress,
+          );
+        }
+      });
+
+      return { success: true, data };
     } catch (error) {
       return { success: false, error: String(error) };
     }

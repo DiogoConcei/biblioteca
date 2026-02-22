@@ -109,6 +109,7 @@ export default class ImageManager extends LibrarySystem {
       }
     }
   }
+
   public async readFileAsDataUrl(rawPath: string): Promise<string> {
     const buf = await fse.promises.readFile(rawPath);
     const mimeType = mime.lookup(rawPath) || 'application/octet-stream';
@@ -276,6 +277,23 @@ export default class ImageManager extends LibrarySystem {
   public async saveNewCover(coverPath: string): Promise<string> {
     const destPath = path.join(this.showcaseImages, path.basename(coverPath));
     return await this.normalizeImage(coverPath, destPath);
+  }
+
+  public async isImageHealthy(filePath: string): Promise<boolean> {
+    try {
+      if (!(await fse.pathExists(filePath))) {
+        return false;
+      }
+
+      if (!(await this.isImage(filePath))) {
+        return false;
+      }
+
+      const metadata = await sharp(filePath).metadata();
+      return Boolean(metadata.width && metadata.height);
+    } catch {
+      return false;
+    }
   }
 
   private async getMime(filePath: string): Promise<string | null> {
