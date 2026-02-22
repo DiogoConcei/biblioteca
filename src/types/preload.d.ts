@@ -43,6 +43,48 @@ declare global {
         close: () => Promise<boolean>;
       };
 
+      system: {
+        createBackup: (options?: {
+          encrypt?: boolean;
+          password?: string;
+          description?: string;
+          includeLargeFiles?: boolean;
+        }) => Promise<APIResponse<undefined> & { path?: string }>;
+        resetApplication: (options: {
+          level: 'soft' | 'full';
+          backupBefore?: boolean;
+          preserve?: string[];
+        }) => Promise<APIResponse<void>>;
+        getBackupList: () => Promise<
+          APIResponse<
+            Array<{
+              id: string;
+              path: string;
+              createdAt: string;
+              description?: string;
+              encrypted?: boolean;
+            }>
+          >
+        >;
+        restoreBackup: (backupPath: string) => Promise<APIResponse<void>>;
+        removeBackup: (backupPath: string) => Promise<APIResponse<void>>;
+        getSettings: () => Promise<APIResponse<Record<string, unknown>>>;
+        setSettings: (
+          settings: Record<string, unknown>,
+        ) => Promise<APIResponse<void>>;
+        connectDrive: () => Promise<APIResponse<void>>;
+        disconnectDrive: () => Promise<APIResponse<void>>;
+        exportLogs: () => Promise<APIResponse<undefined> & { path?: string }>;
+        clearLogs: () => Promise<APIResponse<void>>;
+        createDebugBundle: () => Promise<
+          APIResponse<undefined> & { path?: string }
+        >;
+        pickImage: () => Promise<APIResponse<string | null>>;
+        regenerateComicCovers: () => Promise<
+          SystemResult<ComicCoverRegenerationResult>
+        >;
+      };
+
       webUtilities: {
         getPathForFile: (file: File) => string;
         readFileAsDataUrl: (path: string) => string;

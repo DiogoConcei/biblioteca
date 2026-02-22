@@ -1,8 +1,9 @@
 import './styles/base.scss';
 
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route, Router } from 'react-router-dom';
 
-import Layout from './pages/layout/Layout';
+import Layout from './pages/layout/AppLayout/Layout';
+import SystemConfig from './pages/SettingsPage/SystemSettings/SystemConfig';
 import Home from './pages/home/Home';
 import Collections from './pages/collections/Collections';
 import Upload from './pages/upload/Upload';
@@ -11,8 +12,12 @@ import ComicPage from './pages/comicPage/comicPage';
 import TieInPage from './components/TieInPage/TieInPage';
 import Viewer from './pages/viewer/Viewer';
 import EditSerie from './pages/editSerie/EditSerie';
+import SettingsLayout from './pages/layout/SettingsLayout/SettingsLayout';
+import BackupSettings from './pages/SettingsPage/BackupSettings/BackupSettings';
 import ErrorBoundary from './providers/ErrorBoundary';
-import SettingsPage from './pages/settings/SettingsPage';
+import AppearanceSettings from './pages/SettingsPage/AppearancesSettings/AppearanceSettings';
+import PrivacySettings from './pages/SettingsPage/PrivacySettings/PrivacySettings';
+import SyncSettings from './pages/SettingsPage/SyncSettings/SyncSettings';
 
 const App = () => {
   return (
@@ -21,7 +26,13 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
-            <Route path="collections" element={<Collections />} />
+            <Route path="settings" element={<SettingsLayout />}>
+              <Route index element={<SystemConfig />} />
+              <Route path="backup" element={<BackupSettings />} />
+              <Route path="appearance" element={<AppearanceSettings />} />
+              <Route path="privacy" element={<PrivacySettings />} />
+              <Route path="sync" element={<SyncSettings />} />
+            </Route>
             <Route
               path="edit/serie/:serie_name/:literature_form"
               element={<EditSerie />}

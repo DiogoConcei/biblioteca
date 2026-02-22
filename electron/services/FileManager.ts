@@ -576,6 +576,89 @@ export default class FileManager extends LibrarySystem {
     return null;
   }
 
+  public async regenAppFolders() {
+    const storageFolder = this.baseStorageFolder;
+
+    if (!fse.existsSync(storageFolder)) {
+      await fse.mkdirp(storageFolder);
+    }
+
+    const dataStore = path.join(storageFolder, 'data store');
+    const userLibrary = path.join(storageFolder, 'user library');
+    const configFolder = path.join(storageFolder, 'config');
+    const imagesFolder = path.join(dataStore, 'images files');
+    const jsonFolder = path.join(dataStore, 'json files');
+
+    await Promise.all([
+      fse.mkdirp(dataStore),
+      fse.mkdirp(userLibrary),
+      fse.mkdirp(configFolder),
+      fse.mkdirp(imagesFolder),
+      fse.mkdirp(jsonFolder),
+    ]);
+
+    await Promise.all([
+      fse.mkdirp(path.join(configFolder, 'app')),
+      fse.mkdirp(path.join(configFolder, 'comic')),
+      fse.mkdirp(path.join(configFolder, 'book')),
+      fse.mkdirp(path.join(configFolder, 'manga')),
+      fse.mkdirp(path.join(jsonFolder, 'books')),
+      fse.mkdirp(path.join(jsonFolder, 'comics')),
+      fse.mkdirp(path.join(jsonFolder, 'mangas')),
+      fse.mkdirp(path.join(jsonFolder, 'childSeries')),
+      fse.mkdirp(path.join(imagesFolder, 'book')),
+      fse.mkdirp(path.join(imagesFolder, 'comic')),
+      fse.mkdirp(path.join(imagesFolder, 'manga')),
+      fse.mkdirp(path.join(imagesFolder, 'showcase images')),
+      fse.mkdirp(path.join(imagesFolder, 'dinamic images')),
+    ]);
+
+    const configJsonPath = path.join(configFolder, 'app', 'config.json');
+    const collectionsJsonPath = path.join(
+      configFolder,
+      'app',
+      'appCollections.json',
+    );
+
+    if (!fse.existsSync(configJsonPath)) {
+      await fse.writeJson(
+        configJsonPath,
+        {
+          settings: {
+            reading_mode: 'single_page',
+            zoom: 'fit_width',
+            ligth_mode: true,
+            full_screen: true,
+          },
+          metadata: { global_id: 0 },
+        },
+        { spaces: 2 },
+      );
+    }
+
+    if (!fse.existsSync(collectionsJsonPath)) {
+      await fse.writeJson(
+        collectionsJsonPath,
+        [
+          {
+            name: 'Favoritos',
+            description: 'Minhas séries favoritas.',
+            series: [],
+            updatedAt: new Date().toISOString(),
+          },
+          {
+            name: 'Recentes',
+            description: 'Séries lidas recentemente',
+            series: [],
+            comments: [],
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        { spaces: 2 },
+      );
+    }
+  }
+
   public sortPage(a: string, b: string): number {
     const getIndex = (p: string) => {
       const m = p.match(/-(\d+)\.\w+$/);

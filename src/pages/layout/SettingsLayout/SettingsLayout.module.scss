@@ -1,0 +1,51 @@
+@use '@/styles/variables' as *;
+
+.container {
+  height: 100vh;
+  display: flex;
+
+  .sidebar {
+    width: 260px;
+    padding: $spacing-3;
+
+    .menu {
+      list-style: none;
+      color: $gunmetal;
+
+      .sectionItem {
+        display: block;
+        @include interactive-buttons;
+        width: 100%;
+        background: transparent;
+        padding: $spacing-2 $spacing-3;
+        text-align: start;
+        border-radius: $radius-md;
+        font-size: $font-base;
+        transition: all 0.2s ease;
+        margin-bottom: $spacing-1;
+        color: $snow;
+
+        &:hover {
+          background-color: rgba(155, 89, 182, 0.12);
+        }
+      }
+
+      .active {
+        background: linear-gradient(
+          90deg,
+          rgba(155, 89, 182, 0.4),
+          rgba(155, 89, 182, 0.2)
+        );
+        color: $snow;
+      }
+    }
+  }
+
+  .content {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+    border-radius: 5px 0px 0px 0px;
+    background-color: $weak-gunmental;
+  }
+}

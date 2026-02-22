@@ -2,7 +2,9 @@ $blue: #00a7e1;
 $amethyst: #8963ba;
 $weak-amethyst: #a878e5;
 $gunmetal: #282c34;
+$weak-gunmental: #424650;
 $indian-red: #cd5c5c;
+$weak-indian-red: #fd7373;
 $strong-indian-red: #aa5042;
 $baby-powder: #f4f4ed;
 $snow: #fcf7f8;
@@ -62,7 +64,11 @@ $font-5xl: 3rem; // 48px
   outline: none;
 }
 
-@mixin interactive-button {
+@mixin interactive-buttons {
+  padding: 0px;
+  margin: 0px;
+  font-size: $font-base;
+  border-radius: none;
   border: none;
   background: none;
   outline: none;

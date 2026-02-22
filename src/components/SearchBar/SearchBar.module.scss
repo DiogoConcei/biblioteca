@@ -16,6 +16,11 @@
     border-radius: $radius-md;
     gap: $spacing-2;
 
+    svg {
+      color: $amethyst;
+      cursor: pointer;
+    }
+
     .search-bar {
       @include pattern-button;
       padding: $spacing-1;
@@ -27,10 +32,6 @@
 
       &:focus {
         width: 350px;
-      }
-
-      &:focus-within {
-        border: 1px solid $border-collor;
       }
 
       &::placeholder {

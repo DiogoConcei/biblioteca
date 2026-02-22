@@ -1,7 +1,6 @@
 import styles from './SearchBar.module.scss';
-import { ListFilter, Search } from 'lucide-react';
-
-import { SearchBarProps } from '../../types/components.interfaces';
+import { Search } from 'lucide-react';
+import { SearchBarProps } from '@/types/components.interfaces';
 
 export default function SearchBar({
   searchInput,
@@ -18,11 +17,8 @@ export default function SearchBar({
           placeholder="Pesquisar"
           className={styles['search-bar']}
         />
-        <Search color="#8963ba" className="actIcon" />
+        <Search size={28} />
       </label>
-      <span>
-        <ListFilter color="#8963ba" className="actIcon" />
-      </span>
     </div>
   );
 }

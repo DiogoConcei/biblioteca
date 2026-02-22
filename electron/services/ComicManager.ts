@@ -370,7 +370,6 @@ export default class ComicManager extends LibrarySystem {
   private async updateSytem(comicData: Comic, oldPath: string) {
     await this.fileManager.localUpload(comicData, oldPath);
     await this.storageManager.writeData(comicData);
-    await this.setSerieId(comicData.id + 1);
   }
 
   private async processSerieData(serie: SerieForm): Promise<Comic> {
@@ -390,7 +389,7 @@ export default class ComicManager extends LibrarySystem {
   }
 
   private async mountEmptyComic(serie: SerieForm): Promise<Comic> {
-    const nextId = (await this.getSerieId()) + 1;
+    const nextId = await this.consumeNextSerieId();
     const subDir = await this.fileManager.searchDirectories(serie.oldPath);
     const totalChapters = await this.fileManager.countChapters([
       serie.oldPath,

@@ -45,7 +45,7 @@ const withRetry = async <T>(
     : new Error('Erro desconhecido ao executar operação do sistema');
 };
 
-export default function useSystemManager() {
+export default function useSystem() {
   const createBackup = useCallback(async (options?: CreateBackupOptions) => {
     const response = await withRetry<SystemResult>(async () =>
       window.electronAPI.system.createBackup(options),

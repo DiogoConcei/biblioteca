@@ -7,6 +7,24 @@
   justify-content: flex-start;
   overflow: hidden;
 
+  .options {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    width: 100%;
+
+    .settings-button {
+      @include interactive-buttons;
+      color: $amethyst;
+      padding: $spacing-2;
+
+      &:hover {
+        background-color: $hover-shining;
+        border-radius: 5px;
+      }
+    }
+  }
+
   .content {
     display: flex;
     flex-direction: column;

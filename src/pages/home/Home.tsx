@@ -5,6 +5,8 @@ import useSerieStore from '../../store/useSerieStore';
 import useAllSeries from '../../hooks/useAllSeries';
 import Loading from '../../components/Loading/Loading';
 import SearchBar from '../../components/SearchBar/SearchBar';
+import { ListFilter } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { Play, Pencil } from 'lucide-react';
 import styles from './Home.module.scss';
 import useAction from '@/hooks/useAction';
@@ -33,7 +35,7 @@ export default function Home() {
     });
 
     try {
-      const response = await window.electronAPI.upload.processSerie(filePaths);
+      const response = await window.electronAPI.upload.processSeries(filePaths);
       const serieData = response.data;
       navigate('/local-upload/serie', { state: { serieData } });
     } catch (error) {
@@ -70,7 +72,20 @@ export default function Home() {
       onDragOver={handleDrag}
       onDrop={handleDrop}
     >
-      <SearchBar searchInput={searchInput} onSearchChange={searchChange} />
+      <div className={styles.options}>
+        <SearchBar searchInput={searchInput} onSearchChange={searchChange} />
+
+        <button
+          onClick={() => navigate('/settings')}
+          className={styles['settings-button']}
+        >
+          <Settings size={32} />
+        </button>
+
+        <button>
+          <ListFilter size={32} />
+        </button>
+      </div>
 
       <div className={styles.content}>
         <div className={styles.seriesContent}>

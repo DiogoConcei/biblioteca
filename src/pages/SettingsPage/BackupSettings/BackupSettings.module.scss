@@ -1,0 +1,254 @@
+@use '@/styles/variables' as *;
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  max-width: 480px;
+
+  h2 {
+    font-size: $font-2xl;
+    color: $snow;
+  }
+
+  p {
+    color: $snow;
+    font-weight: 600;
+  }
+
+  /* ===================================================== */
+  /* FORM PRINCIPAL */
+  /* ===================================================== */
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-3;
+
+    label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: $spacing-2;
+      font-size: $font-lg;
+      color: $snow;
+    }
+
+    input[type='text'] {
+      @include interactive-buttons;
+      flex: 1;
+      padding: $spacing-1;
+      border: 1px solid $amethyst;
+      border-radius: $radius-sm;
+    }
+
+    /* ---------- CHECKBOX CUSTOM ---------- */
+
+    input[type='checkbox'] {
+      display: none;
+
+      &:checked + label {
+        background: $amethyst;
+        color: $snow;
+      }
+    }
+
+    .cript_label,
+    .largeFilesLabel {
+      border: 2px solid $amethyst;
+      border-radius: $radius-sm;
+      padding: $spacing-2 $spacing-3;
+      cursor: pointer;
+      font-size: $font-lg;
+      color: $indian-red;
+      transition: 0.25s ease;
+      background: transparent;
+    }
+
+    .encriptLabel {
+      display: flex;
+      justify-content: space-between;
+      gap: $spacing-2;
+
+      input {
+        width: 180px;
+      }
+    }
+
+    button[type='submit'] {
+      @include interactive-buttons;
+      padding: $spacing-2;
+      background: $amethyst;
+      border: 1px solid $amethyst;
+      border-radius: $radius-sm;
+      color: $snow;
+      width: 220px;
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  /* ===================================================== */
+  /* CONFIGURAÇÕES INLINE */
+  /* ===================================================== */
+
+  .inlineSettings {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-3;
+
+    .backupDiv {
+      display: flex;
+      align-items: center;
+      gap: $spacing-3;
+      position: relative;
+    }
+
+    .dropdownWrapper {
+      position: relative;
+      display: inline-block; // importante para largura natural
+    }
+
+    .dropdown {
+      position: absolute;
+      top: 100%; // começa exatamente abaixo do botão
+      left: 0; // alinhado à esquerda do botão
+      margin-top: 4px; // pequeno espaçamento opcional
+    }
+
+    input[type='checkbox'] {
+      display: none;
+
+      &:checked + label {
+        background: $amethyst;
+        color: $snow;
+      }
+    }
+
+    .backupLabel {
+      border: 2px solid $amethyst;
+      border-radius: $radius-sm;
+      padding: $spacing-2 $spacing-3;
+      cursor: pointer;
+      font-size: $font-lg;
+      color: $indian-red;
+      transition: 0.25s ease;
+      background: transparent;
+    }
+
+    .backupFrequency {
+      @include interactive-buttons;
+      min-width: 120px;
+      padding: $spacing-2;
+      border: 1px solid $amethyst;
+      border-radius: $radius-md;
+      color: $snow;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      &:hover {
+        background: rgba(137, 99, 186, 0.15);
+      }
+    }
+
+    /* ---------- DROPDOWN ---------- */
+
+    .dropdown-list {
+      position: absolute;
+      top: calc(100% + #{$spacing-1});
+      right: 0;
+      width: 120px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      background: #282c34;
+      border-radius: $radius-md;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+      z-index: 50;
+      overflow: hidden;
+
+      .dropdown-item {
+        border-bottom: 1px solid #3a3a3a;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .dropdown-option {
+          width: 100%;
+          padding: $spacing-2;
+          border: none;
+          background: transparent;
+          color: $snow;
+          text-align: left;
+          font-size: $font-lg;
+          cursor: pointer;
+          transition: background 0.2s;
+
+          &:hover {
+            background: rgba(137, 99, 186, 0.2);
+          }
+        }
+      }
+    }
+
+    input[type='time'],
+    input[type='number'] {
+      @include interactive-buttons;
+      padding: $spacing-1;
+      border: 1px solid $amethyst;
+      border-radius: $radius-sm;
+      width: 160px;
+    }
+  }
+
+  /* ===================================================== */
+  /* LISTA DE BACKUPS */
+  /* ===================================================== */
+
+  .backupList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: $spacing-2;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: $radius-md;
+      background: rgba(255, 255, 255, 0.03);
+
+      small {
+        display: block;
+        opacity: 0.7;
+      }
+
+      .actions {
+        display: flex;
+        gap: $spacing-2;
+
+        button {
+          @include interactive-buttons;
+          padding: $spacing-1 $spacing-2;
+          border-radius: $radius-sm;
+          border: 1px solid $amethyst;
+          background: transparent;
+          color: $snow;
+
+          &:hover {
+            background: rgba(137, 99, 186, 0.15);
+          }
+        }
+      }
+    }
+  }
+}

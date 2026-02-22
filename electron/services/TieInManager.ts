@@ -334,7 +334,7 @@ export default class TieInManager extends LibrarySystem {
   }
 
   private async mountEmptyTieIn(): Promise<TieIn> {
-    const id = (await this.getSerieId()) + 1;
+    const id = await this.consumeNextSerieId();
     const createdAt = new Date().toISOString();
 
     return {

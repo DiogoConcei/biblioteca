@@ -1,10 +1,20 @@
 import path from 'path';
 import fse from 'fs-extra';
-import { AppConfig } from '../../types/electron-auxiliar.interfaces';
+import { AppConfig } from '../../types/settings.interfaces';
 
 export default abstract class LibrarySystem {
   readonly baseStorageFolder: string =
     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage';
+
+  protected readonly backupFolder: string = path.join(
+    this.baseStorageFolder,
+    'backups',
+  );
+
+  protected readonly logsFolder: string = path.join(
+    this.baseStorageFolder,
+    'logs',
+  );
 
   protected readonly dataStorage: string = path.join(
     this.baseStorageFolder,
@@ -116,6 +126,20 @@ export default abstract class LibrarySystem {
       return filePaths;
     } catch (e) {
       console.error(`erro encontrado: ${e}`);
+      throw e;
+    }
+  }
+
+  public async consumeNextSerieId(): Promise<number> {
+    try {
+      const currentId = await this.getSerieId();
+      const nextId = currentId + 1;
+
+      await this.setSerieId(nextId);
+
+      return nextId;
+    } catch (e) {
+      console.error(`Erro ao consumir o próximo ID: ${e}`);
       throw e;
     }
   }
