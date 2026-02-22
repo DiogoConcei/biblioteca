@@ -61,3 +61,9 @@ export interface ResetApplicationOptions {
   backupBefore?: boolean;
   preserve?: string[];
 }
+
+export interface CustomTimePickerProps {
+  value: string; // formato "HH:mm"
+  onChange: (time: string) => void;
+  minuteStep?: number; // permite customizar intervalo
+}

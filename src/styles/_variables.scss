@@ -65,6 +65,10 @@ $font-5xl: 3rem; // 48px
 }
 
 @mixin interactive-buttons {
+  padding: 0px;
+  margin: 0px;
+  font-size: $font-base;
+  border-radius: none;
   border: none;
   background: none;
   outline: none;

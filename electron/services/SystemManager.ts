@@ -332,6 +332,17 @@ export default class SystemManager extends LibrarySystem {
     }
   }
 
+  public async setSettings(settings: Partial<LocalSettings>): Promise<void> {
+    const config = await fse.readJson(this.configFilePath);
+    const merged = {
+      ...this.getSettingsDefaults(),
+      ...(config.settings ?? {}),
+      ...settings,
+    };
+    config.settings = merged;
+    await fse.writeJson(this.configFilePath, config, { spaces: 2 });
+  }
+
   public async getSettings(): Promise<LocalSettings> {
     const config = await fse.readJson(this.configFilePath);
     return { ...this.getSettingsDefaults(), ...(config.settings ?? {}) };

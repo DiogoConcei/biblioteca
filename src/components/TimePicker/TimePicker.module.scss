@@ -1,0 +1,75 @@
+@use '@/styles/variables' as *;
+
+.timePickerWrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.timePickerWrapper p {
+  margin-bottom: 12px;
+}
+
+.timePickerButton {
+  display: inline-block;
+}
+
+.timePickerButton {
+  padding: 8px 12px;
+  border: 1px solid $amethyst;
+  background: $amethyst;
+  color: $snow;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.timeDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  display: flex;
+  background: $amethyst;
+  border: 1px solid $amethyst;
+  margin-top: 4px;
+  z-index: 1000;
+}
+
+.timeColumn {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: none;
+}
+
+.timeButton {
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  scrollbar-width: 0px;
+
+  &:hover {
+    background: #3a3a3a;
+  }
+}
+
+.active {
+  background: #555;
+}
+
+.timeColumn button {
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.timeColumn button:hover {
+  background: #3a3a3a;
+}
+
+.timeColumn button.active {
+  background: #555;
+}

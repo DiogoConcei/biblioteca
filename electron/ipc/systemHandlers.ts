@@ -46,4 +46,22 @@ export default function systemHandlers(ipcMain: IpcMain) {
       return { success: false, error: String(error) };
     }
   });
+
+  ipcMain.handle('system:get-backup-list', async () => {
+    try {
+      const data = await systemManager.getBackupList();
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('system:set-settings', async (_event, settings) => {
+    try {
+      await systemManager.setSettings(settings);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  });
 }
