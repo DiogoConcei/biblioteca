@@ -62,23 +62,6 @@ export default class ValidationManager extends FileSystem {
     }
   }
 
-  // public async serieExistsInCollection(collectionName: string, serieId: number): Promise<boolean> {
-  //   try {
-  //     const collections: Collection[] = await jsonfile.readFile(this.appCollections, 'utf-8');
-
-  //     const collection = collections.find(c => c.name === collectionName);
-  //     if (!collection) {
-  //       console.warn(`Coleção "${collectionName}" não encontrada.`);
-  //       return false;
-  //     }
-
-  //     return collection.series.some(serie => serie.id === serieId);
-  //   } catch (error) {
-  //     console.error(`Erro ao verificar se a série existe na coleção: ${error}`);
-  //     throw error;
-  //   }
-  // }
-
   public async checkDownload(
     serieData: Literatures | TieIn,
     chapterId: number,

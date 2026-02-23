@@ -44,6 +44,4 @@ export default function userHandlers(ipcMain: IpcMain) {
       }
     },
   );
-
-  // Reordenar séries
 }

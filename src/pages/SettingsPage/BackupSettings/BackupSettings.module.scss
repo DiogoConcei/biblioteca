@@ -35,7 +35,7 @@
     }
 
     input[type='text'] {
-      @include interactive-buttons;
+      @include interactive-button;
       flex: 1;
       padding: $spacing-1;
       border: 1px solid $amethyst;
@@ -76,7 +76,7 @@
     }
 
     button[type='submit'] {
-      @include interactive-buttons;
+      @include interactive-button;
       padding: $spacing-2;
       background: $amethyst;
       border: 1px solid $amethyst;
@@ -140,7 +140,7 @@
     }
 
     .backupFrequency {
-      @include interactive-buttons;
+      @include interactive-button;
       min-width: 120px;
       padding: $spacing-2;
       border: 1px solid $amethyst;
@@ -198,7 +198,7 @@
 
     input[type='time'],
     input[type='number'] {
-      @include interactive-buttons;
+      @include interactive-button;
       padding: $spacing-1;
       border: 1px solid $amethyst;
       border-radius: $radius-sm;
@@ -237,7 +237,7 @@
         gap: $spacing-2;
 
         button {
-          @include interactive-buttons;
+          @include interactive-button;
           padding: $spacing-1 $spacing-2;
           border-radius: $radius-sm;
           border: 1px solid $amethyst;

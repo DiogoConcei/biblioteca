@@ -218,19 +218,16 @@ export default class FileManager extends LibrarySystem {
       (file) => path.join(dirName, file.name),
     );
 
-    // console.log(entry);
-
-    // await Promise.all(
-    // entry.map(async (file) => {
-    // if (await fse.existsSync(file)) {
-    // const parsed = path.parse(file);
-    // const newName = this.sanitizeImageName(parsed.base).concat(
-    // parsed.ext,
-    // );
-    // console.log(newName);
-    // }
-    // }),
-    // );
+    await Promise.all(
+      entry.map(async (file) => {
+        if (await fse.existsSync(file)) {
+          const parsed = path.parse(file);
+          const newName = this.sanitizeImageName(parsed.base).concat(
+            parsed.ext,
+          );
+        }
+      }),
+    );
   }
 
   public sanitizeImageName(name: string): string {
@@ -460,7 +457,6 @@ export default class FileManager extends LibrarySystem {
   }
 
   public findFirstCoverFile(fileNames: string[]): string | null {
-    // console.log('📂 findFirstCoverFile recebeu:', fileNames.length, 'arquivos');
     const ignoredByExtension: string[] = [];
 
     if (!fileNames || fileNames.length === 0) {
@@ -503,7 +499,6 @@ export default class FileManager extends LibrarySystem {
       const baseName = name.replace(imageExtensionRegex, '').toLowerCase();
 
       if (coverKeywords.some((keyword) => baseName.includes(keyword))) {
-        // console.log('🎯 Keyword detectada:', name);
         namedCoverCandidates.push(name);
       }
 
@@ -528,13 +523,6 @@ export default class FileManager extends LibrarySystem {
       }
     }
 
-    // console.log('Resumo:');
-    // console.log('zerosOnly:', zerosOnlyCandidates.length);
-    // console.log('zeroThenOne:', zeroThenOneCandidates.length);
-    // console.log('namedCover:', namedCoverCandidates.length);
-    // console.log('fallback:', fallbackCandidates.length);
-    // console.log('allWithNumbers:', allWithNumbers.length);
-
     if (zerosOnlyCandidates.length > 0) {
       return zerosOnlyCandidates[0];
     }
@@ -556,15 +544,8 @@ export default class FileManager extends LibrarySystem {
         curr.num < min.num ? curr : min,
       );
 
-      // console.log(
-      //   `⚠️ Fallback menor número: ${smallest.name} (${smallest.num})`,
-      // );
-
       return smallest.name;
     }
-
-    // console.log('💀 RETORNANDO NULL — nenhum candidato válido encontrado');
-    // console.log('Arquivos recebidos foram:', fileNames);
 
     if (ignoredByExtension.length > 0) {
       console.log('⛔ Arquivos ignorados por extensão:');
@@ -783,34 +764,27 @@ export default class FileManager extends LibrarySystem {
       .replace(/\s+/g, ' ')
       .toLowerCase();
 
-    // 1️⃣ número de leitura no início
     let readingIndex = 9999;
     const lead = norm.match(/^(\d{1,3})\b/);
     if (lead) readingIndex = parseInt(lead[1], 10);
 
-    // 2️⃣ parte interna (01.de.04)
     let partIndex = 0;
     const part = norm.match(/\b(\d{1,3})\s*de\s*(\d{1,3})\b/);
     if (part) partIndex = parseInt(part[1], 10);
 
-    // 3️⃣ número da edição
     let issueNumber = 0;
 
-    // #083, #10
     const hash = norm.match(/#\s*(\d+)/);
     if (hash) issueNumber = parseInt(hash[1], 10);
 
-    // Hulk 084
     if (!issueNumber) {
       const plain = norm.match(/\b(\d{2,4})\b/);
       if (plain) issueNumber = parseInt(plain[1], 10);
     }
 
-    // v3 #12
     const volumeIssue = norm.match(/v\d+\s*(\d+)/);
     if (volumeIssue) issueNumber = parseInt(volumeIssue[1], 10);
 
-    // 4️⃣ categoria
     let category = ComicCategory.NORMAL;
 
     if (/(annual|one shot|edição especial|special)/i.test(norm)) {

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-
+import CustomSelect from '@/components/CustomSelect/CustomSelect';
 import useSystem from '@/hooks/useSystem';
 
 import { ComicCoverRegenerationProgress } from '@/types/settings.interfaces';
@@ -180,39 +180,32 @@ export default function SystemConfig() {
         <p>Operações destrutivas: revise as opções antes de confirmar.</p>
         <div className={styles.form}>
           <div className={styles.resetArea}>
-            <label>Tipo de reset</label>
-
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className={styles.resetTypes}
-            >
-              {resetType === 'soft'
-                ? 'Soft (cache e temporário)'
-                : 'Full (dados locais)'}
-            </button>
-
-            {isOpen && (
-              <ul className={styles['dropdown-list']}>
-                {resetOptions.map((type) => (
-                  <li key={type} className={styles['dropdown-item']}>
-                    <button
-                      className={styles['dropdown-option']}
-                      onClick={() => {
-                        setResetType(type);
-                        setIsOpen(false);
-                      }}
-                    >
-                      {type}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <CustomSelect
+              label="Tipo de reset"
+              value={resetType}
+              options={[
+                { value: 'soft', label: 'Soft (cache e temporário)' },
+                { value: 'full', label: 'Full (dados locais)' },
+              ]}
+              onChange={(value) => setResetType(value as 'soft' | 'full')}
+            />
           </div>
           <div className={styles.backupOptions}>
             <label className="mainLabel">
               Criar backup automaticamente antes do reset
             </label>
+
+            <div className={styles.checkboxWrapper}>
+              <input
+                type="checkbox"
+                id="backup_before_reset"
+                checked={backupBeforeReset}
+                onChange={(event) => setBackupBeforeReset(event.target.checked)}
+              />
+              <label htmlFor="backup_before_reset">
+                <span>Ativar backup pré-reset</span>
+              </label>
+            </div>
 
             {backupOptions.map((item) => (
               <div key={item} className={styles.checkboxWrapper}>
@@ -285,6 +278,23 @@ export default function SystemConfig() {
             </div>
           </div>
         </div>
+      )}
+
+      {toast && (
+        <p className={`${styles.toast} ${styles[toast.type]}`}>
+          {toast.message}
+        </p>
+      )}
+
+      {operationLogs.length > 0 && (
+        <aside className={styles.logs} aria-live="polite">
+          <h3>Histórico de operações</h3>
+          <ul>
+            {operationLogs.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </aside>
       )}
     </section>
   );

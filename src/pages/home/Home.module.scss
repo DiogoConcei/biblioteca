@@ -6,15 +6,18 @@
   align-items: flex-start;
   justify-content: flex-start;
   overflow: hidden;
+  min-height: 100vh;
 
   .options {
     display: flex;
     align-items: center;
     justify-content: end;
     width: 100%;
+    position: relative;
 
-    .settings-button {
-      @include interactive-buttons;
+    .settings-button,
+    .filterButton {
+      @include interactive-button;
       color: $amethyst;
       padding: $spacing-2;
 
@@ -25,11 +28,35 @@
     }
   }
 
+  .filterPanel {
+    position: absolute;
+    top: 100%;
+    right: 0; // 🔥 alinhado ao botão da direita
+
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
+
+    min-width: 220px;
+    padding: $spacing-2;
+
+    background-color: $amethyst;
+    color: $snow;
+    border: 1px solid rgba(137, 99, 186, 0.3);
+    border-radius: $radius-md;
+
+    margin-top: $spacing-1;
+
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+    z-index: 50;
+  }
+
   .content {
     display: flex;
     flex-direction: column;
     width: 100%;
     box-sizing: border-box;
+    flex: 1;
 
     .seriesContent {
       display: flex;
@@ -41,6 +68,8 @@
       gap: 2rem;
       width: 100%;
       box-sizing: border-box;
+      flex: 1;
+      min-height: 0;
 
       .serieLink {
         display: flex;

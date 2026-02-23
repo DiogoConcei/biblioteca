@@ -1,6 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom';
 
-import Nav from '../../components/Nav/Nav';
+import Nav from '@/components/Nav/Nav';
 import styles from './Layout.module.scss';
 import useUIStore from '../../../store/useUIStore';
 import ErrorScreen from '../../../components/ErrorScreen/ErrorScreen';

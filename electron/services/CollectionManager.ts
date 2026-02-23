@@ -518,7 +518,6 @@ export default class CollectionManager extends LibrarySystem {
       );
 
       if (targetCollections.length === 0) {
-        console.warn('Série já existe em todas as coleções selecionadas.');
         return false;
       }
 
@@ -565,7 +564,6 @@ export default class CollectionManager extends LibrarySystem {
       );
 
       if (targetCollections.length === 0) {
-        console.warn('Série já existe em todas as coleções selecionadas.');
         return false;
       }
 

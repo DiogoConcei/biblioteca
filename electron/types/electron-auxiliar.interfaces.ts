@@ -1,8 +1,8 @@
 import { Manga, MangaChapter } from './manga.interfaces';
 import { Comic, ComicEdition } from './comic.interfaces';
 import { Collection } from '../../src/types/collections.interfaces';
+import { TieIn } from './comic.interfaces';
 import {
-  UseFormRegister,
   FieldError,
   Control,
   FieldValues,
@@ -121,4 +121,111 @@ export interface ChapterView {
   currentPage: number;
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export interface BackupMeta {
+  id: string;
+  path: string;
+  createdAt: string;
+  description?: string;
+  encrypted?: boolean;
+}
+
+export interface LocalSettings {
+  backupAuto: boolean;
+  backupSchedule: { frequency: 'daily' | 'weekly' | 'monthly'; time: string };
+  backupRetention: number;
+  uploadBackupsToDrive: boolean;
+  themeMode: 'light' | 'dark' | 'system';
+  accentColor: string;
+  compactMode: boolean;
+  sendLogsWithBugReport: boolean;
+  driveConnected: boolean;
+}
+
+export interface ComicCoverRegenerationProgress {
+  total: number;
+  processed: number;
+  currentComic?: string;
+  regenerated: number;
+  skipped: number;
+  failed: number;
+}
+
+export interface ComicCoverRegenerationResult {
+  total: number;
+  processed: number;
+  regenerated: number;
+  skipped: number;
+  failed: number;
+  failures: Array<{ comic: string; reason: string }>;
+}
+
+export interface AppConfig {
+  settings: {
+    reading_mode: 'single_page' | 'double_page' | 'vertical_scroll';
+    zoom: 'fit_width' | 'fit_height' | 'original_size';
+    ligth_mode: boolean;
+    full_screen: boolean;
+  };
+  metadata: {
+    global_id: number;
+  };
+}
+
+export type ReadableSerie = Literatures | TieIn;
+
+export type Status = 'Em andamento' | 'Completo' | 'Pendente' | '';
+
+export type BackupFrequency = 'daily' | 'weekly' | 'monthly';
+
+export type ThemeMode = 'light' | 'dark' | 'system';
+
+export interface LocalSettings {
+  backupAuto: boolean;
+  backupSchedule: {
+    frequency: BackupFrequency;
+    time: string;
+  };
+  backupRetention: number;
+  uploadBackupsToDrive: boolean;
+  themeMode: ThemeMode;
+  accentColor: string;
+  compactMode: boolean;
+  sendLogsWithBugReport: boolean;
+  driveConnected: boolean;
+}
+
+export interface BackupMeta {
+  id: string;
+  path: string;
+  createdAt: string;
+  description?: string;
+  encrypted?: boolean;
+}
+
+export interface ComicCoverRegenerationProgress {
+  total: number;
+  processed: number;
+  currentComic?: string;
+  regenerated: number;
+  skipped: number;
+  failed: number;
+}
+
+export interface ComicCoverRegenerationResult {
+  total: number;
+  processed: number;
+  regenerated: number;
+  skipped: number;
+  failed: number;
+  failures: Array<{ comic: string; reason: string }>;
+}
+
+export interface LastReadCandidate {
+  serie: ReadableSerie;
+  chapterId: number;
+  lastPageRead: number;
+  isRead: boolean;
+  timestamp: number;
 }

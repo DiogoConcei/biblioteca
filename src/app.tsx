@@ -1,9 +1,9 @@
 import './styles/base.scss';
 
-import { HashRouter, Routes, Route, Router } from 'react-router-dom';
-
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import Layout from './pages/layout/AppLayout/Layout';
 import SystemConfig from './pages/SettingsPage/SystemSettings/SystemConfig';
+import SettingsPage from './pages/settings/SettingsPage';
 import Home from './pages/home/Home';
 import Collections from './pages/collections/Collections';
 import Upload from './pages/upload/Upload';
@@ -26,6 +26,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
+            <Route path="collections" element={<Collections />} />
             <Route path="settings" element={<SettingsLayout />}>
               <Route index element={<SystemConfig />} />
               <Route path="backup" element={<BackupSettings />} />
@@ -37,7 +38,6 @@ const App = () => {
               path="edit/serie/:serie_name/:literature_form"
               element={<EditSerie />}
             />
-            <Route path="settings" element={<SettingsPage />} />
             <Route path="local-upload/serie" element={<Upload />} />
             <Route path="Manga/:manga_name/:manga_id" element={<MangaPage />} />
             <Route

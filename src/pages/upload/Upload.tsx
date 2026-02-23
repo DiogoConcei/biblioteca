@@ -67,6 +67,7 @@ export default function Upload() {
   });
 
   useEffect(() => {
+    console.log('RESET COM:', series[currentIndex]);
     reset(series[currentIndex]);
   }, [currentIndex, series, reset]);
 
@@ -80,12 +81,23 @@ export default function Upload() {
   };
 
   const handleNext = () => {
-    saveCurrentForm();
-    setCurrentIndex((i) => Math.min(i + 1, series.length - 1));
+    const values = getValues();
+
+    setSeries((prev) => {
+      const copy = [...prev];
+      copy[currentIndex] = values;
+
+      const nextIndex = Math.min(currentIndex + 1, copy.length - 1);
+      setCurrentIndex(nextIndex);
+
+      return copy;
+    });
   };
 
   const handlePrev = () => {
     saveCurrentForm();
+    const values = getValues();
+    console.log('PREV', values);
     setCurrentIndex((i) => Math.max(i - 1, 0));
   };
 

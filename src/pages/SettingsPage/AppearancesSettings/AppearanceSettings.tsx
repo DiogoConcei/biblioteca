@@ -1,30 +1,25 @@
-import useSystem from '@/hooks/useSystem';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
+import CustomSelect from '@/components/CustomSelect/CustomSelect';
+import useSystem from '@/hooks/useSystem';
+
+import useSettingsStore from '@/store/useSettingsStore';
 import { AppSettings } from '@/types/settings.interfaces';
 
 import styles from './AppearanceSettings.module.scss';
 
-const defaultSettings: AppSettings = {
-  backupAuto: false,
-  backupSchedule: { frequency: 'weekly', time: '03:00' },
-  backupRetention: 10,
-  uploadBackupsToDrive: false,
-  themeMode: 'system',
-  accentColor: '#8963ba',
-  compactMode: false,
-  sendLogsWithBugReport: false,
-  driveConnected: false,
-};
-
 export default function AppearanceSettings() {
   const systemManager = useSystem();
+
+  const settings = useSettingsStore((state) => state.settings);
+  const loadFromStorage = useSettingsStore((state) => state.loadFromStorage);
+  const loadFromSystem = useSettingsStore((state) => state.loadFromSystem);
+  const saveToSystem = useSettingsStore((state) => state.saveToSystem);
 
   const [toast, setToast] = useState<{
     type: 'success' | 'error';
     message: string;
   } | null>(null);
-  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [operationLogs, setOperationLogs] = useState<string[]>([]);
 
   const appendLog = (message: string) => {
@@ -33,11 +28,14 @@ export default function AppearanceSettings() {
     );
   };
 
+  useEffect(() => {
+    loadFromStorage();
+    void loadFromSystem(systemManager);
+  }, [loadFromStorage, loadFromSystem, systemManager]);
+
   const persistSettings = async (partial: Partial<AppSettings>) => {
-    const next = { ...settings, ...partial };
-    setSettings(next);
     try {
-      await systemManager.setSettings(partial);
+      await saveToSystem(systemManager, partial);
       setToast({ type: 'success', message: 'Configuração salva com sucesso.' });
       appendLog('Preferências visuais atualizadas.');
     } catch (error) {
@@ -56,39 +54,39 @@ export default function AppearanceSettings() {
       </header>
 
       <div className={styles.form}>
-        <label>
-          Tema
-          <select
-            value={settings.themeMode}
-            onChange={(e) =>
-              void persistSettings({
-                themeMode: e.target.value as AppSettings['themeMode'],
-              })
-            }
-            aria-label="Modo de tema"
-          >
-            <option value="system">Sistema</option>
-            <option value="light">Claro</option>
-            <option value="dark">Escuro</option>
-          </select>
-        </label>
+        <CustomSelect
+          label="Tema"
+          value={settings.themeMode}
+          onChange={(value) =>
+            void persistSettings({
+              themeMode: value as AppSettings['themeMode'],
+            })
+          }
+          options={[
+            { value: 'system', label: 'Sistema' },
+            { value: 'light', label: 'Claro' },
+            { value: 'dark', label: 'Escuro' },
+          ]}
+        />
+
         <label>
           Cor de destaque
           <input
             type="color"
             value={settings.accentColor}
-            onChange={(e) =>
-              void persistSettings({ accentColor: e.target.value })
+            onChange={(event) =>
+              void persistSettings({ accentColor: event.target.value })
             }
             aria-label="Cor de destaque"
           />
         </label>
+
         <label className={styles.checkboxLabel}>
           <input
             type="checkbox"
             checked={settings.compactMode}
-            onChange={(e) =>
-              void persistSettings({ compactMode: e.target.checked })
+            onChange={(event) =>
+              void persistSettings({ compactMode: event.target.checked })
             }
             aria-label="Ativar modo compacto"
           />

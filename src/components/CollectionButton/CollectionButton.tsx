@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { List } from 'lucide-react';
+import CustomSelect from '../CustomSelect/CustomSelect';
 import { CollectionButtonProps } from '../../types/components.interfaces';
 import useCollection from '../../hooks/useCollection';
 import styles from './CollectionButton.module.scss';
@@ -9,42 +10,36 @@ export default function CollectionButton({
   serieData,
 }: CollectionButtonProps) {
   const { collections, addToCollection } = useCollection();
-  const [isAdd, setIsAdd] = useState<boolean>(false);
 
-  const filterCollections = [...collections]
-    .sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-    )
-    .slice(0, 5);
-
-  const onToggle = () => {
-    setIsAdd((prevState) => !prevState);
-  };
+  const filterCollections = useMemo(
+    () =>
+      [...collections]
+        .sort(
+          (a, b) =>
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+        )
+        .slice(0, 5)
+        .map((collection) => ({
+          value: collection.name,
+          label: collection.name,
+        })),
+    [collections],
+  );
 
   return (
-    <div>
-      <button className={styles.collection} onClick={onToggle}>
+    <div className={styles.collectionWrapper}>
+      <div className={styles.collectionTitle}>
         <List />
-        Coleção
-      </button>
+        <span>Coleção</span>
+      </div>
 
-      {isAdd && (
-        <ul className={styles['dropdown-list']}>
-          {filterCollections.map((collection) => (
-            <li key={collection.name} className={styles['dropdown-item']}>
-              <button
-                className={styles['dropdown-option']}
-                onClick={() =>
-                  addToCollection(dataPath, collection.name, serieData)
-                }
-              >
-                {collection.name}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <CustomSelect
+        options={filterCollections}
+        placeholder="Selecionar coleção"
+        onChange={(value) =>
+          addToCollection(dataPath, String(value), serieData)
+        }
+      />
     </div>
   );
 }

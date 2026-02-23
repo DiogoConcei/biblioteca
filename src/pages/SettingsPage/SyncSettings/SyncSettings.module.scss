@@ -32,7 +32,7 @@
   gap: $spacing-2;
 
   button {
-    @include interactive-buttons;
+    @include interactive-button;
     border: 1px solid rgba(137, 99, 186, 0.8);
     border-radius: $radius-md;
     color: $snow;

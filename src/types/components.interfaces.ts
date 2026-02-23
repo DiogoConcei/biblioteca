@@ -11,10 +11,10 @@ import {
   LiteraturesAttributes,
   LiteratureChapterAttributes,
 } from '../../electron/types/electron-auxiliar.interfaces';
+import { Status } from '../../electron/types/electron-auxiliar.interfaces';
 import { Collection } from './collections.interfaces';
 import { SerieEditForm } from './series.interfaces';
 import { SerieForm, SerieData } from './series.interfaces';
-import { Status } from '../../electron/types/electron-auxiliar.interfaces';
 import { viewData } from '../../electron/types/electron-auxiliar.interfaces';
 import { CreateCollectionDTO } from './collections.interfaces';
 
@@ -221,4 +221,36 @@ export interface CreateCollectionFormValues {
   coverImage: string; // usado apenas para preview / upload
   seriesCoverId: string; // id selecionado quando coverType === 'series'
   selectedSeries: SelectedSerieData[];
+}
+
+export type SelectOptionValue = string | number;
+
+export type SelectOption = {
+  value: SelectOptionValue;
+  label: string;
+};
+
+export type SelectProps = {
+  options: SelectOption[];
+  value?: SelectOptionValue;
+  onChange: (value: SelectOptionValue) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  className?: string;
+  optionClassName?: string;
+  dropdownClassName?: string;
+  searchable?: boolean;
+  searchPlaceholder?: string;
+  label?: string;
+  renderOption?: (option: SelectOption, selected: boolean) => JSX.Element;
+};
+
+export default interface CustomTimePickerProps {
+  value: string;
+  onChange: (time: string) => void;
+  minuteStep?: number;
+  className?: string;
+  buttonClassName?: string;
+  dropdownClassName?: string;
+  label?: string;
 }

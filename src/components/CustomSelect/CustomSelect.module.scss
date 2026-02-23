@@ -1,0 +1,71 @@
+@use '@/styles/variables' as *;
+
+.selectRoot {
+  position: relative;
+  width: 100%;
+}
+
+.label {
+  display: block;
+  margin-bottom: $spacing-1;
+  color: $snow;
+}
+
+.trigger {
+  @include interactive-button;
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(137, 99, 186, 0.8);
+  border-radius: $radius-md;
+  color: $snow;
+  padding: $spacing-2;
+  text-align: left;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + #{$spacing-1});
+  left: 0;
+  width: 100%;
+  z-index: 40;
+  border: 1px solid rgba(137, 99, 186, 0.45);
+  background: #20242c;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.searchInput {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: $spacing-2;
+  background: transparent;
+  color: $snow;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.option {
+  padding: $spacing-2;
+  color: $snow;
+  cursor: pointer;
+}
+
+.highlighted {
+  background: rgba(137, 99, 186, 0.15);
+}
+
+.selected {
+  background: rgba(137, 99, 186, 0.25);
+}
+
+.emptyState {
+  padding: $spacing-2;
+  color: rgba(255, 255, 255, 0.72);
+}
