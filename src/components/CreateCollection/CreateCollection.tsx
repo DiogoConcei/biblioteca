@@ -32,8 +32,6 @@ export default function CreateCollection({
   onCreate,
   series,
 }: CreateCollectionModalProps) {
-  const [openRating, setOpenRating] = useState<boolean>(false);
-  const [openStatus, setOpenStatus] = useState<boolean>(false);
   const selectableSeries = useMemo(() => series ?? [], [series]);
 
   const {
@@ -124,7 +122,7 @@ export default function CreateCollection({
         return {
           id: meta.id,
           name: meta.name,
-          coverImage: '',
+          coverImage: meta.coverImage,
           description: '',
           archivesPath: meta.dataPath,
           totalChapters: meta.totalChapters,

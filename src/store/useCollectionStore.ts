@@ -79,9 +79,14 @@ const ensureDisplayableImage = async (image: string | null | undefined) => {
   if (!isFileUrl(image) && !isAbsolutePath(image)) return image;
 
   const normalizedPath = normalizeLocalPath(image);
+
+  console.log('Executou até o segundo marco');
+
   try {
     const dataUrl =
       await window.electronAPI.webUtilities.readFileAsDataUrl(normalizedPath);
+
+    console.log('Executou até o terceiro marco');
     return dataUrl || image;
   } catch (err) {
     return image;
@@ -95,6 +100,9 @@ const ensureDisplayableImage = async (image: string | null | undefined) => {
 const normalizeCollectionsImages = async (collections: Collection[]) => {
   const normalizedCollections = await Promise.all(
     collections.map(async (collection) => {
+      const collectionCoverImage =
+        (await ensureDisplayableImage(collection.coverImage)) ?? '';
+
       const normalizedSeries = await Promise.all(
         collection.series.map(async (serie) => {
           const coverImage =
@@ -112,6 +120,7 @@ const normalizeCollectionsImages = async (collections: Collection[]) => {
 
       return {
         ...collection,
+        coverImage: collectionCoverImage,
         series: normalizedSeries,
       };
     }),
@@ -278,38 +287,60 @@ export const useCollectionStore = create<CollectionState>((set, get) => {
        ================ */
 
     createCollection: async (collection) => {
-      // Padrão otimista: guardamos estado anterior, aplicamos colec. otimista, chamamos backend, rollback se necessário.
-      const previous = get().collections;
+      const previousCollections = get().collections;
+      console.log('coleção a ser criada: ', collection);
+      let coverImage = null;
+
+      if (collection.coverImage) {
+        coverImage = collection.coverImage;
+      } else {
+        if (collection.seriesCoverId) {
+          for (const existingCollection of previousCollections) {
+            for (const serie of existingCollection.series) {
+              if (serie.id === collection.seriesCoverId) {
+                coverImage = serie.coverImage;
+                break;
+              }
+            }
+
+            if (coverImage) {
+              break;
+            }
+          }
+        }
+
+        if (!coverImage && collection.series.length > 0) {
+          coverImage = collection.series[0].coverImage;
+        }
+      }
+
+      const finalCoverImage = (await ensureDisplayableImage(coverImage)) || '';
 
       const now = new Date().toISOString();
+
       const optimisticCollection: Collection = {
         ...collection,
-        id: `optimistic-${Date.now()}`,
+        id: 'optimistic-' + Date.now(),
+        coverImage: finalCoverImage,
         createdAt: now,
         updatedAt: now,
       };
 
-      const next = [...previous, optimisticCollection];
+      const updatedCollections = [...previousCollections, optimisticCollection];
+      setCollectionsState(updatedCollections);
 
-      // Aplica na UI imediatamente
-      setCollectionsState(next);
-
-      // Chama backend
       try {
         const response =
           await window.electronAPI.collections.createCollection(collection);
 
         if (!response.success) {
-          // Rollback
-          setCollectionsState(previous);
+          setCollectionsState(previousCollections);
           return false;
         }
 
-        // Sucesso: mantemos estado (idealmente backend retornaria a collection real; aqui simplificamos)
         return true;
       } catch (error) {
-        // Em erro de rede: rollback
-        setCollectionsState(previous);
+        setCollectionsState(previousCollections);
         return false;
       }
     },

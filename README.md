@@ -93,3 +93,7 @@ Caso encontre algum problema ou tenha sugestões para novas funcionalidades, por
 ---
 
 O **LegacyReader** foi criado para transformar a forma como você gerencia e desfruta sua coleção digital de quadrinhos e livros. Explore, organize e compartilhe suas leituras de maneira prática e eficiente!
+
+Como toda boa aplicação, possui erros desconhecidos.
+
+Quick fix to the collection cover system.

@@ -80,19 +80,18 @@ export default function CollectionView({
         (serie) => !serie.description?.trim(),
       );
 
-      for (const serie of missing) {
-        const response = await window.electronAPI.collections.fetchMetadata(
-          serie.name,
-          'manga',
-        );
-
-        if (response.success && response.data) {
-          setFallbackDescriptions((prev) => ({
-            ...prev,
-            [serie.id]: response.data!.description,
-          }));
-        }
-      }
+      // for (const serie of missing) {
+      // const response = await window.electronAPI.collections.fetchMetadata(
+      //   serie.name,
+      //   'manga',
+      // );
+      // if (response.success && response.data) {
+      //   setFallbackDescriptions((prev) => ({
+      //     ...prev,
+      //     [serie.id]: response.data!.description,
+      //   }));
+      // }
+      // }
     };
 
     void loadMetadata();

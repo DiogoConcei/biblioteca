@@ -1,7 +1,7 @@
 import { IpcMain } from 'electron';
 
 import CollectionsManager from '../services/CollectionManager';
-import MetadataManager from '../services/MetadataManager';
+// import MetadataManager from '../services/MetadataManager';
 import ImageManager from '../services/ImageManager';
 import {
   Collection,
@@ -12,7 +12,7 @@ export type MetadataType = 'manga' | 'comic';
 
 export default function collectionHandlers(ipcMain: IpcMain) {
   const collectionsOperations = new CollectionsManager();
-  const metadataManager = new MetadataManager();
+  // const metadataManager = new MetadataManager();
   const imageManager = new ImageManager();
 
   ipcMain.handle('collection:get-all', async () => {
@@ -180,48 +180,48 @@ export default function collectionHandlers(ipcMain: IpcMain) {
     },
   );
 
-  //  scrapper
-  ipcMain.handle(
-    'metadata:fetch',
-    async (
-      _event,
-      title: string,
-      type: MetadataType,
-      year?: number,
-      author?: string,
-    ) => {
-      try {
-        if (!title?.trim()) {
-          return { success: false, error: 'Título é obrigatório.' };
-        }
+  //  scrapper => Desativado
+  // ipcMain.handle(
+  //   'metadata:fetch',
+  //   async (
+  //     _event,
+  //     title: string,
+  //     type: MetadataType,
+  //     year?: number,
+  //     author?: string,
+  //   ) => {
+  //     try {
+  //       if (!title?.trim()) {
+  //         return { success: false, error: 'Título é obrigatório.' };
+  //       }
 
-        if (type !== 'manga' && type !== 'comic') {
-          return {
-            success: false,
-            error: 'Tipo inválido. Use manga ou comic.',
-          };
-        }
+  //       if (type !== 'manga' && type !== 'comic') {
+  //         return {
+  //           success: false,
+  //           error: 'Tipo inválido. Use manga ou comic.',
+  //         };
+  //       }
 
-        const metadata = await metadataManager.fetchMetadata({
-          title,
-          type,
-          year,
-          author,
-        });
+  //       const metadata = await metadataManager.fetchMetadata({
+  //         title,
+  //         type,
+  //         year,
+  //         author,
+  //       });
 
-        if (!metadata) {
-          return {
-            success: false,
-            error: 'Nenhum metadado confiável encontrado.',
-          };
-        }
+  //       if (!metadata) {
+  //         return {
+  //           success: false,
+  //           error: 'Nenhum metadado confiável encontrado.',
+  //         };
+  //       }
 
-        return { success: true, data: metadata };
-      } catch (e) {
-        return { success: false, error: String(e) };
-      }
-    },
-  );
+  //       return { success: true, data: metadata };
+  //     } catch (e) {
+  //       return { success: false, error: String(e) };
+  //     }
+  //   },
+  // );
 
   ipcMain.handle('collection:get-all-fav', async () => {
     try {
