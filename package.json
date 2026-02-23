@@ -45,6 +45,7 @@
     "electron-squirrel-startup": "^1.0.1",
     "file-type": "^21.1.1",
     "immer": "^10.1.1",
+    "lodash": "^4.17.23",
     "lucide-react": "^0.511.0",
     "mime-types": "^3.0.2",
     "pdfjs": "^2.5.4",

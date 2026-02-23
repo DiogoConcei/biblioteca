@@ -165,8 +165,6 @@ export default abstract class LibrarySystem {
         JSON.stringify(data, null, 2),
         'utf-8',
       );
-
-      console.log(`✅ global_id atualizado para ${newId}`);
     } catch (err) {
       console.error(`❌ Erro ao atualizar global_id:`, err);
       throw err;

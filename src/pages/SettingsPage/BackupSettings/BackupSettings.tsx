@@ -1,77 +1,62 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
-
+import { FormEvent, useState } from 'react';
 import TimePicker from '../../../components/TimePicker/TimePicker';
-import { SelectOption } from '@/types/components.interfaces';
-import CustomSelect from '@/components/CustomSelect/CustomSelect';
-import useSystem from '@/hooks/useSystem';
-import useSettingsStore from '@/store/useSettingsStore';
-import { AppSettings, BackupMeta } from '@/types/settings.interfaces';
 
 import styles from './BackupSettings.module.scss';
 
-const intervalOptions: SelectOption[] = [
-  { value: 'daily', label: 'Diário' },
-  { value: 'weekly', label: 'Semanal' },
-  { value: 'monthly', label: 'Mensal' },
-];
+import { BackupMeta, AppSettings } from '@/types/settings.interfaces';
+
+import useSystem from '@/hooks/useSystem';
+
+const defaultSettings: AppSettings = {
+  backupAuto: false,
+  backupSchedule: { frequency: 'weekly', time: '03:00' },
+  backupRetention: 10,
+  uploadBackupsToDrive: false,
+  themeMode: 'system',
+  accentColor: '#8963ba',
+  compactMode: false,
+  sendLogsWithBugReport: false,
+  driveConnected: false,
+};
 
 export default function BackupSettings() {
   const systemManager = useSystem();
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [interval, setInterval] = useState<'diário' | 'semanal' | 'mensal'>(
+    'diário',
+  );
 
-  const settings = useSettingsStore((state) => state.settings);
-  const backups = useSettingsStore((state) => state.backups);
-  const setBackups = useSettingsStore((state) => state.setBackups);
-  const loadFromStorage = useSettingsStore((state) => state.loadFromStorage);
-  const loadFromSystem = useSettingsStore((state) => state.loadFromSystem);
-  const saveToSystem = useSettingsStore((state) => state.saveToSystem);
+  const intervalOptions: ('diário' | 'semanal' | 'mensal')[] = [
+    'diário',
+    'semanal',
+    'mensal',
+  ];
 
   const [toast, setToast] = useState<{
     type: 'success' | 'error';
     message: string;
   } | null>(null);
-
+  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [encrypt, setEncrypt] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [backups, setBackups] = useState<BackupMeta[]>([]);
   const [description, setDescription] = useState('');
   const [includeLargeFiles, setIncludeLargeFiles] = useState(false);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [operationLogs, setOperationLogs] = useState<string[]>([]);
-
   const appendLog = (message: string) => {
     setOperationLogs((prev) =>
       [new Date().toLocaleTimeString() + ' • ' + message, ...prev].slice(0, 10),
     );
   };
 
-  useEffect(() => {
-    loadFromStorage();
-
-    void loadFromSystem(systemManager);
-
-    const loadBackups = async () => {
-      const loadedBackups = await systemManager.getBackupList();
-      setBackups(loadedBackups as BackupMeta[]);
-    };
-
-    void loadBackups();
-  }, [loadFromStorage, loadFromSystem, setBackups, systemManager]);
-
-  const selectedInterval = useMemo(
-    () =>
-      intervalOptions.find(
-        (option) => option.value === settings.backupSchedule.frequency,
-      ),
-    [settings.backupSchedule.frequency],
-  );
-
-  const persistSettings = async (
-    partial: Parameters<typeof saveToSystem>[1],
-    successMessage = 'Configuração salva com sucesso.',
-  ) => {
+  const persistSettings = async (partial: Partial<AppSettings>) => {
+    const next = { ...settings, ...partial };
+    setSettings(next);
     try {
-      await saveToSystem(systemManager, partial);
-      setToast({ type: 'success', message: successMessage });
+      await systemManager.setSettings(partial);
+      setToast({ type: 'success', message: 'Configuração salva com sucesso.' });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Erro ao salvar configuração';
@@ -132,18 +117,20 @@ export default function BackupSettings() {
           <input
             type="text"
             value={description}
-            onChange={(event) => setDescription(event.target.value)}
+            onChange={(e) => setDescription(e.target.value)}
             aria-label="Descrição do backup"
           />
         </label>
 
-        <label className={styles.checkboxLabel}>
-          <input
-            type="checkbox"
-            checked={encrypt}
-            onChange={(event) => setEncrypt(event.target.checked)}
-            aria-label="Criptografar backup"
-          />
+        <input
+          type="checkbox"
+          id="check_cript"
+          checked={encrypt}
+          onChange={(e) => setEncrypt(e.target.checked)}
+          aria-label="Criptografar backup"
+        />
+
+        <label htmlFor="check_cript" className={styles.cript_label}>
           Criptografar backup
         </label>
 
@@ -152,9 +139,9 @@ export default function BackupSettings() {
             <label className={styles.encriptLabel}>
               Senha
               <input
-                type="password"
+                type="text"
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 aria-label="Senha do backup"
               />
             </label>
@@ -162,22 +149,24 @@ export default function BackupSettings() {
             <label className={styles.encriptLabel}>
               Confirmar senha
               <input
-                type="password"
+                type="text"
                 value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 aria-label="Confirmar senha do backup"
               />
             </label>
           </>
         )}
 
-        <label className={styles.checkboxLabel}>
-          <input
-            type="checkbox"
-            checked={includeLargeFiles}
-            onChange={(event) => setIncludeLargeFiles(event.target.checked)}
-            aria-label="Incluir arquivos grandes"
-          />
+        <input
+          type="checkbox"
+          id={'largeFilesInput'}
+          checked={includeLargeFiles}
+          onChange={(e) => setIncludeLargeFiles(e.target.checked)}
+          aria-label="Incluir arquivos grandes"
+        />
+
+        <label htmlFor="largeFilesInput" className={styles.largeFilesLabel}>
           Incluir arquivos grandes
         </label>
 
@@ -193,37 +182,49 @@ export default function BackupSettings() {
       </form>
 
       <div className={styles.inlineSettings}>
-        <label className={styles.checkboxLabel}>
+        <div className={styles.backupDiv}>
           <input
             type="checkbox"
+            id="backupAut"
             checked={settings.backupAuto}
-            onChange={(event) =>
-              void persistSettings(
-                { backupAuto: event.target.checked },
-                'Backup automático atualizado.',
-              )
+            onChange={(e) =>
+              void persistSettings({ backupAuto: e.target.checked })
             }
             aria-label="Ativar backup automático"
           />
-          Backup automático
-        </label>
 
-        <CustomSelect
-          label="Frequência"
-          value={selectedInterval?.value}
-          options={intervalOptions}
-          onChange={(value) =>
-            void persistSettings({
-              backupSchedule: {
-                ...settings.backupSchedule,
-                frequency: value as AppSettings['backupSchedule']['frequency'],
-              },
-            })
-          }
-          className={styles.frequencySelect}
-          dropdownClassName={styles.frequencyDropdown}
-        />
+          <label htmlFor="backupAut" className={styles.backupLabel}>
+            Backup automático
+          </label>
 
+          <div className={styles['dropdown-wrapper']}>
+            <button
+              type="button"
+              onClick={() => setIsOpen((prev) => !prev)}
+              className={styles.backupFrequency}
+            >
+              {interval}
+            </button>
+
+            {isOpen && (
+              <ul className={styles['dropdown-list']}>
+                {intervalOptions.map((interval) => (
+                  <li key={interval} className={styles['dropdown-item']}>
+                    <button
+                      className={styles['dropdown-option']}
+                      onClick={() => {
+                        setInterval(interval);
+                        setIsOpen((prev) => !prev);
+                      }}
+                    >
+                      {interval}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
         <TimePicker
           value={settings.backupSchedule.time}
           onChange={(time) =>
@@ -234,25 +235,23 @@ export default function BackupSettings() {
               },
             })
           }
-          className={styles.timePicker}
-          buttonClassName={styles.timeButton}
-          dropdownClassName={styles.timeDropdown}
         />
 
-        <label className={styles.numberLabel}>
+        {/* <label>
           Retenção
           <input
             type="number"
             min={1}
             value={settings.backupRetention}
-            onChange={(event) =>
+            onChange={(e) =>
               void persistSettings({
-                backupRetention: Number(event.target.value) || 1,
+                backupRetention: Number(e.target.value) || 1,
               })
             }
             aria-label="Quantidade máxima de backups"
           />
         </label>
+         */}
       </div>
 
       <ul className={styles.backupList}>
@@ -284,23 +283,6 @@ export default function BackupSettings() {
           </li>
         ))}
       </ul>
-
-      {toast && (
-        <p className={`${styles.toast} ${styles[toast.type]}`}>
-          {toast.message}
-        </p>
-      )}
-
-      {operationLogs.length > 0 && (
-        <section className={styles.logs}>
-          <h3>Histórico</h3>
-          <ul>
-            {operationLogs.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        </section>
-      )}
     </article>
   );
 }

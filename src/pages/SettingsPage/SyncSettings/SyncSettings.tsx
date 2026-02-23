@@ -1,48 +1,39 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import useSystem from '@/hooks/useSystem';
-import useSettingsStore from '@/store/useSettingsStore';
-import { AppSettings } from '@/types/settings.interfaces';
 
 import styles from './SyncSettings.module.scss';
 
+import { AppSettings } from '@/types/settings.interfaces';
+
+const defaultSettings: AppSettings = {
+  backupAuto: false,
+  backupSchedule: { frequency: 'weekly', time: '03:00' },
+  backupRetention: 10,
+  uploadBackupsToDrive: false,
+  themeMode: 'system',
+  accentColor: '#8963ba',
+  compactMode: false,
+  sendLogsWithBugReport: false,
+  driveConnected: false,
+};
+
 export default function SyncSettings() {
   const systemManager = useSystem();
-
-  const settings = useSettingsStore((state) => state.settings);
-  const loadFromStorage = useSettingsStore((state) => state.loadFromStorage);
-  const loadFromSystem = useSettingsStore((state) => state.loadFromSystem);
-  const saveToSystem = useSettingsStore((state) => state.saveToSystem);
-
+  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [busyAction, setBusyAction] = useState<string | null>(null);
+
   const [toast, setToast] = useState<{
     type: 'success' | 'error';
     message: string;
   } | null>(null);
-  const [operationLogs, setOperationLogs] = useState<string[]>([]);
 
-  useEffect(() => {
-    loadFromStorage();
-    void loadFromSystem(systemManager);
-  }, [loadFromStorage, loadFromSystem, systemManager]);
+  const [operationLogs, setOperationLogs] = useState<string[]>([]);
 
   const appendLog = (message: string) => {
     setOperationLogs((prev) =>
       [new Date().toLocaleTimeString() + ' • ' + message, ...prev].slice(0, 10),
     );
-  };
-
-  const persistSettings = async (partial: Partial<AppSettings>) => {
-    try {
-      await saveToSystem(systemManager, partial);
-      setToast({ type: 'success', message: 'Configuração salva com sucesso.' });
-      appendLog('Configuração de sincronização atualizada.');
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Erro ao salvar configuração';
-      setToast({ type: 'error', message });
-      appendLog(message);
-    }
   };
 
   const handleDriveConnection = async () => {
@@ -68,6 +59,20 @@ export default function SyncSettings() {
     }
   };
 
+  const persistSettings = async (partial: Partial<AppSettings>) => {
+    const next = { ...settings, ...partial };
+    setSettings(next);
+    try {
+      await systemManager.setSettings(partial);
+      setToast({ type: 'success', message: 'Configuração salva com sucesso.' });
+      appendLog('Configuração de sincronização atualizada.');
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Erro ao salvar configuração';
+      setToast({ type: 'error', message });
+      appendLog(message);
+    }
+  };
   return (
     <article className={styles.card}>
       <header className={styles.header}>
@@ -93,9 +98,9 @@ export default function SyncSettings() {
             type="checkbox"
             checked={settings.uploadBackupsToDrive}
             disabled={!settings.driveConnected}
-            onChange={(event) =>
+            onChange={(e) =>
               void persistSettings({
-                uploadBackupsToDrive: event.target.checked,
+                uploadBackupsToDrive: e.target.checked,
               })
             }
             aria-label="Enviar backups automaticamente ao Drive"

@@ -1,9 +1,9 @@
-import useSystem from '@/hooks/useSystem';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
-import useSettingsStore from '@/store/useSettingsStore';
+import useSystem from '@/hooks/useSystem';
 
 import styles from './PrivacySettings.module.scss';
+
 import { AppSettings } from '@/types/settings.interfaces';
 
 const defaultSettings: AppSettings = {
@@ -20,15 +20,6 @@ const defaultSettings: AppSettings = {
 
 export default function Privacy() {
   const systemManager = useSystem();
-  const settings = useSettingsStore((state) => state.settings);
-  const loadFromStorage = useSettingsStore((state) => state.loadFromStorage);
-  const loadFromSystem = useSettingsStore((state) => state.loadFromSystem);
-  const saveToSystem = useSettingsStore((state) => state.saveToSystem);
-
-  useEffect(() => {
-    loadFromStorage();
-    void loadFromSystem(systemManager);
-  }, [loadFromStorage, loadFromSystem, systemManager]);
 
   const [toast, setToast] = useState<{
     type: 'success' | 'error';
@@ -36,6 +27,7 @@ export default function Privacy() {
   } | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [operationLogs, setOperationLogs] = useState<string[]>([]);
+  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
 
   const appendLog = (message: string) => {
     setOperationLogs((prev) =>
@@ -45,8 +37,9 @@ export default function Privacy() {
 
   const persistSettings = async (partial: Partial<AppSettings>) => {
     const next = { ...settings, ...partial };
+    setSettings(next);
     try {
-      await saveToSystem(systemManager, partial);
+      await systemManager.setSettings(partial);
       setToast({ type: 'success', message: 'Configuração salva com sucesso.' });
       appendLog('Preferências de privacidade atualizadas.');
     } catch (error) {

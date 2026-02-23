@@ -309,6 +309,22 @@ export default class ImageManager extends LibrarySystem {
     return await this.normalizeImage(coverPath, destPath);
   }
 
+  public async processCoverIfNeeded(
+    cover: string,
+    actualCover: string,
+  ): Promise<string> {
+    const isBase64 =
+      typeof cover === 'string' &&
+      cover.startsWith('data:image/') &&
+      cover.includes(';base64,');
+
+    if (isBase64) {
+      return actualCover;
+    }
+
+    return await this.saveNewCover(cover);
+  }
+
   public async isImageHealthy(filePath: string): Promise<boolean> {
     try {
       if (!(await fse.pathExists(filePath))) {

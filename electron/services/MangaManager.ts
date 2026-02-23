@@ -81,7 +81,7 @@ export default class MangaManager extends LibrarySystem {
 
       return processedImages;
     } catch (error) {
-      console.error('Não foi possível encontrar a edição do quadrinho:', error);
+      console.error('Não foi possível encontrar a edição do manga:', error);
       throw error;
     }
   }

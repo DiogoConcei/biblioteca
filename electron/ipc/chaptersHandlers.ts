@@ -151,15 +151,32 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         };
       }
 
-      const chapter = candidate.serie.chapters?.find(
-        (item) => item.id === candidate.chapterId,
-      );
+      const chapter = candidate.serie.chapters?.find((item) => item.id === 0);
 
       if (!chapter) {
         return {
           success: false,
           error: 'Capítulo final não encontrado para a série selecionada.',
         };
+      }
+
+      if (chapter.isDownloaded === 'not_downloaded') {
+        const dataPath = candidate.serie.dataPath;
+        const LiteratureForm = fileManager.foundLiteratureForm(dataPath);
+
+        switch (LiteratureForm) {
+          case 'Mangas':
+            await mangaManager.createChapterById(dataPath, chapter.id);
+            break;
+          case 'Comics':
+            await comicManager.createChapterById(dataPath, chapter.id);
+            break;
+          case 'childSeries':
+            await tieManager.createChapterById(dataPath, chapter.id);
+            break;
+          default:
+            break;
+        }
       }
 
       const url = userManager.mountChapterUrl(

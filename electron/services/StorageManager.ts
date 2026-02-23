@@ -16,7 +16,6 @@ import { randomBytes } from 'crypto';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { createCanvas } from '@napi-rs/canvas';
 import { promisify } from 'util';
-import os from 'os';
 import { exec } from 'child_process';
 
 export default class StorageManager extends LibrarySystem {
@@ -715,20 +714,35 @@ export default class StorageManager extends LibrarySystem {
     return updated;
   }
 
-  public async patchHelper(updatedData: Literatures, newData: SerieEditForm) {
+  public async patchHelper(
+    oldData: Literatures,
+    updatedData: Literatures,
+  ): Promise<void> {
     try {
-      const dir = path.dirname(updatedData.dataPath);
-      const newPath = path.join(dir, `${newData.name}.json`);
-      updatedData.dataPath = newPath;
+      const dir = path.dirname(oldData.dataPath);
+      const newPath = path.join(dir, `${updatedData.name}.json`);
 
-      if (newData.name !== updatedData.name) {
+      const nameChanged = oldData.name !== updatedData.name;
+
+      if (nameChanged) {
         await fse.ensureDir(dir);
+
+        if (await fse.pathExists(oldData.dataPath)) {
+          await fse.remove(oldData.dataPath);
+        }
+
+        updatedData.dataPath = newPath;
+
         await fse.writeJson(newPath, updatedData, { spaces: 2 });
       } else {
-        this.writeData(updatedData);
+        await fse.writeJson(oldData.dataPath, updatedData, { spaces: 2 });
       }
     } catch (e) {
-      console.error(`Falha ao finalizar update da série: ${newData.name}`, e);
+      console.error(
+        `Falha ao finalizar update da série: ${updatedData.name}`,
+        e,
+      );
+      throw e; // importante propagar
     }
   }
 
@@ -753,6 +767,85 @@ export default class StorageManager extends LibrarySystem {
     );
 
     await Promise.all(tasks);
+  }
+
+  public buildUpdatedSerie(
+    oldData: Literatures,
+    newData: SerieEditForm,
+  ): { hasChanges: boolean; data: Literatures } {
+    const updated: any = { ...oldData };
+    let hasChanges = false;
+
+    for (const key of Object.keys(newData)) {
+      const newValue = (newData as any)[key];
+      const oldValue = (oldData as any)[key];
+
+      if (!this.deepEqual(oldValue, newValue)) {
+        updated[key] = newValue;
+        hasChanges = true;
+      }
+    }
+
+    return { hasChanges, data: updated };
+  }
+
+  private deepEqual(a: any, b: any): boolean {
+    if (a === b) return true;
+
+    if (a === null || b === null) return a === b;
+    if (typeof a !== typeof b) return false;
+
+    if (typeof a !== 'object') return a === b;
+
+    if (Array.isArray(a) !== Array.isArray(b)) return false;
+
+    if (Array.isArray(a)) {
+      if (a.length !== b.length) return false;
+
+      for (let i = 0; i < a.length; i++) {
+        if (!this.deepEqual(a[i], b[i])) return false;
+      }
+
+      return true;
+    }
+
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+
+    if (keysA.length !== keysB.length) return false;
+
+    for (const key of keysA) {
+      if (!this.deepEqual(a[key], b[key])) return false;
+    }
+
+    return true;
+  }
+
+  public async persistSerie(
+    oldData: Literatures,
+    updated: Literatures,
+  ): Promise<string> {
+    const oldPath = oldData.dataPath;
+    const dir = path.dirname(oldPath);
+
+    const nameChanged = oldData.name !== updated.name;
+    const newPath = nameChanged
+      ? path.join(dir, `${updated.name}.json`)
+      : oldPath;
+
+    // Se mudou nome, remove antigo antes de escrever
+    if (nameChanged && oldPath !== newPath) {
+      if (await fse.pathExists(oldPath)) {
+        await fse.remove(oldPath);
+      }
+    }
+
+    updated.dataPath = newPath;
+
+    await fse.ensureDir(dir);
+    await fse.writeJson(newPath, updated, { spaces: 2 });
+
+    return newPath;
   }
 
   private async processPdfPage(

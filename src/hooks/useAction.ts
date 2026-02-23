@@ -6,7 +6,6 @@ import {
   Literatures,
 } from '../../electron/types/electron-auxiliar.interfaces';
 import { useNavigate } from 'react-router-dom';
-import { viewData } from '../../electron/types/electron-auxiliar.interfaces';
 import useDownload from './useDownload';
 
 export default function useAction() {
@@ -118,6 +117,7 @@ export default function useAction() {
     }
 
     const [lastChapterUrl, serieData] = response.data;
+
     setSerie(serieData);
 
     if (lastChapterUrl) {

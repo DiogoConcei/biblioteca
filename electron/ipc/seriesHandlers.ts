@@ -281,39 +281,48 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         const oldData = await storageManager.readSerieData(editedData.dataPath);
 
         if (!oldData) {
-          throw new Error(`Dados antigos não encontrados para a série!`);
+          throw new Error('Dados antigos não encontrados para a série');
         }
 
-        const updatedData = await storageManager.patchSerie(editedData);
-
-        if (!updatedData) {
-          throw new Error(
-            `Falha ao atualizar dados da série: ${editedData.name}`,
-          );
-        }
-
-        const isImageChanged = updatedData.coverImage.startsWith('data:image/');
-
-        if (!isImageChanged) {
-          updatedData.coverImage = await imageManager.saveNewCover(
-            updatedData.coverImage,
-          );
-        }
-
-        const oldColl = oldData.metadata.collections;
-        const newColl = updatedData.metadata.collections;
-
-        await collectionManager.updateSerie(updatedData.dataPath);
-
-        await collectionManager.collectionControl(
-          updatedData.dataPath,
-          oldColl,
-          newColl,
+        // 1️⃣ Normaliza imagem antes de qualquer merge
+        const normalizedCover = await imageManager.processCoverIfNeeded(
+          editedData.coverImage,
+          oldData.coverImage,
         );
 
-        await storageManager.patchHelper(updatedData, editedData);
+        const preparedData: SerieEditForm = {
+          ...editedData,
+          coverImage: normalizedCover,
+        };
+
+        // 2️⃣ Gera updatedData com diff profundo
+        const updatedData = storageManager.buildUpdatedSerie(
+          oldData,
+          preparedData,
+        );
+
+        if (!updatedData.hasChanges) {
+          return { success: true }; // nada mudou
+        }
+
+        // 3️⃣ Persistência segura
+        const finalPath = await storageManager.persistSerie(
+          oldData,
+          updatedData.data,
+        );
+
+        // 4️⃣ Atualização de coleções
+        await collectionManager.updateSerie(finalPath);
+
+        await collectionManager.collectionControl(
+          finalPath,
+          oldData.metadata.collections,
+          updatedData.data.metadata.collections,
+        );
+
         return { success: true };
       } catch (e) {
+        console.error('Erro no update de série:', e);
         return {
           success: false,
           error: 'Falha ao salvar dados editados da série',

@@ -80,13 +80,10 @@ const ensureDisplayableImage = async (image: string | null | undefined) => {
 
   const normalizedPath = normalizeLocalPath(image);
 
-  console.log('Executou até o segundo marco');
-
   try {
     const dataUrl =
       await window.electronAPI.webUtilities.readFileAsDataUrl(normalizedPath);
 
-    console.log('Executou até o terceiro marco');
     return dataUrl || image;
   } catch (err) {
     return image;
@@ -288,7 +285,6 @@ export const useCollectionStore = create<CollectionState>((set, get) => {
 
     createCollection: async (collection) => {
       const previousCollections = get().collections;
-      console.log('coleção a ser criada: ', collection);
       let coverImage = null;
 
       if (collection.coverImage) {

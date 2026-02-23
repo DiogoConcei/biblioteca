@@ -67,7 +67,6 @@ export default function Upload() {
   });
 
   useEffect(() => {
-    console.log('RESET COM:', series[currentIndex]);
     reset(series[currentIndex]);
   }, [currentIndex, series, reset]);
 
@@ -97,7 +96,6 @@ export default function Upload() {
   const handlePrev = () => {
     saveCurrentForm();
     const values = getValues();
-    console.log('PREV', values);
     setCurrentIndex((i) => Math.max(i - 1, 0));
   };
 

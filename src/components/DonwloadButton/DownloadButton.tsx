@@ -1,57 +1,67 @@
-import { useMemo } from 'react';
+import { useState } from 'react';
 import { Download } from 'lucide-react';
 
 import useDownload from '../../hooks/useDownload';
 import ErrorScreen from '../ErrorScreen/ErrorScreen';
 import { downloadButtonProps } from '../../types/components.interfaces';
 
-import CustomSelect from '../CustomSelect/CustomSelect';
 import useSerieStore from '../../store/useSerieStore';
 import useUIStore from '../../store/useUIStore';
+import useClickOutside from '../../hooks/useClickOutside';
 import styles from './DownloadButton.module.scss';
 
 export default function DownloadButton({ serie }: downloadButtonProps) {
   const chapters = useSerieStore((state) => state.chapters);
   const error = useUIStore((state) => state.error);
   const setError = useUIStore((state) => state.setError);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const updateChapter = useSerieStore((state) => state.updateChapter);
-  const { downloadMultipleChapters } = useDownload();
-
-  const options = useMemo(
-    () => [1, 5, 10, 20, 25].map((value) => ({ value, label: `${value}` })),
-    [],
+  const containerRef = useClickOutside<HTMLDivElement>(
+    () => setIsOpen(false),
+    isOpen,
   );
 
-  const onSelect = async (quantityValue: string | number) => {
-    const quantity = Number(quantityValue);
+  const { downloadMultipleChapters } = useDownload();
 
-    if (quantity <= 0) return;
+  const options = [1, 5, 10, 20, 25];
 
-    const startIndex = serie.metadata.lastDownload;
-    const endIndex = startIndex + quantity;
-    const downloadingChapters = chapters.slice(startIndex, endIndex);
+  const onToggle = () => {
+    setIsOpen((prevState) => !prevState);
+  };
 
-    for (let i = 0; i < downloadingChapters.length; i++) {
-      updateChapter(downloadingChapters[i].id, 'isDownloaded', 'downloading');
-    }
+  const onSelect = async (quantity: number) => {
+    if (quantity > 0) {
+      const startIndex = serie.metadata.lastDownload;
+      const endIndex = startIndex + quantity;
+      const downloadingChapters = chapters.slice(startIndex, endIndex);
 
-    const response = await downloadMultipleChapters(quantity);
-
-    if (!response) {
       for (let i = 0; i < downloadingChapters.length; i++) {
-        updateChapter(
-          downloadingChapters[i].id,
-          'isDownloaded',
-          'not_downloaded',
-        );
+        updateChapter(downloadingChapters[i].id, 'isDownloaded', 'downloading');
       }
 
-      setError('Falha ao baixar capítulos');
-      return;
-    }
+      const response = await downloadMultipleChapters(quantity);
 
-    for (let i = 0; i < downloadingChapters.length; i++) {
-      updateChapter(downloadingChapters[i].id, 'isDownloaded', 'downloaded');
+      if (!response) {
+        for (let i = 0; i < downloadingChapters.length; i++) {
+          updateChapter(
+            downloadingChapters[i].id,
+            'isDownloaded',
+            'not_downloaded',
+          );
+        }
+
+        setError('Falha ao baixar capítulos');
+      } else {
+        for (let i = 0; i < downloadingChapters.length; i++) {
+          updateChapter(
+            downloadingChapters[i].id,
+            'isDownloaded',
+            'downloaded',
+          );
+        }
+      }
+
+      setIsOpen(false);
     }
   };
 
@@ -60,18 +70,32 @@ export default function DownloadButton({ serie }: downloadButtonProps) {
   }
 
   return (
-    <div className={styles.downloadWrapper}>
-      <div className={styles.downloadTitle}>
+    <div ref={containerRef}>
+      <button
+        className={`${styles.download} ${isOpen ? styles.open : ''}`}
+        onClick={onToggle}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+      >
         <Download />
-        <span>Download</span>
-      </div>
+        Download
+      </button>
 
-      <CustomSelect
-        options={options}
-        placeholder="Qtd. capítulos"
-        onChange={(value) => void onSelect(value)}
-        className={styles.downloadSelect}
-      />
+      {isOpen && (
+        <ul className={styles['dropdown-list']} role="menu">
+          {options.map((quantity) => (
+            <li key={quantity} className={styles['dropdown-item']} role="none">
+              <button
+                className={styles['dropdown-option']}
+                role="menuitem"
+                onClick={() => onSelect(quantity)}
+              >
+                {quantity}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

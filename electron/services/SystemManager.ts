@@ -643,11 +643,6 @@ export default class SystemManager extends LibrarySystem {
             if (dirs.length === 1 && imageFiles.length === 0) {
               const brokenPath = path.join(outputPath, dirs[0].name);
 
-              console.log(
-                '🛠 Estrutura aninhada detectada. Corrigindo:',
-                brokenPath,
-              );
-
               await this.storageManager.fixComicDir(brokenPath, outputPath);
             }
 
@@ -819,7 +814,6 @@ export default class SystemManager extends LibrarySystem {
     const childSeries = serieData.childSeries;
 
     if (!serieData.metadata.compiledComic || !childSeries) {
-      console.log('Não é uma série compilada. (não possui Tie-Ins)');
       return;
     }
 

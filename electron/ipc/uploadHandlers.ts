@@ -98,11 +98,9 @@ export default function uploadHandlers(ipcMain: IpcMain) {
             case 'Manga':
               await mangaManager.createMangaSerie(s);
               break;
-
             case 'Quadrinho':
               await comicManager.createComicSerie(s);
               break;
-
             default:
               throw new Error(
                 `Tipo de literatura inválido: ${s.literatureForm}`,

@@ -20,7 +20,6 @@ export default function MangaPage() {
   useSerie(serie_name, 'Manga');
   const serie = useSerieStore((state) => state.serie) as Manga;
   const loading = useUIStore((state) => state.loading);
-  const navigate = useNavigate();
   const { favorites, recents } = useCollection();
   const { lastChapter } = useAction();
 
