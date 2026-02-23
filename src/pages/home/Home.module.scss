@@ -55,20 +55,17 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    box-sizing: border-box;
     flex: 1;
 
     .seriesContent {
       display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
+      flex-flow: row wrap;
       align-items: flex-start;
       justify-content: flex-start;
       padding: 1rem;
       gap: 2rem;
       width: 100%;
       box-sizing: border-box;
-      flex: 1;
       min-height: 0;
 
       .serieLink {
