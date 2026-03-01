@@ -4,9 +4,8 @@ import { Download } from 'lucide-react';
 import useDownload from '../../hooks/useDownload';
 import ErrorScreen from '../ErrorScreen/ErrorScreen';
 import { downloadButtonProps } from '../../types/components.interfaces';
-
 import useSerieStore from '../../store/useSerieStore';
-import useUIStore from '../../store/useUIStore';
+import { useUIStore } from '../../store/useUIStore';
 import useClickOutside from '../../hooks/useClickOutside';
 import styles from './DownloadButton.module.scss';
 

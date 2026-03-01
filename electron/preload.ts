@@ -1,5 +1,11 @@
 import { ipcRenderer, contextBridge, webUtils } from 'electron';
-import { CreateCollectionDTO } from '../src/types/collections.interfaces.ts';
+
+import {
+  CreateCollectionDTO,
+  Collection,
+  SerieInCollection,
+  ScrapedMetadata,
+} from '../src/types/collections.interfaces.ts';
 import {
   APIResponse,
   viewData,
@@ -11,11 +17,6 @@ import {
   SerieEditForm,
   SerieForm,
 } from '../src/types/series.interfaces.ts';
-import {
-  Collection,
-  SerieInCollection,
-  ScrapedMetadata,
-} from '../src/types/collections.interfaces.ts';
 import { ComicTieIn, TieIn } from './types/comic.interfaces.ts';
 
 // --------- Expose some API to the Renderer process ---------
@@ -39,7 +40,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke(channel, ...omit);
   },
 
-  emit: (channel: string, ...args: any[]) => ipcRenderer.send(channel, ...args),
+  emit: (channel: string, ...args: unknown[]) =>
+    ipcRenderer.send(channel, ...args),
 
   windowAction: {
     minimize: () => ipcRenderer.invoke('window:minimize'),
@@ -141,8 +143,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('serie:recent-read', dataPath, serie_name),
     updateSerie: (data: SerieEditForm): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('serie:update-serie', data),
-    readFileAsDataUrl: (path: string) =>
-      ipcRenderer.invoke('web:readFileAsDataUrl', path),
   },
 
   chapters: {
@@ -203,14 +203,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     removeSerie: async (
       collectionName: string,
       serieId: number,
-      keepEmpty = false,
-    ): Promise<APIResponse<string>> =>
-      ipcRenderer.invoke(
-        'collection:remove-serie',
-        collectionName,
-        serieId,
-        keepEmpty,
-      ),
+    ): Promise<boolean> =>
+      ipcRenderer.invoke('collection:remove-serie', collectionName, serieId),
     reorderSeries: async (
       collectionName: string,
       orderedSeriesIds: number[],

@@ -1,7 +1,3 @@
-import { Manga, MangaChapter } from './manga.interfaces';
-import { Comic, ComicEdition } from './comic.interfaces';
-import { Collection } from '../../src/types/collections.interfaces';
-import { TieIn } from './comic.interfaces';
 import {
   FieldError,
   Control,
@@ -9,7 +5,11 @@ import {
   Path,
   UseFormRegisterReturn,
 } from 'react-hook-form';
-import { SerieEditForm, SerieForm } from '../../src/types/series.interfaces';
+
+import { Manga, MangaChapter } from './manga.interfaces';
+import { Comic, ComicEdition, TieIn } from './comic.interfaces';
+import { Collection } from '../../src/types/collections.interfaces';
+import { SerieEditForm } from '../../src/types/series.interfaces';
 
 export type LiteratureChapter = ComicEdition | MangaChapter;
 
@@ -58,18 +58,6 @@ export interface viewData {
   literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
 }
 
-export interface AppConfig {
-  settings: {
-    reading_mode: 'single_page' | 'double_page' | 'vertical_scroll';
-    zoom: 'fit_width' | 'fit_height' | 'original_size';
-    ligth_mode: boolean;
-    full_screen: boolean;
-  };
-  metadata: {
-    global_id: number;
-  };
-}
-
 export interface APIResponse<T> {
   success: boolean;
   data?: T;
@@ -91,7 +79,7 @@ export interface FormInputProps {
   error?: FieldError;
 }
 
-export interface FormControllerProps<T extends FieldValues = FieldValues> {
+export interface FormControllerProps {
   control: Control<SerieEditForm>;
   label?: string;
 }
@@ -121,44 +109,6 @@ export interface ChapterView {
   currentPage: number;
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-export interface BackupMeta {
-  id: string;
-  path: string;
-  createdAt: string;
-  description?: string;
-  encrypted?: boolean;
-}
-
-export interface LocalSettings {
-  backupAuto: boolean;
-  backupSchedule: { frequency: 'daily' | 'weekly' | 'monthly'; time: string };
-  backupRetention: number;
-  uploadBackupsToDrive: boolean;
-  themeMode: 'light' | 'dark' | 'system';
-  accentColor: string;
-  compactMode: boolean;
-  sendLogsWithBugReport: boolean;
-  driveConnected: boolean;
-}
-
-export interface ComicCoverRegenerationProgress {
-  total: number;
-  processed: number;
-  currentComic?: string;
-  regenerated: number;
-  skipped: number;
-  failed: number;
-}
-
-export interface ComicCoverRegenerationResult {
-  total: number;
-  processed: number;
-  regenerated: number;
-  skipped: number;
-  failed: number;
-  failures: Array<{ comic: string; reason: string }>;
 }
 
 export interface AppConfig {

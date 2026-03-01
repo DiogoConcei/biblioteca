@@ -5,9 +5,7 @@ import FileManager from './FileManager';
 import CollectionManager from './CollectionManager';
 import ImageManager from './ImageManager';
 import StorageManager from './StorageManager';
-
 import { Manga, MangaChapter } from '../types/manga.interfaces';
-
 import { SerieForm } from '../../src/types/series.interfaces';
 
 export default class MangaManager extends LibrarySystem {
@@ -48,42 +46,29 @@ export default class MangaManager extends LibrarySystem {
     dataPath: string,
     chapter_id: number,
   ): Promise<string[]> {
-    try {
-      const manga = await this.storageManager.readSerieData(dataPath);
-
-      if (!manga) {
-        return [];
-      }
-
-      if (!manga.chapters || manga.chapters.length === 0) {
-        throw new Error('Nenhum capítulo encontrado.');
-      }
-
-      const chapter = manga.chapters.find((chap) => chap.id === chapter_id);
-
-      if (!chapter || !chapter.chapterPath) {
-        throw new Error('Capítulo não encontrado ou caminho inválido.');
-      }
-
-      const imageFiles = await this.fileManager.searchImages(
-        chapter.chapterPath,
-      );
-
-      for (let idx = 0; idx < imageFiles.length; idx++) {
-        const imageFile = imageFiles[idx];
-
-        if (!(await this.imageManager.isImage(imageFile))) {
-          return [];
-        }
-      }
-
-      const processedImages = await this.imageManager.encodeImages(imageFiles);
-
-      return processedImages;
-    } catch (error) {
-      console.error('Não foi possível encontrar a edição do manga:', error);
-      throw error;
+    const manga = await this.storageManager.readSerieData(dataPath);
+    if (!manga) {
+      throw new Error('Série não encontrada.');
     }
+    if (!manga.chapters?.length) {
+      throw new Error('Nenhum capítulo encontrado.');
+    }
+
+    const chapter = manga.chapters.find((chap) => chap.id === chapter_id);
+    if (!chapter?.chapterPath) {
+      throw new Error('Capítulo não encontrado ou caminho inválido.');
+    }
+
+    const imageFiles = await this.fileManager.searchImages(chapter.chapterPath);
+
+    const validations = await Promise.all(
+      imageFiles.map((f) => this.imageManager.isImage(f)),
+    );
+    if (validations.some((valid) => !valid)) {
+      throw new Error('Arquivos inválidos encontrados no capítulo.');
+    }
+
+    return this.imageManager.encodeImages(imageFiles);
   }
 
   public async createChapterById(dataPath: string, chapter_id: number) {
@@ -261,8 +246,7 @@ export default class MangaManager extends LibrarySystem {
     serieName: string,
     archivesPath: string,
   ): Promise<MangaChapter[]> {
-    const [mangaEntries, total] =
-      await this.fileManager.searchChapters(archivesPath);
+    const [mangaEntries] = await this.fileManager.searchChapters(archivesPath);
     const orderChapters = await this.fileManager.orderManga(mangaEntries);
 
     if (!mangaEntries || mangaEntries.length === 0) return [];
@@ -303,7 +287,7 @@ export default class MangaManager extends LibrarySystem {
 
   private async mountEmptyManga(serie: SerieForm): Promise<Manga> {
     const nextId = await this.consumeNextSerieId();
-    const [dirEntries, totalChapters] = await this.fileManager.searchChapters(
+    const [, totalChapters] = await this.fileManager.searchChapters(
       serie.oldPath,
     );
 

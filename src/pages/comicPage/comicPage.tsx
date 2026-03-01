@@ -1,16 +1,22 @@
+import {
+  ArrowDownToLine,
+  ArrowDownFromLine,
+  LoaderCircle,
+  CirclePlus,
+} from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { useState } from 'react';
+
+import { Comic, ComicEdition } from 'electron/types/comic.interfaces';
+
 import useSerieStore from '../../store/useSerieStore';
-import useUIStore from '../../store/useUIStore';
+import { useUIStore } from '../../store/useUIStore';
 import UploadPopUp from '../../components/UploadPopUp/UploadPopUp';
 import Loading from '../../components/Loading/Loading';
 import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
-import { Comic, ComicEdition } from 'electron/types/comic.interfaces';
 import useAction from '../../hooks/useAction';
 import useDownload from '../../hooks/useDownload';
-import { ArrowDownToLine, ArrowDownFromLine, LoaderCircle } from 'lucide-react';
 import useSerie from '../../hooks/useSerie';
-import { CirclePlus } from 'lucide-react';
-import { useParams } from 'react-router-dom';
-import { useState } from 'react';
 import styles from './comicPage.module.scss';
 
 export default function ComicPage() {

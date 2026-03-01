@@ -1,17 +1,15 @@
 import fse from 'fs-extra';
 import path from 'path';
+
 import {
   Collection,
   SerieInCollection,
+  CreateCollectionDTO,
 } from '../../src/types/collections.interfaces';
-import { CreateCollectionDTO } from '../../src/types/collections.interfaces';
 import LibrarySystem from './abstract/LibrarySystem';
 import StorageManager from './StorageManager';
 import FileManager from './FileManager';
-import {
-  APIResponse,
-  Literatures,
-} from '../types/electron-auxiliar.interfaces';
+import { Literatures } from '../types/electron-auxiliar.interfaces';
 import { TieIn } from '../types/comic.interfaces';
 
 export default class CollectionManager extends LibrarySystem {
@@ -335,7 +333,6 @@ export default class CollectionManager extends LibrarySystem {
   public async removeInCollection(
     collectionName: string,
     serieId: number,
-    keepEmpty = false,
   ): Promise<boolean> {
     try {
       const collection = await this.getCollection(collectionName);
@@ -760,21 +757,17 @@ export default class CollectionManager extends LibrarySystem {
   private async mountSerieInCollection(
     serie: SerieInCollection,
   ): Promise<SerieInCollection> {
-    try {
-      const dataPath = await this.fileManager.getDataPath(serie.name);
-      const serieData = await this.storageManager.readSerieData(dataPath);
+    const dataPath = await this.fileManager.getDataPath(serie.name);
+    const serieData = await this.storageManager.readSerieData(dataPath);
 
-      if (!serieData) {
-        throw new Error('The code is broken');
-      }
-
-      return {
-        ...serie,
-        coverImage: serieData.coverImage,
-      };
-    } catch (e) {
-      throw e;
+    if (!serieData) {
+      throw new Error('The code is broken');
     }
+
+    return {
+      ...serie,
+      coverImage: serieData.coverImage,
+    };
   }
 
   private async updateCollection(collection: Collection): Promise<boolean> {

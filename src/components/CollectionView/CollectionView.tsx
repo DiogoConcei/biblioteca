@@ -15,6 +15,8 @@ import {
   X,
 } from 'lucide-react';
 
+import useImage from '@/hooks/useImage';
+
 import { FocusedCollectionViewProps } from '../../types/components.interfaces';
 import CollectionSeriesCard from '../CollectionsSerieCard/CollectionsSerieCard';
 import styles from './CollectionView.module.scss';
@@ -35,11 +37,8 @@ export default function CollectionView({
   >({});
   const titleRef = useRef<HTMLHeadingElement | null>(null);
 
-  const [backgroundPreview, setBackgroundPreview] = useState<string | null>(
-    null,
-  );
+  const { previewSrc, getPreview, setPreviewSrc } = useImage();
   const [backgroundPath, setBackgroundPath] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const orderedSeries = useMemo(
     () =>
@@ -70,63 +69,17 @@ export default function CollectionView({
   );
 
   useEffect(() => {
-    setBackgroundPreview(null);
+    setPreviewSrc(null);
     setBackgroundPath(null);
-  }, [activeSerie?.id]);
-
-  useEffect(() => {
-    const loadMetadata = async () => {
-      const missing = orderedSeries.filter(
-        (serie) => !serie.description?.trim(),
-      );
-
-      // for (const serie of missing) {
-      // const response = await window.electronAPI.collections.fetchMetadata(
-      //   serie.name,
-      //   'manga',
-      // );
-      // if (response.success && response.data) {
-      //   setFallbackDescriptions((prev) => ({
-      //     ...prev,
-      //     [serie.id]: response.data!.description,
-      //   }));
-      // }
-      // }
-    };
-
-    void loadMetadata();
-  }, [orderedSeries]);
-
-  const pickImagePath = async () => {
-    const bridge = (
-      window as Window & {
-        electron?: {
-          dialog?: { openFile?: () => Promise<string | null> };
-        };
-      }
-    ).electron;
-
-    if (bridge?.dialog?.openFile) {
-      const pickedPath = await bridge.dialog.openFile();
-      return pickedPath || null;
-    }
-
-    const response = await window.electronAPI.system.pickImage();
-    return response.success ? (response.data ?? null) : null;
-  };
+  }, [activeSerie?.id, setPreviewSrc]);
 
   const onPickBackground = async () => {
-    const pickedPath = await pickImagePath();
+    const pickedPath = await getPreview();
 
     if (pickedPath) {
-      const dataUrl =
-        await window.electronAPI.webUtilities.readFileAsDataUrl(pickedPath);
       setBackgroundPath(pickedPath);
-      setBackgroundPreview(dataUrl || null);
       return;
     }
-
-    fileInputRef.current?.click();
   };
 
   useEffect(() => {
@@ -217,6 +170,8 @@ export default function CollectionView({
               key={serie.id}
               serie={serie}
               onDropOnCard={onReorder}
+              serieIndex={index}
+              activeSerieIndex={activeIndex}
               onActivate={() => onChangeIndex?.(index)}
             />
           ))}
@@ -264,28 +219,6 @@ export default function CollectionView({
                   </p>
 
                   <div className={styles.actions}>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className={styles.hiddenInput}
-                      onChange={async (event) => {
-                        const file = event.target.files?.[0];
-                        if (!file) return;
-
-                        const path =
-                          window.electronAPI.webUtilities.getPathForFile(file);
-                        if (!path) return;
-
-                        const dataUrl =
-                          await window.electronAPI.webUtilities.readFileAsDataUrl(
-                            path,
-                          );
-
-                        setBackgroundPath(path);
-                        setBackgroundPreview(dataUrl || null);
-                      }}
-                    />
                     <button
                       type="button"
                       onClick={(e) => onOpenReader(e, activeSerie.id)}
@@ -317,9 +250,9 @@ export default function CollectionView({
                     </button>
                   </div>
 
-                  {backgroundPreview && backgroundPath && (
+                  {previewSrc && backgroundPath && (
                     <div className={styles.backgroundPreviewBox}>
-                      <img src={backgroundPreview} alt="Prévia do background" />
+                      <img src={previewSrc} alt="Prévia do background" />
                       <button
                         type="button"
                         onClick={async () => {
@@ -327,11 +260,11 @@ export default function CollectionView({
                             collection.name,
                             activeSerie.id,
                             backgroundPath,
-                            backgroundPreview,
+                            previewSrc,
                           );
 
                           if (updated) {
-                            setBackgroundPreview(null);
+                            setPreviewSrc(null);
                             setBackgroundPath(null);
                           }
                         }}

@@ -1,26 +1,16 @@
-import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { EyeOff, Eye, ChevronLeft, ChevronRight, Trash } from 'lucide-react';
+import { useForm, SubmitHandler } from 'react-hook-form';
+
 import useSerie from '../../hooks/useSerie';
-import {
-  EyeOff,
-  Eye,
-  ArrowDownToLine,
-  ArrowDownFromLine,
-  ChevronLeft,
-  ChevronRight,
-  LoaderCircle,
-  Trash,
-} from 'lucide-react';
 import useCollection from '../../hooks/useCollection';
 import useSerieStore from '../../store/useSerieStore';
-import useUIStore from '../../store/useUIStore';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useUIStore } from '../../store/useUIStore';
 import Favorite from '../../components/FavoriteButton/Favorite';
 import Rating from '../../components/Rating/Rating';
 import ImageController from '../../components/Form/Fields/ImageController/ImageController';
 import TextInput from '../../components/Form/GenericInputs/TextInput/TextInput';
-import LiteratureField from '../../components/Form/Fields/LiteratureField/LiteratureField';
 import BackupField from '../../components/Form/Fields/BackupField/BackupField';
 import PrivacyField from '../../components/Form/Fields/PrivacyField/PrivacyField';
 import StatusField from '../../components/Form/Fields/StatusField/StatusField';
@@ -28,11 +18,7 @@ import CollectionsField from '../../components/Form/Fields/CollectionsField/Coll
 import TagsField from '../../components/Form/Fields/TagsField/TagsField';
 import Loading from '../../components/Loading/Loading';
 import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
-import {
-  SerieData,
-  SerieForm,
-  SerieEditForm,
-} from '../../types/series.interfaces';
+import { SerieEditForm } from '../../types/series.interfaces';
 import {
   Literatures,
   LiteratureChapter,
@@ -48,21 +34,20 @@ export default function EditSerie() {
   }>();
   const serie_name = decodeURIComponent(rawSerieName ?? '');
   const navigate = useNavigate();
-
   if (!rawSerieName || !lForm) {
     return null;
   }
 
   useSerie(serie_name, lForm);
+
   const serie = useSerieStore((state) => state.serie) as Literatures;
   const chapters = useSerieStore((state) => state.chapters);
-  const [oldChapters, setOldChapters] = useState<LiteratureChapter[]>([]);
   const setChapters = useSerieStore((state) => state.setChapters);
   const loading = useUIStore((state) => state.loading);
   const setLoading = useUIStore((state) => state.setLoading);
   const error = useUIStore((state) => state.error);
   const setError = useUIStore((state) => state.setError);
-  const { setFav } = useCollection();
+  const [oldChapters, setOldChapters] = useState<LiteratureChapter[]>([]);
   const { handlePage, pageNumbers, totalPages, currentItems, currentPage } =
     usePagination();
 

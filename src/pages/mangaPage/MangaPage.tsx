@@ -1,5 +1,9 @@
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { Tag, Book } from 'lucide-react';
+
+import { Manga } from 'electron/types/manga.interfaces';
+import useAction from '@/hooks/useAction';
+
 import Loading from '../../components/Loading/Loading';
 import DownloadButton from '../../components/DonwloadButton/DownloadButton';
 import Rating from '../../components/Rating/Rating';
@@ -8,11 +12,9 @@ import Favorite from '../../components/FavoriteButton/Favorite';
 import ListView from '../../components/ListView/ListView';
 import useCollection from '../../hooks/useCollection';
 import useSerieStore from '../../store/useSerieStore';
-import useUIStore from '../../store/useUIStore';
-import { Manga } from 'electron/types/manga.interfaces';
+import { useUIStore } from '../../store/useUIStore';
 import useSerie from '../../hooks/useSerie';
 import styles from './MangaPage.module.scss';
-import useAction from '@/hooks/useAction';
 
 export default function MangaPage() {
   const { manga_name: rawSerieName } = useParams<{ manga_name: string }>();
@@ -31,7 +33,7 @@ export default function MangaPage() {
 
   const orderRecent = () => {
     return recents
-      ? [...recents.series].sort((a, b) => b.rating - a.rating)
+      ? [...recents.series].sort((a, b) => new Date(b.addAt).getTime() - new Date(a.addAt).getTime()).slice(0, 5)
       : [];
   };
 

@@ -1,4 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { LoaderCircle } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+
+import { ChapterView } from '@/types/components.interfaces';
+
 import useChapter from '../../hooks/useChapter';
 import useNavigation from '../../hooks/useNavigation';
 import useDrag from '../../hooks/useDrag';
@@ -6,10 +11,8 @@ import ViewerMenu from '../../components/ViewerMenu/ViewerMenu';
 import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
 import Loading from '../../components/Loading/Loading';
 import PageControl from '../../components/PageControl/PageControl';
-import { LoaderCircle } from 'lucide-react';
-import { ChapterView } from '@/types/components.interfaces';
-import useUIStore from '../../store/useUIStore';
-import { useParams } from 'react-router-dom';
+import { useUIStore } from '../../store/useUIStore';
+
 import './Viewer.scss';
 
 export default function Viewer() {
@@ -57,7 +60,7 @@ export default function Viewer() {
     window.addEventListener('keydown', handleKey);
 
     return () => window.removeEventListener('keydown', handleKey);
-  }, [chapterNavigation]);
+  }, [chapterNavigation, chapter]);
 
   if (!chapter.pages || !chapter.quantityPages) {
     return <Loading />;

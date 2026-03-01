@@ -5,13 +5,11 @@ import { Link } from 'react-router-dom';
 import useCollection from '@/hooks/useCollection';
 import useAllSeries from '@/hooks/useAllSeries';
 import useAction from '@/hooks/useAction';
-
 import CreateCollection from '@/components/CreateCollection/CreateCollection';
 import { Collection } from '@/types/collections.interfaces';
 
 import CollectionsMenu from '../../components/CollectionsMenu/CollectionsMenu';
 import CollectionView from '../../components/CollectionView/CollectionView';
-
 import styles from './Collections.module.scss';
 
 const SPECIAL_COLLECTIONS = new Set(['Favoritos', 'Recentes']);
@@ -58,12 +56,10 @@ export default function Collections() {
     return allSeries.filter((serie) => !existingSeriesIds.has(serie.id));
   }, [activeCollection, allSeries]);
 
-  // background state
   const [bgLoaded, setBgLoaded] = useState(false);
   const [bgIsPortrait, setBgIsPortrait] = useState(false);
   const [bgError, setBgError] = useState(false);
 
-  // reset background flags when changing activeBackground
   useEffect(() => {
     setBgLoaded(false);
     setBgIsPortrait(false);
@@ -85,8 +81,6 @@ export default function Collections() {
       setBgIsPortrait(false);
       setBgError(true);
     };
-
-    // no cleanup necessary for Image object
   }, [activeBackground]);
 
   const nextCollection = useCallback(() => {
@@ -153,7 +147,6 @@ export default function Collections() {
         activeBackground && bgLoaded && !bgError ? styles.hasBackground : '',
       ].join(' ')}
     >
-      {/* BACKGROUND LAYER */}
       <div className={styles.backgroundContainer} aria-hidden>
         {!activeBackground && <div className={styles.stars} />}
 
@@ -171,11 +164,9 @@ export default function Collections() {
           />
         )}
 
-        {/* fallback overlay for contrast */}
         {activeBackground && <div className={styles.backgroundOverlay} />}
       </div>
 
-      {/* PAGE CONTENT */}
       <header className={styles.header}>
         <Link to="/" className={styles.backButton}>
           <ArrowLeft />
@@ -239,12 +230,7 @@ export default function Collections() {
               return removeSerie(collectionName, serieId);
             }}
             onReorderSeries={reorderSeries}
-            onUpdateSerieBackground={async (
-              collectionName,
-              serieId,
-              path,
-              previewImage,
-            ) => {
+            onUpdateSerieBackground={async (collectionName, serieId, path) => {
               return updateSerieBackground(collectionName, serieId, path);
             }}
           />

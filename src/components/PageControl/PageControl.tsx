@@ -1,7 +1,8 @@
-import "./PageControl.scss";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
-import { PageControlProps } from "../../types/components.interfaces";
+import './PageControl.scss';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
+import { PageControlProps } from '../../types/components.interfaces';
 
 export default function PageControl({
   currentPage,
@@ -30,7 +31,7 @@ export default function PageControl({
   return (
     <div
       className="secondInfo"
-      style={{ "--progress": `${progress}` } as React.CSSProperties}
+      style={{ '--progress': `${progress}` } as React.CSSProperties}
     >
       <ChevronLeft onClick={handlePrevPage} />
       <div className="pageProgress">

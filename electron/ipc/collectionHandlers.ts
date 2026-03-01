@@ -99,7 +99,7 @@ export default function collectionHandlers(ipcMain: IpcMain) {
       backgroundImage: string | null,
     ) => {
       try {
-        let normalizedImage: string | null =
+        const normalizedImage: string | null =
           await imageManager.uploadBackground(backgroundImage);
 
         const result = await collectionsOperations.updateSerieBackground(
@@ -150,17 +150,8 @@ export default function collectionHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle(
     'collection:remove-serie',
-    async (
-      _event,
-      collectionName: string,
-      serieId: number,
-      keepEmpty = false,
-    ) => {
-      return collectionsOperations.removeInCollection(
-        collectionName,
-        serieId,
-        keepEmpty,
-      );
+    async (_event, collectionName: string, serieId: number) => {
+      return collectionsOperations.removeInCollection(collectionName, serieId);
     },
   );
 
@@ -181,47 +172,46 @@ export default function collectionHandlers(ipcMain: IpcMain) {
   );
 
   //  scrapper => Desativado
-  // ipcMain.handle(
-  //   'metadata:fetch',
-  //   async (
-  //     _event,
-  //     title: string,
-  //     type: MetadataType,
-  //     year?: number,
-  //     author?: string,
-  //   ) => {
-  //     try {
-  //       if (!title?.trim()) {
-  //         return { success: false, error: 'Título é obrigatório.' };
-  //       }
+  ipcMain.handle('metadata:fetch', async () =>
+    // _event,
+    // title: string,
+    // type: MetadataType,
+    // year?: number,
+    // author?: string,
+    {
+      console.log('Não implementado');
+      // try {
+      //   if (!title?.trim()) {
+      //     return { success: false, error: 'Título é obrigatório.' };
+      //   }
 
-  //       if (type !== 'manga' && type !== 'comic') {
-  //         return {
-  //           success: false,
-  //           error: 'Tipo inválido. Use manga ou comic.',
-  //         };
-  //       }
+      //   if (type !== 'manga' && type !== 'comic') {
+      //     return {
+      //       success: false,
+      //       error: 'Tipo inválido. Use manga ou comic.',
+      //     };
+      //   }
 
-  //       const metadata = await metadataManager.fetchMetadata({
-  //         title,
-  //         type,
-  //         year,
-  //         author,
-  //       });
+      //   const metadata = await metadataManager.fetchMetadata({
+      //     title,
+      //     type,
+      //     year,
+      //     author,
+      //   });
 
-  //       if (!metadata) {
-  //         return {
-  //           success: false,
-  //           error: 'Nenhum metadado confiável encontrado.',
-  //         };
-  //       }
+      //   if (!metadata) {
+      //     return {
+      //       success: false,
+      //       error: 'Nenhum metadado confiável encontrado.',
+      //     };
+      //   }
 
-  //       return { success: true, data: metadata };
-  //     } catch (e) {
-  //       return { success: false, error: String(e) };
-  //     }
-  //   },
-  // );
+      //   return { success: true, data: metadata };
+      // } catch (e) {
+      //   return { success: false, error: String(e) };
+      // }
+    },
+  );
 
   ipcMain.handle('collection:get-all-fav', async () => {
     try {

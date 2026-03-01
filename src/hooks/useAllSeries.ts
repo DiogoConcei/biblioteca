@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+
 import { viewData } from '../../electron/types/electron-auxiliar.interfaces';
-import useUIStore from '../store/useUIStore';
+import { useUIStore } from '../store/useUIStore';
 
 export default function useAllSeries() {
   const [series, setSeries] = useState<viewData[] | null>(null);
@@ -33,7 +34,7 @@ export default function useAllSeries() {
     }
 
     getAllSeries();
-  }, []);
+  }, [controlFetching]);
 
   return series;
 }

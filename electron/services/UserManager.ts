@@ -4,10 +4,10 @@ import StorageManager from './StorageManager';
 import {
   ReadableSerie,
   LastReadCandidate,
+  Literatures,
 } from '../types/electron-auxiliar.interfaces';
 import { Comic, TieIn } from '../types/comic.interfaces';
 import FileManager from './FileManager';
-import { Literatures } from '../types/electron-auxiliar.interfaces';
 
 export default class UserManager extends FileSystem {
   private readonly collManager: CollectionManager = new CollectionManager();
@@ -16,24 +16,6 @@ export default class UserManager extends FileSystem {
 
   constructor() {
     super();
-  }
-
-  public async resolveLastReadCandidateBySerieId(
-    serieId: number,
-  ): Promise<LastReadCandidate | null> {
-    const dataPaths = await this.fileManager.getDataPaths();
-
-    for (const dataPath of dataPaths) {
-      const serieData = await this.storageManager.readData(dataPath);
-
-      if (!serieData || serieData.id !== serieId) {
-        continue;
-      }
-
-      return this.resolveLastReadCandidate(dataPath);
-    }
-
-    return null;
   }
 
   public async addToRecents(serieData: Literatures | TieIn): Promise<boolean> {
@@ -123,32 +105,6 @@ export default class UserManager extends FileSystem {
     }
   }
 
-  public async resolveLastReadCandidate(
-    dataPath: string,
-    visited = new Set<string>(),
-  ): Promise<LastReadCandidate | null> {
-    if (!dataPath || visited.has(dataPath)) return null;
-
-    visited.add(dataPath);
-
-    const serieData = await this.storageManager.readData(dataPath);
-    if (!serieData) return null;
-
-    let bestCandidate = this.resolveChapterFromSerie(serieData);
-
-    if (this.isComic(serieData) && serieData.childSeries?.length) {
-      for (const child of serieData.childSeries) {
-        const childCandidate = await this.resolveLastReadCandidate(
-          child.dataPath,
-          visited,
-        );
-        bestCandidate = this.pickBestCandidate(bestCandidate, childCandidate);
-      }
-    }
-
-    return bestCandidate;
-  }
-
   public mountChapterUrl(
     serie: ReadableSerie,
     chapterId: number,
@@ -157,20 +113,6 @@ export default class UserManager extends FileSystem {
     isRead: boolean,
   ): string {
     return `/${encodeURIComponent(serie.name)}/${serie.id}/${encodeURIComponent(chapterName)}/${chapterId}/${lastPageRead}/${isRead}`;
-  }
-
-  private pickBestCandidate(
-    current: LastReadCandidate | null,
-    next: LastReadCandidate | null,
-  ): LastReadCandidate | null {
-    if (!next) return current;
-    if (!current) return next;
-
-    if (next.timestamp !== current.timestamp) {
-      return next.timestamp > current.timestamp ? next : current;
-    }
-
-    return next.chapterId > current.chapterId ? next : current;
   }
 
   private resolveChapterFromSerie(

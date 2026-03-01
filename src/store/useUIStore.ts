@@ -12,7 +12,7 @@ export interface useUIStore {
   clearLoading: () => void;
 }
 
-const useUIStore = create<useUIStore>((set, get, store) => ({
+export const useUIStore = create<useUIStore>((set, get, store) => ({
   loading: false,
 
   error: null,
@@ -31,5 +31,3 @@ const useUIStore = create<useUIStore>((set, get, store) => ({
     set({ loading: store.getInitialState().loading });
   },
 }));
-
-export default useUIStore;

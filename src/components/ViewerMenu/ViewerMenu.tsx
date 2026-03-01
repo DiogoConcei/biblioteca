@@ -1,8 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { visualizerProps } from '../../types/components.interfaces';
-import useSerieStore from '../../store/useSerieStore';
-import './ViewerMenu.scss';
 import {
   House,
   ChevronsLeft,
@@ -13,6 +10,11 @@ import {
   ZoomIn,
   Book,
 } from 'lucide-react';
+
+import { visualizerProps } from '../../types/components.interfaces';
+import useSerieStore from '../../store/useSerieStore';
+
+import './ViewerMenu.scss';
 
 export default function ViewerMenu({
   setScale,
@@ -92,15 +94,24 @@ export default function ViewerMenu({
         totalPages,
       );
 
-      await window.electronAPI.series.recentSerie(
-        serie?.dataPath!,
-        serie_name!,
-      );
+      if (serie?.dataPath) {
+        await window.electronAPI.series.recentSerie(
+          serie.dataPath,
+          serie_name!,
+        );
+      }
 
       clearSerie();
       navigate('/');
     },
-    [serie_name, chapter_id, currentPage, navigate],
+    [
+      serie_name,
+      chapter_id,
+      currentPage,
+      navigate,
+      clearSerie,
+      serie?.dataPath,
+    ],
   );
 
   const seriePage = useCallback(
@@ -112,21 +123,23 @@ export default function ViewerMenu({
         totalPages,
       );
 
-      const toSeriePage = await window.electronAPI.userAction.returnPage(
-        serie?.dataPath!,
-        serie_name!,
-      );
+      if (serie?.dataPath) {
+        const toSeriePage = await window.electronAPI.userAction.returnPage(
+          serie.dataPath,
+          serie_name!,
+        );
 
-      await window.electronAPI.series.recentSerie(
-        serie?.dataPath!,
-        serie_name!,
-      );
+        await window.electronAPI.series.recentSerie(
+          serie.dataPath,
+          serie_name!,
+        );
 
-      const seriePage = toSeriePage.data;
+        const seriePage = toSeriePage.data;
 
-      navigate(seriePage!);
+        navigate(seriePage!);
+      }
     },
-    [serie_name, chapter_id, currentPage, navigate],
+    [serie_name, chapter_id, currentPage, navigate, serie?.dataPath],
   );
 
   return (
@@ -172,7 +185,7 @@ export default function ViewerMenu({
             </div>
             <div className="returnControl">
               <label htmlFor="home">
-                <button id="home" onClick={(e) => goHome(totalPages)}>
+                <button id="home" onClick={() => goHome(totalPages)}>
                   <House />
                 </button>
                 <span>Pagina Inicial</span>
@@ -180,7 +193,7 @@ export default function ViewerMenu({
               <label className="returnTest" htmlFor="returnPage">
                 <button
                   id="seriePage"
-                  onClick={(e) => seriePage(totalPages)}
+                  onClick={() => seriePage(totalPages)}
                   className="returnPageBtn"
                 >
                   <ChevronLeft />

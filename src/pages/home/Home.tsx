@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import useUIStore from '../../store/useUIStore';
+import { ListFilter, Settings, Play, Pencil } from 'lucide-react';
+
+import CustomSelect from '@/components/CustomSelect/CustomSelect';
+import { SerieForm } from '@/types/series.interfaces';
+import useAction from '@/hooks/useAction';
+
+import { useUIStore } from '../../store/useUIStore';
 import useSerieStore from '../../store/useSerieStore';
 import useAllSeries from '../../hooks/useAllSeries';
 import Loading from '../../components/Loading/Loading';
 import SearchBar from '../../components/SearchBar/SearchBar';
-import { ListFilter, Settings, Play, Pencil } from 'lucide-react';
-import CustomSelect from '@/components/CustomSelect/CustomSelect';
-import { SerieForm } from '@/types/series.interfaces';
 import styles from './Home.module.scss';
-import useAction from '@/hooks/useAction';
 
 export default function Home() {
   const [searchInput, setSearchInput] = useState<string>('');

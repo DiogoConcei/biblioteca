@@ -1,15 +1,3 @@
-import LibrarySystem from './abstract/LibrarySystem';
-import FileManager from './FileManager';
-
-import {
-  LiteratureChapter,
-  Literatures,
-  viewData,
-} from '../types/electron-auxiliar.interfaces';
-import { Comic, TieIn } from '../types/comic.interfaces';
-import { Manga } from '../types/manga.interfaces';
-import { SerieData, SerieEditForm } from '../../src/types/series.interfaces';
-
 import fse from 'fs-extra';
 import path from 'path';
 import { randomBytes } from 'crypto';
@@ -17,6 +5,17 @@ import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { createCanvas } from '@napi-rs/canvas';
 import { promisify } from 'util';
 import { exec } from 'child_process';
+
+import { SerieData, SerieEditForm } from '../../src/types/series.interfaces';
+import { Manga } from '../types/manga.interfaces';
+import { Comic, TieIn } from '../types/comic.interfaces';
+import {
+  LiteratureChapter,
+  Literatures,
+  viewData,
+} from '../types/electron-auxiliar.interfaces';
+import FileManager from './FileManager';
+import LibrarySystem from './abstract/LibrarySystem';
 
 export default class StorageManager extends LibrarySystem {
   private readonly SEVEN_ZIP_PATH = 'C:\\Program Files\\7-Zip\\7z';
@@ -35,6 +34,24 @@ export default class StorageManager extends LibrarySystem {
       console.error(`Erro em escrever dados da serie: ${e}`);
       return false;
     }
+  }
+
+  public async searchSerieById(
+    serieId: number,
+  ): Promise<Literatures | TieIn | null> {
+    const dataPaths = await this.fileManager.getDataPaths();
+
+    for (const dataPath of dataPaths) {
+      const serieData = await this.readData(dataPath);
+
+      if (!serieData || serieData.id !== serieId) {
+        continue;
+      }
+
+      return serieData;
+    }
+
+    return null;
   }
 
   // Gambiarra genérica para ler todos os dados (temporária)
@@ -625,7 +642,6 @@ export default class StorageManager extends LibrarySystem {
 
       const loadingTask = pdfjsLib.getDocument({
         data: new Uint8Array(data),
-        // @ts-ignore
         disableWorker: true,
       });
 

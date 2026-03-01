@@ -1,9 +1,10 @@
 import { Controller, FieldValues } from 'react-hook-form';
 import { useEffect, useState } from 'react';
+
 import { GenericControllerProps } from '../../../../../electron/types/electron-auxiliar.interfaces';
 import { Collection } from '../../../../types/collections.interfaces';
 import styles from './CollectionsField.module.scss';
-import useUIStore from '../../../../store/useUIStore';
+import { useUIStore } from '../../../../store/useUIStore';
 
 export default function CollectionsField<T extends FieldValues>({
   control,
@@ -36,7 +37,7 @@ export default function CollectionsField<T extends FieldValues>({
     }
 
     getCollections();
-  }, []);
+  }, [setError]);
 
   return (
     <Controller

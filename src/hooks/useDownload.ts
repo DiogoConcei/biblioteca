@@ -1,6 +1,6 @@
 import { LiteratureChapter } from '../../electron/types/electron-auxiliar.interfaces';
 import useSerieStore from '../store/useSerieStore';
-import useUIStore from '../store/useUIStore';
+import { useUIStore } from '../store/useUIStore';
 
 export default function useDownload() {
   const dataPath = useSerieStore((state) => state.serie?.dataPath);

@@ -1,11 +1,12 @@
 import { IpcMain } from 'electron';
+
 import StorageManager from '../services/StorageManager.ts';
 import CollectionsManager from '../services/CollectionManager';
 import FileManager from '../services/FileManager.ts';
 import ImageManager from '../services/ImageManager.ts';
 import UserManager from '../services/UserManager.ts';
 import TieInManager from '../services/TieInManager.ts';
-import { ComicTieIn, TieIn } from '../types/comic.interfaces.ts';
+import { ComicTieIn } from '../types/comic.interfaces.ts';
 import { SerieInCollection } from '../../src/types/collections.interfaces.ts';
 import { SerieEditForm } from '../../src/types/series.interfaces.ts';
 import { Literatures } from '../types/electron-auxiliar.interfaces.ts';

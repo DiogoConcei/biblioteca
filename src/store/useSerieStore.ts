@@ -1,4 +1,7 @@
 import { create } from 'zustand';
+
+import { TieIn } from 'electron/types/comic.interfaces';
+
 import {
   Literatures,
   LiteratureChapter,
@@ -6,8 +9,7 @@ import {
   LiteraturesAttributes,
   APIResponse,
 } from '../../electron/types/electron-auxiliar.interfaces';
-import { TieIn } from 'electron/types/comic.interfaces';
-import useUIStore from './useUIStore';
+import { useUIStore } from './useUIStore';
 
 interface UseSerieStore {
   serie: Literatures | TieIn | null;
@@ -26,7 +28,7 @@ interface UseSerieStore {
   clearSerie: () => void;
 }
 
-const useSerieStore = create<UseSerieStore>((set, get) => ({
+const useSerieStore = create<UseSerieStore>((set) => ({
   serie: null,
   chapters: [],
 
@@ -76,14 +78,14 @@ const useSerieStore = create<UseSerieStore>((set, get) => ({
       if (!state.serie) return {};
       const updated = { ...state.serie };
       const keys = path.split('.');
-      let cursor: any = updated;
-      for (let i = 0; i < keys.length - 1; i++) cursor = cursor[keys[i]];
+      let cursor: Record<string, unknown> = updated;
+      for (let i = 0; i < keys.length - 1; i++) cursor = cursor[keys[i]] as Record<string, unknown>;
       cursor[keys.at(-1)!] = newValue;
       return { serie: updated };
     });
   },
 
-  updateChapter: (idOrIndex: number | string, path: string, newValue: any) => {
+  updateChapter: (idOrIndex: number | string, path: string, newValue: unknown) => {
     set((state) => {
       const idNum = Number(idOrIndex);
 
@@ -107,8 +109,8 @@ const useSerieStore = create<UseSerieStore>((set, get) => ({
 
       const keys = path.split('.');
 
-      let chapter = { ...originalChapter };
-      let cursor: any = chapter;
+      const chapter = { ...originalChapter };
+      let cursor: Record<string, unknown> = chapter;
 
       if (keys.length === 1) {
         cursor[keys[0]] = newValue;
@@ -117,7 +119,7 @@ const useSerieStore = create<UseSerieStore>((set, get) => ({
           const k = keys[i];
           const next = cursor[k];
           cursor[k] = next && typeof next === 'object' ? { ...next } : {};
-          cursor = cursor[k];
+          cursor = cursor[k] as Record<string, unknown>;
         }
 
         const lastKey = keys[keys.length - 1];

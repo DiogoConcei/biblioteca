@@ -1,13 +1,15 @@
+import { useParams } from 'react-router-dom';
+import { ArrowDownToLine, ArrowDownFromLine, LoaderCircle } from 'lucide-react';
+
+import { ComicEdition, TieIn } from 'electron/types/comic.interfaces';
+
 import useSerieStore from '../../store/useSerieStore';
-import useUIStore from '../../store/useUIStore';
+import { useUIStore } from '../../store/useUIStore';
 import useAction from '../../hooks/useAction';
 import useDownload from '../../hooks/useDownload';
-import { useParams } from 'react-router-dom';
 import useSerie from '../../hooks/useSerie';
 import Loading from '../Loading/Loading';
 import ErrorScreen from '../ErrorScreen/ErrorScreen';
-import { Comic, ComicEdition, TieIn } from 'electron/types/comic.interfaces';
-import { ArrowDownToLine, ArrowDownFromLine, LoaderCircle } from 'lucide-react';
 import styles from '../../pages/comicPage/comicPage.module.scss';
 
 export default function TieInPage() {

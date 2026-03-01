@@ -1,5 +1,6 @@
 import { Dispatch } from 'react';
-import useUIStore from '../../store/useUIStore';
+
+import { useUIStore } from '../../store/useUIStore';
 import useSerieStore from '../../store/useSerieStore';
 import styles from './UploadPopUp.module.scss';
 

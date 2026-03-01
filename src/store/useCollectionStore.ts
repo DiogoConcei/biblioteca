@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+
 import {
   Collection,
   CreateCollectionDTO,
@@ -36,11 +37,7 @@ interface CollectionState {
     payload: Partial<Pick<Collection, 'description' | 'coverImage' | 'name'>>,
   ) => Promise<boolean>;
   deleteCollection: (name: string) => Promise<boolean>;
-  removeSerie: (
-    collectionName: string,
-    serieId: number,
-    keepEmpty?: boolean,
-  ) => Promise<boolean>;
+  removeSerie: (collectionName: string, serieId: number) => Promise<boolean>;
   reorderSeries: (
     collectionName: string,
     orderedSeriesIds: number[],
@@ -411,11 +408,7 @@ export const useCollectionStore = create<CollectionState>((set, get) => {
       }
     },
 
-    /* ================
-       removeSerie
-       ================ */
-
-    removeSerie: async (collectionName, serieId, keepEmpty = false) => {
+    removeSerie: async (collectionName, serieId) => {
       const previous = get().collections;
 
       const next = previous.map((collection) => {
@@ -436,10 +429,9 @@ export const useCollectionStore = create<CollectionState>((set, get) => {
         const response = await window.electronAPI.collections.removeSerie(
           collectionName,
           serieId,
-          keepEmpty,
         );
 
-        if (!response.success) {
+        if (!response) {
           setCollectionsState(previous);
           return false;
         }

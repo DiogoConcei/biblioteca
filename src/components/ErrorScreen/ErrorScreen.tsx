@@ -1,8 +1,8 @@
-import styles from './ErrorScreen.module.scss';
 import { useNavigate } from 'react-router-dom';
 
+import styles from './ErrorScreen.module.scss';
 import { ErrorScreenProps } from '../../types/components.interfaces';
-import useUIStore from '../../store/useUIStore';
+import { useUIStore } from '../../store/useUIStore';
 
 export default function ErrorScreen({ error, serieName }: ErrorScreenProps) {
   const navigate = useNavigate();

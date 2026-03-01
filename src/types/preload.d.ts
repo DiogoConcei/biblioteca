@@ -5,8 +5,12 @@ import {
   ComicTieIn,
   TieIn,
 } from 'electron/types/comic.interfaces.js';
-import { childSerie, ComicTieIn } from 'electron/types/comic.interfaces.js';
-import { CreateCollectionDTO } from './collections.interfaces.js';
+
+import {
+  Collection,
+  SerieInCollection,
+  ScrapedMetadata,
+} from './collections.interfaces.js';
 import {
   Literatures,
   viewData,
@@ -14,11 +18,6 @@ import {
   LiteratureChapter,
 } from '../../electron/types/electron-auxiliar.interfaces.js';
 import { SerieData, SerieEditForm, SerieForm } from './series.interfaces.ts';
-import {
-  Collection,
-  SerieInCollection,
-  ScrapedMetadata,
-} from './collections.interfaces';
 import {
   ComicCoverRegenerationResult,
   SystemResult,
@@ -184,8 +183,7 @@ declare global {
         removeSerie: (
           collectionName: string,
           serieId: number,
-          keepEmpty?: boolean,
-        ) => Promise<APIResponse<string>>;
+        ) => Promise<boolean>;
         reorderSeries: (
           collectionName: string,
           orderedSeriesIds: number[],

@@ -1,14 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
-  Controller,
   SubmitHandler,
   useForm,
   useFieldArray,
   useWatch,
 } from 'react-hook-form';
 
-import { SerieInCollection } from '@/types/collections.interfaces';
+import {
+  SerieInCollection,
+  CreateCollectionDTO,
+} from '@/types/collections.interfaces';
 import { Status } from 'electron/types/electron-auxiliar.interfaces';
+
 import styles from './CreateCollection.module.scss';
 import ImageController from '../Form/Fields/ImageController/ImageController';
 import {
@@ -51,10 +54,15 @@ export default function CreateCollection({
     name: 'selectedSeries',
   });
 
-  const watchedSelected = (useWatch({
+  const watchedSelectedRaw = useWatch({
     control,
     name: 'selectedSeries',
-  }) ?? []) as SelectedSerieData[];
+  });
+
+  const watchedSelected = useMemo(
+    () => (watchedSelectedRaw ?? []) as SelectedSerieData[],
+    [watchedSelectedRaw],
+  );
 
   const coverType = watch('coverType');
   const selectedCoverId = watch('seriesCoverId');
@@ -156,10 +164,9 @@ export default function CreateCollection({
       name: values.name.trim(),
       description: values.description.trim(),
       coverImage: coverImageToSend,
-      // agora enviamos explicitamente o id da série (ou null)
       seriesCoverId: seriesCoverIdToSend,
       series: buildCollectionSeries(),
-    } as any);
+    } as CreateCollectionDTO);
 
     reset(defaultValues);
     onClose();
@@ -177,8 +184,9 @@ export default function CreateCollection({
     >
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-          {/* ImageController continua recebendo 'coverImage' para exibir preview */}
-          <ImageController control={control} name="coverImage" />
+          <div className={styles.imageControlWrapper}>
+            <ImageController control={control} name="coverImage" />
+          </div>
 
           <div className={styles.inputArea}>
             <label>

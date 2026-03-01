@@ -1,11 +1,13 @@
-import useUIStore from '../store/useUIStore';
-import useSerieStore from '../store/useSerieStore';
+import { useNavigate } from 'react-router-dom';
+
 import { TieIn, ComicTieIn } from 'electron/types/comic.interfaces';
+
+import { useUIStore } from '../store/useUIStore';
+import useSerieStore from '../store/useSerieStore';
 import {
   LiteratureChapter,
   Literatures,
 } from '../../electron/types/electron-auxiliar.interfaces';
-import { useNavigate } from 'react-router-dom';
 import useDownload from './useDownload';
 
 export default function useAction() {

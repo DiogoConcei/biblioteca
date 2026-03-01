@@ -6,12 +6,16 @@ import { SerieInCollection } from '@/types/collections.interfaces';
 import styles from './CollectionsSerieCard.module.scss';
 
 interface CollectionSeriesCardProps {
+  activeSerieIndex: number;
+  serieIndex: number;
   serie: SerieInCollection;
   onDropOnCard: (sourceId: number, targetId: number) => Promise<void>;
   onActivate: () => void;
 }
 
 export default function CollectionSeriesCard({
+  serieIndex,
+  activeSerieIndex,
   serie,
   onDropOnCard,
   onActivate,
@@ -20,7 +24,7 @@ export default function CollectionSeriesCard({
 
   return (
     <article
-      className={`${styles.card} ${isOver ? styles.dragOver : ''}`}
+      className={`${styles.card} ${isOver ? styles.dragOver : ''} ${activeSerieIndex === serieIndex ? styles.active : ''}`}
       draggable
       onClick={onActivate}
       onKeyDown={(event) => {

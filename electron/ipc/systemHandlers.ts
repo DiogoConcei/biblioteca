@@ -1,4 +1,5 @@
 import { BrowserWindow, dialog, IpcMain } from 'electron';
+
 import SystemManager from '../services/SystemManager';
 
 export default function systemHandlers(ipcMain: IpcMain) {

@@ -1,4 +1,3 @@
-import { Manga } from '../../electron/types/manga.interfaces';
 import {
   FieldError,
   Control,
@@ -6,17 +5,17 @@ import {
   Path,
   UseFormRegisterReturn,
 } from 'react-hook-form';
+
+import { Manga } from '../../electron/types/manga.interfaces';
 import {
   Literatures,
   LiteraturesAttributes,
   LiteratureChapterAttributes,
+  Status,
+  viewData,
 } from '../../electron/types/electron-auxiliar.interfaces';
-import { Status } from '../../electron/types/electron-auxiliar.interfaces';
-import { Collection } from './collections.interfaces';
-import { SerieEditForm } from './series.interfaces';
-import { SerieForm, SerieData } from './series.interfaces';
-import { viewData } from '../../electron/types/electron-auxiliar.interfaces';
-import { CreateCollectionDTO } from './collections.interfaces';
+import { Collection, CreateCollectionDTO } from './collections.interfaces';
+import { SerieEditForm, SerieForm, SerieData } from './series.interfaces';
 
 export interface OnlySerieProp {
   manga: Literatures;
@@ -159,7 +158,7 @@ export interface FormInputProps {
   error?: FieldError;
 }
 
-export interface FormControllerProps<T extends FieldValues = FieldValues> {
+export interface FormControllerProps {
   control: Control<SerieEditForm>;
   label?: string;
 }
