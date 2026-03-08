@@ -6,13 +6,13 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && electron-builder",
+    "build": "tsc && vite build",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:linux": "npm run build && electron-builder --linux",
+    "postinstall": "electron-rebuild -f -w sharp",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
-    "dist": "electron-builder",
-    "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make"
+    "preview": "vite preview"
   },
   "build": {
     "appId": "com.diogo.biblioteca",
@@ -42,7 +42,6 @@
     "@types/fs-extra": "^11.0.4",
     "@types/mime-types": "^3.0.1",
     "@types/react-router-dom": "^5.3.3",
-    "electron-squirrel-startup": "^1.0.1",
     "file-type": "^21.1.1",
     "immer": "^10.1.1",
     "lodash": "^4.17.23",
@@ -60,14 +59,6 @@
     "zustand": "^5.0.5"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^7.8.3",
-    "@electron-forge/maker-deb": "^7.8.3",
-    "@electron-forge/maker-rpm": "^7.8.3",
-    "@electron-forge/maker-squirrel": "^7.8.3",
-    "@electron-forge/maker-zip": "^7.8.3",
-    "@electron-forge/plugin-auto-unpack-natives": "^7.8.3",
-    "@electron-forge/plugin-fuses": "^7.8.3",
-    "@electron/fuses": "^1.8.0",
     "@eslint/js": "^9.27.0",
     "@types/jsonfile": "^6.1.4",
     "@types/pdfjs-dist": "^2.10.377",
@@ -77,6 +68,7 @@
     "@typescript-eslint/parser": "^7.1.1",
     "@vitejs/plugin-react": "^4.2.1",
     "electron": "^30.0.1",
+    "electron-builder": "^26.8.1",
     "electron-rebuild": "^3.2.9",
     "eslint": "^8.57.1",
     "eslint-import-resolver-typescript": "^4.4.1",

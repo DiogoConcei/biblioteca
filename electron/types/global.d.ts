@@ -3,7 +3,7 @@
 export {}; // garante que este arquivo seja tratado como módulo
 
 declare global {
-  var storageFolder: string;
+  const storageFolder: string;
 }
 
 // src/types/pdfjs-dist.d.ts

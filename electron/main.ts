@@ -1,12 +1,13 @@
-import { app, BrowserWindow, ipcMain, Menu } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { fileURLToPath } from 'node:url';
-import { registerHandlers } from './ipc';
 import path from 'path';
 import fse from 'fs-extra';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
+import { registerHandlers } from './ipc';
+
 declare global {
-  var storageFolder: string;
+  const storageFolder: string;
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -138,13 +139,7 @@ function createWindow() {
     win.loadURL(VITE_DEV_SERVER_URL);
   } else {
     // Production
-    const indexHtml = path.join(
-      process.resourcesPath,
-      'app',
-      'dist',
-      'index.html',
-    );
-    win.loadFile(indexHtml);
+    win.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
   ipcMain.handle('window:minimize', async () => {

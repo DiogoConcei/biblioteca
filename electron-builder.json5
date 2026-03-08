@@ -1,24 +1,16 @@
-// @see - https://www.electron.build/configuration/configuration
 {
   $schema: 'https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json',
-  appId: 'YourAppID',
+  appId: 'com.diogo.biblioteca',
   asar: true,
-  productName: 'YourAppName',
+  productName: 'Biblioteca',
   directories: {
     output: 'release/${version}',
   },
   files: ['dist', 'dist-electron'],
-  mac: {
-    target: ['dmg'],
-    artifactName: '${productName}-Mac-${version}-Installer.${ext}',
-  },
+  // Reconstrói native modules (sharp) para o Electron
+  npmRebuild: true,
   win: {
-    target: [
-      {
-        target: 'nsis',
-        arch: ['x64'],
-      },
-    ],
+    target: [{ target: 'nsis', arch: ['x64'] }],
     artifactName: '${productName}-Windows-${version}-Setup.${ext}',
   },
   nsis: {
@@ -26,6 +18,8 @@
     perMachine: false,
     allowToChangeInstallationDirectory: true,
     deleteAppDataOnUninstall: false,
+    createDesktopShortcut: true,
+    createStartMenuShortcut: true,
   },
   linux: {
     target: ['AppImage'],
