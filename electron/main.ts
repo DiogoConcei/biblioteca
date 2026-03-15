@@ -1,16 +1,34 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, protocol, net } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'path';
 import fse from 'fs-extra';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 import { registerHandlers } from './ipc';
+import DownloadManager from './services/DownloadManager';
+import MediaServer from './services/MediaServer';
+
+// Registrar o protocolo antes do app estar pronto (obrigatório para alguns tipos de protocolo)
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'lib-media',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      bypassCSP: true,
+      stream: true,
+    },
+  },
+]);
 
 declare global {
   const storageFolder: string;
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+let downloadManager: DownloadManager | null = null;
+const mediaServer = new MediaServer();
 
 process.env.APP_ROOT = path.join(__dirname, '..');
 
@@ -130,6 +148,8 @@ function createWindow() {
     },
   });
 
+  downloadManager = new DownloadManager(win);
+
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString());
   });
@@ -181,6 +201,7 @@ app.on('activate', () => {
 
 app.whenReady().then(async () => {
   await ensureAppFolders();
+  mediaServer.register();
   await registerHandlers();
   createWindow();
 });

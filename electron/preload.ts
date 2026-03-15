@@ -277,5 +277,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
       chapter_id: number,
     ): Promise<boolean> =>
       ipcRenderer.invoke('download:check', serieName, chapter_id),
+
+    // Novos métodos do DownloadManager
+    getTasks: () => ipcRenderer.invoke('download:get-tasks'),
+    addTask: (taskData: any) => ipcRenderer.invoke('download:add-task', taskData),
+    pauseTask: (taskId: string) => ipcRenderer.invoke('download:pause-task', taskId),
+    resumeTask: (taskId: string) => ipcRenderer.invoke('download:resume-task', taskId),
+    cancelTask: (taskId: string) => ipcRenderer.invoke('download:cancel-task', taskId),
+    clearCompleted: () => ipcRenderer.invoke('download:clear-completed'),
   },
 });

@@ -1,14 +1,11 @@
 import fse from 'fs-extra';
-import path, { parse } from 'path';
+import path from 'path';
 import iconv from 'iconv-lite';
 import pLimit from 'p-limit';
 import { randomUUID } from 'crypto';
 
 import LibrarySystem from './abstract/LibrarySystem';
-import {
-  LiteratureChapter,
-  Literatures,
-} from '../types/electron-auxiliar.interfaces';
+import { Literatures } from '../types/electron-auxiliar.interfaces';
 
 enum ComicCategory {
   NORMAL = 0,
@@ -174,22 +171,24 @@ export default class FileManager extends LibrarySystem {
   }
 
   public sanitizeFilename(fileName: string): string {
-    return fileName
-      .replaceAll(/\s+/g, '_')
+    return (
+      fileName
+        .replaceAll(/\s+/g, '_')
 
-      .replaceAll(/[<>:"/\\|?*\x00-\x1F#!]/g, '_')
-      .replaceAll(/[^a-zA-Z0-9._-]/g, '_')
+        // .replaceAll(/[<>:"/\\|?*\x00-\x1F#!]/g, '_')
+        .replaceAll(/[^a-zA-Z0-9._-]/g, '_')
 
-      .replaceAll(/_{2,}/g, '_')
+        .replaceAll(/_{2,}/g, '_')
 
-      .replaceAll(/\.{2,}/g, '.')
+        .replaceAll(/\.{2,}/g, '.')
 
-      .replaceAll(/^-+|-+$/g, '')
+        .replaceAll(/^-+|-+$/g, '')
 
-      .replaceAll(/[. ]+$/g, '')
-      .replaceAll('#', '')
-      .replaceAll('.pdf', '')
-      .trim();
+        .replaceAll(/[. ]+$/g, '')
+        .replaceAll('#', '')
+        .replaceAll('.pdf', '')
+        .trim()
+    );
   }
 
   public sanitizeDirName(dirName: string) {
@@ -222,9 +221,7 @@ export default class FileManager extends LibrarySystem {
       entry.map(async (file) => {
         if (await fse.existsSync(file)) {
           const parsed = path.parse(file);
-          const newName = this.sanitizeImageName(parsed.base).concat(
-            parsed.ext,
-          );
+          return this.sanitizeImageName(parsed.base).concat(parsed.ext);
         }
       }),
     );
@@ -243,20 +240,18 @@ export default class FileManager extends LibrarySystem {
 
     let fixedName = base;
 
-    try {
-      const buffer = Buffer.from(base, 'binary');
-      const utf8 = iconv.decode(buffer, 'latin1');
+    const buffer = Buffer.from(base, 'binary');
+    const utf8 = iconv.decode(buffer, 'latin1');
 
-      if (utf8 && utf8 !== base) {
-        fixedName = utf8;
-      }
-    } catch {}
+    if (utf8 && utf8 !== base) {
+      fixedName = utf8;
+    }
 
     fixedName = fixedName.normalize('NFKD');
 
     fixedName = fixedName.replace(/[\u0300-\u036f]/g, '');
 
-    fixedName = fixedName.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
+    // fixedName = fixedName.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
 
     fixedName = fixedName.replace(/\s+/g, ' ').replace(/_+/g, '_').trim();
 
@@ -555,89 +550,6 @@ export default class FileManager extends LibrarySystem {
     }
 
     return null;
-  }
-
-  public async regenAppFolders() {
-    const storageFolder = this.baseStorageFolder;
-
-    if (!fse.existsSync(storageFolder)) {
-      await fse.mkdirp(storageFolder);
-    }
-
-    const dataStore = path.join(storageFolder, 'data store');
-    const userLibrary = path.join(storageFolder, 'user library');
-    const configFolder = path.join(storageFolder, 'config');
-    const imagesFolder = path.join(dataStore, 'images files');
-    const jsonFolder = path.join(dataStore, 'json files');
-
-    await Promise.all([
-      fse.mkdirp(dataStore),
-      fse.mkdirp(userLibrary),
-      fse.mkdirp(configFolder),
-      fse.mkdirp(imagesFolder),
-      fse.mkdirp(jsonFolder),
-    ]);
-
-    await Promise.all([
-      fse.mkdirp(path.join(configFolder, 'app')),
-      fse.mkdirp(path.join(configFolder, 'comic')),
-      fse.mkdirp(path.join(configFolder, 'book')),
-      fse.mkdirp(path.join(configFolder, 'manga')),
-      fse.mkdirp(path.join(jsonFolder, 'books')),
-      fse.mkdirp(path.join(jsonFolder, 'comics')),
-      fse.mkdirp(path.join(jsonFolder, 'mangas')),
-      fse.mkdirp(path.join(jsonFolder, 'childSeries')),
-      fse.mkdirp(path.join(imagesFolder, 'book')),
-      fse.mkdirp(path.join(imagesFolder, 'comic')),
-      fse.mkdirp(path.join(imagesFolder, 'manga')),
-      fse.mkdirp(path.join(imagesFolder, 'showcase images')),
-      fse.mkdirp(path.join(imagesFolder, 'dinamic images')),
-    ]);
-
-    const configJsonPath = path.join(configFolder, 'app', 'config.json');
-    const collectionsJsonPath = path.join(
-      configFolder,
-      'app',
-      'appCollections.json',
-    );
-
-    if (!fse.existsSync(configJsonPath)) {
-      await fse.writeJson(
-        configJsonPath,
-        {
-          settings: {
-            reading_mode: 'single_page',
-            zoom: 'fit_width',
-            ligth_mode: true,
-            full_screen: true,
-          },
-          metadata: { global_id: 0 },
-        },
-        { spaces: 2 },
-      );
-    }
-
-    if (!fse.existsSync(collectionsJsonPath)) {
-      await fse.writeJson(
-        collectionsJsonPath,
-        [
-          {
-            name: 'Favoritos',
-            description: 'Minhas séries favoritas.',
-            series: [],
-            updatedAt: new Date().toISOString(),
-          },
-          {
-            name: 'Recentes',
-            description: 'Séries lidas recentemente',
-            series: [],
-            comments: [],
-            updatedAt: new Date().toISOString(),
-          },
-        ],
-        { spaces: 2 },
-      );
-    }
   }
 
   public sortPage(a: string, b: string): number {

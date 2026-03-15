@@ -18,6 +18,7 @@ import ErrorBoundary from './providers/ErrorBoundary';
 import AppearanceSettings from './pages/SettingsPage/AppearancesSettings/AppearanceSettings';
 import PrivacySettings from './pages/SettingsPage/PrivacySettings/PrivacySettings';
 import SyncSettings from './pages/SettingsPage/SyncSettings/SyncSettings';
+import Downloads from './pages/downloads/Downloads';
 
 const App = () => {
   return (
@@ -27,6 +28,7 @@ const App = () => {
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="collections" element={<Collections />} />
+            <Route path="downloads" element={<Downloads />} />
             <Route path="settings" element={<SettingsLayout />}>
               <Route index element={<SystemConfig />} />
               <Route path="backup" element={<BackupSettings />} />

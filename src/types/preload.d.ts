@@ -278,6 +278,13 @@ declare global {
           serieName: string,
           chapter_id: number,
         ) => Promise<boolean>;
+
+        getTasks: () => Promise<any[]>;
+        addTask: (taskData: any) => Promise<any>;
+        pauseTask: (taskId: string) => Promise<boolean>;
+        resumeTask: (taskId: string) => Promise<boolean>;
+        cancelTask: (taskId: string) => Promise<boolean>;
+        clearCompleted: () => Promise<boolean>;
       };
     };
   }

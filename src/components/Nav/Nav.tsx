@@ -35,6 +35,11 @@ export default function Nav() {
             Coleções
           </Link>
         </li>
+        <li key="downloads">
+          <Link to="downloads" className={styles.link} onClick={resetStates}>
+            Downloads
+          </Link>
+        </li>
         <li key="settings">
           <Link to="settings" className={styles.link} onClick={resetStates}>
             Configurações

@@ -603,7 +603,7 @@ export default class StorageManager extends LibrarySystem {
             );
           }
 
-          return this.mountViewData(serie);
+          return await this.mountViewData(serie);
         }),
       );
 

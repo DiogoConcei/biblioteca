@@ -16,11 +16,16 @@ import styles from './Home.module.scss';
 export default function Home() {
   const [searchInput, setSearchInput] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
+  const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
   const [selectedLiteratureForm, setSelectedLiteratureForm] = useState<
     SerieForm['literatureForm'] | ''
   >('');
 
   const { lastChapter } = useAction();
+
+  const handleImageLoad = (id: number) => {
+    setLoadedImages((prev) => ({ ...prev, [id]: true }));
+  };
 
   const loading = useUIStore((state) => state.loading);
   const clearSerie = useSerieStore((state) => state.clearSerie);
@@ -136,8 +141,15 @@ export default function Home() {
               key={serie.id}
               className={styles.serieLink}
             >
-              <figure className={styles.coverCard}>
-                <img src={`${serie.coverImage}`} alt={`Série: ${serie.name}`} />
+              <figure className={`${styles.coverCard} ${!loadedImages[serie.id] ? styles.skeleton : ''}`}>
+                <img 
+                  src={`${serie.coverImage}`} 
+                  alt={`Série: ${serie.name}`}
+                  decoding="async"
+                  loading="lazy"
+                  onLoad={() => handleImageLoad(serie.id)}
+                  className={loadedImages[serie.id] ? styles.loaded : ''}
+                />
                 <div className={styles['cover-actions']}>
                   <button
                     className={styles.editChapter}

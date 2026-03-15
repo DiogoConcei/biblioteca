@@ -206,17 +206,14 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         }
 
         const nextChapter = serieData.chapters?.find(
-          (chapter) => chapter.id === chapter_id,
+          (chapter) => chapter.id === chapter_id + 1,
         );
 
-        if (!nextChapter || nextChapter.id > serieData.totalChapters) {
-          console.error(
-            `Não há próximo capítulo para a série: ${serieData.name}, capítulo atual: ${chapter_id}`,
-          );
+        if (!nextChapter) {
           return null;
         }
 
-        const url = `/${serieData.name}/${serieData.id}/${nextChapter.name}/${nextChapter.id}/${nextChapter.page.lastPageRead}/${nextChapter.isRead}`;
+        const url = `/${serieData.name}/${serieData.id}/${encodeURIComponent(nextChapter.name)}/${nextChapter.id}/${nextChapter.page.lastPageRead}/${nextChapter.isRead}`;
 
         return { success: true, data: url };
       } catch (e) {
@@ -240,17 +237,14 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
           return { success: false, error: `Falha em recuperar dados` };
         }
         const prevChapter = serieData.chapters!.find(
-          (chapter) => chapter.id === chapter_id,
+          (chapter) => chapter.id === chapter_id - 1,
         );
 
-        if (!prevChapter || prevChapter.id < 0) {
-          console.error(
-            `Não há capítulo anterior para a série: ${serieData.name}, capítulo atual: ${chapter_id}`,
-          );
+        if (!prevChapter) {
           return null;
         }
 
-        const url = `/${serieData.name}/${serieData.id}/${prevChapter.name}/${prevChapter.id}/${prevChapter.page.lastPageRead}/${prevChapter.isRead}`;
+        const url = `/${serieData.name}/${serieData.id}/${encodeURIComponent(prevChapter.name)}/${prevChapter.id}/${prevChapter.page.lastPageRead}/${prevChapter.isRead}`;
 
         return { success: true, data: url };
       } catch (e) {

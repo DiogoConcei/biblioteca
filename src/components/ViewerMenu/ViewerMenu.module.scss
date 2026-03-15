@@ -1,6 +1,6 @@
 @use '@/styles/variables' as *;
 
-.viewer-menu {
+.viewerMenu {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,6 +10,14 @@
   z-index: 10;
   order: 2;
   border-radius: 0px 5px 5px 0px;
+
+  &.open {
+    // estilos específicos para quando está aberto, se necessário
+  }
+
+  &.closed {
+    // estilos específicos para quando está fechado, se necessário
+  }
 
   .hideMenuBtn {
     cursor: pointer;
@@ -90,7 +98,6 @@
       }
     }
 
-    // Revisar
     .zoomControl {
       display: flex;
       align-items: center;

@@ -1,11 +1,12 @@
+import fse from 'fs-extra';
+import path from 'path';
+
 import LibrarySystem from './abstract/LibrarySystem.ts';
 import StorageManager from './StorageManager.ts';
 import FileManager from './FileManager.ts';
 import ImageManager from './ImageManager.ts';
 import TieInManager from './TieInManager.ts';
 import ComicManager from './ComicManager.ts';
-import fse from 'fs-extra';
-import path from 'path';
 import {
   LocalSettings,
   BackupMeta,
@@ -273,7 +274,7 @@ export default class SystemManager extends LibrarySystem {
           await fse.remove(fullPath);
         }
       }
-      await this.fileManager.regenAppFolders();
+      // await this.fileManager.regenAppFolders();
     }
 
     const collectionsBackup =
@@ -762,7 +763,7 @@ export default class SystemManager extends LibrarySystem {
 
       const rawSeries = await Promise.all(
         dataPaths.map(async (rawData) => {
-          let response = await this.storageManager.readSerieData(rawData);
+          const response = await this.storageManager.readSerieData(rawData);
 
           if (!response) return { id: -1 } as Literatures;
 

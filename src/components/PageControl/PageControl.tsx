@@ -1,4 +1,4 @@
-import './PageControl.scss';
+import styles from './PageControl.module.scss';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -30,11 +30,11 @@ export default function PageControl({
 
   return (
     <div
-      className="secondInfo"
+      className={styles.secondInfo}
       style={{ '--progress': `${progress}` } as React.CSSProperties}
     >
       <ChevronLeft onClick={handlePrevPage} />
-      <div className="pageProgress">
+      <div className={styles.pageProgress}>
         <p>{currentPage}</p>
         <input
           type="range"
@@ -49,7 +49,7 @@ export default function PageControl({
               else prevPage();
             }
           }}
-          className="rangeSlider"
+          className={styles.rangeSlider}
         />
         <p>{TamPages}</p>
       </div>

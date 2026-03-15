@@ -88,6 +88,18 @@
           aspect-ratio: 2 / 3;
           overflow: hidden;
           border-radius: 4px;
+          background-color: rgba($gunmetal, 0.5);
+
+          &.skeleton {
+            background: linear-gradient(
+              90deg,
+              rgba($gunmetal, 0.5) 25%,
+              rgba($weak-gunmental, 0.8) 50%,
+              rgba($gunmetal, 0.5) 75%
+            );
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite linear;
+          }
 
           img {
             width: auto;
@@ -96,6 +108,12 @@
             border-radius: 5px;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
             display: block;
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+
+            &.loaded {
+              opacity: 1;
+            }
           }
 
           .cover-actions {
@@ -176,5 +194,14 @@
         }
       }
     }
+  }
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }

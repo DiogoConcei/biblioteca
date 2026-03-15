@@ -1,35 +1,31 @@
-import { useNavigate } from 'react-router-dom';
-
 import styles from './ErrorScreen.module.scss';
 import { ErrorScreenProps } from '../../types/components.interfaces';
 import { useUIStore } from '../../store/useUIStore';
 
-export default function ErrorScreen({ error, serieName }: ErrorScreenProps) {
-  const navigate = useNavigate();
+export default function ErrorScreen({ error, serieName, onReset }: ErrorScreenProps & { onReset?: () => void }) {
   const clearError = useUIStore((state) => state.clearError);
 
-  const goToSeriePage = async () => {
-    try {
-      const toSeriePage = await window.electronAPI.userAction.returnPage(
-        '',
-        serieName,
-      );
-      const serieLink = toSeriePage.data;
-
-      if (!serieLink) {
-        console.error('Erro ao obter o link da série');
-        return;
-      }
-
-      navigate(serieLink);
-    } catch (e) {
-      console.error(e);
+  const handleReset = () => {
+    if (onReset) {
+      onReset();
     }
+    clearError();
+    window.location.hash = '/'; // Fallback seguro para navegação em caso de falha grave
+    window.location.reload();   // Recarrega para limpar o estado de crash do React
   };
 
-  const goToHome = () => {
-    navigate('/');
-    clearError();
+  const handleRetrySerie = async () => {
+    if (!serieName) return;
+    try {
+      const response = await window.electronAPI.userAction.returnPage('', serieName);
+      if (response.data) {
+        window.location.hash = response.data;
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error('Falha ao tentar retornar para a série:', e);
+      handleReset();
+    }
   };
 
   return (
@@ -41,38 +37,22 @@ export default function ErrorScreen({ error, serieName }: ErrorScreenProps) {
           <p className={styles.errorMessage}>
             O sistema apresentou o seguinte erro: <span>{error}</span>
           </p>
-
-          <p>
-            Porém, não se preocupe, pois todas as suas informações foram
-            devidamente salvas.
-          </p>
-
-          <p>
-            Estamos trabalhando para resolver o problema o mais rápido possível.
-          </p>
+          <p>Não se preocupe, tentaremos recuperar o seu progresso.</p>
         </div>
 
         <div className={styles.secondaryInfo}>
-          {serieName && (
-            <p>
-              Por favor, retorne à página inicial da aplicação ou acesse a
-              página principal para continuar lendo mais capítulos de
-              <strong> {serieName}</strong>.
-            </p>
-          )}
-
           <p>Agradecemos pela sua compreensão.</p>
         </div>
       </div>
 
       <div className={styles.ButtonContainer}>
-        <button onClick={goToHome} className={styles.errorButton}>
+        <button onClick={handleReset} className={styles.errorButton}>
           Página Inicial
         </button>
 
-        {serieName && goToSeriePage && (
-          <button onClick={goToSeriePage} className={styles.errorButton}>
-            Página dedicada a {serieName}
+        {serieName && (
+          <button onClick={handleRetrySerie} className={styles.errorButton}>
+            Voltar para {serieName}
           </button>
         )}
       </div>

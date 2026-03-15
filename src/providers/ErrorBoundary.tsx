@@ -13,17 +13,26 @@ type State = {
 export default class ErrorBoundary extends React.Component<Props, State> {
   state: State = { hasError: false, error: null };
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    this.setState({ error: error });
+    console.error('ErrorBoundary caught an error:', error, info);
   }
+
+  handleReset = () => {
+    this.setState({ hasError: false, error: null });
+  };
 
   render() {
     if (this.state.hasError) {
-      return <ErrorScreen error={String(this.state.error?.message)} />;
+      return (
+        <ErrorScreen 
+          error={this.state.error?.message || 'Erro desconhecido na renderização'} 
+          onReset={this.handleReset}
+        />
+      );
     }
 
     return this.props.children;

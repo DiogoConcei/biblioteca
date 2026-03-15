@@ -35,6 +35,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         getData.map(async (serieData) => {
           const encodedImage = await imageManager.encodeImage(
             serieData.coverImage,
+            false, // Base64 para Home (cacheável no frontend)
           );
 
           return {
@@ -57,7 +58,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
       const processedData = {
         ...data,
-        coverImage: await imageManager.encodeImage(data.coverImage),
+        coverImage: await imageManager.encodeImage(data.coverImage, false),
       };
 
       return { success: true, data: processedData, error: ' ' };
@@ -76,7 +77,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
             data.chapters.map(async (chapter) => {
               const encodedCover =
                 typeof chapter.coverImage === 'string'
-                  ? await imageManager.encodeImage(chapter.coverImage)
+                  ? await imageManager.encodeImage(chapter.coverImage, false)
                   : '';
 
               return {
@@ -91,7 +92,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         ? await Promise.all(
             data.childSeries.map(async (tieIn) => {
               const encodedCover = tieIn.coverImage
-                ? await imageManager.encodeImage(tieIn.coverImage)
+                ? await imageManager.encodeImage(tieIn.coverImage, false)
                 : '';
 
               return {
@@ -104,7 +105,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
       const processedData = {
         ...data,
-        coverImage: await imageManager.encodeImage(data.coverImage),
+        coverImage: await imageManager.encodeImage(data.coverImage, false),
         chapters: updatedChapters,
         childSeries: updatedChildSeries,
       };

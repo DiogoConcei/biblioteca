@@ -1,16 +1,23 @@
 import path from 'path';
 import sharp from 'sharp';
-import mime from 'mime-types';
 import { fileTypeFromBuffer } from 'file-type';
 import fse from 'fs-extra';
+
 import LibrarySystem from './abstract/LibrarySystem';
-import StorageManager from './StorageManager.ts';
 import FileManager from './FileManager';
 import { ComicEdition } from '../types/comic.interfaces.ts';
 
 export default class ImageManager extends LibrarySystem {
-  private readonly storageManager: StorageManager = new StorageManager();
   private readonly fileManager: FileManager = new FileManager();
+  private _storageManager: any = null;
+
+  private async getStorageManager() {
+    if (!this._storageManager) {
+      const StorageManager = (await import('./StorageManager')).default;
+      this._storageManager = new StorageManager();
+    }
+    return this._storageManager;
+  }
 
   public async normalizeImage(
     imagePath: string,
@@ -46,17 +53,22 @@ export default class ImageManager extends LibrarySystem {
 
       const dir = path.dirname(destPath);
       await fse.ensureDir(dir);
+
+      // Se for uma imagem de vitrine (capa), redimensionamos para um tamanho razoável (ex: 300px de largura)
+      const isShowcase = finalPath.includes('showcase images');
+
       if (await fse.pathExists(destPath)) {
         return destPath;
-      }
-      if (parse.ext === '.webp') {
-        return normalizedPath;
       }
 
       imageInstance = sharp(normalizedPath);
 
       if (!(await fse.pathExists(normalizedPath))) {
         throw new Error(`Arquivo de origem não existe: ${normalizedPath}`);
+      }
+
+      if (isShowcase) {
+        imageInstance.resize(300, null, { withoutEnlargement: true });
       }
 
       await imageInstance.webp({ quality: 85 }).toFile(destPath);
@@ -118,23 +130,35 @@ export default class ImageManager extends LibrarySystem {
     }
   }
 
+  public getMediaUrl(absolutePath: string): string {
+    if (!absolutePath) return '';
+    const encoded = Buffer.from(absolutePath, 'utf-8').toString('base64');
+    return `lib-media://local/${encoded}`;
+  }
+
   public async readFileAsDataUrl(rawPath: string): Promise<string> {
-    const buf = await fse.promises.readFile(rawPath);
-    const mimeType = mime.lookup(rawPath) || 'application/octet-stream';
-    return `data:${mimeType};base64,${buf.toString('base64')}`;
+    try {
+      const buffer = await fse.readFile(rawPath);
+      const mimeType = (await this.getMime(rawPath)) || 'image/webp';
+      return `data:${mimeType};base64,${buffer.toString('base64')}`;
+    } catch (e) {
+      console.error('Erro ao ler arquivo como Base64:', e);
+      return '';
+    }
   }
 
   // chapOut === dirPath
   public async normalizeChapter(dirPath: string): Promise<void> {
     try {
       const entries = await fse.readdir(dirPath, { withFileTypes: true });
+      const storageManager = await this.getStorageManager();
 
       const dirs = entries
         .filter((e) => e.isDirectory())
         .map((e) => path.join(dirPath, e.name));
 
       for (const dir of dirs) {
-        await this.storageManager.fixComicDir(dir, dirPath);
+        await storageManager.fixComicDir(dir, dirPath);
       }
 
       const files = await fse.readdir(dirPath, { withFileTypes: true });
@@ -206,16 +230,17 @@ export default class ImageManager extends LibrarySystem {
     if (!inputFile) return '';
     let resultCover: string = '';
     const ext = path.extname(inputFile);
+    const storageManager = await this.getStorageManager();
 
     try {
       if (ext === '.pdf') {
-        resultCover = await this.storageManager.extractCoverFromPdf(
+        resultCover = await storageManager.extractCoverFromPdf(
           inputFile,
           outputPath,
         );
       } else {
         try {
-          resultCover = await this.storageManager.extractCoverWith7zip(
+          resultCover = await storageManager.extractCoverWith7zip(
             inputFile,
             outputPath,
           );
@@ -226,9 +251,9 @@ export default class ImageManager extends LibrarySystem {
         } catch (err) {
           console.warn('⚠️ Falha na extração principal:', err);
 
-          await this.storageManager.cleanupExtractedCover(outputPath);
+          await storageManager.cleanupExtractedCover(outputPath);
 
-          resultCover = await this.storageManager.safeExtract(
+          resultCover = await storageManager.safeExtract(
             inputFile,
             outputPath,
           );
@@ -246,61 +271,41 @@ export default class ImageManager extends LibrarySystem {
     }
   }
 
-  public async encodeImages(filePaths: string[]): Promise<string[]> {
-    try {
-      const codedImages = await Promise.all(
-        filePaths.map(async (filePath) => {
-          const buffer = await fse.readFile(filePath);
-          const mimeType = await this.getMime(filePath);
-
-          if (!mimeType) {
-            throw new Error(`Arquivo não é uma imagem válida: ${filePath}`);
-          }
-
-          return `data:${mimeType};base64,${buffer.toString('base64')}`;
-        }),
-      );
-
-      return codedImages;
-    } catch (e) {
-      console.error('Falha em codificar as imagens', e);
-      return [];
+  public async encodeImages(
+    filePaths: string[],
+    useProtocol = true,
+  ): Promise<string[]> {
+    if (useProtocol) {
+      return filePaths.map((filePath) => this.getMediaUrl(filePath));
     }
+
+    return Promise.all(filePaths.map((p) => this.readFileAsDataUrl(p)));
   }
 
-  public async encodeImage(filePath: string): Promise<string> {
-    try {
-      if (!filePath) return '';
-
-      const buffer = await fse.readFile(filePath);
-      const mimeType = await this.getMime(filePath);
-
-      if (!mimeType) {
-        throw new Error(`Arquivo não é uma imagem válida: ${filePath}`);
-      }
-
-      return `data:${mimeType};base64,${buffer.toString('base64')}`;
-    } catch (e) {
-      console.error('Falha em codificar a imagem', e);
-      return '';
-    }
+  public async encodeImage(
+    filePath: string,
+    useProtocol = true,
+  ): Promise<string> {
+    if (useProtocol) return this.getMediaUrl(filePath);
+    return this.readFileAsDataUrl(filePath);
   }
 
-  public async encodeComic(chapters: ComicEdition[]): Promise<ComicEdition[]> {
-    const encodeChapter = await Promise.all(
+  public async encodeComic(
+    chapters: ComicEdition[],
+    useProtocol = true,
+  ): Promise<ComicEdition[]> {
+    const encoded = await Promise.all(
       chapters.map(async (ch) => {
         if (!ch.coverImage) return ch;
-
-        const encodeCover = await this.encodeImage(ch.coverImage);
-
         return {
           ...ch,
-          coverImage: encodeCover as string,
+          coverImage: useProtocol
+            ? this.getMediaUrl(ch.coverImage)
+            : await this.readFileAsDataUrl(ch.coverImage),
         };
       }),
     );
-
-    return encodeChapter;
+    return encoded;
   }
 
   // Temporario

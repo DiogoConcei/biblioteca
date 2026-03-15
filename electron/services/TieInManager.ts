@@ -5,7 +5,6 @@ import LibrarySystem from './abstract/LibrarySystem';
 import FileManager from './FileManager';
 import ImageManager from './ImageManager';
 import StorageManager from './StorageManager';
-
 import { ComicTieIn, TieIn, ComicEdition } from '../types/comic.interfaces';
 
 export default class TieInManager extends LibrarySystem {
@@ -48,11 +47,12 @@ export default class TieInManager extends LibrarySystem {
     archivesPath: string,
     comicEdition: ComicEdition[],
   ) {
-    const dirName = path.basename(archivesPath);
+    // const dirName = path.basename(archivesPath);
 
     try {
       await Promise.all(
-        comicEdition.map(async (chap, idx) => {
+        // idx
+        comicEdition.map(async (chap) => {
           const rawName = chap.name;
           const safeName = this.fileManager.sanitizeDirName(rawName);
 
@@ -190,8 +190,7 @@ export default class TieInManager extends LibrarySystem {
     serieName: string,
     archivesPath: string,
   ): Promise<ComicEdition[]> {
-    const [comicEntries, total] =
-      await this.fileManager.searchChapters(archivesPath);
+    const [comicEntries] = await this.fileManager.searchChapters(archivesPath);
     const orderComics = await this.fileManager.orderComic(comicEntries);
 
     if (!comicEntries || comicEntries.length === 0) return [];

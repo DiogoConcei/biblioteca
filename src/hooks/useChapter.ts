@@ -18,6 +18,11 @@ export default function useChapter(
 
   useEffect(() => {
     async function fetchPages() {
+      if (!chapter) {
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
 
@@ -36,7 +41,7 @@ export default function useChapter(
         }
 
         setPages(data);
-        setCurrentPage(chapter.page.lastPageRead);
+        setCurrentPage(chapter.page?.lastPageRead || 0);
       } catch (e) {
         setIsLoading(false);
         setError('Erro ao carregar as páginas do capítulo.');
@@ -46,15 +51,15 @@ export default function useChapter(
     }
 
     fetchPages();
-  }, [serieName, chapterId, chapter.page.lastPageRead, setError]);
+  }, [serieName, chapterId, chapter?.page?.lastPageRead, setError]);
 
   return {
-    id: chapter.id,
-    serieName: chapter.serieName,
-    chapterName: chapter.name,
+    id: chapter?.id || 0,
+    serieName: chapter?.serieName || '',
+    chapterName: chapter?.name || '',
     isLoading,
     setIsLoading,
-    isDownloaded: chapter.isDownloaded,
+    isDownloaded: chapter?.isDownloaded || 'not_downloaded',
     pages,
     quantityPages: pages.length,
     currentPage,

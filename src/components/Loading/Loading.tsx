@@ -1,10 +1,10 @@
-import './Loading.scss';
+import styles from './Loading.module.scss';
 import { Radius } from 'lucide-react';
 
 export default function Loading() {
   return (
-    <div className="loadingWrapper">
-      <Radius className="spinner" />
+    <div className={styles.loadingWrapper}>
+      <Radius className={styles.spinner} />
     </div>
   );
 }

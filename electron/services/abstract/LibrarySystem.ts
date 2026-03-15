@@ -1,121 +1,121 @@
 import path from 'path';
 import fse from 'fs-extra';
+import { app } from 'electron';
 import { AppConfig } from '../../types/settings.interfaces';
 
 export default abstract class LibrarySystem {
-  readonly baseStorageFolder: string =
-    'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage';
+  // O app.getPath só funciona se o app estiver pronto. 
+  // Em alguns casos de teste ou instanciamento precoce, pode falhar.
+  // Usamos um getter para garantir que pegamos o caminho correto sempre.
+  
+  get baseStorageFolder(): string {
+    return path.join(app.getPath('userData'), 'storage');
+  }
 
-  protected readonly backupFolder: string = path.join(
-    this.baseStorageFolder,
-    'backups',
-  );
+  protected get backupFolder(): string {
+    return path.join(this.baseStorageFolder, 'backups');
+  }
 
-  protected readonly logsFolder: string = path.join(
-    this.baseStorageFolder,
-    'logs',
-  );
+  protected get logsFolder(): string {
+    return path.join(this.baseStorageFolder, 'logs');
+  }
 
-  protected readonly dataStorage: string = path.join(
-    this.baseStorageFolder,
-    'data store',
-  );
+  protected get dataStorage(): string {
+    return path.join(this.baseStorageFolder, 'data store');
+  }
 
-  protected readonly userLibrary: string = path.join(
-    this.baseStorageFolder,
-    'user library',
-  );
+  protected get userLibrary(): string {
+    return path.join(this.baseStorageFolder, 'user library');
+  }
 
-  protected readonly configFolder: string = path.join(
-    this.baseStorageFolder,
-    'config',
-  );
+  protected get configFolder(): string {
+    return path.join(this.baseStorageFolder, 'config');
+  }
 
-  protected readonly imagesFolder: string = path.join(
-    this.dataStorage,
-    'images files',
-  );
+  protected get imagesFolder(): string {
+    return path.join(this.dataStorage, 'images files');
+  }
 
-  protected readonly backgroundImages: string = path.join(
-    this.imagesFolder,
-    'background images',
-  );
+  protected get backgroundImages(): string {
+    return path.join(this.imagesFolder, 'background images');
+  }
 
-  protected readonly jsonFolder: string = path.join(
-    this.dataStorage,
-    'json files',
-  );
+  protected get jsonFolder(): string {
+    return path.join(this.dataStorage, 'json files');
+  }
 
-  protected readonly appConfigFolder: string = path.join(
-    this.configFolder,
-    'app',
-  );
+  protected get appConfigFolder(): string {
+    return path.join(this.configFolder, 'app');
+  }
 
-  protected readonly showcaseImages: string = path.join(
-    this.imagesFolder,
-    'showcase images',
-  );
+  protected get showcaseImages(): string {
+    return path.join(this.imagesFolder, 'showcase images');
+  }
 
-  protected readonly dinamicImages: string = path.join(
-    this.imagesFolder,
-    'dinamic images',
-  );
+  protected get dinamicImages(): string {
+    return path.join(this.imagesFolder, 'dinamic images');
+  }
 
-  protected readonly booksImages: string = path.join(this.imagesFolder, 'book');
+  protected get booksImages(): string {
+    return path.join(this.imagesFolder, 'book');
+  }
 
-  protected readonly comicsImages: string = path.join(
-    this.imagesFolder,
-    'comic',
-  );
+  protected get comicsImages(): string {
+    return path.join(this.imagesFolder, 'comic');
+  }
 
-  protected readonly mangasImages: string = path.join(
-    this.imagesFolder,
-    'manga',
-  );
+  protected get mangasImages(): string {
+    return path.join(this.imagesFolder, 'manga');
+  }
 
-  protected readonly booksData: string = path.join(this.jsonFolder, 'books');
+  protected get booksData(): string {
+    return path.join(this.jsonFolder, 'books');
+  }
 
-  protected readonly comicsData: string = path.join(this.jsonFolder, 'Comics');
+  protected get comicsData(): string {
+    return path.join(this.jsonFolder, 'Comics');
+  }
 
-  protected readonly childSeriesData: string = path.join(
-    this.jsonFolder,
-    'childSeries',
-  );
+  protected get childSeriesData(): string {
+    return path.join(this.jsonFolder, 'childSeries');
+  }
 
-  protected readonly mangasData: string = path.join(this.jsonFolder, 'Mangas');
+  protected get mangasData(): string {
+    return path.join(this.jsonFolder, 'Mangas');
+  }
 
-  protected readonly configFilePath: string = path.join(
-    this.appConfigFolder,
-    'config.json',
-  );
+  protected get configFilePath(): string {
+    return path.join(this.appConfigFolder, 'config.json');
+  }
 
-  protected readonly appCollections: string = path.join(
-    this.appConfigFolder,
-    'appCollections.json',
-  );
+  protected get appCollections(): string {
+    return path.join(this.appConfigFolder, 'appCollections.json');
+  }
 
   constructor() {}
 
-  public async createFolder(path: string): Promise<void> {
+  public async createFolder(folderPath: string): Promise<void> {
     try {
-      await fse.mkdir(path, { recursive: true });
+      await fse.mkdir(folderPath, { recursive: true });
     } catch (e) {
-      console.error(`Erro ao criar diretório: ${path}`, e);
+      console.error(`Erro ao criar diretório: ${folderPath}`, e);
       throw e;
     }
   }
 
-  public async deleteFolder(path: string): Promise<void> {
+  public async deleteFolder(folderPath: string): Promise<void> {
     try {
-      await fse.rm(path, { force: true });
+      await fse.rm(folderPath, { force: true, recursive: true });
     } catch (e) {
-      console.error(`Erro ao criar diretório: ${path}`, e);
+      console.error(`Erro ao deletar diretório: ${folderPath}`, e);
       throw e;
     }
   }
 
   public async foundFiles(dirPath: string): Promise<string[]> {
     try {
+      if (!(await fse.pathExists(dirPath))) return [];
+      
       const contents = await fse.readdir(dirPath, { withFileTypes: true });
       const filter =
         /\.(jpe?g|png|gif|bmp|webp|tiff|pdf|cbz|cbr|md|markdown|json)$/i;
@@ -125,7 +125,7 @@ export default abstract class LibrarySystem {
 
       return filePaths;
     } catch (e) {
-      console.error(`erro encontrado: ${e}`);
+      console.error(`Erro ao buscar arquivos em ${dirPath}: ${e}`);
       throw e;
     }
   }
@@ -180,7 +180,7 @@ export default abstract class LibrarySystem {
       return data.metadata.global_id;
     } catch (e) {
       console.error(`Erro ao obter o ID atual: ${e}`);
-      throw e;
+      return 0; // Fallback para 0 se não existir
     }
   }
 }

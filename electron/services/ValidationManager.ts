@@ -1,20 +1,12 @@
 import path from 'path';
 import fse from 'fs-extra';
 
-import StorageManager from './StorageManager';
 import FileSystem from './abstract/LibrarySystem.ts';
 import { Collection } from '../../src/types/collections.interfaces.ts';
 import { Literatures } from '../types/electron-auxiliar.interfaces';
 import { TieIn } from '../types/comic.interfaces.ts';
 
-import FileManager from './FileManager';
-import ImageManager from './ImageManager';
-
 export default class ValidationManager extends FileSystem {
-  private readonly storageManager: StorageManager = new StorageManager();
-  private readonly fileManager: FileManager = new FileManager();
-  private readonly imageManager: ImageManager = new ImageManager();
-
   constructor() {
     super();
   }

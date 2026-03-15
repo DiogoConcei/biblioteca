@@ -10,7 +10,12 @@ $baby-powder: #f4f4ed;
 $snow: #fcf7f8;
 $pacific-cyan: #31afd4;
 $hover-shining: #f4f4ed1f;
-$border-collor: #fcf7f8;
+
+// Cores Principais
+$text-color: $snow;
+$border-color: rgba($snow, 0.1);
+$text-muted: rgba($snow, 0.6);
+$accent-color: $amethyst;
 
 // ===================================
 // Spacing Scale (rem)   (— equivalent in px —)

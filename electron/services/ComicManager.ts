@@ -6,9 +6,7 @@ import StorageManager from './StorageManager';
 import ImageManager from './ImageManager';
 import TieInManager from './TieInManager';
 import CollectionManager from './CollectionManager';
-
 import { Comic, ComicEdition, ComicTieIn } from '../types/comic.interfaces';
-
 import { SerieForm } from '../../src/types/series.interfaces';
 
 export default class ComicManager extends LibrarySystem {
@@ -59,8 +57,7 @@ export default class ComicManager extends LibrarySystem {
     serieName: string,
     archivesPath: string,
   ): Promise<ComicEdition[]> {
-    const [comicEntries, total] =
-      await this.fileManager.searchChapters(archivesPath);
+    const [comicEntries] = await this.fileManager.searchChapters(archivesPath);
     const orderComics = await this.fileManager.orderComic(comicEntries);
 
     if (!comicEntries || comicEntries.length === 0) return [];

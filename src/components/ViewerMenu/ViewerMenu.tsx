@@ -14,7 +14,7 @@ import {
 import { visualizerProps } from '../../types/components.interfaces';
 import useSerieStore from '../../store/useSerieStore';
 
-import './ViewerMenu.scss';
+import styles from './ViewerMenu.module.scss';
 
 export default function ViewerMenu({
   setScale,
@@ -144,61 +144,61 @@ export default function ViewerMenu({
 
   return (
     <article>
-      <section className={`viewer-menu ${isMenuOpen ? 'open' : 'closed'}`}>
-        <button className="hideMenuBtn" onClick={toggleMenu}>
+      <section className={`${styles.viewerMenu} ${isMenuOpen ? styles.open : styles.closed}`}>
+        <button className={styles.hideMenuBtn} onClick={toggleMenu}>
           {isMenuOpen ? <ChevronLeft /> : <ChevronRight />}
         </button>
         {isMenuOpen && (
-          <div className="quicklyActions">
-            <span className="serieTitle">
-              <Book color="#a878e5" className="book" /> <p>{serie_name}</p>
+          <div className={styles.quicklyActions}>
+            <span className={styles.serieTitle}>
+              <Book color="#a878e5" className={styles.book} /> <p>{serie_name}</p>
             </span>
-            <div className="chapterControl">
-              <button onClick={backToPrevious} className="jumpNextBtn">
+            <div className={styles.chapterControl}>
+              <button onClick={backToPrevious} className={styles.jumpNextBtn}>
                 <ChevronsLeft />
               </button>
-              <button className="choseChapterBtn">{chapter_name}</button>
-              <button onClick={jumpToNext} className="jumpPrevBtn">
+              <button className={styles.choseChapterBtn}>{chapter_name}</button>
+              <button onClick={jumpToNext} className={styles.jumpPrevBtn}>
                 <ChevronsRight />
               </button>
             </div>
-            <div className="zoomControl">
-              <div className="positiveZoom">
+            <div className={styles.zoomControl}>
+              <div className={styles.positiveZoom}>
                 <button
                   id="positiveZoom"
                   onClick={zoomIn}
-                  className="positiveZoomBtn"
+                  className={styles.positiveZoomBtn}
                 >
                   <ZoomIn />
                 </button>
               </div>
-              <span className="zoomDivisor"></span>
-              <div className="negativeZoom">
+              <span className={styles.zoomDivisor}></span>
+              <div className={styles.negativeZoom}>
                 <button
                   id="negativeZoom"
-                  className="negativeZoomBtn"
+                  className={styles.negativeZoomBtn}
                   onClick={zoomOut}
                 >
-                  <ZoomOut className="negativeZIcon" />
+                  <ZoomOut className={styles.negativeZIcon} />
                 </button>
               </div>
             </div>
-            <div className="returnControl">
+            <div className={styles.returnControl}>
               <label htmlFor="home">
                 <button id="home" onClick={() => goHome(totalPages)}>
                   <House />
                 </button>
                 <span>Pagina Inicial</span>
               </label>
-              <label className="returnTest" htmlFor="returnPage">
+              <label className={styles.returnTest} htmlFor="returnPage">
                 <button
                   id="seriePage"
                   onClick={() => seriePage(totalPages)}
-                  className="returnPageBtn"
+                  className={styles.returnPageBtn}
                 >
                   <ChevronLeft />
                 </button>
-                <span className="serieName">Voltar para {serie_name}</span>
+                <span className={styles.serieName}>Voltar para {serie_name}</span>
               </label>
             </div>
           </div>

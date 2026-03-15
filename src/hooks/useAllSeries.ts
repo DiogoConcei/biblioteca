@@ -1,40 +1,12 @@
-import { useEffect, useState } from 'react';
-
-import { viewData } from '../../electron/types/electron-auxiliar.interfaces';
-import { useUIStore } from '../store/useUIStore';
+import { useEffect } from 'react';
+import { useAllSeriesStore } from '../store/useAllSeriesStore';
 
 export default function useAllSeries() {
-  const [series, setSeries] = useState<viewData[] | null>(null);
-  const controlFetching = useUIStore((state) => state.controlFetching);
+  const { series, fetchAllSeries } = useAllSeriesStore();
 
   useEffect(() => {
-    async function getAllSeries() {
-      try {
-        controlFetching(true, null);
+    fetchAllSeries();
+  }, [fetchAllSeries]);
 
-        const response = await window.electronAPI.series.getSeries();
-
-        if (!response.success) {
-          controlFetching(false);
-          setSeries(null);
-        }
-
-        if (response.success && response.data) {
-          controlFetching(false, null);
-          setSeries(response.data);
-        }
-      } catch (e) {
-        controlFetching(
-          false,
-          'Aconteceu um erro desconhecido ao buscar séries',
-        );
-      } finally {
-        controlFetching(false);
-      }
-    }
-
-    getAllSeries();
-  }, [controlFetching]);
-
-  return series;
+  return series && series.length > 0 ? series : null;
 }

@@ -13,7 +13,7 @@ import Loading from '../../components/Loading/Loading';
 import PageControl from '../../components/PageControl/PageControl';
 import { useUIStore } from '../../store/useUIStore';
 
-import './Viewer.scss';
+import styles from './Viewer.module.scss';
 
 export default function Viewer() {
   const { serie_name: rawSerieName, chapter_id } = useParams<{
@@ -71,7 +71,7 @@ export default function Viewer() {
   }
 
   return (
-    <section className="visualizer">
+    <section className={styles.visualizer}>
       <ViewerMenu
         currentPage={chapter.currentPage}
         nextChapter={chapterNavigation.nextChapter}
@@ -79,9 +79,9 @@ export default function Viewer() {
         totalPages={chapter.quantityPages}
         setScale={setScale}
       />
-      <div className="containerPage">
+      <div className={styles.containerPage}>
         <img
-          className="chapterPage"
+          className={styles.chapterPage}
           draggable={false}
           style={{
             transform: `scale(${scale})  translate(${position.x}px, ${position.y}px)`,
@@ -90,9 +90,9 @@ export default function Viewer() {
           src={`${chapter.pages[chapter.currentPage]}`}
           alt="pagina do capitulo"
         />
-        {chapter.isLoading && <LoaderCircle className="spinner" />}
+        {chapter.isLoading && <LoaderCircle className={styles.spinner} />}
       </div>
-      <div className="pageControlWrapper">
+      <div className={styles.pageControlWrapper}>
         <PageControl
           currentPage={chapter.currentPage}
           TamPages={chapter.quantityPages}
