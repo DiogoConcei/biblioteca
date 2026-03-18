@@ -21,6 +21,11 @@ export default class StorageManager extends LibrarySystem {
   private readonly SEVEN_ZIP_PATH = 'C:\\Program Files\\7-Zip\\7z';
   private readonly execAsync = promisify(exec);
   private readonly fileManager: FileManager = new FileManager();
+  private _viewDataCache: viewData[] | null = null;
+
+  public invalidateCache(): void {
+    this._viewDataCache = null;
+  }
 
   constructor() {
     super();
@@ -28,6 +33,7 @@ export default class StorageManager extends LibrarySystem {
 
   public async writeData(serie: Literatures | TieIn): Promise<boolean> {
     try {
+      this.invalidateCache();
       await fse.writeJSON(serie.dataPath, serie, { spaces: 2 });
       return true;
     } catch (e) {
@@ -39,6 +45,18 @@ export default class StorageManager extends LibrarySystem {
   public async searchSerieById(
     serieId: number,
   ): Promise<Literatures | TieIn | null> {
+    // Usamos o cache do getViewData para encontrar o caminho do arquivo rapidamente.
+    // Como getViewData tem a propriedade id e dataPath, a busca é instantânea.
+    const viewData = await this.getViewData();
+    
+    if (viewData) {
+      const targetSerie = viewData.find((serie) => serie.id === serieId);
+      if (targetSerie) {
+        return await this.readData(targetSerie.dataPath);
+      }
+    }
+
+    // Fallback caso o getViewData falhe por algum motivo
     const dataPaths = await this.fileManager.getDataPaths();
 
     for (const dataPath of dataPaths) {
@@ -108,6 +126,7 @@ export default class StorageManager extends LibrarySystem {
 
   public async deleteChapter(chapter: LiteratureChapter): Promise<boolean> {
     try {
+      this.invalidateCache();
       if (await fse.pathExists(chapter.chapterPath)) {
         await fse.remove(chapter.chapterPath);
         chapter.isDownloaded = 'not_downloaded';
@@ -123,61 +142,45 @@ export default class StorageManager extends LibrarySystem {
     }
   }
 
-  public async selectComicData(serieName: string): Promise<Comic> {
+  public async selectSerieData<T extends Literatures | TieIn>(
+    serieName: string,
+    type?: 'Manga' | 'Quadrinho' | 'childSeries',
+  ): Promise<T> {
     try {
-      const seriesData = await this.fileManager.foundFiles(this.comicsData);
+      let targetFolder: string;
 
-      const serieDataPath = seriesData.find((filePath) => {
-        return path.parse(filePath).name === serieName;
-      });
-
-      if (!serieDataPath) {
-        throw new Error(`Nenhuma série encontrada com o nome: ${serieName}`);
+      if (type) {
+        switch (type) {
+          case 'Manga': targetFolder = this.mangasData; break;
+          case 'Quadrinho': targetFolder = this.comicsData; break;
+          case 'childSeries': targetFolder = this.childSeriesData; break;
+          default: targetFolder = this.mangasData;
+        }
+      } else {
+        // Se o tipo não for passado, tenta encontrar em todas as pastas
+        const allFolders = [this.mangasData, this.comicsData, this.childSeriesData];
+        for (const folder of allFolders) {
+          const files = await this.fileManager.foundFiles(folder);
+          const found = files.find(f => path.parse(f).name === serieName);
+          if (found) {
+            return await fse.readJson(found, { encoding: 'utf-8' });
+          }
+        }
+        throw new Error(`Série não encontrada: ${serieName}`);
       }
 
-      return fse.readJson(serieDataPath, { encoding: 'utf-8' });
-    } catch (e) {
-      console.error('Erro ao selecionar dados do Quadrinho:', e);
-      throw e;
-    }
-  }
-
-  public async selectTieInData(serieName: string): Promise<TieIn> {
-    try {
-      const seriesData = await this.fileManager.foundFiles(
-        this.childSeriesData,
+      const seriesData = await this.fileManager.foundFiles(targetFolder);
+      const serieDataPath = seriesData.find(
+        (filePath) => path.parse(filePath).name === serieName,
       );
 
-      const serieDataPath = seriesData.find((filePath) => {
-        return path.parse(filePath).name === serieName;
-      });
-
       if (!serieDataPath) {
-        throw new Error(`Nenhuma série encontrada com o nome: ${serieName}`);
+        throw new Error(`Nenhuma série encontrada com o nome: ${serieName} em ${type}`);
       }
 
-      return fse.readJson(serieDataPath, { encoding: 'utf-8' });
+      return await fse.readJson(serieDataPath, { encoding: 'utf-8' });
     } catch (e) {
-      console.error('Erro ao selecionar dados da TieIn:', e);
-      throw e;
-    }
-  }
-
-  public async selectMangaData(serieName: string): Promise<Manga> {
-    try {
-      const seriesData = await this.fileManager.foundFiles(this.mangasData);
-
-      const serieDataPath = seriesData.find((filePath) => {
-        return path.parse(filePath).name === serieName;
-      });
-
-      if (!serieDataPath) {
-        throw new Error(`Nenhuma série encontrada com o nome: ${serieName}`);
-      }
-
-      return fse.readJson(serieDataPath, { encoding: 'utf-8' });
-    } catch (e) {
-      console.error('Erro ao selecionar dados do Manga:', e);
+      console.error(`Erro ao selecionar dados da série (${serieName}):`, e);
       throw e;
     }
   }
@@ -592,6 +595,10 @@ export default class StorageManager extends LibrarySystem {
 
   public async getViewData(): Promise<viewData[] | null> {
     try {
+      if (this._viewDataCache) {
+        return this._viewDataCache;
+      }
+
       const dataPaths = await this.fileManager.getDataPaths();
 
       const viewData: viewData[] = await Promise.all(
@@ -607,6 +614,7 @@ export default class StorageManager extends LibrarySystem {
         }),
       );
 
+      this._viewDataCache = viewData;
       return viewData;
     } catch (e) {
       console.error(`Erro ao trazer dados de visualização:${e}`);
@@ -841,6 +849,7 @@ export default class StorageManager extends LibrarySystem {
     oldData: Literatures,
     updated: Literatures,
   ): Promise<string> {
+    this.invalidateCache();
     const oldPath = oldData.dataPath;
     const dir = path.dirname(oldPath);
 

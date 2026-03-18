@@ -20,11 +20,23 @@ export default class UserManager extends FileSystem {
 
   public async addToRecents(serieData: Literatures | TieIn): Promise<boolean> {
     try {
+      // Pequeno detalhe: atualizar o timestamp de última leitura ao adicionar aos recentes
+      if ('readingData' in serieData) {
+        serieData.readingData.lastReadAt = new Date().toISOString();
+        
+        // Se a série estava Pendente e foi aberta, muda para Em andamento
+        if (serieData.metadata.status === 'Pendente') {
+          serieData.metadata.status = 'Em andamento';
+        }
+        
+        await this.storageManager.writeData(serieData);
+      }
+
       await this.collManager.addLastRead(serieData);
       return true;
     } catch (err) {
       console.error('Erro ao atualizar historico de series:', err);
-      throw false;
+      return false;
     }
   }
 
@@ -82,6 +94,10 @@ export default class UserManager extends FileSystem {
 
       chapter.isRead = isRead;
 
+      // Atualiza o último capítulo interagido e o timestamp
+      serieData.readingData.lastChapterId = chapter_id;
+      serieData.readingData.lastReadAt = new Date().toISOString();
+
       if (chapter_id !== 1) {
         if (isRead) {
           if (serieData.chaptersRead < serieData.totalChapters) {
@@ -95,6 +111,16 @@ export default class UserManager extends FileSystem {
           } else {
             console.warn('chaptersRead já está no mínimo permitido.');
           }
+        }
+      }
+
+      // Atualização automática de status
+      if (serieData.chaptersRead === serieData.totalChapters) {
+        serieData.metadata.status = 'Completo';
+      } else if (serieData.chaptersRead > 0 || isRead) {
+        // Se leu algo ou marcou como lido, e não está completo, está "Em andamento"
+        if (serieData.metadata.status === 'Pendente' || serieData.metadata.status === 'Completo') {
+           serieData.metadata.status = 'Em andamento';
         }
       }
 

@@ -45,20 +45,8 @@ const useSerieStore = create<UseSerieStore>((set) => ({
 
     try {
       controlFetching(true, null);
-      let response: APIResponse<Literatures | TieIn | null>;
-      switch (literatureForm) {
-        case 'Manga':
-          response = await window.electronAPI.series.getManga(serieName);
-          break;
-        case 'Quadrinho':
-          response = await window.electronAPI.series.getComic(serieName);
-          break;
-        case 'childSeries':
-          response = await window.electronAPI.series.getTieIn(serieName);
-          break;
-        default:
-          throw new Error('Tipo de literatura desconhecido');
-      }
+      
+      const response = await window.electronAPI.series.getSerieInfo(serieName, literatureForm);
 
       if (!response.success || !response.data)
         throw new Error(response.error || 'Erro ao buscar série');

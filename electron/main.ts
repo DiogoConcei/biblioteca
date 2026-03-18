@@ -50,51 +50,36 @@ async function ensureAppFolders() {
   const userDataPath = app.getPath('userData');
   const storageFolder = path.join(userDataPath, 'storage');
 
-  if (!fse.existsSync(storageFolder)) {
-    await fse.mkdirp(storageFolder);
-  }
+  // fse.mkdirp cria diretórios recursivamente. Podemos criar os mais profundos de uma vez.
+  const foldersToCreate = [
+    path.join(storageFolder, 'config', 'app'),
+    path.join(storageFolder, 'config', 'comic'),
+    path.join(storageFolder, 'config', 'book'),
+    path.join(storageFolder, 'config', 'manga'),
+    path.join(storageFolder, 'user library'),
+    path.join(storageFolder, 'data store', 'json files', 'books'),
+    path.join(storageFolder, 'data store', 'json files', 'comics'),
+    path.join(storageFolder, 'data store', 'json files', 'mangas'),
+    path.join(storageFolder, 'data store', 'json files', 'childSeries'),
+    path.join(storageFolder, 'data store', 'images files', 'book'),
+    path.join(storageFolder, 'data store', 'images files', 'comic'),
+    path.join(storageFolder, 'data store', 'images files', 'manga'),
+    path.join(storageFolder, 'data store', 'images files', 'showcase images', 'thumbnails'),
+    path.join(storageFolder, 'data store', 'images files', 'dinamic images'),
+  ];
 
-  const dataStore = path.join(storageFolder, 'data store');
-  const userLibrary = path.join(storageFolder, 'user library');
-  const configFolder = path.join(storageFolder, 'config');
-  const imagesFolder = path.join(dataStore, 'images files');
-  const jsonFolder = path.join(dataStore, 'json files');
-
-  await Promise.all([
-    fse.mkdirp(dataStore),
-    fse.mkdirp(userLibrary),
-    fse.mkdirp(configFolder),
-    fse.mkdirp(imagesFolder),
-    fse.mkdirp(jsonFolder),
-  ]);
-
-  await Promise.all([
-    fse.mkdirp(path.join(configFolder, 'app')),
-    fse.mkdirp(path.join(configFolder, 'comic')),
-    fse.mkdirp(path.join(configFolder, 'book')),
-    fse.mkdirp(path.join(configFolder, 'manga')),
-    fse.mkdirp(path.join(jsonFolder, 'books')),
-    fse.mkdirp(path.join(jsonFolder, 'comics')),
-    fse.mkdirp(path.join(jsonFolder, 'mangas')),
-    fse.mkdirp(path.join(jsonFolder, 'childSeries')),
-    fse.mkdirp(path.join(imagesFolder, 'book')),
-    fse.mkdirp(path.join(imagesFolder, 'comic')),
-    fse.mkdirp(path.join(imagesFolder, 'manga')),
-    fse.mkdirp(path.join(imagesFolder, 'showcase images')),
-    fse.mkdirp(path.join(imagesFolder, 'dinamic images')),
-  ]);
+  await Promise.all(foldersToCreate.map(folder => fse.mkdirp(folder)));
 
   global.storageFolder = storageFolder;
 
-  const configJsonPath = path.join(configFolder, 'app', 'config.json');
-  const collectionsJsonPath = path.join(
-    configFolder,
-    'app',
-    'appCollections.json',
-  );
+  const configFolder = path.join(storageFolder, 'config', 'app');
+  const configJsonPath = path.join(configFolder, 'config.json');
+  const collectionsJsonPath = path.join(configFolder, 'appCollections.json');
+
+  const fileWrites = [];
 
   if (!fse.existsSync(configJsonPath)) {
-    await fse.writeJson(
+    fileWrites.push(fse.writeJson(
       configJsonPath,
       {
         settings: {
@@ -106,11 +91,11 @@ async function ensureAppFolders() {
         metadata: { global_id: 0 },
       },
       { spaces: 2 },
-    );
+    ));
   }
 
   if (!fse.existsSync(collectionsJsonPath)) {
-    await fse.writeJson(
+    fileWrites.push(fse.writeJson(
       collectionsJsonPath,
       [
         {
@@ -130,15 +115,18 @@ async function ensureAppFolders() {
         },
       ],
       { spaces: 2 },
-    );
+    ));
   }
+
+  await Promise.all(fileWrites);
 }
 
 function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC || '', 'electron-vite.svg'),
     frame: false,
-
+    show: false, // Inicia oculta
+    backgroundColor: '#131313', // Cor do fundo da sua Home (ajuste se necessário)
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       allowRunningInsecureContent: false,
@@ -149,6 +137,14 @@ function createWindow() {
   });
 
   downloadManager = new DownloadManager(win);
+
+  // Exibe a janela apenas quando o conteúdo inicial estiver renderizado
+  win.once('ready-to-show', () => {
+    if (win) {
+      win.show();
+      win.focus();
+    }
+  });
 
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString());
@@ -200,9 +196,13 @@ app.on('activate', () => {
 });
 
 app.whenReady().then(async () => {
-  await ensureAppFolders();
+  // Inicializamos as pastas vitais primeiro (é rápido com Promise.all)
+  await ensureAppFolders().catch(err => console.error('Erro folders:', err));
+  
+  // Registros síncronos de handlers e protocolos
   mediaServer.register();
-  await registerHandlers();
+  registerHandlers();
+  
   createWindow();
 });
 

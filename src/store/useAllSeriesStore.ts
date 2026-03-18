@@ -42,7 +42,7 @@ export const useAllSeriesStore = create<AllSeriesState>()(
       },
     }),
     {
-      name: 'all-series-cache',
+      name: 'all-series-cache-v2', // v2 para invalidar o cache antigo cheio de Base64
       storage: createJSONStorage(() => localStorage),
     }
   )

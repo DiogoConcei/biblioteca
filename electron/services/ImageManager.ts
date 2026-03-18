@@ -290,6 +290,35 @@ export default class ImageManager extends LibrarySystem {
     return this.readFileAsDataUrl(filePath);
   }
 
+  public async getThumbnailUrl(originalPath: string): Promise<string> {
+    if (!originalPath) return '';
+    try {
+      const parse = path.parse(originalPath);
+      const thumbDir = path.join(this.showcaseImages, 'thumbnails');
+      await fse.ensureDir(thumbDir);
+      
+      // Usa o nome original com sufixo. Adicionamos o tamanho do arquivo original na checagem
+      // para recriar a thumbnail caso a imagem original mude (ex: alteração de capa).
+      const thumbPath = path.join(thumbDir, `${parse.name}_thumb.webp`);
+      
+      if (!(await fse.pathExists(thumbPath))) {
+         if (!(await fse.pathExists(originalPath))) {
+            return '';
+         }
+         // Cria a miniatura de forma otimizada
+         await sharp(originalPath)
+           .resize(300, null, { withoutEnlargement: true })
+           .webp({ quality: 80, effort: 4 })
+           .toFile(thumbPath);
+      }
+      
+      return this.getMediaUrl(thumbPath);
+    } catch (e) {
+      console.error('Erro ao gerar thumbnail:', e);
+      return this.getMediaUrl(originalPath); // Fallback seguro
+    }
+  }
+
   public async encodeComic(
     chapters: ComicEdition[],
     useProtocol = true,

@@ -121,11 +121,23 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
           (c) => c.isRead,
         ).length;
 
+        // Atualização automática de status
+        let updatedStatus = serieData.metadata.status;
+        if (updatedChaptersRead === serieData.totalChapters) {
+          updatedStatus = 'Completo';
+        } else if (updatedStatus === 'Completo' && updatedChaptersRead < serieData.totalChapters) {
+          updatedStatus = 'Em andamento';
+        }
+
         const updatedSerieData: Literatures = {
           ...serieData,
           chapters: updatedChapters,
           chaptersRead: updatedChaptersRead,
           readingData: updatedReadingData,
+          metadata: {
+            ...serieData.metadata,
+            status: updatedStatus,
+          },
         };
 
         await storageManager.writeData(updatedSerieData);

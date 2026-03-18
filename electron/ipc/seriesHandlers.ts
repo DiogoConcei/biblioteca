@@ -33,9 +33,9 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
       const procesData = await Promise.all(
         getData.map(async (serieData) => {
-          const encodedImage = await imageManager.encodeImage(
-            serieData.coverImage,
-            false, // Base64 para Home (cacheável no frontend)
+          // Usa Thumbnail via protocolo: super rápido, zero memory leak
+          const encodedImage = await imageManager.getThumbnailUrl(
+            serieData.coverImage
           );
 
           return {
@@ -52,32 +52,16 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle('serie:manga-serie', async (_event, serieName: string) => {
+  ipcMain.handle('serie:get-info', async (_event, serieName: string, literatureForm: 'Manga' | 'Quadrinho' | 'childSeries') => {
     try {
-      const data = await storageManager.selectMangaData(serieName);
-
-      const processedData = {
-        ...data,
-        coverImage: await imageManager.encodeImage(data.coverImage, false),
-      };
-
-      return { success: true, data: processedData, error: ' ' };
-    } catch (e) {
-      console.error('Erro ao buscar dados da series:', e);
-      return { success: false, error: String(e) };
-    }
-  });
-
-  ipcMain.handle('serie:comic-serie', async (_event, serieName: string) => {
-    try {
-      const data = await storageManager.selectComicData(serieName);
+      const data = await storageManager.selectSerieData<Literatures>(serieName, literatureForm);
 
       const updatedChapters = data.chapters
         ? await Promise.all(
             data.chapters.map(async (chapter) => {
               const encodedCover =
                 typeof chapter.coverImage === 'string'
-                  ? await imageManager.encodeImage(chapter.coverImage, false)
+                  ? await imageManager.encodeImage(chapter.chapterPath || chapter.coverImage, true)
                   : '';
 
               return {
@@ -88,11 +72,12 @@ export default function seriesHandlers(ipcMain: IpcMain) {
           )
         : [];
 
-      const updatedChildSeries = data.childSeries
+      // Se for Quadrinho ou Manga e tiver tie-ins/childSeries
+      const updatedChildSeries = (data as any).childSeries
         ? await Promise.all(
-            data.childSeries.map(async (tieIn) => {
+            ((data as any).childSeries as TieIn[]).map(async (tieIn) => {
               const encodedCover = tieIn.coverImage
-                ? await imageManager.encodeImage(tieIn.coverImage, false)
+                ? await imageManager.encodeImage(tieIn.coverImage, true)
                 : '';
 
               return {
@@ -105,15 +90,15 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
       const processedData = {
         ...data,
-        coverImage: await imageManager.encodeImage(data.coverImage, false),
+        coverImage: await imageManager.encodeImage(data.coverImage, true),
         chapters: updatedChapters,
         childSeries: updatedChildSeries,
       };
 
       return { success: true, data: processedData, error: '' };
     } catch (error) {
-      console.error('Erro ao buscar dados da series:', error);
-      throw error;
+      console.error(`Erro ao buscar dados da série ${serieName}:`, error);
+      return { success: false, error: String(error) };
     }
   });
 

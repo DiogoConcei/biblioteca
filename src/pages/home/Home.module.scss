@@ -7,6 +7,8 @@
   justify-content: flex-start;
   overflow: hidden;
   min-height: 100vh;
+  position: relative;
+  z-index: 1;
 
   .options {
     display: flex;
@@ -14,6 +16,8 @@
     justify-content: end;
     width: 100%;
     position: relative;
+    padding-top: $spacing-2;
+    z-index: 20;
 
     .settings-button,
     .filterButton {
@@ -67,6 +71,7 @@
       width: 100%;
       box-sizing: border-box;
       min-height: 0;
+      perspective: 1000px;
 
       .serieLink {
         display: flex;
@@ -75,6 +80,22 @@
         justify-content: flex-start;
         gap: 0.5rem;
         text-decoration: none;
+        transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        will-change: transform;
+
+        &:hover {
+          transform: translateY(-8px) scale(1.02);
+          z-index: 10;
+
+          .coverCard {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 15px rgba($amethyst, 0.3);
+            border: 1px solid rgba($snow, 0.15);
+          }
+          
+          .serie-info .serie-name {
+            color: $snow;
+          }
+        }
 
         .coverCard {
           display: flex;
@@ -87,8 +108,10 @@
           cursor: pointer;
           aspect-ratio: 2 / 3;
           overflow: hidden;
-          border-radius: 4px;
+          border-radius: 6px;
           background-color: rgba($gunmetal, 0.5);
+          transition: box-shadow 0.4s ease, border 0.4s ease;
+          border: 1px solid transparent;
 
           &.skeleton {
             background: linear-gradient(
@@ -102,11 +125,10 @@
           }
 
           img {
-            width: auto;
-            height: 20vh;
-            object-fit: contain;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
             border-radius: 5px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
             display: block;
             opacity: 0;
             transition: opacity 0.4s ease-in-out;
@@ -121,24 +143,34 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            bottom: 8px;
+            bottom: -40px; // Escondido por padrão
             right: 8px;
             z-index: 10;
-            width: 130px;
+            width: calc(100% - 16px);
+            transition: bottom 0.3s cubic-bezier(0.25, 1, 0.5, 1);
           }
+          
+          &:hover .cover-actions {
+            bottom: 8px; // Sobe suavemente no hover
+          }
+
           .playChapter,
           .editChapter {
             display: flex;
             @include interactive-button;
             font-size: 24px;
             color: white;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(19, 19, 19, 0.8);
             border-radius: 50%;
-            padding: 2px;
+            padding: 6px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
 
             &:hover {
               background: $amethyst;
-              color: black;
+              color: white;
+              transform: scale(1.1);
             }
           }
         }
@@ -148,27 +180,28 @@
           flex-direction: column;
           align-items: flex-start;
           justify-content: flex-start;
-          width: 8vw;
-          min-width: 120px;
-          gap: 0.7rem;
+          width: 150px;
+          gap: 0.5rem;
           box-sizing: border-box;
 
           .serie-name {
             width: 100%;
-            padding: 0.5rem 0;
+            padding: 0.2rem 0;
             font-size: 1rem;
+            font-weight: 500;
             color: #8963ba;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             box-sizing: border-box;
+            transition: color 0.3s ease;
           }
 
           .progress-bar {
             width: 100%;
-            height: 5px;
+            height: 4px;
             border-radius: 20px;
-            background-color: #eeeeee7d;
+            background-color: rgba(238, 238, 238, 0.1);
             overflow: hidden;
 
             .progress-bar-completed {
@@ -176,6 +209,7 @@
               background-color: #8963ba;
               border-radius: 20px;
               transition: width 0.3s ease;
+              box-shadow: 0 0 8px rgba(137, 99, 186, 0.8);
             }
           }
 
@@ -184,8 +218,8 @@
             align-items: center;
             justify-content: space-between;
             width: 100%;
-            font-size: 0.9rem;
-            color: #8963ba;
+            font-size: 0.8rem;
+            color: rgba(137, 99, 186, 0.8);
 
             p {
               margin: 0;

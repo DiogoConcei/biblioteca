@@ -108,16 +108,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
   series: {
     getSeries: async (): Promise<APIResponse<viewData[]>> =>
       ipcRenderer.invoke('serie:get-all'),
+    getSerieInfo: async (
+      serieName: string,
+      literatureForm: string,
+    ): Promise<APIResponse<Literatures | null>> =>
+      ipcRenderer.invoke('serie:get-info', serieName, literatureForm),
     getTieIn: async (serieName: string): Promise<APIResponse<TieIn | null>> =>
       ipcRenderer.invoke('serie:get-TieIn', serieName),
     getManga: async (
       serieName: string,
     ): Promise<APIResponse<Literatures | null>> =>
-      ipcRenderer.invoke('serie:manga-serie', serieName),
+      ipcRenderer.invoke('serie:get-info', serieName, 'Manga'),
     getComic: async (
       serieName: string,
     ): Promise<APIResponse<Literatures | null>> =>
-      ipcRenderer.invoke('serie:comic-serie', serieName),
+      ipcRenderer.invoke('serie:get-info', serieName, 'Quadrinho'),
     createTieIn: async (
       childSerie: ComicTieIn,
     ): Promise<APIResponse<string | null>> =>

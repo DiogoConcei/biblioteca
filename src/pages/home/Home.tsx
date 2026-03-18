@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ListFilter, Settings, Play, Pencil } from 'lucide-react';
+import { ListFilter, Settings, Play, Pencil, Dices } from 'lucide-react';
 
 import CustomSelect from '@/components/CustomSelect/CustomSelect';
 import { SerieForm } from '@/types/series.interfaces';
@@ -17,6 +17,7 @@ export default function Home() {
   const [searchInput, setSearchInput] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
   const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
+  const [hoveredCover, setHoveredCover] = useState<string | null>(null);
   const [selectedLiteratureForm, setSelectedLiteratureForm] = useState<
     SerieForm['literatureForm'] | ''
   >('');
@@ -80,6 +81,14 @@ export default function Home() {
     });
   }, [selectedLiteratureForm, searchInput, series]);
 
+  const handleSurpriseMe = () => {
+    if (!filteredSeries || filteredSeries.length === 0) return;
+    const randomIndex = Math.floor(Math.random() * filteredSeries.length);
+    const randomSerie = filteredSeries[randomIndex];
+    clearSerie();
+    navigate(`/${randomSerie.literatureForm}/${randomSerie.name}/${randomSerie.id}`);
+  };
+
   if (loading || !series) {
     return <Loading />;
   }
@@ -95,8 +104,17 @@ export default function Home() {
           <SearchBar searchInput={searchInput} onSearchChange={searchChange} />
 
           <button
+            onClick={handleSurpriseMe}
+            className={styles['settings-button']}
+            title="Surpreenda-me"
+          >
+            <Dices size={32} />
+          </button>
+
+          <button
             onClick={() => navigate('/settings')}
             className={styles['settings-button']}
+            title="Configurações"
           >
             <Settings size={32} />
           </button>
@@ -106,6 +124,7 @@ export default function Home() {
               type="button"
               onClick={() => setShowFilters((prev) => !prev)}
               className={styles.filterButton}
+              title="Filtros"
             >
               <ListFilter size={32} />
             </button>
@@ -140,6 +159,8 @@ export default function Home() {
               onClick={clearSerie}
               key={serie.id}
               className={styles.serieLink}
+              onMouseEnter={() => setHoveredCover(serie.coverImage)}
+              onMouseLeave={() => setHoveredCover(null)}
             >
               <figure className={`${styles.coverCard} ${!loadedImages[serie.id] ? styles.skeleton : ''}`}>
                 <img 

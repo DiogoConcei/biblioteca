@@ -129,48 +129,33 @@ export default class CollectionManager extends LibrarySystem {
   }
 
   public async addLastRead(serie: Literatures | TieIn): Promise<boolean> {
-    const collection = await this.getLastRead();
+    try {
+      const collection = await this.getLastRead();
+      if (!collection) return false;
 
-    if (!collection) {
+      const newSerieInfo = await this.mountSerieInfo(serie.dataPath);
+      if (!newSerieInfo) return false;
+
+      // Remove se já existir para reinserir no topo (LIFO)
+      const otherSeries = collection.series.filter(s => s.id !== newSerieInfo.id);
+      
+      // Adiciona no topo e limita a 8 itens para manter a Home limpa
+      const updatedSeries = [
+        { ...newSerieInfo, position: 1 },
+        ...otherSeries.map((s, i) => ({ ...s, position: i + 2 }))
+      ].slice(0, 8);
+
+      const update = {
+        ...collection,
+        series: updatedSeries,
+      };
+
+      await this.updateCollection(update);
+      return true;
+    } catch (e) {
+      console.error('Erro ao adicionar aos recentes:', e);
       return false;
     }
-
-    const newSerie = await this.mountEmptySerieInfo(serie);
-
-    if (!newSerie) {
-      return false;
-    }
-
-    const alreadyExists = collection.series.some((s) => {
-      const match = s.id === newSerie.id;
-      return match;
-    });
-
-    if (alreadyExists) {
-      return false;
-    }
-
-    if (collection.series.length >= CollectionManager.MAX_COLLECTION_ITEMS) {
-      return false;
-    }
-
-    const description =
-      newSerie.description || `Série ${newSerie.name} sem descrição local.`;
-
-    const positionedSerie = {
-      ...newSerie,
-      description,
-      position: collection.series.length + 1,
-    };
-
-    const update = {
-      ...collection,
-      series: [...collection.series, positionedSerie],
-    };
-
-    await this.updateCollection(update);
-
-    return true;
   }
 
   public async getLastRead(): Promise<Collection | null> {
