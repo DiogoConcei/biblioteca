@@ -1,99 +1,155 @@
-# LegacyReader
+# Biblioteca (LegacyReader) 📚
 
-O **LegacyReader** é uma aplicação desktop inovadora, projetada para facilitar a leitura e o gerenciamento de suas coleções digitais de quadrinhos, mangás, livros e muito mais. Com suporte nativo a arquivos `.cbr` e `.cbz`, o LegacyReader também oferece compatibilidade com outros formatos, como `.pdf`, `.epub`, `.txt`, `.doc`, entre outros.
-
----
-
-## Visão Geral
-
-### Objetivo Principal
-
-Permitir a leitura intuitiva e organizada de arquivos compactados e documentos, proporcionando uma experiência imersiva para os amantes de quadrinhos e literatura digital.
-
-### Funcionalidades-Chave
-
-- **Leitura de Arquivos**: Suporte para `.cbr` e `.cbz` com imagens ordenadas e nomeadas corretamente.
-- **Multiformatos**: Compatibilidade com arquivos `.pdf`, `.epub`, `.txt`, `.doc` e outros.
-- **Compartilhamento de Conteúdo**: Transfira arquivos entre dispositivos na mesma rede.
-- **Gerenciamento de Coleções**: Catalogação, ordenação e gerenciamento avançado de arquivos.
-- **Pacotes de Dados**: Acesso a conteúdos pré-disponibilizados pela comunidade.
+A **Biblioteca** (também conhecida como **LegacyReader**) é uma aplicação desktop robusta e moderna, desenvolvida para entusiastas de quadrinhos, mangás e literatura digital. Projetada para oferecer uma experiência de leitura imersiva e uma organização de coleção impecável, a aplicação combina o poder do **Electron** com a flexibilidade do **React**.
 
 ---
 
-## Motivação
+## ✨ Principais Funcionalidades
 
-A inspiração para o LegacyReader surgiu da dificuldade em encontrar uma ferramenta que exibisse coleções de quadrinhos e livros de forma visual e organizada. Muitas aplicações existentes sacrificam a experiência do usuário em prol de funcionalidades básicas. O LegacyReader preenche essa lacuna ao oferecer uma interface intuitiva e recursos robustos de organização e gerenciamento.
+### 📖 Leitura Imersiva
+
+- **Suporte Multi-formato:** Leitura nativa de arquivos `.cbr`, `.cbz`, além de suporte em expansão para `.pdf` e outros formatos.
+- **Modos de Visualização:** Escolha entre página única, ajuste à largura e controle de zoom personalizado.
+- **Navegação Fluida:** Transições suaves entre capítulos e páginas.
+
+### 🗂️ Gerenciamento de Coleções
+
+- **Organização Inteligente:** Catalogação automática de séries, mangás e quadrinhos.
+- **Metadados Automáticos:** Integração com serviços de busca para obter capas, sinopses e detalhes da obra.
+- **Categorização Personalizada:** Crie coleções, marque favoritos e gerencie seu progresso de leitura.
+- **Tie-ins:** Suporte para gerenciamento de histórias conectadas e ordens de leitura.
+
+### ⚙️ Configurações e Customização
+
+- **Temas:** Suporte a modo claro, escuro e sincronização com o sistema.
+- **Backup e Sincronização:** Sistema de backup automático programável com suporte a retenção de versões.
+- **Privacidade:** Opções para gerenciar dados locais e logs de erro.
+
+### 📥 Downloads e Uploads
+
+- **Gerenciador de Downloads:** Acompanhe o progresso de novos conteúdos.
+- **Upload Local:** Importação simplificada de pastas e arquivos locais para a biblioteca.
 
 ---
 
-## Tecnologias Utilizadas
+## 🛠️ Tecnologias Utilizadas
 
-A aplicação foi desenvolvida com tecnologias modernas e confiáveis:
+O projeto utiliza um stack moderno focado em performance e experiência do usuário:
 
-- **Electron.js** – Plataforma para criação de aplicações desktop.
-- **React** – Biblioteca para construção de interfaces interativas.
-- **TypeScript** – Superset do JavaScript que adiciona tipagem estática, promovendo código mais seguro e organizado.
-- **7zip** – Ferramenta para manipulação e compactação de arquivos.
-
-### Bibliotecas e Ferramentas Complementares
-
-- **Electron Forge** – Facilita o empacotamento e a distribuição do aplicativo.
-- **React Router DOM** – Gerencia a navegação e as rotas dentro da interface.
-- **React Icons / FontAwesome** – Fornece ícones modernos para enriquecer a UI.
-- **fs-extra** – Manipulação avançada de arquivos e diretórios.
-- **unzipper / unrar.js** – Extração eficiente de arquivos compactados.
-- **sharp** – Processamento rápido e eficaz de imagens.
-- **pdf-poppler** – Conversão e manipulação de documentos PDF.
+- **Core:** [Electron](https://www.electronjs.org/) & [Vite](https://vitejs.dev/)
+- **Frontend:** [React](https://reactjs.org/) & [TypeScript](https://www.typescriptlang.org/)
+- **Estado:** [Zustand](https://zustand-demo.pmnd.rs/) (Gerenciamento de estado leve e rápido)
+- **UI:** [Material UI (MUI)](https://mui.com/) & [Lucide React](https://lucide.dev/) (Ícones)
+- **Estilização:** [SASS/SCSS](https://sass-lang.com/) (Módulos)
+- **Processamento:** [Sharp](https://sharp.pixelplumbing.com/) (Processamento de imagens ultra-rápido)
+- **Documentos:** [PDF.js](https://mozilla.github.io/pdf.js/) (Renderização de PDFs)
+- **Formulários:** [React Hook Form](https://react-hook-form.com/) & [Yup](https://github.com/jquense/yup)
 
 ---
 
-## Como Utilizar
+## 🚀 Como Executar
 
-**Atenção:** A aplicação está em desenvolvimento e, por enquanto, oferece suporte para arquivos `.cbr` e `.cbz` que estejam devidamente organizados.
+### Pré-requisitos
 
-### Passo a Passo para Testar
+- [Node.js](https://nodejs.org/) (versão LTS recomendada)
+- npm ou yarn
 
-1. **Clone o repositório** para sua máquina local.
-2. **Instale as dependências** utilizando o comando:
+### Instalação
 
+1. Clone o repositório:
+
+   ```bash
+   git clone https://github.com/seu-usuario/biblioteca.git
+   cd biblioteca
+   ```
+
+2. Instale as dependências:
    ```bash
    npm install
    ```
 
-3. **Organize seus arquivos:** Crie uma pasta e coloque os arquivos `.cbr` ou `.cbz` nela.
-4. **Importe a pasta:** Arraste a pasta para a aplicação.
-5. **Configure os parâmetros:** Preencha o formulário exibido conforme necessário.
-6. **Aproveite a experiência:** A aplicação funcionará de forma intuitiva e eficiente.
+### Desenvolvimento
+
+Para iniciar o ambiente de desenvolvimento com Hot Reload:
+
+```bash
+npm run dev
+```
+
+### Build e Distribuição
+
+Para gerar o executável da sua plataforma:
+
+```bash
+# Windows
+npm run dist:win
+
+# Linux
+npm run dist:linux
+```
 
 ---
 
-## Contribuições
+## 📂 Estrutura do Projeto
 
-Contribuições são muito bem-vindas!  
-Não há regras rígidas para colaboração. Basta enviar um pull request (PR) com melhorias ou correções e, se o conteúdo agregar valor ao projeto, ele será incorporado.
-
----
-
-## Roadmap e Melhorias Futuras
-
-A equipe de desenvolvimento está comprometida em aprimorar continuamente o LegacyReader. As próximas etapas incluem:
-
-- **Melhorias na experiência de leitura:** Transições mais suaves entre capítulos, otimização do tempo de carregamento e mais informações visuais para o usuário.
-- **Otimização do Código:** Facilitar a conversão de arquivos `.pdf` para `.cbr`/`.cbz` e aprimorar o processamento de imagens.
+- `electron/`: Código do processo principal, incluindo serviços de sistema, gerenciamento de arquivos e handlers IPC.
+- `src/`: Código do processo de renderização (Frontend React).
+  - `components/`: Componentes reutilizáveis da interface.
+  - `hooks/`: Hooks customizados para lógica de negócio e integração com Electron.
+  - `pages/`: Telas principais da aplicação (Home, Reader, Settings, etc).
+  - `store/`: Gerenciamento de estado global com Zustand.
+  - `types/`: Definições de tipos TypeScript.
 
 ---
 
-## Reporte de Bugs e Solicitações de Funcionalidades
+## 🤝 Contribuições
 
-Caso encontre algum problema ou tenha sugestões para novas funcionalidades, por favor, utilize um dos canais abaixo:
+Contribuições são bem-vindas! Sinta-se à vontade para abrir uma **Issue** ou enviar um **Pull Request**.
 
-- **Issues no GitHub.**
-- **E-mail:** [projetos.academicos.pessoais@gmail.com](mailto:projetos.academicos.pessoais@gmail.com)
+1. Faça um Fork do projeto.
+2. Crie uma branch para sua feature (`git checkout -b feature/nova-funcionalidade`).
+3. Envie suas mudanças (`git commit -m 'Adiciona nova funcionalidade'`).
+4. Push para a branch (`git push origin feature/nova-funcionalidade`).
+5. Abra um Pull Request.
 
 ---
 
-O **LegacyReader** foi criado para transformar a forma como você gerencia e desfruta sua coleção digital de quadrinhos e livros. Explore, organize e compartilhe suas leituras de maneira prática e eficiente!
+## 🗺️ Roadmap de Desenvolvimento
 
-Ultima mudança:
+O desenvolvimento da Biblioteca está organizado em fases que priorizam a estabilidade do núcleo (Core), a eliminação de débitos técnicos e a expansão para novos formatos.
 
-- Correção de bugs esquisitos
+### 🟢 Fase 1: Consolidação & Débito Técnico (Curto Prazo)
+
+_Foco: Unificação de sistemas e melhoria da manutenibilidade._
+
+- **Unificação de Domínios:** Fundir `MangaManager` e `ComicManager` em um único `SeriesManager` genérico. Atualmente, há 90% de duplicação de lógica entre esses dois serviços.
+- **Refatoração do StorageManager:** Eliminar as "gambiarras genéricas" de leitura de JSON e implementar um sistema de cache em memória sincronizado para evitar leituras excessivas de disco.
+- **Integração Total do Scraper:** Automatizar a busca de metadados durante o processo de Upload. O `MetadataScraperService` já possui os adaptadores (Jikan, Google Books), mas a UI ainda requer preenchimento manual excessivo.
+- **Padronização de Status:** Unificar o tratamento de status (`Pendente`, `Em andamento`, `Completo`) entre o backend Electron e os enums do Frontend.
+
+### 🟡 Fase 2: Experiência de Leitura & Formatos (Médio Prazo)
+
+_Foco: Expandir o que o usuário pode ler e como ele lê._
+
+- **Suporte Nativo a PDF (Zero-Extraction):** Implementar renderização sob demanda usando `pdfjs-dist`. Em vez de extrair todas as páginas para o disco, a aplicação renderiza apenas a página atual solicitada, permitindo abertura instantânea de arquivos PDF gigantes.
+- **Módulo EPUB/Livros:** Implementar o `EpubAdapter` para suporte a literatura textual, permitindo ajuste de fonte, entrelinhamento e temas de leitura (sépia, noturno).
+- **Modos de Visualização Dinâmicos:**
+  - **Webtoon Mode:** Rolagem vertical contínua com pré-carregamento (lazy loading) inteligente.
+  - **Double Page Mode:** Visualização de duas páginas lado a lado com detecção de "Spread Pages" (páginas duplas que devem ser exibidas juntas).
+- **Pós-processamento de Imagem:** Filtros em tempo real via Sharp (Brilho, Contraste, Nitidez e Limpeza de ruído) para restaurar a qualidade de scans antigos.
+
+### 🟠 Fase 3: Ecossistema & Conectividade (Longo Prazo)
+
+_Foco: Sincronização e recursos avançados._
+
+- **Sincronização Cloud:** Implementar o upload de backups e progresso de leitura para Google Drive/OneDrive.
+- **Compartilhamento em Rede Local:** Transformar a Biblioteca em um servidor de mídia local, permitindo ler sua coleção em tablets ou celulares via navegador na mesma rede Wi-Fi.
+- **Sistema de Tie-ins Avançado:** Criar "Cronologias" onde o usuário pode seguir uma ordem de leitura que alterna automaticamente entre diferentes séries (comum em eventos de quadrinhos).
+
+---
+
+## 📝 Licença
+
+Este projeto está sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes (ou consulte os autores).
+
+---
