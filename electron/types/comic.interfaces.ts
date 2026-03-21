@@ -16,7 +16,7 @@ export interface Comic {
     lastChapterId: number;
     lastReadAt: string;
   };
-  chapters?: ComicEdition[];
+  chapters: ComicEdition[];
   childSeries?: ComicTieIn[];
   metadata: {
     status: 'Em andamento' | 'Completo' | 'Pendente' | '';
@@ -31,7 +31,7 @@ export interface Comic {
     compiledComic: boolean;
   };
   createdAt: string;
-  deletedAt?: string;
+  deletedAt: string;
   tags: string[];
   comments: string[];
 }

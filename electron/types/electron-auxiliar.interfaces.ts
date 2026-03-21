@@ -7,8 +7,8 @@ import {
 } from 'react-hook-form';
 
 import { Manga, MangaChapter } from './manga.interfaces';
-import { Comic, ComicEdition, TieIn } from './comic.interfaces';
-import { Collection } from '../../src/types/collections.interfaces';
+import { Comic, ComicEdition } from './comic.interfaces';
+// import { Collection } from '../../src/types/collections.interfaces';
 import { SerieEditForm } from '../../src/types/series.interfaces';
 
 export type LiteratureChapter = ComicEdition | MangaChapter;
@@ -89,14 +89,14 @@ export interface GenericControllerProps<T extends FieldValues = FieldValues> {
   name: Path<T>;
 }
 
-export interface FavoriteProps {
-  serie: Literatures;
-  setFavorites: React.Dispatch<React.SetStateAction<Collection | undefined>>;
-}
+// export interface FavoriteProps {
+//   serie: Literatures;
+//   setFavorites: React.Dispatch<React.SetStateAction<Collection | undefined>>;
+// }
 
-export interface RatingProps {
-  serie: Literatures;
-}
+// export interface RatingProps {
+//   serie: Literatures;
+// }
 
 export interface ChapterView {
   id: number;
@@ -123,7 +123,7 @@ export interface AppConfig {
   };
 }
 
-export type ReadableSerie = Literatures | TieIn;
+// export type ReadableSerie = Literatures | TieIn;
 
 export type Status = 'Em andamento' | 'Completo' | 'Pendente' | '';
 
@@ -172,10 +172,63 @@ export interface ComicCoverRegenerationResult {
   failures: Array<{ comic: string; reason: string }>;
 }
 
-export interface LastReadCandidate {
-  serie: ReadableSerie;
-  chapterId: number;
-  lastPageRead: number;
+// export interface LastReadCandidate {
+//   serie: ReadableSerie;
+//   chapterId: number;
+//   lastPageRead: number;
+//   isRead: boolean;
+//   timestamp: number;
+// }
+
+export interface graphSerie<C extends graphChapter> {
+  id: number;
+  name: string;
+  sanitizedName: string;
+  genre?: string;
+  author?: string;
+  language?: string;
+  coverImage: string;
+  archivesPath: string;
+  chaptersPath: string;
+  dataPath: string;
+  chapters: C[];
+  totalChapters: number;
+  chaptersRead: number;
+  literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
+  readingData: {
+    lastChapterId: number;
+    lastReadAt: string;
+  };
+  metadata: {
+    status: 'Em andamento' | 'Completo' | 'Pendente' | '';
+    collections: string[];
+    recommendedBy?: string;
+    originalOwner?: string;
+    lastDownload: number;
+    privacy: 'Publica' | 'Privada' | '';
+    rating?: number;
+    isFavorite: boolean;
+    autoBackup: 'Sim' | 'Não' | '';
+  };
+  comments: string[];
+  tags: string[];
+  deletedAt: string;
+  createdAt: string;
+}
+
+export interface graphChapter {
+  id: number;
+  serieName: string;
+  name: string;
+  sanitizedName: string;
+  coverImage?: string;
+  archivesPath: string;
+  chapterPath: string;
+  createdAt: string;
   isRead: boolean;
-  timestamp: number;
+  isDownloaded: 'not_downloaded' | 'downloading' | 'downloaded';
+  page: {
+    lastPageRead: number;
+    favoritePage: number;
+  };
 }

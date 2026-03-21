@@ -1,18 +1,19 @@
 import path from 'path';
 
-import LibrarySystem from './abstract/LibrarySystem';
 import FileManager from './FileManager';
 import CollectionManager from './CollectionManager';
 import ImageManager from './ImageManager';
 import StorageManager from './StorageManager';
 import { Manga, MangaChapter } from '../types/manga.interfaces';
 import { SerieForm } from '../../src/types/series.interfaces';
+import GraphSerie from './abstract/GraphSerie';
 
-export default class MangaManager extends LibrarySystem {
-  private readonly fileManager: FileManager = new FileManager();
+export default class MangaManager extends GraphSerie<Manga, MangaChapter> {
+  protected readonly fileManager: FileManager = new FileManager();
   private readonly collManager: CollectionManager = new CollectionManager();
-  private readonly imageManager: ImageManager = new ImageManager();
-  private readonly storageManager: StorageManager = new StorageManager();
+
+  protected readonly imageManager: ImageManager = new ImageManager();
+  protected readonly storageManager: StorageManager = new StorageManager();
 
   constructor() {
     super();
@@ -21,7 +22,7 @@ export default class MangaManager extends LibrarySystem {
   public async createMangaSerie(serie: SerieForm) {
     const mangaData = await this.processSerieData(serie);
 
-    await this.processCovers(serie.oldPath, mangaData);
+    await this.processCovers(mangaData);
 
     await this.collManager.initializeCollections(
       mangaData,
@@ -29,163 +30,6 @@ export default class MangaManager extends LibrarySystem {
     );
 
     await this.updateSytem(mangaData, serie.oldPath);
-  }
-
-  public async processCovers(oldPath: string, mangaData: Manga) {
-    const isImg = await this.imageManager.isImage(mangaData.coverImage);
-
-    if (isImg) {
-      mangaData.coverImage = await this.imageManager.normalizeImage(
-        mangaData.coverImage,
-        path.join(this.showcaseImages, mangaData.name),
-      );
-    }
-  }
-
-  public async getManga(
-    dataPath: string,
-    chapter_id: number,
-  ): Promise<string[]> {
-    const manga = await this.storageManager.readSerieData(dataPath);
-    if (!manga) {
-      throw new Error('Série não encontrada.');
-    }
-    if (!manga.chapters?.length) {
-      throw new Error('Nenhum capítulo encontrado.');
-    }
-
-    const chapter = manga.chapters.find((chap) => chap.id === chapter_id);
-    if (!chapter?.chapterPath) {
-      throw new Error('Capítulo não encontrado ou caminho inválido.');
-    }
-
-    const imageFiles = await this.fileManager.searchImages(chapter.chapterPath);
-
-    const validations = await Promise.all(
-      imageFiles.map((f) => this.imageManager.isImage(f)),
-    );
-    if (validations.some((valid) => !valid)) {
-      throw new Error('Arquivos inválidos encontrados no capítulo.');
-    }
-
-    return this.imageManager.encodeImages(imageFiles);
-  }
-
-  public async createChapterById(dataPath: string, chapter_id: number) {
-    const mangaData = (await this.storageManager.readSerieData(
-      dataPath,
-    )) as Manga;
-
-    if (!mangaData.chapters) {
-      throw new Error('Serie não possui capitulos.');
-    }
-
-    const chapterToProcess = mangaData.chapters.find(
-      (chapter) => chapter.id === chapter_id,
-    );
-
-    if (!chapterToProcess) {
-      throw new Error(`Capitulo com id ${chapter_id} nao foi encontrado.`);
-    }
-
-    await this.generateChapter(chapterToProcess);
-
-    chapterToProcess.isDownloaded = 'downloaded';
-    mangaData.metadata.lastDownload = chapterToProcess.id;
-    await this.storageManager.writeData(mangaData);
-  }
-
-  public async createMultipleChapters(dataPath: string, quantity: number) {
-    const mangaData = (await this.storageManager.readSerieData(
-      dataPath,
-    )) as Manga;
-
-    if (!mangaData.chapters) {
-      throw new Error('Serie não possui capitulos.');
-    }
-
-    const firstItem = mangaData.metadata.lastDownload;
-    const lastItem = Math.min(firstItem + quantity, mangaData.chapters.length);
-
-    const chaptersToProcess = mangaData.chapters.filter(
-      (chapter) => chapter.id >= firstItem && chapter.id <= lastItem,
-    );
-
-    if (!chaptersToProcess) {
-      throw new Error(`Intervalo de capitulos nao encontrado`);
-    }
-
-    await Promise.all(
-      chaptersToProcess.map(async (chapter) => {
-        await this.generateChapter(chapter);
-        chapter.isDownloaded = 'downloaded';
-        mangaData.metadata.lastDownload = chapter.id;
-      }),
-    );
-
-    await this.storageManager.writeData(mangaData);
-  }
-
-  public async updateChapters(
-    filesPath: string[],
-    dataPath: string,
-  ): Promise<MangaChapter[]> {
-    const serieData = (await this.storageManager.readSerieData(
-      dataPath,
-    )) as Manga;
-
-    if (!serieData.chapters)
-      throw new Error('Dados do capítulo não encontrandos.');
-
-    const chapters = await this.createNewChapter(filesPath, serieData.chapters);
-
-    serieData.chapters = chapters;
-    serieData.totalChapters = chapters.length;
-    await this.storageManager.writeData(serieData);
-
-    return await this.imageManager.encodeComic(chapters);
-  }
-
-  private async createNewChapter(
-    filesPath: string[],
-    chapters: MangaChapter[],
-  ) {
-    const chapterMap = new Map(chapters.map((ch) => [ch.archivesPath, ch]));
-    const existingPaths = chapters.map((ch) => ch.archivesPath);
-    const allPaths = [...existingPaths, ...filesPath];
-    const orderedPaths = await this.fileManager.orderManga(allPaths);
-
-    const result: MangaChapter[] = await Promise.all(
-      orderedPaths.map(async (chapterPath, idx) => {
-        const exits = chapterMap.get(chapterPath);
-
-        if (exits) {
-          return exits;
-        }
-
-        this.fileManager.moveChapter(
-          chapterPath,
-          path.join(
-            this.userLibrary,
-            chapters[0].serieName,
-            path.basename(chapterPath),
-          ),
-        );
-
-        const newChapter = await this.createChapter(
-          chapters[0].serieName,
-          chapterPath,
-          idx,
-        );
-        return newChapter;
-      }),
-    );
-
-    result.forEach((ch, idx) => {
-      ch.id = idx + 1;
-    });
-
-    return result;
   }
 
   public async createChapter(
@@ -209,32 +53,6 @@ export default class MangaManager extends LibrarySystem {
       ),
       archivesPath: archivePath,
     };
-  }
-
-  private async generateChapter(chapter: MangaChapter) {
-    const normalized = path.resolve(chapter.archivesPath);
-    const ext = path.extname(normalized);
-
-    const chapterOut = await this.fileManager.buildChapterPath(
-      this.comicsImages,
-      chapter.serieName,
-      chapter.name,
-    );
-
-    try {
-      if (ext === '.pdf') {
-        await this.storageManager.convertPdf_overdrive(normalized, chapterOut);
-      } else {
-        await this.storageManager.extractWith7zip(normalized, chapterOut);
-      }
-
-      chapter.chapterPath = chapterOut;
-    } catch (e) {
-      console.error(`Erro ao processar os capítulos em "${chapter.name}":`, e);
-      throw e;
-    } finally {
-      await this.imageManager.normalizeChapter(chapterOut);
-    }
   }
 
   private async updateSytem(mangaData: Manga, oldPath: string) {

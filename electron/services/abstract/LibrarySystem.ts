@@ -1,13 +1,14 @@
 import path from 'path';
 import fse from 'fs-extra';
 import { app } from 'electron';
+
 import { AppConfig } from '../../types/settings.interfaces';
 
 export default abstract class LibrarySystem {
-  // O app.getPath só funciona se o app estiver pronto. 
+  // O app.getPath só funciona se o app estiver pronto.
   // Em alguns casos de teste ou instanciamento precoce, pode falhar.
   // Usamos um getter para garantir que pegamos o caminho correto sempre.
-  
+
   get baseStorageFolder(): string {
     return path.join(app.getPath('userData'), 'storage');
   }
@@ -115,7 +116,7 @@ export default abstract class LibrarySystem {
   public async foundFiles(dirPath: string): Promise<string[]> {
     try {
       if (!(await fse.pathExists(dirPath))) return [];
-      
+
       const contents = await fse.readdir(dirPath, { withFileTypes: true });
       const filter =
         /\.(jpe?g|png|gif|bmp|webp|tiff|pdf|cbz|cbr|md|markdown|json)$/i;

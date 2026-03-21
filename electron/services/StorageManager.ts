@@ -7,12 +7,13 @@ import { promisify } from 'util';
 import { exec } from 'child_process';
 
 import { SerieData, SerieEditForm } from '../../src/types/series.interfaces';
-import { Manga } from '../types/manga.interfaces';
-import { Comic, TieIn } from '../types/comic.interfaces';
+import { TieIn } from '../types/comic.interfaces';
 import {
+  graphSerie,
   LiteratureChapter,
-  Literatures,
+  // Literatures,
   viewData,
+  Literatures,
 } from '../types/electron-auxiliar.interfaces';
 import FileManager from './FileManager';
 import LibrarySystem from './abstract/LibrarySystem';
@@ -42,70 +43,88 @@ export default class StorageManager extends LibrarySystem {
     }
   }
 
-  public async searchSerieById(
-    serieId: number,
-  ): Promise<Literatures | TieIn | null> {
-    // Usamos o cache do getViewData para encontrar o caminho do arquivo rapidamente.
-    // Como getViewData tem a propriedade id e dataPath, a busca é instantânea.
-    const viewData = await this.getViewData();
-    
-    if (viewData) {
-      const targetSerie = viewData.find((serie) => serie.id === serieId);
-      if (targetSerie) {
-        return await this.readData(targetSerie.dataPath);
-      }
-    }
+  // public async searchSerieById(
+  //   serieId: number,
+  // ): Promise<Literatures | TieIn | null> {
+  //   // Usamos o cache do getViewData para encontrar o caminho do arquivo rapidamente.
+  //   // Como getViewData tem a propriedade id e dataPath, a busca é instantânea.
+  //   const viewData = await this.getViewData();
 
-    // Fallback caso o getViewData falhe por algum motivo
-    const dataPaths = await this.fileManager.getDataPaths();
+  //   if (viewData) {
+  //     const targetSerie = viewData.find((serie) => serie.id === serieId);
+  //     if (targetSerie) {
+  //       return await this.readData(targetSerie.dataPath);
+  //     }
+  //   }
 
-    for (const dataPath of dataPaths) {
-      const serieData = await this.readData(dataPath);
+  //   // Fallback caso o getViewData falhe por algum motivo
+  //   const dataPaths = await this.fileManager.getDataPaths();
 
-      if (!serieData || serieData.id !== serieId) {
-        continue;
-      }
+  //   for (const dataPath of dataPaths) {
+  //     const serieData = await this.readData(dataPath);
 
-      return serieData;
-    }
+  //     if (!serieData || serieData.id !== serieId) {
+  //       continue;
+  //     }
 
-    return null;
-  }
+  //     return serieData;
+  //   }
+
+  //   return null;
+  // }
 
   // Gambiarra genérica para ler todos os dados (temporária)
-  public async readData(dataPath: string): Promise<Literatures | TieIn | null> {
+  // public async readData(dataPath: string): Promise<Literatures | TieIn | null> {
+  //   try {
+  //     const serieData = (await fse.readJson(dataPath, {
+  //       encoding: 'utf-8',
+  //     })) as Literatures;
+
+  //     if (!serieData) {
+  //       throw new Error('Arquivo lido, mas vazio ou inválido.');
+  //     }
+
+  //     return serieData;
+  //   } catch (e) {
+  //     console.error(`Erro ao ler dados da série: ${e}`);
+  //     return null;
+  //   }
+  // }
+
+  public async readSerieData<T extends graphSerie, C>(
+    dataPath: string,
+  ): Promise<T | null> {
     try {
       const serieData = (await fse.readJson(dataPath, {
         encoding: 'utf-8',
-      })) as Literatures;
+      })) as T;
 
-      if (!serieData) {
-        throw new Error('Arquivo lido, mas vazio ou inválido.');
+      if (serieData === null) {
+        return null;
       }
 
       return serieData;
     } catch (e) {
-      console.error(`Erro ao ler dados da série: ${e}`);
-      return null;
+      throw new Error(`Falha ao ler dados da serie selecionada: ${e}`);
     }
   }
 
-  public async readSerieData(dataPath: string): Promise<Literatures | null> {
-    try {
-      const serieData = (await fse.readJson(dataPath, {
-        encoding: 'utf-8',
-      })) as Literatures;
+  // public async readSerieData(dataPath: string): Promise<Literatures | null> {
+  //   try {
+  //     const serieData = (await fse.readJson(dataPath, {
+  //       encoding: 'utf-8',
+  //     })) as Literatures;
 
-      if (!serieData) {
-        throw new Error('Arquivo lido, mas vazio ou inválido.');
-      }
+  //     if (serieData === null) {
+  //       return;
+  //     }
 
-      return serieData;
-    } catch (e) {
-      console.error(`Erro ao ler dados da série: ${e}`);
-      return null;
-    }
-  }
+  //     return serieData;
+  //   } catch (e) {
+  //     console.error(`Erro ao ler dados da série: ${e}`);
+  //     return null;
+  //   }
+  // }
 
   public async readTieInData(dataPath: string): Promise<TieIn | null> {
     try {
@@ -151,17 +170,28 @@ export default class StorageManager extends LibrarySystem {
 
       if (type) {
         switch (type) {
-          case 'Manga': targetFolder = this.mangasData; break;
-          case 'Quadrinho': targetFolder = this.comicsData; break;
-          case 'childSeries': targetFolder = this.childSeriesData; break;
-          default: targetFolder = this.mangasData;
+          case 'Manga':
+            targetFolder = this.mangasData;
+            break;
+          case 'Quadrinho':
+            targetFolder = this.comicsData;
+            break;
+          case 'childSeries':
+            targetFolder = this.childSeriesData;
+            break;
+          default:
+            targetFolder = this.mangasData;
         }
       } else {
         // Se o tipo não for passado, tenta encontrar em todas as pastas
-        const allFolders = [this.mangasData, this.comicsData, this.childSeriesData];
+        const allFolders = [
+          this.mangasData,
+          this.comicsData,
+          this.childSeriesData,
+        ];
         for (const folder of allFolders) {
           const files = await this.fileManager.foundFiles(folder);
-          const found = files.find(f => path.parse(f).name === serieName);
+          const found = files.find((f) => path.parse(f).name === serieName);
           if (found) {
             return await fse.readJson(found, { encoding: 'utf-8' });
           }
@@ -175,7 +205,9 @@ export default class StorageManager extends LibrarySystem {
       );
 
       if (!serieDataPath) {
-        throw new Error(`Nenhuma série encontrada com o nome: ${serieName} em ${type}`);
+        throw new Error(
+          `Nenhuma série encontrada com o nome: ${serieName} em ${type}`,
+        );
       }
 
       return await fse.readJson(serieDataPath, { encoding: 'utf-8' });
