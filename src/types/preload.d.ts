@@ -1,10 +1,6 @@
 export {};
 
-import {
-  childSerie,
-  ComicTieIn,
-  TieIn,
-} from 'electron/types/comic.interfaces.js';
+import { ComicTieIn, TieIn } from 'electron/types/comic.interfaces.js';
 
 import {
   Collection,
@@ -109,15 +105,10 @@ declare global {
 
       series: {
         getSeries: () => Promise<APIResponse<viewData[]>>;
-        getComic: (
+        getSerie: (
           serieName: string,
-        ) => Promise<APIResponse<Literatures | null>>;
-        getManga: (
-          serieName: string,
-        ) => Promise<APIResponse<Literatures | null>>;
-        getTieIn: (
-          SerieName: string,
-        ) => Promise<APIResponse<childSerie | null>>;
+          literatureForm: string,
+        ) => Promise<APIResponse<Literatures | TieIn>>;
         createTieIn: (
           childSerie: ComicTieIn,
         ) => Promise<APIResponse<string | null>>;

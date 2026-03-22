@@ -1,5 +1,6 @@
 import path from 'path';
 
+import { SerieForm } from '../../../src/types/series.interfaces';
 import {
   graphChapter,
   graphSerie,
@@ -8,6 +9,9 @@ import StorageManager from '../StorageManager';
 import ImageManager from '../ImageManager';
 import LibrarySystem from './LibrarySystem';
 import FileManager from '../FileManager';
+import CollectionManager from '../CollectionManager';
+import ArchiveManager from '../ArchiveManager';
+import PdfManager from '../PdfManager';
 
 export default abstract class GraphSerie<
   T extends graphSerie<C>,
@@ -16,6 +20,9 @@ export default abstract class GraphSerie<
   protected abstract storageManager: StorageManager;
   protected abstract imageManager: ImageManager;
   protected abstract fileManager: FileManager;
+  protected abstract collectionManager: CollectionManager;
+  protected abstract archiveManager: ArchiveManager;
+  protected abstract pdfManager: PdfManager;
 
   protected async processCovers(serieData: T): Promise<void> {
     const isImg = await this.imageManager.isImage(serieData.coverImage);
@@ -26,39 +33,6 @@ export default abstract class GraphSerie<
         path.join(this.showcaseImages, serieData.name),
       );
     }
-  }
-
-  protected async getChapter<T extends graphSerie<graphChapter>, C>(
-    dataPath: string,
-    chapter_id: number,
-  ): Promise<string[]> {
-    const serie = await this.storageManager.readSerieData<T, C>(dataPath);
-
-    if (!serie) {
-      throw new Error('Série não encontrada.');
-    }
-
-    if (!serie.chapters?.length) {
-      throw new Error('Nenhum capítulo encontrado.');
-    }
-
-    const chapter = serie.chapters.find((chap) => chap.id === chapter_id);
-
-    if (!chapter?.chapterPath) {
-      throw new Error('Capítulo não encontrado ou caminho inválido.');
-    }
-
-    const imageFiles = await this.fileManager.searchImages(chapter.chapterPath);
-
-    const validations = await Promise.all(
-      imageFiles.map((f) => this.imageManager.isImage(f)),
-    );
-
-    if (validations.some((valid) => !valid)) {
-      throw new Error('Arquivos inválidos encontrados no capítulo.');
-    }
-
-    return this.imageManager.encodeImages(imageFiles);
   }
 
   protected async generateChapter(chapter: graphChapter) {
@@ -76,9 +50,9 @@ export default abstract class GraphSerie<
 
     try {
       if (ext === '.pdf') {
-        await this.storageManager.convertPdf_overdrive(normalized, chapterOut);
+        await this.pdfManager.convertPdf_overdrive(normalized, chapterOut);
       } else {
-        await this.storageManager.extractWith7zip(normalized, chapterOut);
+        await this.archiveManager.extractWith7zip(normalized, chapterOut);
       }
 
       chapter.chapterPath = chapterOut;
@@ -90,16 +64,13 @@ export default abstract class GraphSerie<
     }
   }
 
-  protected async createNewChapter(
-    filesPath: string[],
-    chapters: MangaChapter[],
-  ) {
+  protected async createNewChapter(filesPath: string[], chapters: C[]) {
     const chapterMap = new Map(chapters.map((ch) => [ch.archivesPath, ch]));
     const existingPaths = chapters.map((ch) => ch.archivesPath);
     const allPaths = [...existingPaths, ...filesPath];
-    const orderedPaths = await this.fileManager.orderManga(allPaths);
+    const orderedPaths = await this.orderChapters(allPaths);
 
-    const result: MangaChapter[] = await Promise.all(
+    const result: graphChapter[] = await Promise.all(
       orderedPaths.map(async (chapterPath, idx) => {
         const exits = chapterMap.get(chapterPath);
 
@@ -132,11 +103,64 @@ export default abstract class GraphSerie<
     return result;
   }
 
-  async updateChapters<T extends graphSerie<graphChapter>, C>(
+  async createChapter(
+    serieName: string,
+    archivePath: string,
+    id: number,
+  ): Promise<graphChapter> {
+    const fileName = path
+      .basename(archivePath, path.extname(archivePath))
+      .replaceAll('#', '');
+    const sanitizedName = this.fileManager.sanitizeFilename(fileName);
+
+    return {
+      ...this.mountEmptyChapter(serieName, fileName),
+      id: id,
+      sanitizedName,
+      chapterPath: await this.fileManager.buildChapterPath(
+        this.comicsImages,
+        serieName,
+        fileName,
+      ),
+      archivesPath: archivePath,
+    };
+  }
+
+  async getChapter(dataPath: string, chapter_id: number): Promise<string[]> {
+    const serie = await this.storageManager.readSerieData<T>(dataPath);
+
+    if (!serie) {
+      throw new Error('Série não encontrada.');
+    }
+
+    if (!serie.chapters?.length) {
+      throw new Error('Nenhum capítulo encontrado.');
+    }
+
+    const chapter = serie.chapters.find((chap) => chap.id === chapter_id);
+
+    if (!chapter?.chapterPath) {
+      throw new Error('Capítulo não encontrado ou caminho inválido.');
+    }
+
+    const imageFiles = await this.fileManager.searchImages(chapter.chapterPath);
+
+    const validations = await Promise.all(
+      imageFiles.map((f) => this.imageManager.isImage(f)),
+    );
+
+    if (validations.some((valid) => !valid)) {
+      throw new Error('Arquivos inválidos encontrados no capítulo.');
+    }
+
+    return this.imageManager.encodeImages(imageFiles);
+  }
+
+  async updateChapters(
     filesPath: string[],
     dataPath: string,
-  ): Promise<C[]> {
-    const serie = await this.storageManager.readSerieData<T, C>(dataPath);
+  ): Promise<graphChapter[]> {
+    const serie = await this.storageManager.readSerieData<T>(dataPath);
 
     if (!serie) {
       throw new Error('Série não encontrada.');
@@ -144,20 +168,22 @@ export default abstract class GraphSerie<
 
     if (!serie.chapters) throw new Error('Dados do capítulo não encontrandos.');
 
-    const chapters = await this.createNewChapter(filesPath, serie.chapters);
+    const rawChapters = await this.createNewChapter(filesPath, serie.chapters);
+    const chapters = await Promise.all(
+      rawChapters.map(async (chapter) => {
+        return await this.postProcessChapters(chapter);
+      }),
+    );
 
-    serie.chapters = chapters;
+    serie.chapters = chapters as C[];
     serie.totalChapters = chapters.length;
     await this.storageManager.writeData(serie);
 
     return await this.imageManager.encodeComic(chapters);
   }
 
-  async createChapterById<T extends graphSerie<graphChapter>, C>(
-    dataPath: string,
-    chapter_id: number,
-  ) {
-    const serie = await this.storageManager.readSerieData<T, C>(dataPath);
+  async createChapterById(dataPath: string, chapter_id: number) {
+    const serie = await this.storageManager.readSerieData<T>(dataPath);
 
     if (!serie) {
       throw new Error('Série não encontrada.');
@@ -178,11 +204,8 @@ export default abstract class GraphSerie<
     await this.storageManager.writeData(serie);
   }
 
-  async createMultipleChapters<T extends graphSerie<graphChapter>, C>(
-    dataPath: string,
-    quantity: number,
-  ) {
-    const serie = await this.storageManager.readSerieData<T, C>(dataPath);
+  async createMultipleChapters(dataPath: string, quantity: number) {
+    const serie = await this.storageManager.readSerieData<T>(dataPath);
 
     if (!serie) {
       throw new Error('Série não encontrada.');
@@ -217,4 +240,30 @@ export default abstract class GraphSerie<
   async save(serie: T): Promise<void> {
     await this.storageManager.writeData(serie);
   }
+
+  async createSerie(serie: SerieForm): Promise<void> {
+    const serieData = await this.processSerieData(serie);
+
+    await this.processCovers(serieData);
+
+    await this.collectionManager.initializeCollections(
+      serieData,
+      serieData.metadata.collections,
+    );
+
+    await this.updateSystem(serieData, serie.oldPath);
+  }
+
+  async updateSystem(serieData: T, oldPath: string) {
+    await this.fileManager.localUpload(serieData, oldPath);
+    await this.storageManager.writeData(serieData);
+  }
+
+  abstract mountEmptyChapter(serieName: string, fileName: string): graphChapter;
+
+  abstract orderChapters(filesPath: string[]): Promise<string[]>;
+
+  abstract postProcessChapters(chapter: graphChapter): Promise<graphChapter>;
+
+  abstract processSerieData(serie: SerieForm): Promise<T>;
 }

@@ -1,9 +1,9 @@
 import './styles/base.scss';
 
 import { HashRouter, Routes, Route } from 'react-router-dom';
+
 import Layout from './pages/layout/AppLayout/Layout';
 import SystemConfig from './pages/SettingsPage/SystemSettings/SystemConfig';
-import SettingsPage from './pages/settings/SettingsPage';
 import Home from './pages/home/Home';
 import Collections from './pages/collections/Collections';
 import Upload from './pages/upload/Upload';

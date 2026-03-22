@@ -44,13 +44,13 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
         switch (LiteratureForm) {
           case 'Mangas':
-            chapterData = await mangaManager.getManga(dataPath, chapter_id);
+            chapterData = await mangaManager.getChapter(dataPath, chapter_id);
             break;
           case 'Comics':
-            chapterData = await comicManager.getComic(dataPath, chapter_id);
+            chapterData = await comicManager.getChapter(dataPath, chapter_id);
             break;
           case 'childSeries':
-            chapterData = await tieManager.getTieIn(dataPath, chapter_id);
+            chapterData = await tieManager.getChapter(dataPath, chapter_id);
             break;
           default:
             break;
@@ -125,7 +125,10 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         let updatedStatus = serieData.metadata.status;
         if (updatedChaptersRead === serieData.totalChapters) {
           updatedStatus = 'Completo';
-        } else if (updatedStatus === 'Completo' && updatedChaptersRead < serieData.totalChapters) {
+        } else if (
+          updatedStatus === 'Completo' &&
+          updatedChaptersRead < serieData.totalChapters
+        ) {
           updatedStatus = 'Em andamento';
         }
 

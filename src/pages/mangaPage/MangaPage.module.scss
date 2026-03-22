@@ -15,12 +15,21 @@
     gap: $spacing-2;
     padding: $spacing-2;
 
+    @media (max-width: 768px) {
+      align-items: center;
+      width: 100%;
+    }
+
     .mangaTags {
       display: flex;
       align-items: flex-start;
       gap: $spacing-3;
       padding: $spacing-2;
       flex-flow: column nowrap;
+
+      @media (max-width: 768px) {
+        align-items: center;
+      }
 
       div {
         display: flex;
@@ -31,6 +40,10 @@
         max-height: 150px;
         max-width: 280px;
         overflow: hidden;
+
+        @media (max-width: 768px) {
+          justify-content: center;
+        }
       }
 
       span {
@@ -50,12 +63,22 @@
     .owner {
       font-size: $font-lg;
       color: $snow;
+
+      @media (max-width: 768px) {
+        text-align: center;
+      }
     }
 
     .mangaCover {
       height: 40vh;
       max-width: 600px;
       border-radius: $radius-md;
+
+      @media (max-width: 768px) {
+        height: auto;
+        max-width: 100%;
+        max-height: 50vh;
+      }
     }
   }
 
@@ -79,6 +102,11 @@
         width: 100%;
         color: $snow;
         font-size: $font-2xl;
+
+        @media (max-width: 768px) {
+          white-space: normal;
+          text-align: center;
+        }
       }
     }
 
@@ -90,6 +118,10 @@
       p {
         color: $snow;
         font-size: $font-2xl;
+
+        @media (max-width: 480px) {
+          font-size: $font-lg;
+        }
       }
     }
 
@@ -98,6 +130,12 @@
       align-items: center;
       justify-content: space-between;
       gap: $spacing-2;
+
+      @media (max-width: 768px) {
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+      }
 
       .favorite,
       .reading {
@@ -127,15 +165,18 @@
     border: 1px solid $snow;
     border-radius: $radius-md;
 
+    @media (max-width: 1100px) {
+      width: 100%;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
     ul {
       width: 200px;
       padding: 0;
       margin: 0;
       list-style: none;
-
-      li {
-        width: 100%;
-      }
     }
 
     span {
@@ -151,6 +192,12 @@
     .favCollection {
       padding: $spacing-2;
       border-top: 1px solid $snow;
+
+      @media (max-width: 1100px) {
+        border-top: none;
+        flex: 1;
+        min-width: 200px;
+      }
 
       h3 {
         color: $snow;
@@ -173,6 +220,15 @@
 
     .favCollection {
       border-top: none;
+
+      @media (max-width: 1100px) {
+        border-right: 1px solid $snow;
+      }
+
+      @media (max-width: 600px) {
+        border-right: none;
+        border-bottom: 1px solid $snow;
+      }
     }
   }
 }

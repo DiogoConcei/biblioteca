@@ -1,16 +1,20 @@
 import path from 'path';
 import fse from 'fs-extra';
 
-import LibrarySystem from './abstract/LibrarySystem';
+import ComicManager from './ComicManager';
 import FileManager from './FileManager';
 import ImageManager from './ImageManager';
+import PdfManager from './PdfManager';
+import ArchiveManager from './ArchiveManager';
 import StorageManager from './StorageManager';
 import { ComicTieIn, TieIn, ComicEdition } from '../types/comic.interfaces';
 
-export default class TieInManager extends LibrarySystem {
-  private readonly fileManager: FileManager = new FileManager();
-  private readonly imageManager: ImageManager = new ImageManager();
-  private readonly storageManager: StorageManager = new StorageManager();
+export default class TieInManager extends ComicManager {
+  protected readonly fileManager: FileManager = new FileManager();
+  protected readonly storageManager: StorageManager = new StorageManager();
+  protected readonly imageManager: ImageManager = new ImageManager();
+  protected readonly pdfManager: PdfManager = new PdfManager();
+  protected readonly archiveManager: ArchiveManager = new ArchiveManager();
 
   public async createChildCover(
     serieName: string,
@@ -40,55 +44,6 @@ export default class TieInManager extends LibrarySystem {
     } catch (error) {
       console.error('Erro ao criar Tie-In:', error);
       throw error;
-    }
-  }
-
-  public async createEditionCovers(
-    archivesPath: string,
-    comicEdition: ComicEdition[],
-  ) {
-    // const dirName = path.basename(archivesPath);
-
-    try {
-      await Promise.all(
-        // idx
-        comicEdition.map(async (chap) => {
-          const rawName = chap.name;
-          const safeName = this.fileManager.sanitizeDirName(rawName);
-
-          const safeDirName = this.fileManager
-            .sanitizeDirName(rawName)
-            .replaceAll('_', '')
-            .replaceAll('-', '');
-
-          const outputPath = path.join(
-            this.showcaseImages,
-            chap.name,
-            safeDirName,
-          );
-
-          chap.chapterPath = path.join(
-            this.comicsImages,
-            chap.serieName,
-            safeName,
-          );
-
-          if (!chap.archivesPath) {
-            console.warn(
-              `Arquivo de origem não informado para a edição ${chap.name}. Pulando geração de capa.`,
-            );
-            return;
-          }
-
-          chap.coverImage = await this.imageManager.generateCover(
-            chap.archivesPath,
-            outputPath,
-          );
-        }),
-      );
-    } catch (e) {
-      console.error(`Falha em gerar capa para as edicoes`);
-      throw e;
     }
   }
 
@@ -131,92 +86,6 @@ export default class TieInManager extends LibrarySystem {
       console.error('Não foi possível encontrar a edição do quadrinho:', error);
       throw error;
     }
-  }
-
-  public async createChapterById(dataPath: string, chapter_id: number) {
-    const comicData = (await this.storageManager.readTieInData(
-      dataPath,
-    )) as TieIn;
-
-    if (!comicData.chapters) {
-      throw new Error('Serie não possui capitulos.');
-    }
-
-    const editionToProces = comicData.chapters.find(
-      (chapter) => chapter.id === chapter_id,
-    );
-
-    if (!editionToProces) {
-      throw new Error(`Capitulo com id ${chapter_id} nao foi encontrado.`);
-    }
-
-    await this.generateChapter(editionToProces);
-
-    editionToProces.isDownloaded = 'downloaded';
-    comicData.metadata.lastDownload = editionToProces.id;
-    await this.storageManager.writeData(comicData);
-  }
-
-  private async generateChapter(chapter: ComicEdition) {
-    const normalized = path.resolve(chapter.archivesPath);
-    const ext = path.extname(normalized);
-
-    const rawName = chapter.name;
-    const safeName = this.fileManager.sanitizeDirName(rawName);
-
-    const chapterOut = await this.fileManager.buildChapterPath(
-      this.comicsImages,
-      chapter.serieName,
-      safeName,
-    );
-
-    try {
-      if (ext === '.pdf') {
-        await this.storageManager.convertPdf_overdrive(normalized, chapterOut);
-      } else {
-        await this.storageManager.extractWith7zip(normalized, chapterOut);
-      }
-
-      chapter.chapterPath = chapterOut;
-    } catch (e) {
-      console.error(`Erro ao processar os capítulos em "${chapter.name}":`, e);
-      throw e;
-    } finally {
-      await this.imageManager.normalizeChapter(chapterOut);
-    }
-  }
-
-  public async createEditions(
-    serieName: string,
-    archivesPath: string,
-  ): Promise<ComicEdition[]> {
-    const [comicEntries] = await this.fileManager.searchChapters(archivesPath);
-    const orderComics = await this.fileManager.orderComic(comicEntries);
-
-    if (!comicEntries || comicEntries.length === 0) return [];
-
-    const chapters: ComicEdition[] = await Promise.all(
-      orderComics.map(async (comicPath, idx) => {
-        const fileName = path
-          .basename(comicPath, path.extname(comicPath))
-          .replaceAll('#', '');
-        const sanitizedName = this.fileManager.sanitizeFilename(fileName);
-
-        return {
-          ...this.mountEmptyEdition(serieName, fileName),
-          id: idx,
-          sanitizedName,
-          chapterPath: await this.fileManager.buildChapterPath(
-            this.comicsImages,
-            serieName,
-            fileName,
-          ),
-          archivesPath: comicPath,
-        };
-      }),
-    );
-
-    return chapters;
   }
 
   public async generateChildCovers(childs: ComicTieIn[], basePath: string) {
@@ -287,49 +156,25 @@ export default class TieInManager extends LibrarySystem {
     await this.storageManager.writeData(tieIn);
   }
 
-  public async createChilds(
-    serieName: string,
-    parentId: number,
-    archivesPath: string,
-  ): Promise<ComicTieIn[]> {
-    const rightPath = path.join(this.userLibrary, serieName);
-    const subPaths = await this.fileManager.searchDirectories(archivesPath);
+  public async processTieInData(basePath: string, childSeries: ComicTieIn[]) {
+    if (!childSeries) return;
 
-    const childSeries: ComicTieIn[] = await Promise.all(
-      subPaths.map(async (subPath, idx) => {
-        const chapter = await this.fileManager.findFirstChapter(subPath);
+    for (let idx = 0; idx < childSeries.length; idx++) {
+      const child = childSeries[idx];
+      const oldPath = await this.fileManager.findPath(
+        basePath,
+        child.serieName,
+      );
 
-        const relative = path.relative(archivesPath, subPath);
+      if (!oldPath) {
+        console.warn(
+          `Não encontrado child ${child.serieName} em ${basePath}, pulando TieIn.`,
+        );
+        continue;
+      }
 
-        const rightDir = path.join(rightPath, relative);
-
-        return {
-          ...this.mountEmptyChild(parentId, subPath),
-          id: idx,
-          compiledComic: !!chapter,
-          archivesPath: rightDir,
-        };
-      }),
-    );
-
-    return childSeries;
-  }
-
-  private mountEmptyChild(parentId: number, subPath: string) {
-    const rawName = path.basename(subPath);
-
-    return {
-      id: 0,
-      parentId,
-      serieName: rawName,
-      compiledComic: false,
-      archivesPath: '',
-      dataPath: path.join(
-        this.childSeriesData,
-        `${path.basename(subPath)}.json`,
-      ),
-      coverImage: '',
-    };
+      await this.createTieIn(child, oldPath);
+    }
   }
 
   private async mountEmptyTieIn(): Promise<TieIn> {
@@ -405,7 +250,6 @@ export default class TieInManager extends LibrarySystem {
     };
   }
 
-  // Criado para regen
   public async createEditionCover(chap: ComicEdition) {
     try {
       const rawName = chap.name;

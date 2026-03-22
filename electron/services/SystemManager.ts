@@ -6,7 +6,8 @@ import StorageManager from './StorageManager.ts';
 import FileManager from './FileManager.ts';
 import ImageManager from './ImageManager.ts';
 import TieInManager from './TieInManager.ts';
-import ComicManager from './ComicManager.ts';
+import ArchiveManager from './ArchiveManager.ts';
+import PdfManager from './PdfManager.ts';
 import {
   LocalSettings,
   BackupMeta,
@@ -15,14 +16,15 @@ import {
   Literatures,
   AppConfig,
 } from '../types/electron-auxiliar.interfaces.ts';
-import { Comic, TieIn } from '../types/comic.interfaces.ts';
+import { Comic } from '../types/comic.interfaces.ts';
 
 export default class SystemManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
   private readonly storageManager: StorageManager = new StorageManager();
-  private readonly comicManager: ComicManager = new ComicManager();
   private readonly tieManager: TieInManager = new TieInManager();
   private readonly imageManager: ImageManager = new ImageManager();
+  private readonly pdfManager: PdfManager = new PdfManager();
+  private readonly archiveManager: ArchiveManager = new ArchiveManager();
 
   constructor() {
     super();
@@ -622,12 +624,12 @@ export default class SystemManager extends LibrarySystem {
 
         try {
           if (ext === '.pdf') {
-            resultCover = await this.storageManager.extractCoverFromPdf(
+            resultCover = await this.pdfManager.extractCoverFromPdf(
               tie.archivesPath,
               outputPath,
             );
           } else {
-            await this.storageManager.extractWith7zip(
+            await this.archiveManager.extractWith7zip(
               tie.archivesPath,
               outputPath,
             );
@@ -644,7 +646,7 @@ export default class SystemManager extends LibrarySystem {
             if (dirs.length === 1 && imageFiles.length === 0) {
               const brokenPath = path.join(outputPath, dirs[0].name);
 
-              await this.storageManager.fixComicDir(brokenPath, outputPath);
+              await this.archiveManager.fixComicDir(brokenPath, outputPath);
             }
 
             const entriesTwo = await Promise.all(
@@ -830,88 +832,6 @@ export default class SystemManager extends LibrarySystem {
         child.archivesPath = result;
       }
     }
-
-    await this.storageManager.writeData(serieData);
-  }
-
-  public async fixMangaOrder(serieData: Literatures | TieIn) {
-    const entries = await fse.readdir(serieData.archivesPath, {
-      withFileTypes: true,
-    });
-
-    const comicFiles = entries
-      .filter((e) => e.isFile() && /\.(cbz|cbr|zip|rar|pdf)$/i.test(e.name))
-      .map((e) => path.join(serieData.archivesPath, e.name));
-
-    if (!serieData.chapters) {
-      throw new Error(
-        'Número de arquivos de quadrinhos é menor que o número de capítulos',
-      );
-    }
-
-    const orderComics = await this.fileManager.orderManga(comicFiles);
-
-    serieData.chapters = serieData.chapters.map((chap, idx) => {
-      const baseName = path.basename(
-        orderComics[idx],
-        path.extname(orderComics[idx]),
-      );
-      const archivesPath = orderComics[idx];
-
-      return {
-        ...chap,
-        name: baseName,
-        sanitizedName: this.fileManager.sanitizeFilename(baseName),
-        archivesPath,
-        chapterPath: path.join(
-          this.comicsImages,
-          serieData.name,
-          this.fileManager.sanitizeFilename(baseName),
-        ),
-        isDownloaded: 'not_downloaded',
-      };
-    });
-
-    await this.storageManager.writeData(serieData);
-  }
-
-  public async fixComicOrder(serieData: Literatures | TieIn) {
-    const entries = await fse.readdir(serieData.archivesPath, {
-      withFileTypes: true,
-    });
-
-    const comicFiles = entries
-      .filter((e) => e.isFile() && /\.(cbz|cbr|zip|rar|pdf)$/i.test(e.name))
-      .map((e) => path.join(serieData.archivesPath, e.name));
-
-    if (!serieData.chapters) {
-      throw new Error(
-        'Número de arquivos de quadrinhos é menor que o número de capítulos',
-      );
-    }
-
-    const orderComics = await this.fileManager.orderComic(comicFiles);
-
-    serieData.chapters = serieData.chapters.map((chap, idx) => {
-      const baseName = path.basename(
-        orderComics[idx],
-        path.extname(orderComics[idx]),
-      );
-      const archivesPath = orderComics[idx];
-
-      return {
-        ...chap,
-        name: baseName,
-        sanitizedName: this.fileManager.sanitizeFilename(baseName),
-        archivesPath,
-        chapterPath: path.join(
-          this.comicsImages,
-          serieData.name,
-          this.fileManager.sanitizeFilename(baseName),
-        ),
-        isDownloaded: 'not_downloaded',
-      };
-    });
 
     await this.storageManager.writeData(serieData);
   }

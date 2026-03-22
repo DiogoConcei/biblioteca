@@ -108,21 +108,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   series: {
     getSeries: async (): Promise<APIResponse<viewData[]>> =>
       ipcRenderer.invoke('serie:get-all'),
-    getSerieInfo: async (
+    getSerie: async (
       serieName: string,
       literatureForm: string,
-    ): Promise<APIResponse<Literatures | null>> =>
-      ipcRenderer.invoke('serie:get-info', serieName, literatureForm),
-    getTieIn: async (serieName: string): Promise<APIResponse<TieIn | null>> =>
-      ipcRenderer.invoke('serie:get-TieIn', serieName),
-    getManga: async (
-      serieName: string,
-    ): Promise<APIResponse<Literatures | null>> =>
-      ipcRenderer.invoke('serie:get-info', serieName, 'Manga'),
-    getComic: async (
-      serieName: string,
-    ): Promise<APIResponse<Literatures | null>> =>
-      ipcRenderer.invoke('serie:get-info', serieName, 'Quadrinho'),
+    ): Promise<APIResponse<Literatures | TieIn>> =>
+      ipcRenderer.invoke('serie:get', serieName, literatureForm),
     createTieIn: async (
       childSerie: ComicTieIn,
     ): Promise<APIResponse<string | null>> =>
@@ -285,10 +275,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // Novos métodos do DownloadManager
     getTasks: () => ipcRenderer.invoke('download:get-tasks'),
-    addTask: (taskData: any) => ipcRenderer.invoke('download:add-task', taskData),
-    pauseTask: (taskId: string) => ipcRenderer.invoke('download:pause-task', taskId),
-    resumeTask: (taskId: string) => ipcRenderer.invoke('download:resume-task', taskId),
-    cancelTask: (taskId: string) => ipcRenderer.invoke('download:cancel-task', taskId),
+    addTask: (taskData: string) =>
+      ipcRenderer.invoke('download:add-task', taskData),
+    pauseTask: (taskId: string) =>
+      ipcRenderer.invoke('download:pause-task', taskId),
+    resumeTask: (taskId: string) =>
+      ipcRenderer.invoke('download:resume-task', taskId),
+    cancelTask: (taskId: string) =>
+      ipcRenderer.invoke('download:cancel-task', taskId),
     clearCompleted: () => ipcRenderer.invoke('download:clear-completed'),
   },
 });

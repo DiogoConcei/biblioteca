@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+
 import useSerieStore from '../store/useSerieStore';
 
 export default function useSerie(serieName: string, literatureForm: string) {
@@ -16,5 +17,5 @@ export default function useSerie(serieName: string, literatureForm: string) {
     if (serieName && literatureForm) {
       getData();
     }
-  }, [serieName, literatureForm]);
+  }, [serieName, literatureForm, fetchSerie]);
 }

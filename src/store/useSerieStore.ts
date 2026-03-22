@@ -7,7 +7,6 @@ import {
   LiteratureChapter,
   LiteratureChapterAttributes,
   LiteraturesAttributes,
-  APIResponse,
 } from '../../electron/types/electron-auxiliar.interfaces';
 import { useUIStore } from './useUIStore';
 
@@ -45,8 +44,11 @@ const useSerieStore = create<UseSerieStore>((set) => ({
 
     try {
       controlFetching(true, null);
-      
-      const response = await window.electronAPI.series.getSerieInfo(serieName, literatureForm);
+
+      const response = await window.electronAPI.series.getSerie(
+        serieName,
+        literatureForm,
+      );
 
       if (!response.success || !response.data)
         throw new Error(response.error || 'Erro ao buscar série');
@@ -67,13 +69,18 @@ const useSerieStore = create<UseSerieStore>((set) => ({
       const updated = { ...state.serie };
       const keys = path.split('.');
       let cursor: Record<string, unknown> = updated;
-      for (let i = 0; i < keys.length - 1; i++) cursor = cursor[keys[i]] as Record<string, unknown>;
+      for (let i = 0; i < keys.length - 1; i++)
+        cursor = cursor[keys[i]] as Record<string, unknown>;
       cursor[keys.at(-1)!] = newValue;
       return { serie: updated };
     });
   },
 
-  updateChapter: (idOrIndex: number | string, path: string, newValue: unknown) => {
+  updateChapter: (
+    idOrIndex: number | string,
+    path: string,
+    newValue: unknown,
+  ) => {
     set((state) => {
       const idNum = Number(idOrIndex);
 

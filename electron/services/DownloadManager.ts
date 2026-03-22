@@ -1,7 +1,5 @@
 import { BrowserWindow, ipcMain } from 'electron';
 import { v4 as uuidv4 } from 'uuid';
-import path from 'path';
-import fse from 'fs-extra';
 
 import LibrarySystem from './abstract/LibrarySystem';
 import { DownloadTask, DownloadTaskStatus } from '../types/download.interfaces';

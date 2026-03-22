@@ -122,7 +122,6 @@ O desenvolvimento da Biblioteca está organizado em fases que priorizam a estabi
 
 _Foco: Unificação de sistemas e melhoria da manutenibilidade._
 
-- **Unificação de Domínios:** Fundir `MangaManager` e `ComicManager` em um único `SeriesManager` genérico. Atualmente, há 90% de duplicação de lógica entre esses dois serviços.
 - **Refatoração do StorageManager:** Eliminar as "gambiarras genéricas" de leitura de JSON e implementar um sistema de cache em memória sincronizado para evitar leituras excessivas de disco.
 - **Integração Total do Scraper:** Automatizar a busca de metadados durante o processo de Upload. O `MetadataScraperService` já possui os adaptadores (Jikan, Google Books), mas a UI ainda requer preenchimento manual excessivo.
 - **Padronização de Status:** Unificar o tratamento de status (`Pendente`, `Em andamento`, `Completo`) entre o backend Electron e os enums do Frontend.

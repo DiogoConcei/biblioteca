@@ -1,4 +1,6 @@
-export interface Comic {
+import { graphChapter, graphSerie } from './electron-auxiliar.interfaces';
+
+export interface Comic extends graphSerie<ComicEdition> {
   id: number;
   name: string;
   sanitizedName: string;
@@ -76,7 +78,7 @@ export interface ComicTieIn {
   parentId?: number;
 }
 
-export interface ComicEdition {
+export interface ComicEdition extends graphChapter {
   id: number;
   serieName: string;
   name: string;

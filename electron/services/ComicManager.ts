@@ -3,42 +3,32 @@ import path from 'path';
 import FileManager from './FileManager';
 import StorageManager from './StorageManager';
 import ImageManager from './ImageManager';
-import TieInManager from './TieInManager';
 import CollectionManager from './CollectionManager';
+import PdfManager from './PdfManager';
+import ArchiveManager from './ArchiveManager';
 import { Comic, ComicEdition, ComicTieIn } from '../types/comic.interfaces';
 import { SerieForm } from '../../src/types/series.interfaces';
 import GraphSerie from './abstract/GraphSerie';
 
+interface ITieInManager {
+  processTieInData(basePath: string, childSeries: ComicTieIn[]): Promise<void>;
+}
+
 export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
   protected readonly fileManager: FileManager = new FileManager();
   protected readonly imageManager: ImageManager = new ImageManager();
-  protected readonly tieManager: TieInManager = new TieInManager();
-  protected readonly collManager: CollectionManager = new CollectionManager();
+  protected readonly collectionManager: CollectionManager =
+    new CollectionManager();
   protected readonly storageManager: StorageManager = new StorageManager();
+  protected readonly pdfManager: PdfManager = new PdfManager();
+  protected readonly archiveManager: ArchiveManager = new ArchiveManager();
 
-  public async createComicSerie(serie: SerieForm) {
-    const comicData = await this.processSerieData(serie);
-
-    if (comicData.childSeries) {
-      await this.processTieInData(serie.oldPath, comicData.childSeries);
-    }
-
-    await this.processCovers(comicData);
-
-    await this.collManager.initializeCollections(
-      comicData,
-      comicData.metadata.collections,
-    );
-
-    await this.updateSytem(comicData, serie.oldPath);
-  }
-
-  public async createEditions(
+  async createEditions(
     serieName: string,
     archivesPath: string,
   ): Promise<ComicEdition[]> {
     const [comicEntries] = await this.fileManager.searchChapters(archivesPath);
-    const orderComics = await this.fileManager.orderComic(comicEntries);
+    const orderComics = await this.orderChapters(comicEntries);
 
     if (!comicEntries || comicEntries.length === 0) return [];
 
@@ -50,7 +40,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
         const sanitizedName = this.fileManager.sanitizeFilename(fileName);
 
         return {
-          ...this.mountEmptyEdition(serieName, fileName),
+          ...this.mountEmptyChapter(serieName, fileName),
           id: idx,
           sanitizedName,
           chapterPath: await this.fileManager.buildChapterPath(
@@ -66,7 +56,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
     return chapters;
   }
 
-  public async createEdition(
+  async createEdition(
     serieName: string,
     archivePath: string,
     id: number,
@@ -77,7 +67,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
     const sanitizedName = this.fileManager.sanitizeFilename(fileName);
 
     return {
-      ...this.mountEmptyEdition(serieName, fileName),
+      ...this.mountEmptyChapter(serieName, fileName),
       id: id,
       sanitizedName,
       chapterPath: await this.fileManager.buildChapterPath(
@@ -85,12 +75,11 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
         serieName,
         fileName,
       ),
-      // preenche archivesPath com o caminho do arquivo de origem
       archivesPath: archivePath,
     };
   }
 
-  public async createEditionCovers(
+  async createEditionCovers(
     archivesPath: string,
     comicEdition: ComicEdition[],
   ) {
@@ -132,79 +121,103 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
     }
   }
 
-  public async processTieInData(basePath: string, childSeries: ComicTieIn[]) {
-    if (!childSeries) return;
-
-    for (let idx = 0; idx < childSeries.length; idx++) {
-      const child = childSeries[idx];
-      const oldPath = await this.fileManager.findPath(
-        basePath,
-        child.serieName,
-      );
-
-      if (!oldPath) {
-        console.warn(
-          `Não encontrado child ${child.serieName} em ${basePath}, pulando TieIn.`,
-        );
-        continue;
-      }
-
-      await this.tieManager.createTieIn(child, oldPath);
+  async postProcessChapters(chapter: ComicEdition): Promise<ComicEdition> {
+    if (chapter.coverImage) {
+      return chapter;
     }
+
+    const outputPath = path.join(
+      this.showcaseImages,
+      chapter.serieName,
+      chapter.name,
+    );
+
+    if (!chapter.archivesPath) {
+      console.warn(
+        `Arquivo de origem não informado para a edição ${chapter.name}. Pulando geração de capa.`,
+      );
+      return chapter;
+    }
+
+    chapter.coverImage = await this.imageManager.generateCover(
+      chapter.archivesPath,
+      outputPath,
+    );
+
+    return chapter;
   }
 
-  // Trouxxe todos os capítulos porque preciso fazer um setState no front
-  private async createNewEdition(
-    filesPath: string[],
-    chapters: ComicEdition[],
-  ) {
-    const chapterMap = new Map(chapters.map((ch) => [ch.archivesPath, ch]));
-    const existingPaths = chapters.map((ch) => ch.archivesPath);
-    const allPaths = [...existingPaths, ...filesPath];
-    const orderedPaths = await this.fileManager.orderComic(allPaths);
+  async orderChapters(filesPath: string[]): Promise<string[]> {
+    const items = filesPath.map((file, index) => {
+      const info = this.fileManager.extractComicInfo(file);
+      return { ...info, filePath: file, fsIndex: index };
+    });
 
-    const result: ComicEdition[] = await Promise.all(
-      orderedPaths.map(async (chapterPath, idx) => {
-        const exits = chapterMap.get(chapterPath);
+    items.sort((a, b) => {
+      if (a.readingIndex !== b.readingIndex)
+        return a.readingIndex - b.readingIndex;
 
-        if (exits) {
-          return exits;
-        }
+      if (a.partIndex !== b.partIndex) return a.partIndex - b.partIndex;
 
-        this.fileManager.moveChapter(
-          chapterPath,
-          path.join(
-            this.userLibrary,
-            chapters[0].serieName,
-            path.basename(chapterPath),
-          ),
-        );
+      if (a.issueNumber !== b.issueNumber) return a.issueNumber - b.issueNumber;
 
-        const newChapter = await this.createEdition(
-          chapters[0].serieName,
-          chapterPath,
-          idx,
-        );
-        return newChapter;
+      if (a.category !== b.category) return a.category - b.category;
+
+      return a.fsIndex - b.fsIndex;
+    });
+
+    return items.map((i) => i.filePath);
+  }
+
+  public async createChilds(
+    serieName: string,
+    parentId: number,
+    archivesPath: string,
+  ): Promise<ComicTieIn[]> {
+    const rightPath = path.join(this.userLibrary, serieName);
+    const subPaths = await this.fileManager.searchDirectories(archivesPath);
+
+    const childSeries: ComicTieIn[] = await Promise.all(
+      subPaths.map(async (subPath, idx) => {
+        const chapter = await this.fileManager.findFirstChapter(subPath);
+
+        const relative = path.relative(archivesPath, subPath);
+
+        const rightDir = path.join(rightPath, relative);
+
+        return {
+          ...this.mountEmptyChild(parentId, subPath),
+          id: idx,
+          compiledComic: !!chapter,
+          archivesPath: rightDir,
+        };
       }),
     );
 
-    result.forEach((ch, idx) => {
-      ch.id = idx + 1;
-    });
-
-    return result;
+    return childSeries;
   }
 
-  private async updateSytem(comicData: Comic, oldPath: string) {
-    await this.fileManager.localUpload(comicData, oldPath);
-    await this.storageManager.writeData(comicData);
+  private mountEmptyChild(parentId: number, subPath: string) {
+    const rawName = path.basename(subPath);
+
+    return {
+      id: 0,
+      parentId,
+      serieName: rawName,
+      compiledComic: false,
+      archivesPath: '',
+      dataPath: path.join(
+        this.childSeriesData,
+        `${path.basename(subPath)}.json`,
+      ),
+      coverImage: '',
+    };
   }
 
-  private async processSerieData(serie: SerieForm): Promise<Comic> {
+  async processSerieData(serie: SerieForm): Promise<Comic> {
     const comic = await this.mountEmptyComic(serie);
     const chapters = await this.createEditions(serie.name, serie.oldPath);
-    const childSeries = await this.tieManager.createChilds(
+    const childSeries = await this.createChilds(
       comic.name,
       comic.id,
       serie.oldPath,
@@ -217,7 +230,29 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
     };
   }
 
-  private async mountEmptyComic(serie: SerieForm): Promise<Comic> {
+  async createSerie(
+    serie: SerieForm,
+    tieInManager?: ITieInManager,
+  ): Promise<void> {
+    const serieData = await this.processSerieData(serie);
+
+    if (
+      tieInManager &&
+      serieData.childSeries &&
+      serieData.childSeries.length > 0
+    ) {
+      await tieInManager.processTieInData(serie.oldPath, serieData.childSeries);
+    }
+
+    await this.processCovers(serieData);
+    await this.collectionManager.initializeCollections(
+      serieData,
+      serieData.metadata.collections,
+    );
+    await this.updateSystem(serieData, serie.oldPath);
+  }
+
+  async mountEmptyComic(serie: SerieForm): Promise<Comic> {
     const nextId = await this.consumeNextSerieId();
     const subDir = await this.fileManager.searchDirectories(serie.oldPath);
     const totalChapters = await this.fileManager.countChapters([
@@ -265,7 +300,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
     };
   }
 
-  private mountEmptyEdition(serieName: string, fileName: string): ComicEdition {
+  mountEmptyChapter(serieName: string, fileName: string): ComicEdition {
     const createdAt = new Date().toISOString();
     const safeName = this.fileManager.sanitizeDirName(fileName);
 

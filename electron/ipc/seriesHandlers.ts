@@ -6,7 +6,7 @@ import FileManager from '../services/FileManager.ts';
 import ImageManager from '../services/ImageManager.ts';
 import UserManager from '../services/UserManager.ts';
 import TieInManager from '../services/TieInManager.ts';
-import { ComicTieIn } from '../types/comic.interfaces.ts';
+import { TieIn, ComicTieIn } from '../types/comic.interfaces.ts';
 import { SerieInCollection } from '../../src/types/collections.interfaces.ts';
 import { SerieEditForm } from '../../src/types/series.interfaces.ts';
 import { Literatures } from '../types/electron-auxiliar.interfaces.ts';
@@ -35,7 +35,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         getData.map(async (serieData) => {
           // Usa Thumbnail via protocolo: super rápido, zero memory leak
           const encodedImage = await imageManager.getThumbnailUrl(
-            serieData.coverImage
+            serieData.coverImage,
           );
 
           return {
@@ -52,87 +52,56 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle('serie:get-info', async (_event, serieName: string, literatureForm: 'Manga' | 'Quadrinho' | 'childSeries') => {
-    try {
-      const data = await storageManager.selectSerieData<Literatures>(serieName, literatureForm);
+  ipcMain.handle(
+    'serie:get',
+    async (
+      _event,
+      serieName: string,
+      literatureForm: 'Manga' | 'Quadrinho' | 'childSeries',
+    ) => {
+      try {
+        const data = await storageManager.selectSerieData<Literatures | TieIn>(
+          serieName,
+          literatureForm,
+        );
 
-      const updatedChapters = data.chapters
-        ? await Promise.all(
-            data.chapters.map(async (chapter) => {
-              const encodedCover =
-                typeof chapter.coverImage === 'string'
-                  ? await imageManager.encodeImage(chapter.chapterPath || chapter.coverImage, true)
-                  : '';
+        const updatedChapters = await Promise.all(
+          (data.chapters ?? []).map(async (chapter) => ({
+            ...chapter,
+            coverImage: await imageManager.encodeImage(
+              chapter.chapterPath || chapter.coverImage || '',
+              true,
+            ),
+          })),
+        );
 
-              return {
-                ...chapter,
-                coverImage: encodedCover,
-              };
-            }),
-          )
-        : [];
+        const childSeries =
+          'childSeries' in data ? (data.childSeries ?? []) : [];
+        const updatedChildSeries = await Promise.all(
+          childSeries.map(async (tieIn) => ({
+            ...tieIn,
+            coverImage: tieIn.coverImage
+              ? await imageManager.encodeImage(tieIn.coverImage, true)
+              : '',
+          })),
+        );
 
-      // Se for Quadrinho ou Manga e tiver tie-ins/childSeries
-      const updatedChildSeries = (data as any).childSeries
-        ? await Promise.all(
-            ((data as any).childSeries as TieIn[]).map(async (tieIn) => {
-              const encodedCover = tieIn.coverImage
-                ? await imageManager.encodeImage(tieIn.coverImage, true)
-                : '';
-
-              return {
-                ...tieIn,
-                coverImage: encodedCover,
-              };
-            }),
-          )
-        : [];
-
-      const processedData = {
-        ...data,
-        coverImage: await imageManager.encodeImage(data.coverImage, true),
-        chapters: updatedChapters,
-        childSeries: updatedChildSeries,
-      };
-
-      return { success: true, data: processedData, error: '' };
-    } catch (error) {
-      console.error(`Erro ao buscar dados da série ${serieName}:`, error);
-      return { success: false, error: String(error) };
-    }
-  });
-
-  ipcMain.handle('serie:get-TieIn', async (_event, serieName: string) => {
-    try {
-      const dataPath = await fileManager.getDataPath(serieName);
-      const data = await storageManager.selectTieInData(serieName);
-
-      if (!data) throw new Error('Data nao encontrada no Handle');
-
-      const updatedChapters = data.chapters
-        ? await Promise.all(
-            data.chapters.map(async (chapter) => {
-              const encodedCover = await imageManager.encodeImage(
-                chapter.coverImage!,
-              );
-              return {
-                ...chapter,
-                coverImage: encodedCover,
-              };
-            }),
-          )
-        : [];
-
-      const processedData = {
-        ...data,
-        chapters: updatedChapters,
-      };
-
-      return { success: true, data: processedData, error: '' };
-    } catch (e) {
-      return { success: false, data: null, error: e };
-    }
-  });
+        return {
+          success: true,
+          data: {
+            ...data,
+            coverImage: await imageManager.encodeImage(data.coverImage, true),
+            chapters: updatedChapters,
+            childSeries: updatedChildSeries,
+          },
+          error: '',
+        };
+      } catch (error) {
+        console.error(`Erro ao buscar dados da série ${serieName}:`, error);
+        return { success: false, error: String(error) };
+      }
+    },
+  );
 
   ipcMain.handle(
     'serie:add-to-collection',
@@ -198,8 +167,9 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         dataPath,
       )) as Literatures;
 
-      let newFav: SerieInCollection;
-      newFav = await collectionManager.mountSerieInfo(serieData.dataPath);
+      const newFav: SerieInCollection = await collectionManager.mountSerieInfo(
+        serieData.dataPath,
+      );
 
       const result = await userManager.favoriteSerie(serieData);
       return { success: result, data: newFav };
@@ -213,7 +183,6 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     'serie:recent-read',
     async (_event, dataPath: string, serie_name: string) => {
       try {
-        // dataPath
         let pathData: string;
 
         if (serie_name) {
@@ -222,7 +191,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
           pathData = dataPath;
         }
 
-        const serieData = await storageManager.readData(pathData);
+        const serieData = await storageManager.readSerieData(pathData);
 
         if (!serieData) return { success: false };
 

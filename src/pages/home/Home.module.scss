@@ -5,19 +5,27 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  overflow: hidden;
   min-height: 100vh;
   position: relative;
   z-index: 1;
+  width: 100%;
 
   .options {
     display: flex;
     align-items: center;
-    justify-content: end;
+    justify-content: flex-end;
     width: 100%;
     position: relative;
     padding-top: $spacing-2;
+    padding-right: $spacing-2;
+    gap: $spacing-2;
     z-index: 20;
+    box-sizing: border-box;
+
+    @media (max-width: 600px) {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
 
     .settings-button,
     .filterButton {
@@ -30,29 +38,6 @@
         border-radius: 5px;
       }
     }
-  }
-
-  .filterPanel {
-    position: absolute;
-    top: 100%;
-    right: 0; // 🔥 alinhado ao botão da direita
-
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-2;
-
-    min-width: 220px;
-    padding: $spacing-2;
-
-    background-color: $amethyst;
-    color: $snow;
-    border: 1px solid rgba(137, 99, 186, 0.3);
-    border-radius: $radius-md;
-
-    margin-top: $spacing-1;
-
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-    z-index: 50;
   }
 
   .content {
@@ -70,8 +55,11 @@
       gap: 2rem;
       width: 100%;
       box-sizing: border-box;
-      min-height: 0;
-      perspective: 1000px;
+
+      @media (max-width: 600px) {
+        justify-content: center;
+        gap: 1rem;
+      }
 
       .serieLink {
         display: flex;
@@ -81,7 +69,7 @@
         gap: 0.5rem;
         text-decoration: none;
         transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-        will-change: transform;
+        width: 150px;
 
         &:hover {
           transform: translateY(-8px) scale(1.02);
@@ -101,9 +89,7 @@
           display: flex;
           align-items: center;
           justify-content: center;
-          flex-flow: column nowrap;
           width: 150px;
-
           position: relative;
           cursor: pointer;
           aspect-ratio: 2 / 3;
@@ -112,17 +98,6 @@
           background-color: rgba($gunmetal, 0.5);
           transition: box-shadow 0.4s ease, border 0.4s ease;
           border: 1px solid transparent;
-
-          &.skeleton {
-            background: linear-gradient(
-              90deg,
-              rgba($gunmetal, 0.5) 25%,
-              rgba($weak-gunmental, 0.8) 50%,
-              rgba($gunmetal, 0.5) 75%
-            );
-            background-size: 200% 100%;
-            animation: skeleton-loading 1.5s infinite linear;
-          }
 
           img {
             width: 100%;
@@ -143,7 +118,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            bottom: -40px; // Escondido por padrão
+            bottom: -40px;
             right: 8px;
             z-index: 10;
             width: calc(100% - 16px);
@@ -151,7 +126,7 @@
           }
           
           &:hover .cover-actions {
-            bottom: 8px; // Sobe suavemente no hover
+            bottom: 8px;
           }
 
           .playChapter,
@@ -180,9 +155,8 @@
           flex-direction: column;
           align-items: flex-start;
           justify-content: flex-start;
-          width: 150px;
+          width: 100%;
           gap: 0.5rem;
-          box-sizing: border-box;
 
           .serie-name {
             width: 100%;
@@ -193,7 +167,6 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            box-sizing: border-box;
             transition: color 0.3s ease;
           }
 
@@ -232,10 +205,6 @@
 }
 
 @keyframes skeleton-loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

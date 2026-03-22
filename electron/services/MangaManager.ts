@@ -7,57 +7,65 @@ import StorageManager from './StorageManager';
 import { Manga, MangaChapter } from '../types/manga.interfaces';
 import { SerieForm } from '../../src/types/series.interfaces';
 import GraphSerie from './abstract/GraphSerie';
+import PdfManager from './PdfManager';
+import ArchiveManager from './ArchiveManager';
 
 export default class MangaManager extends GraphSerie<Manga, MangaChapter> {
   protected readonly fileManager: FileManager = new FileManager();
-  private readonly collManager: CollectionManager = new CollectionManager();
+  protected readonly collectionManager: CollectionManager =
+    new CollectionManager();
 
   protected readonly imageManager: ImageManager = new ImageManager();
   protected readonly storageManager: StorageManager = new StorageManager();
+  protected readonly pdfManager: PdfManager = new PdfManager();
+  protected readonly archiveManager: ArchiveManager = new ArchiveManager();
 
   constructor() {
     super();
   }
 
-  public async createMangaSerie(serie: SerieForm) {
-    const mangaData = await this.processSerieData(serie);
+  async orderChapters(filesPath: string[]): Promise<string[]> {
+    const fileDetails = await Promise.all(
+      filesPath.map(async (file) => {
+        const fileName = path.basename(file);
+        const { volume, chapter } = this.fileManager.extractSerieInfo(fileName);
 
-    await this.processCovers(mangaData);
-
-    await this.collManager.initializeCollections(
-      mangaData,
-      mangaData.metadata.collections,
+        return {
+          filePath: file,
+          volume: volume ? Number(volume) : 0,
+          chapter: chapter ? Number(chapter) : 0,
+        };
+      }),
     );
 
-    await this.updateSytem(mangaData, serie.oldPath);
+    fileDetails.sort((a, b) => a.chapter - b.chapter);
+
+    const orderedPaths = fileDetails.map((fileDetail) => fileDetail.filePath);
+    return orderedPaths;
   }
 
-  public async createChapter(
-    serieName: string,
-    archivePath: string,
-    id: number,
-  ): Promise<MangaChapter> {
-    const fileName = path
-      .basename(archivePath, path.extname(archivePath))
-      .replaceAll('#', '');
-    const sanitizedName = this.fileManager.sanitizeFilename(fileName);
+  mountEmptyChapter(serieName: string, fileName: string): MangaChapter {
+    const createdAt = new Date().toISOString();
 
     return {
-      ...this.mountEmptyChapter(serieName, fileName),
-      id: id,
-      sanitizedName,
-      chapterPath: await this.fileManager.buildChapterPath(
-        this.comicsImages,
-        serieName,
-        fileName,
-      ),
-      archivesPath: archivePath,
+      id: 0,
+      serieName: serieName,
+      name: fileName,
+      sanitizedName: '',
+      archivesPath: '',
+      chapterPath: '',
+      createdAt,
+      isRead: false,
+      isDownloaded: 'not_downloaded',
+      page: {
+        lastPageRead: 0,
+        favoritePage: 0,
+      },
     };
   }
 
-  private async updateSytem(mangaData: Manga, oldPath: string) {
-    await this.fileManager.localUpload(mangaData, oldPath);
-    await this.storageManager.writeData(mangaData);
+  async postProcessChapters(chapter: MangaChapter): Promise<MangaChapter> {
+    return chapter;
   }
 
   private async createChapters(
@@ -65,7 +73,7 @@ export default class MangaManager extends GraphSerie<Manga, MangaChapter> {
     archivesPath: string,
   ): Promise<MangaChapter[]> {
     const [mangaEntries] = await this.fileManager.searchChapters(archivesPath);
-    const orderChapters = await this.fileManager.orderManga(mangaEntries);
+    const orderChapters = await this.orderChapters(mangaEntries);
 
     if (!mangaEntries || mangaEntries.length === 0) return [];
 
@@ -93,7 +101,7 @@ export default class MangaManager extends GraphSerie<Manga, MangaChapter> {
     return chapters;
   }
 
-  private async processSerieData(serie: SerieForm): Promise<Manga> {
+  async processSerieData(serie: SerieForm): Promise<Manga> {
     const manga = await this.mountEmptyManga(serie);
     const chapters = await this.createChapters(serie.name, serie.oldPath);
 
@@ -144,26 +152,6 @@ export default class MangaManager extends GraphSerie<Manga, MangaChapter> {
       deletedAt: serie.deletedAt,
       tags: serie.tags,
       comments: [],
-    };
-  }
-
-  private mountEmptyChapter(serieName: string, fileName: string): MangaChapter {
-    const createdAt = new Date().toISOString();
-
-    return {
-      id: 0,
-      serieName: serieName,
-      name: fileName,
-      sanitizedName: '',
-      archivesPath: '',
-      chapterPath: '',
-      createdAt,
-      isRead: false,
-      isDownloaded: 'not_downloaded',
-      page: {
-        lastPageRead: 0,
-        favoritePage: 0,
-      },
     };
   }
 }

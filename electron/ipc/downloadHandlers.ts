@@ -52,7 +52,7 @@ export default function downloadHandlers(ipcMain: IpcMain) {
   ipcMain.handle(
     'download:delete',
     async (_event, dataPath: string, chapter_id: number) => {
-      const serieData = await storageManager.readData(dataPath);
+      const serieData = await storageManager.readSerieData(dataPath);
 
       if (!serieData) {
         throw new Error(`Dados da série não encontrados em: ${dataPath}`);
@@ -89,7 +89,7 @@ export default function downloadHandlers(ipcMain: IpcMain) {
         );
       }
 
-      const serieData = await storageManager.readData(dataPath);
+      const serieData = await storageManager.readSerieData(dataPath);
       const literatureForm = fileManager.foundLiteratureForm(dataPath);
 
       if (!serieData) {

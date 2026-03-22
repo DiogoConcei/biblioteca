@@ -7,8 +7,8 @@ import {
 } from 'react-hook-form';
 
 import { Manga, MangaChapter } from './manga.interfaces';
-import { Comic, ComicEdition } from './comic.interfaces';
-// import { Collection } from '../../src/types/collections.interfaces';
+import { Comic, ComicEdition, TieIn } from './comic.interfaces';
+import { Collection } from '../../src/types/collections.interfaces';
 import { SerieEditForm } from '../../src/types/series.interfaces';
 
 export type LiteratureChapter = ComicEdition | MangaChapter;
@@ -89,14 +89,14 @@ export interface GenericControllerProps<T extends FieldValues = FieldValues> {
   name: Path<T>;
 }
 
-// export interface FavoriteProps {
-//   serie: Literatures;
-//   setFavorites: React.Dispatch<React.SetStateAction<Collection | undefined>>;
-// }
+export interface FavoriteProps {
+  serie: Literatures;
+  setFavorites: React.Dispatch<React.SetStateAction<Collection | undefined>>;
+}
 
-// export interface RatingProps {
-//   serie: Literatures;
-// }
+export interface RatingProps {
+  serie: Literatures;
+}
 
 export interface ChapterView {
   id: number;
@@ -123,7 +123,7 @@ export interface AppConfig {
   };
 }
 
-// export type ReadableSerie = Literatures | TieIn;
+export type ReadableSerie = Literatures | TieIn;
 
 export type Status = 'Em andamento' | 'Completo' | 'Pendente' | '';
 
@@ -172,15 +172,15 @@ export interface ComicCoverRegenerationResult {
   failures: Array<{ comic: string; reason: string }>;
 }
 
-// export interface LastReadCandidate {
-//   serie: ReadableSerie;
-//   chapterId: number;
-//   lastPageRead: number;
-//   isRead: boolean;
-//   timestamp: number;
-// }
+export interface LastReadCandidate {
+  serie: ReadableSerie;
+  chapterId: number;
+  lastPageRead: number;
+  isRead: boolean;
+  timestamp: number;
+}
 
-export interface graphSerie<C extends graphChapter> {
+export interface graphSerie<C extends graphChapter = graphChapter> {
   id: number;
   name: string;
   sanitizedName: string;

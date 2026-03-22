@@ -1,5 +1,6 @@
-export interface Manga {
-  id: number;
+import { graphChapter, graphSerie } from './electron-auxiliar.interfaces';
+
+export interface Manga extends graphSerie<MangaChapter> {
   name: string;
   sanitizedName: string;
   genre?: string;
@@ -34,7 +35,7 @@ export interface Manga {
   createdAt: string;
 }
 
-export interface MangaChapter {
+export interface MangaChapter extends graphChapter {
   id: number;
   serieName: string;
   name: string;

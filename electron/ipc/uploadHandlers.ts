@@ -1,4 +1,5 @@
 import { IpcMain } from 'electron';
+
 import { SerieData, SerieForm } from '../../src/types/series.interfaces.ts';
 import {
   APIResponse,
@@ -7,11 +8,13 @@ import {
 import MangaManager from '../services/MangaManager.ts';
 import StorageManager from '../services/StorageManager.ts';
 import ComicManager from '../services/ComicManager.ts';
+import TieInManager from '../services/TieInManager.ts';
 
 export default function uploadHandlers(ipcMain: IpcMain) {
   const storageManager = new StorageManager();
   const comicManager = new ComicManager();
   const mangaManager = new MangaManager();
+  const tieInManager = new TieInManager();
 
   ipcMain.handle(
     'upload:process-data',
@@ -53,10 +56,10 @@ export default function uploadHandlers(ipcMain: IpcMain) {
       try {
         switch (serieData.literatureForm) {
           case 'Manga':
-            await mangaManager.createMangaSerie(serieData);
+            await mangaManager.createSerie(serieData);
             break;
           case 'Quadrinho':
-            await comicManager.createComicSerie(serieData);
+            await comicManager.createSerie(serieData, tieInManager);
             break;
           default:
             throw new Error('Tipo de literatura inválido');
@@ -96,10 +99,10 @@ export default function uploadHandlers(ipcMain: IpcMain) {
         try {
           switch (s.literatureForm) {
             case 'Manga':
-              await mangaManager.createMangaSerie(s);
+              await mangaManager.createSerie(s);
               break;
             case 'Quadrinho':
-              await comicManager.createComicSerie(s);
+              await comicManager.createSerie(s, tieInManager);
               break;
             default:
               throw new Error(
@@ -150,7 +153,7 @@ export default function uploadHandlers(ipcMain: IpcMain) {
           );
           break;
         case 'Quadrinho':
-          processedFiles = await comicManager.updateEditions(
+          processedFiles = await comicManager.updateChapters(
             filesPath,
             dataPath,
           );

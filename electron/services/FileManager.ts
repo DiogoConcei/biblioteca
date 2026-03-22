@@ -622,49 +622,7 @@ export default class FileManager extends LibrarySystem {
     await fse.move(from, to);
   }
 
-  public async orderManga(filesPath: string[]): Promise<string[]> {
-    const fileDetails = await Promise.all(
-      filesPath.map(async (file) => {
-        const fileName = path.basename(file);
-        const { volume, chapter } = this.extractSerieInfo(fileName);
-
-        return {
-          filePath: file,
-          volume: volume ? Number(volume) : 0,
-          chapter: chapter ? Number(chapter) : 0,
-        };
-      }),
-    );
-
-    fileDetails.sort((a, b) => a.chapter - b.chapter);
-
-    const orderedPaths = fileDetails.map((fileDetail) => fileDetail.filePath);
-    return orderedPaths;
-  }
-
-  public async orderComic(filesPath: string[]): Promise<string[]> {
-    const items = filesPath.map((file, index) => {
-      const info = this.extractComicInfo(file);
-      return { ...info, filePath: file, fsIndex: index };
-    });
-
-    items.sort((a, b) => {
-      if (a.readingIndex !== b.readingIndex)
-        return a.readingIndex - b.readingIndex;
-
-      if (a.partIndex !== b.partIndex) return a.partIndex - b.partIndex;
-
-      if (a.issueNumber !== b.issueNumber) return a.issueNumber - b.issueNumber;
-
-      if (a.category !== b.category) return a.category - b.category;
-
-      return a.fsIndex - b.fsIndex;
-    });
-
-    return items.map((i) => i.filePath);
-  }
-
-  private extractComicInfo(fullPath: string): {
+  extractComicInfo(fullPath: string): {
     readingIndex: number;
     partIndex: number;
     issueNumber: number;
@@ -715,7 +673,7 @@ export default class FileManager extends LibrarySystem {
     };
   }
 
-  private extractSerieInfo(fileName: string): {
+  extractSerieInfo(fileName: string): {
     volume: number;
     chapter: number;
   } {

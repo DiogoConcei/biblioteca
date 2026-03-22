@@ -1,10 +1,5 @@
 import fse from 'fs-extra';
 import path from 'path';
-import { randomBytes } from 'crypto';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
-import { createCanvas } from '@napi-rs/canvas';
-import { promisify } from 'util';
-import { exec } from 'child_process';
 
 import { SerieData, SerieEditForm } from '../../src/types/series.interfaces';
 import { TieIn } from '../types/comic.interfaces';
@@ -19,12 +14,10 @@ import FileManager from './FileManager';
 import LibrarySystem from './abstract/LibrarySystem';
 
 export default class StorageManager extends LibrarySystem {
-  private readonly SEVEN_ZIP_PATH = 'C:\\Program Files\\7-Zip\\7z';
-  private readonly execAsync = promisify(exec);
   private readonly fileManager: FileManager = new FileManager();
   private _viewDataCache: viewData[] | null = null;
 
-  public invalidateCache(): void {
+  invalidateCache(): void {
     this._viewDataCache = null;
   }
 
@@ -32,7 +25,7 @@ export default class StorageManager extends LibrarySystem {
     super();
   }
 
-  public async writeData(serie: Literatures | TieIn): Promise<boolean> {
+  async writeData(serie: Literatures | TieIn): Promise<boolean> {
     try {
       this.invalidateCache();
       await fse.writeJSON(serie.dataPath, serie, { spaces: 2 });
@@ -43,55 +36,32 @@ export default class StorageManager extends LibrarySystem {
     }
   }
 
-  // public async searchSerieById(
-  //   serieId: number,
-  // ): Promise<Literatures | TieIn | null> {
-  //   // Usamos o cache do getViewData para encontrar o caminho do arquivo rapidamente.
-  //   // Como getViewData tem a propriedade id e dataPath, a busca é instantânea.
-  //   const viewData = await this.getViewData();
+  async searchSerieById(serieId: number): Promise<Literatures | TieIn | null> {
+    const viewData = await this.getViewData();
 
-  //   if (viewData) {
-  //     const targetSerie = viewData.find((serie) => serie.id === serieId);
-  //     if (targetSerie) {
-  //       return await this.readData(targetSerie.dataPath);
-  //     }
-  //   }
+    if (viewData) {
+      const targetSerie = viewData.find((serie) => serie.id === serieId);
+      if (targetSerie) {
+        return await this.readSerieData(targetSerie.dataPath);
+      }
+    }
 
-  //   // Fallback caso o getViewData falhe por algum motivo
-  //   const dataPaths = await this.fileManager.getDataPaths();
+    const dataPaths = await this.fileManager.getDataPaths();
 
-  //   for (const dataPath of dataPaths) {
-  //     const serieData = await this.readData(dataPath);
+    for (const dataPath of dataPaths) {
+      const serieData = await this.readSerieData(dataPath);
 
-  //     if (!serieData || serieData.id !== serieId) {
-  //       continue;
-  //     }
+      if (!serieData || serieData.id !== serieId) {
+        continue;
+      }
 
-  //     return serieData;
-  //   }
+      return serieData;
+    }
 
-  //   return null;
-  // }
+    return null;
+  }
 
-  // Gambiarra genérica para ler todos os dados (temporária)
-  // public async readData(dataPath: string): Promise<Literatures | TieIn | null> {
-  //   try {
-  //     const serieData = (await fse.readJson(dataPath, {
-  //       encoding: 'utf-8',
-  //     })) as Literatures;
-
-  //     if (!serieData) {
-  //       throw new Error('Arquivo lido, mas vazio ou inválido.');
-  //     }
-
-  //     return serieData;
-  //   } catch (e) {
-  //     console.error(`Erro ao ler dados da série: ${e}`);
-  //     return null;
-  //   }
-  // }
-
-  public async readSerieData<T extends graphSerie, C>(
+  async readSerieData<T extends graphSerie>(
     dataPath: string,
   ): Promise<T | null> {
     try {
@@ -109,24 +79,7 @@ export default class StorageManager extends LibrarySystem {
     }
   }
 
-  // public async readSerieData(dataPath: string): Promise<Literatures | null> {
-  //   try {
-  //     const serieData = (await fse.readJson(dataPath, {
-  //       encoding: 'utf-8',
-  //     })) as Literatures;
-
-  //     if (serieData === null) {
-  //       return;
-  //     }
-
-  //     return serieData;
-  //   } catch (e) {
-  //     console.error(`Erro ao ler dados da série: ${e}`);
-  //     return null;
-  //   }
-  // }
-
-  public async readTieInData(dataPath: string): Promise<TieIn | null> {
+  async readTieInData(dataPath: string): Promise<TieIn | null> {
     try {
       const serieData = (await fse.readJson(dataPath, {
         encoding: 'utf-8',
@@ -143,7 +96,7 @@ export default class StorageManager extends LibrarySystem {
     }
   }
 
-  public async deleteChapter(chapter: LiteratureChapter): Promise<boolean> {
+  async deleteChapter(chapter: LiteratureChapter): Promise<boolean> {
     try {
       this.invalidateCache();
       if (await fse.pathExists(chapter.chapterPath)) {
@@ -161,7 +114,7 @@ export default class StorageManager extends LibrarySystem {
     }
   }
 
-  public async selectSerieData<T extends Literatures | TieIn>(
+  async selectSerieData<T extends Literatures | TieIn>(
     serieName: string,
     type?: 'Manga' | 'Quadrinho' | 'childSeries',
   ): Promise<T> {
@@ -218,414 +171,8 @@ export default class StorageManager extends LibrarySystem {
   }
 
   // Refeito durante a reformulação de ComicManager
-  public async fixComicDir(
-    brokenPath: string,
-    correctPath: string,
-  ): Promise<string[]> {
-    const moved: string[] = [];
 
-    async function walk(dir: string) {
-      const entries = await fse.readdir(dir, { withFileTypes: true });
-
-      for (const entry of entries) {
-        const src = path.join(dir, entry.name);
-
-        if (entry.isDirectory()) {
-          await walk(src);
-          continue;
-        }
-
-        const dest = path.join(correctPath, entry.name);
-
-        if (await fse.pathExists(dest)) {
-          await fse.remove(dest);
-        }
-
-        await fse.move(src, dest, { overwrite: true });
-
-        if (/\.(jpe?g|png|webp)$/i.test(entry.name)) {
-          moved.push(dest);
-        }
-      }
-    }
-
-    await walk(brokenPath);
-    await fse.remove(brokenPath);
-
-    return moved;
-  }
-
-  public async cleanupExtractedCover(outputDir: string): Promise<void> {
-    try {
-      const resolved = path.resolve(outputDir);
-
-      // Guardrail simples: não permita remoção acidental de raiz/level alto.
-      const root = path.parse(resolved).root;
-      if (!resolved || resolved === root) {
-        console.error(
-          '❌ cleanupExtractedCover: Recusei remover caminho potencialmente perigoso:',
-          resolved,
-        );
-        throw new Error('cleanupExtractedCover: caminho inválido');
-      }
-
-      const exists = await fse.pathExists(resolved);
-      if (!exists) {
-        console.log(
-          '🧹 cleanupExtractedCover: nada a remover (não existe):',
-          resolved,
-        );
-        return;
-      }
-
-      // Log antes de apagar, listando conteúdo resumido
-      const entries = await fse.readdir(resolved);
-      console.log(
-        `🧹 cleanupExtractedCover: removendo diretório (${entries.length} itens):`,
-        resolved,
-      );
-
-      await fse.remove(resolved);
-
-      console.log(
-        '✅ cleanupExtractedCover: diretório removido com sucesso:',
-        resolved,
-      );
-    } catch (err) {
-      console.error(
-        '❌ cleanupExtractedCover: erro ao limpar diretório:',
-        outputDir,
-        err,
-      );
-      throw err;
-    }
-  }
-  public async safeExtract(
-    inputFile: string,
-    outputPath: string,
-  ): Promise<string> {
-    const tempSuffix = `${Date.now()}-${randomBytes(2).toString('hex')}`;
-    const tempDir = path.join(outputPath, `__7z_extract_tmp_${tempSuffix}`);
-
-    try {
-      console.log(
-        `🔍 safeExtract: iniciando extração segura para arquivo: ${inputFile}`,
-      );
-      console.log(`📂 safeExtract: diretório temporário: ${tempDir}`);
-
-      // garante temp
-      await fse.mkdirp(tempDir);
-
-      // extração para tempDir (assumo que extractWith7zip extrai um CBZ/CBR inteiro em uma pasta)
-      console.log(
-        '🧰 safeExtract: executando extractWith7zip para pasta temporária...',
-      );
-      await this.extractWith7zip(inputFile, tempDir);
-      console.log('✅ safeExtract: extração inicial concluída em:', tempDir);
-
-      // Leia conteúdo do temp
-      const entries = await fse.readdir(tempDir, { withFileTypes: true });
-      const dirs = entries.filter((e) => e.isDirectory());
-      const imageFiles = entries.filter(
-        (e) => e.isFile() && /\.(jpe?g|jpeg|png|webp|gif)$/i.test(e.name),
-      );
-
-      // Caso: pasta aninhada (um diretório único com imagens dentro)
-      if (dirs.length === 1 && imageFiles.length === 0) {
-        const brokenPath = path.join(tempDir, dirs[0].name);
-        console.log(
-          '🛠 safeExtract: estrutura aninhada detectada. Corrigindo:',
-          brokenPath,
-        );
-        await this.fixComicDir(brokenPath, tempDir);
-        console.log(
-          '✅ safeExtract: correção de estrutura aninhada concluída.',
-        );
-      } else {
-        console.log(
-          `🔎 safeExtract: estrutura verificada. dirs=${dirs.length} imageFilesAtRoot=${imageFiles.length}`,
-        );
-      }
-
-      // Releia e transforme em paths absolutos para o fileManager
-      const finalEntries = (
-        await fse.readdir(tempDir, { withFileTypes: true })
-      ).map((file) => path.join(tempDir, file.name));
-
-      console.log(
-        `🔎 safeExtract: total de entradas no temp: ${finalEntries.length}`,
-      );
-
-      // encontra capa
-      const cover = this.fileManager.findFirstCoverFile(finalEntries);
-
-      if (!cover) {
-        console.warn(
-          '⚠️ safeExtract: nenhuma capa encontrada nos conteúdos extraídos:',
-          tempDir,
-        );
-        // limpa temp e retorna vazio
-        await this.cleanupExtractedCover(tempDir);
-        return '';
-      }
-
-      console.log('🎯 safeExtract: candidato a capa encontrado:', cover);
-
-      // sanitize e move para outputPath (cria outputPath se necessário)
-      const parsed = path.parse(cover);
-      const newName = this.fileManager
-        .sanitizeImageName(parsed.name)
-        .concat(parsed.ext);
-      const destDir = path.resolve(outputPath);
-      const destPath = path.join(destDir, newName);
-
-      await fse.mkdirp(destDir);
-
-      // se existir, remover antes para evitar erro ou duplicação
-      if (await fse.pathExists(destPath)) {
-        console.log(
-          '⚠️ safeExtract: arquivo destino já existe e será sobrescrito:',
-          destPath,
-        );
-        await fse.remove(destPath);
-      }
-
-      console.log(
-        `➡️ safeExtract: movendo capa de "${cover}" -> "${destPath}"`,
-      );
-      await fse.move(cover, destPath, { overwrite: true });
-      console.log('✅ safeExtract: capa movida com sucesso:', destPath);
-
-      // limpeza do tempDir restante
-      try {
-        const remaining = await fse.readdir(tempDir);
-        if (remaining.length > 0) {
-          console.log(
-            `🧹 safeExtract: removendo conteúdo temporário restante (${remaining.length} itens) em:`,
-            tempDir,
-          );
-        } else {
-          console.log(
-            '🧹 safeExtract: diretório temporário está vazio, removendo:',
-            tempDir,
-          );
-        }
-        await fse.remove(tempDir);
-        console.log('✅ safeExtract: diretório temporário removido:', tempDir);
-      } catch (cleanupErr) {
-        // não falhar a operação principal se limpeza falhar — apenas logar
-        console.warn(
-          '⚠️ safeExtract: falha ao limpar tempDir, pode permanecer lixo temporário:',
-          tempDir,
-          cleanupErr,
-        );
-      }
-
-      return destPath;
-    } catch (err) {
-      console.error(
-        '❌ safeExtract: erro durante extração segura para arquivo:',
-        inputFile,
-        err,
-      );
-      // tentativa defensiva de limpar temp (não lançar se cleanup falhar)
-      try {
-        if (await fse.pathExists(tempDir)) {
-          await fse.remove(tempDir);
-          console.log('🧹 safeExtract: tempDir removido após erro:', tempDir);
-        }
-      } catch (cleanupErr) {
-        console.warn(
-          '⚠️ safeExtract: falha ao limpar tempDir após erro:',
-          tempDir,
-          cleanupErr,
-        );
-      }
-      throw err;
-    }
-  }
-
-  public async extractCoverWith7zip(
-    inputFile: string,
-    outputDir: string,
-  ): Promise<string> {
-    const ctx = { inputFile, outputDir };
-    try {
-      console.log('🔎 extractCoverWith7zip: iniciando para', inputFile);
-      await fse.mkdirp(outputDir);
-      console.log('📂 extractCoverWith7zip: garantido outputDir:', outputDir);
-
-      // Lista o conteúdo do arquivo (7z l)
-      console.log(
-        '📄 extractCoverWith7zip: listando conteúdo do arquivo (7z l)...',
-      );
-      const { stdout } = await this.execAsync(
-        `"${this.SEVEN_ZIP_PATH}" l "${inputFile}"`,
-      );
-      const filesInArchive = this.parse7zList(stdout);
-      console.log(
-        `📄 extractCoverWith7zip: encontrados ${filesInArchive.length} items no archive.`,
-      );
-
-      if (filesInArchive.length === 0) {
-        console.error(
-          '❌ extractCoverWith7zip: arquivo compactado está vazio:',
-          inputFile,
-        );
-        throw new Error('Arquivo compactado está vazio.');
-      }
-
-      // procura candidato pelo nome base (apenas nomes)
-      const candidateName = this.fileManager.findFirstCoverFile(
-        filesInArchive.map((f) => path.basename(f)),
-      );
-
-      if (!candidateName) {
-        console.log(
-          '⚠️ extractCoverWith7zip: nenhum candidato por nome detectado no arquivo. Saindo sem extrair.',
-        );
-        return '';
-      }
-
-      console.log(
-        '🎯 extractCoverWith7zip: candidateName selecionado:',
-        candidateName,
-      );
-
-      const candidatePath = filesInArchive.find(
-        (f) => path.basename(f) === candidateName,
-      );
-
-      if (!candidatePath) {
-        console.error(
-          '❌ extractCoverWith7zip: candidato encontrado, mas path interno não foi localizado no listing:',
-          candidateName,
-        );
-        throw new Error(
-          'Candidato encontrado, mas path interno não localizado.',
-        );
-      }
-
-      const normalizedCandidate = path.normalize(candidatePath);
-      console.log(
-        '🔁 extractCoverWith7zip: normalized candidate:',
-        normalizedCandidate,
-      );
-
-      if (normalizedCandidate.startsWith('..')) {
-        console.error(
-          '❌ extractCoverWith7zip: path interno inválido (path traversal):',
-          normalizedCandidate,
-        );
-        throw new Error('Path interno inválido no arquivo compactado.');
-      }
-
-      const ext = path.extname(normalizedCandidate);
-      const baseName = path.basename(normalizedCandidate, ext);
-      const safeBase = baseName.replace(/[. ]+$/, '');
-      const suffix = randomBytes(3).toString('hex');
-      const finalPath = this.fileManager.buildImagePath(
-        outputDir,
-        `${safeBase}_${suffix}`,
-        ext,
-      );
-
-      console.log(
-        `🧩 extractCoverWith7zip: preparando extração do item "${normalizedCandidate}" para "${outputDir}". FinalPath será "${finalPath}"`,
-      );
-
-      try {
-        console.log(
-          '📥 extractCoverWith7zip: executando 7z x para extrair o arquivo específico...',
-        );
-        await this.execAsync(
-          `"${this.SEVEN_ZIP_PATH}" x "${inputFile}" "${normalizedCandidate}" -o"${outputDir}" -y`,
-        );
-        console.log('✅ extractCoverWith7zip: extração concluída (7z).');
-      } catch (err: any) {
-        // permite erro CRC específico sem falhar totalmente
-        if (
-          err?.code === 2 &&
-          typeof err.stderr === 'string' &&
-          err.stderr.includes('CRC Failed')
-        ) {
-          console.warn(
-            '⚠️ extractCoverWith7zip: CRC Failed detectado durante extração, continuando (não-fatal).',
-            { inputFile, candidate: normalizedCandidate },
-          );
-        } else {
-          console.error('❌ extractCoverWith7zip: erro ao extrair com 7zip:', {
-            inputFile,
-            normalizedCandidate,
-            err,
-          });
-          throw err;
-        }
-      }
-
-      const extractedPath = path.join(outputDir, normalizedCandidate);
-      console.log(
-        '📍 extractCoverWith7zip: caminho esperado do arquivo extraído:',
-        extractedPath,
-      );
-
-      // move o arquivo do caminho extraído (pode estar dentro de subpastas criadas pelo 7z)
-      if (!(await fse.pathExists(extractedPath))) {
-        console.error(
-          '❌ extractCoverWith7zip: arquivo extraído não encontrado no caminho esperado:',
-          extractedPath,
-        );
-        throw new Error(`Arquivo extraído não encontrado: ${extractedPath}`);
-      }
-
-      await fse.move(extractedPath, finalPath, { overwrite: true });
-      console.log(
-        '✅ extractCoverWith7zip: arquivo movido para finalPath:',
-        finalPath,
-      );
-
-      // limpa diretório extraído se vazio
-      const extractedDir = path.dirname(extractedPath);
-      if (extractedDir !== outputDir) {
-        const remaining = await fse.readdir(extractedDir);
-        if (remaining.length === 0) {
-          console.log(
-            '🧹 extractCoverWith7zip: extraído em subdiretório vazio. Removendo:',
-            extractedDir,
-          );
-          await fse.remove(extractedDir);
-          console.log(
-            '✅ extractCoverWith7zip: subdiretório removido:',
-            extractedDir,
-          );
-        } else {
-          console.log(
-            'ℹ️ extractCoverWith7zip: subdiretório contém outros arquivos, não remover:',
-            extractedDir,
-            'itens:',
-            remaining.length,
-          );
-        }
-      }
-
-      console.log(
-        '🎉 extractCoverWith7zip: concluído com sucesso, retornando:',
-        finalPath,
-      );
-      return finalPath;
-    } catch (err) {
-      console.error(
-        '❌ extractCoverWith7zip: falha geral para arquivo:',
-        ctx.inputFile,
-        'outputDir:',
-        ctx.outputDir,
-        err,
-      );
-      throw err;
-    }
-  }
-
-  public async getViewData(): Promise<viewData[] | null> {
+  async getViewData(): Promise<viewData[] | null> {
     try {
       if (this._viewDataCache) {
         return this._viewDataCache;
@@ -654,7 +201,7 @@ export default class StorageManager extends LibrarySystem {
     }
   }
 
-  public async processData(seriePath: string): Promise<SerieData> {
+  async processData(seriePath: string): Promise<SerieData> {
     const serieName = path.basename(seriePath);
     const newPath = path.join(this.userLibrary, serieName);
 
@@ -671,83 +218,7 @@ export default class StorageManager extends LibrarySystem {
     };
   }
 
-  public async extractCoverFromPdf(
-    inputFile: string,
-    outputDir: string,
-  ): Promise<string> {
-    try {
-      await fse.ensureDir(outputDir);
-
-      const data = await fse.readFile(inputFile);
-
-      const loadingTask = pdfjsLib.getDocument({
-        data: new Uint8Array(data),
-        disableWorker: true,
-      });
-
-      const pdf = await loadingTask.promise;
-
-      const page = await pdf.getPage(1);
-
-      const scale = 1.5;
-      const viewport = page.getViewport({ scale });
-
-      const canvas = createCanvas(viewport.width, viewport.height);
-      const context = canvas.getContext('2d');
-
-      await page.render({
-        canvas: canvas as unknown as HTMLCanvasElement,
-        canvasContext: context as unknown as CanvasRenderingContext2D,
-        viewport,
-      }).promise;
-
-      const suffix = randomBytes(3).toString('hex');
-      const finalPath = this.fileManager.buildImagePath(
-        outputDir,
-        `cover_${suffix}`,
-        '.jpg',
-      );
-
-      const buffer = canvas.toBuffer('image/jpeg', 0.85);
-      await fse.writeFile(finalPath, buffer);
-
-      return finalPath;
-    } catch (e) {
-      console.error('Falha na conversão de PDF -> Imagem', e);
-      throw e;
-    }
-  }
-
-  public async extractWith7zip(
-    inputFile: string,
-    outputDir: string,
-  ): Promise<void> {
-    try {
-      await fse.mkdir(outputDir, { recursive: true });
-      const extractCmd = `"${this.SEVEN_ZIP_PATH}" x "${inputFile}" -o"${outputDir}" -y`;
-
-      try {
-        await this.execAsync(extractCmd);
-      } catch (err: any) {
-        if (
-          err?.code === 2 &&
-          typeof err.stderr === 'string' &&
-          err.stderr.includes('CRC Failed')
-        ) {
-          console.warn(
-            '⚠️ Extração concluída com erros de CRC. Alguns arquivos podem estar corrompidos.',
-          );
-        } else {
-          throw err;
-        }
-      }
-    } catch (e) {
-      console.error(`Falha em descompactar arquivos: ${e}`);
-      throw e;
-    }
-  }
-
-  public async patchSerie(data: SerieEditForm): Promise<Literatures | null> {
+  async patchSerie(data: SerieEditForm): Promise<Literatures | null> {
     const oldData = await this.readSerieData(data.dataPath);
 
     if (!oldData) return null;
@@ -770,7 +241,7 @@ export default class StorageManager extends LibrarySystem {
     return updated;
   }
 
-  public async patchHelper(
+  async patchHelper(
     oldData: Literatures,
     updatedData: Literatures,
   ): Promise<void> {
@@ -798,37 +269,15 @@ export default class StorageManager extends LibrarySystem {
         `Falha ao finalizar update da série: ${updatedData.name}`,
         e,
       );
-      throw e; // importante propagar
+      throw e;
     }
   }
 
-  public async convertPdf_overdrive(
-    inputFile: string,
-    outputDir: string,
-  ): Promise<void> {
-    await fse.ensureDir(outputDir);
-
-    const data = await fse.readFile(inputFile);
-    const pdf = await pdfjsLib.getDocument({
-      data: new Uint8Array(data),
-      // @ts-ignore
-      disableWorker: true,
-    }).promise;
-
-    const scale = 1;
-    const totalPages = pdf.numPages;
-
-    const tasks = Array.from({ length: totalPages }, (_, i) =>
-      this.processPdfPage(pdf, i + 1, outputDir, scale),
-    );
-
-    await Promise.all(tasks);
-  }
-
-  public buildUpdatedSerie(
+  buildUpdatedSerie(
     oldData: Literatures,
     newData: SerieEditForm,
   ): { hasChanges: boolean; data: Literatures } {
+    // any justificado: acesso dinâmico por chave não é inferível pelo TS
     const updated: any = { ...oldData };
     let hasChanges = false;
 
@@ -845,6 +294,7 @@ export default class StorageManager extends LibrarySystem {
     return { hasChanges, data: updated };
   }
 
+  // any justificado: comparação de valores arbitrários
   private deepEqual(a: any, b: any): boolean {
     if (a === b) return true;
 
@@ -877,7 +327,7 @@ export default class StorageManager extends LibrarySystem {
     return true;
   }
 
-  public async persistSerie(
+  async persistSerie(
     oldData: Literatures,
     updated: Literatures,
   ): Promise<string> {
@@ -903,66 +353,6 @@ export default class StorageManager extends LibrarySystem {
     await fse.writeJson(newPath, updated, { spaces: 2 });
 
     return newPath;
-  }
-
-  private async processPdfPage(
-    pdf: pdfjsLib.PDFDocumentProxy,
-    pageNum: number,
-    outputDir: string,
-    scale: number,
-  ): Promise<void> {
-    const buffer = await this.renderPdfPageToBuffer(pdf, pageNum, scale);
-    const fileName = this.buildPageFileName(pageNum);
-
-    await fse.writeFile(path.join(outputDir, fileName), buffer);
-  }
-
-  private async renderPdfPageToBuffer(
-    pdf: pdfjsLib.PDFDocumentProxy,
-    pageNum: number,
-    scale: number,
-  ): Promise<Buffer> {
-    const page = await pdf.getPage(pageNum);
-    const viewport = page.getViewport({ scale });
-
-    const canvas = createCanvas(viewport.width, viewport.height);
-    const context = canvas.getContext('2d');
-
-    await page.render({
-      canvas: canvas as unknown as HTMLCanvasElement,
-      canvasContext: context as unknown as CanvasRenderingContext2D,
-      viewport,
-    }).promise;
-
-    return canvas.toBuffer('image/jpeg', 0.85);
-  }
-
-  private buildPageFileName(pageNum: number): string {
-    return `${String(pageNum).padStart(4, '0')}.jpeg`;
-  }
-
-  private parse7zList(output: string): string[] {
-    const lines = output.split('\n');
-    const files: string[] = [];
-    let parsing = false;
-
-    for (const line of lines) {
-      if (line.startsWith('----')) {
-        parsing = !parsing;
-        continue;
-      }
-
-      if (!parsing) continue;
-
-      const parts = line.trim().split(/\s+/);
-      const filePath = parts.slice(5).join(' ');
-
-      if (filePath && !filePath.endsWith('/')) {
-        files.push(filePath);
-      }
-    }
-
-    return files;
   }
 
   private mountViewData(serie: Literatures): viewData {
