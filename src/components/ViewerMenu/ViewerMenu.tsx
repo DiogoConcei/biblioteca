@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useState, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import {
   House,
   ChevronsLeft,
@@ -9,201 +9,215 @@ import {
   ZoomOut,
   ZoomIn,
   Book,
+  Settings,
+  Image as ImageIcon,
+  Monitor,
 } from 'lucide-react';
 
 import { visualizerProps } from '../../types/components.interfaces';
-import useSerieStore from '../../store/useSerieStore';
+import useSettingsStore from '../../store/useSettingsStore';
+import useNavigation from '../../hooks/useNavigation';
+import CustomSelect from '../CustomSelect/CustomSelect';
 
 import styles from './ViewerMenu.module.scss';
 
-export default function ViewerMenu({
-  setScale,
-  nextChapter,
-  prevChapter,
-  currentPage,
-  totalPages,
-}: visualizerProps) {
-  const clearSerie = useSerieStore((state) => state.clearSerie);
-  const serie = useSerieStore((state) => state.serie);
+type MenuTab = 'navigation' | 'reading' | 'filters';
+
+export default function ViewerMenu({ chapter, setScale }: visualizerProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<MenuTab>('navigation');
+  
+  const { chapter_name: rawChapterName } = useParams<{ chapter_name: string }>();
+  const chapterName = decodeURIComponent(rawChapterName ?? '');
 
-  const {
-    serie_name,
-    chapter_id,
-    chapter_name: rawChapterName,
-  } = useParams<{
-    serie_name: string;
-    chapter_id: string;
-    chapter_name: string;
-  }>();
-
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const navigate = useNavigate();
-  const chapter_name = decodeURIComponent(rawChapterName ?? '');
+  const { goHome, goToSeriePage, nextChapter, prevChapter } = useNavigation(chapter);
+  const { settings, updateSetting } = useSettingsStore();
+  const viewerSettings = settings.viewer;
 
   const toggleMenu = useCallback(() => {
-    setIsMenuOpen((prev) => {
-      const newState = !prev;
-      if (newState) {
-        if (timerRef.current) clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => {
-          setIsMenuOpen(false);
-        }, 1000 * 50); // 5 seconds
-      } else {
-        if (timerRef.current) {
-          clearTimeout(timerRef.current);
-          timerRef.current = null;
-        }
-      }
-      return newState;
+    setIsMenuOpen((prev) => !prev);
+  }, []);
+
+  const handleUpdateViewer = useCallback(<K extends keyof typeof viewerSettings>(key: K, value: typeof viewerSettings[K]) => {
+    updateSetting('viewer', {
+      ...viewerSettings,
+      [key]: value
     });
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
-
-  const zoomIn = useCallback(() => {
-    setScale((prevScale) => prevScale + 0.1);
-  }, [setScale]);
-
-  const zoomOut = useCallback(() => {
-    setScale((prevScale) => prevScale - 0.1);
-  }, [setScale]);
-
-  const jumpToNext = useCallback(async () => {
-    await window.electronAPI.download.readingDownload(
-      serie_name!,
-      Number(chapter_id),
-    );
-    nextChapter();
-  }, [serie_name, chapter_id, nextChapter]);
-
-  const backToPrevious = useCallback(() => {
-    prevChapter();
-  }, [prevChapter]);
-
-  const goHome = useCallback(
-    async (totalPages: number) => {
-      await window.electronAPI.chapters.saveLastRead(
-        serie_name!,
-        Number(chapter_id),
-        currentPage,
-        totalPages,
-      );
-
-      if (serie?.dataPath) {
-        await window.electronAPI.series.recentSerie(
-          serie.dataPath,
-          serie_name!,
-        );
-      }
-
-      clearSerie();
-      navigate('/');
-    },
-    [
-      serie_name,
-      chapter_id,
-      currentPage,
-      navigate,
-      clearSerie,
-      serie?.dataPath,
-    ],
-  );
-
-  const seriePage = useCallback(
-    async (totalPages: number) => {
-      await window.electronAPI.chapters.saveLastRead(
-        serie_name!,
-        Number(chapter_id),
-        currentPage,
-        totalPages,
-      );
-
-      if (serie?.dataPath) {
-        const toSeriePage = await window.electronAPI.userAction.returnPage(
-          serie.dataPath,
-          serie_name!,
-        );
-
-        await window.electronAPI.series.recentSerie(
-          serie.dataPath,
-          serie_name!,
-        );
-
-        const seriePage = toSeriePage.data;
-
-        navigate(seriePage!);
-      }
-    },
-    [serie_name, chapter_id, currentPage, navigate, serie?.dataPath],
-  );
+  }, [updateSetting, viewerSettings]);
 
   return (
-    <article>
-      <section className={`${styles.viewerMenu} ${isMenuOpen ? styles.open : styles.closed}`}>
-        <button className={styles.hideMenuBtn} onClick={toggleMenu}>
-          {isMenuOpen ? <ChevronLeft /> : <ChevronRight />}
-        </button>
-        {isMenuOpen && (
-          <div className={styles.quicklyActions}>
-            <span className={styles.serieTitle}>
-              <Book color="#a878e5" className={styles.book} /> <p>{serie_name}</p>
-            </span>
-            <div className={styles.chapterControl}>
-              <button onClick={backToPrevious} className={styles.jumpNextBtn}>
-                <ChevronsLeft />
-              </button>
-              <button className={styles.choseChapterBtn}>{chapter_name}</button>
-              <button onClick={jumpToNext} className={styles.jumpPrevBtn}>
-                <ChevronsRight />
-              </button>
-            </div>
-            <div className={styles.zoomControl}>
-              <div className={styles.positiveZoom}>
-                <button
-                  id="positiveZoom"
-                  onClick={zoomIn}
-                  className={styles.positiveZoomBtn}
+    <article className={`${styles.viewerMenuContainer} ${isMenuOpen ? styles.open : styles.closed}`}>
+      <button className={styles.toggleBtn} onClick={toggleMenu} aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}>
+        {isMenuOpen ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
+      </button>
+
+      {isMenuOpen && (
+        <section className={styles.menuContent}>
+          <header className={styles.menuHeader}>
+            <Book size={20} className={styles.headerIcon} />
+            <h2 title={chapter.serieName}>{chapter.serieName}</h2>
+          </header>
+
+          <nav className={styles.tabs}>
+            <button 
+              className={activeTab === 'navigation' ? styles.active : ''} 
+              onClick={() => setActiveTab('navigation')}
+              title="Navegação"
+            >
+              <Monitor size={20} />
+            </button>
+            <button 
+              className={activeTab === 'reading' ? styles.active : ''} 
+              onClick={() => setActiveTab('reading')}
+              title="Modos de Leitura"
+            >
+              <Settings size={20} />
+            </button>
+            <button 
+              className={activeTab === 'filters' ? styles.active : ''} 
+              onClick={() => setActiveTab('filters')}
+              title="Filtros de Imagem"
+            >
+              <ImageIcon size={20} />
+            </button>
+          </nav>
+
+          <div className={styles.tabContent}>
+            {activeTab === 'navigation' && (
+              <div className={styles.navigationTab}>
+                <div className={styles.chapterNav}>
+                  <button onClick={prevChapter} title="Capítulo Anterior"><ChevronsLeft /></button>
+                  <span className={styles.currentChapterName}>{chapterName}</span>
+                  <button onClick={nextChapter} title="Próximo Capítulo"><ChevronsRight /></button>
+                </div>
+                
+                <div className={styles.zoomActions}>
+                   <button onClick={() => setScale(s => Math.max(0.5, s - 0.1))} title="Diminuir Zoom"><ZoomOut /></button>
+                   <button onClick={() => setScale(1)} className={styles.resetBtn}>100%</button>
+                   <button onClick={() => setScale(s => Math.min(3, s + 0.1))} title="Aumentar Zoom"><ZoomIn /></button>
+                </div>
+
+                <div className={styles.navLinks}>
+                  <button onClick={goHome} className={styles.navLink}>
+                    <House size={18} /> <span>Página Inicial</span>
+                  </button>
+                  <button onClick={goToSeriePage} className={styles.navLink}>
+                    <ChevronLeft size={18} /> <span>Voltar para a Série</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'reading' && (
+              <div className={styles.readingTab}>
+                <div className={styles.settingGroup}>
+                  <label>Modo de Leitura</label>
+                  <CustomSelect 
+                    value={viewerSettings.readingMode}
+                    onChange={(val) => handleUpdateViewer('readingMode', val as any)}
+                    options={[
+                      { value: 'single', label: 'Página Única' },
+                      { value: 'double', label: 'Página Dupla' },
+                      { value: 'webtoon', label: 'Webtoon' },
+                    ]}
+                  />
+                </div>
+
+                <div className={styles.settingGroup}>
+                  <label>Efeito de Transição</label>
+                  <CustomSelect 
+                    value={viewerSettings.transitionEffect}
+                    onChange={(val) => handleUpdateViewer('transitionEffect', val as any)}
+                    options={[
+                      { value: 'none', label: 'Nenhum' },
+                      { value: 'fade', label: 'Fade' },
+                      { value: 'slide', label: 'Slide' },
+                    ]}
+                  />
+                </div>
+
+                <div className={styles.checkboxGroup}>
+                  <label className={styles.checkboxLabel}>
+                    <input 
+                      type="checkbox" 
+                      checked={viewerSettings.wideScreen} 
+                      onChange={(e) => handleUpdateViewer('wideScreen', e.target.checked)}
+                    />
+                    <span>Ajustar à Largura</span>
+                  </label>
+                  <label className={styles.checkboxLabel}>
+                    <input 
+                      type="checkbox" 
+                      checked={viewerSettings.showPageNumbers} 
+                      onChange={(e) => handleUpdateViewer('showPageNumbers', e.target.checked)}
+                    />
+                    <span>Mostrar Números</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'filters' && (
+              <div className={styles.filtersTab}>
+                <div className={styles.sliderGroup}>
+                  <div className={styles.sliderLabel}>
+                    <span>Brilho</span>
+                    <span>{viewerSettings.brightness.toFixed(1)}x</span>
+                  </div>
+                  <input 
+                    type="range" min="0.5" max="2" step="0.1"
+                    value={viewerSettings.brightness}
+                    onChange={(e) => handleUpdateViewer('brightness', parseFloat(e.target.value))}
+                  />
+                </div>
+                <div className={styles.sliderGroup}>
+                  <div className={styles.sliderLabel}>
+                    <span>Contraste</span>
+                    <span>{viewerSettings.contrast.toFixed(1)}x</span>
+                  </div>
+                  <input 
+                    type="range" min="0.5" max="2" step="0.1"
+                    value={viewerSettings.contrast}
+                    onChange={(e) => handleUpdateViewer('contrast', parseFloat(e.target.value))}
+                  />
+                </div>
+                <div className={styles.sliderGroup}>
+                  <div className={styles.sliderLabel}>
+                    <span>Nitidez</span>
+                    <span>{viewerSettings.sharpness}</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max="10" step="1"
+                    value={viewerSettings.sharpness}
+                    onChange={(e) => handleUpdateViewer('sharpness', parseFloat(e.target.value))}
+                  />
+                </div>
+                <div className={styles.checkboxGroup}>
+                  <label className={styles.checkboxLabel}>
+                    <input 
+                      type="checkbox" 
+                      checked={viewerSettings.grayscale} 
+                      onChange={(e) => handleUpdateViewer('grayscale', e.target.checked)}
+                    />
+                    <span>Preto e Branco</span>
+                  </label>
+                </div>
+                <button 
+                  className={styles.resetFilters}
+                  onClick={() => {
+                    handleUpdateViewer('brightness', 1);
+                    handleUpdateViewer('contrast', 1);
+                    handleUpdateViewer('sharpness', 0);
+                    handleUpdateViewer('grayscale', false);
+                  }}
                 >
-                  <ZoomIn />
+                  Resetar Filtros
                 </button>
               </div>
-              <span className={styles.zoomDivisor}></span>
-              <div className={styles.negativeZoom}>
-                <button
-                  id="negativeZoom"
-                  className={styles.negativeZoomBtn}
-                  onClick={zoomOut}
-                >
-                  <ZoomOut className={styles.negativeZIcon} />
-                </button>
-              </div>
-            </div>
-            <div className={styles.returnControl}>
-              <label htmlFor="home">
-                <button id="home" onClick={() => goHome(totalPages)}>
-                  <House />
-                </button>
-                <span>Pagina Inicial</span>
-              </label>
-              <label className={styles.returnTest} htmlFor="returnPage">
-                <button
-                  id="seriePage"
-                  onClick={() => seriePage(totalPages)}
-                  className={styles.returnPageBtn}
-                >
-                  <ChevronLeft />
-                </button>
-                <span className={styles.serieName}>Voltar para {serie_name}</span>
-              </label>
-            </div>
+            )}
           </div>
-        )}
-      </section>
+        </section>
+      )}
     </article>
   );
 }

@@ -9,7 +9,11 @@ import {
 import { Manga, MangaChapter } from './manga.interfaces';
 import { Comic, ComicEdition, TieIn } from './comic.interfaces';
 import { Collection } from '../../src/types/collections.interfaces';
-import { SerieEditForm } from '../../src/types/series.interfaces';
+import {
+  ReadingStatus,
+  LiteratureForm,
+  SerieEditForm,
+} from '../../src/types/series.interfaces';
 
 export type LiteratureChapter = ComicEdition | MangaChapter;
 
@@ -17,13 +21,8 @@ export type LiteraturesAttributes =
   | string
   | number
   | boolean
-  | 'Manga'
-  | 'Quadrinho'
-  | 'Livro'
-  | ''
-  | 'Em andamento'
-  | 'Completo'
-  | 'Pendente'
+  | LiteratureForm
+  | ReadingStatus
   | 'Publica'
   | 'Privada'
   | 'Sim'
@@ -40,7 +39,7 @@ export interface NormalizedSerieData {
   archivesPath: string;
   chaptersPath: string;
   totalChapters: number;
-  status: 'Em andamento' | 'Completo' | 'Pendente' | '';
+  status: ReadingStatus;
   isFavorite: boolean;
   collections: string[];
   recommendedBy?: string;
@@ -55,7 +54,7 @@ export interface viewData {
   chaptersRead: number;
   dataPath: string;
   totalChapters: number;
-  literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
+  literatureForm: LiteratureForm;
 }
 
 export interface APIResponse<T> {
@@ -103,6 +102,8 @@ export interface ChapterView {
   serieName: string;
   chapterName: string;
   isLoading: boolean;
+  type: 'comic' | 'book' | 'pdf';
+  originalPath?: string;
   isDownloaded: DownloadStatus;
   pages: string[];
   quantityPages: number;
@@ -125,7 +126,7 @@ export interface AppConfig {
 
 export type ReadableSerie = Literatures | TieIn;
 
-export type Status = 'Em andamento' | 'Completo' | 'Pendente' | '';
+export type Status = ReadingStatus;
 
 export type BackupFrequency = 'daily' | 'weekly' | 'monthly';
 
@@ -194,13 +195,13 @@ export interface graphSerie<C extends graphChapter = graphChapter> {
   chapters: C[];
   totalChapters: number;
   chaptersRead: number;
-  literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
+  literatureForm: LiteratureForm;
   readingData: {
     lastChapterId: number;
     lastReadAt: string;
   };
   metadata: {
-    status: 'Em andamento' | 'Completo' | 'Pendente' | '';
+    status: ReadingStatus;
     collections: string[];
     recommendedBy?: string;
     originalOwner?: string;

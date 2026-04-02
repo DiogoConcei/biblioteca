@@ -1,6 +1,6 @@
 import { IpcMain } from 'electron';
 
-import StorageManager from '../services/StorageManager.ts';
+import storageManager from '../services/StorageManager.ts';
 import CollectionsManager from '../services/CollectionManager';
 import FileManager from '../services/FileManager.ts';
 import ImageManager from '../services/ImageManager.ts';
@@ -13,7 +13,6 @@ import { Literatures } from '../types/electron-auxiliar.interfaces.ts';
 
 export default function seriesHandlers(ipcMain: IpcMain) {
   const tieIn = new TieInManager();
-  const storageManager = new StorageManager();
   const imageManager = new ImageManager();
   const userManager = new UserManager();
   const fileManager = new FileManager();
@@ -31,19 +30,33 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         throw new Error('Falha em gerar dados de visualizacao');
       }
 
-      const procesData = await Promise.all(
-        getData.map(async (serieData) => {
-          // Usa Thumbnail via protocolo: super rápido, zero memory leak
-          const encodedImage = await imageManager.getThumbnailUrl(
-            serieData.coverImage,
-          );
+      const procesData = (
+        await Promise.all(
+          getData.map(async (serieData) => {
+            try {
+              // Usa Thumbnail via protocolo: super rápido, zero memory leak
+              const encodedImage = await imageManager.getThumbnailUrl(
+                serieData.coverImage,
+              );
 
-          return {
-            ...serieData,
-            coverImage: encodedImage,
-          };
-        }),
-      );
+              return {
+                ...serieData,
+                coverImage: encodedImage,
+              };
+            } catch (err) {
+              console.warn(
+                `Aviso: Falha ao carregar miniatura para ${serieData.name}:`,
+                err,
+              );
+              // Fallback para imagem vazia ou path original em caso de erro
+              return {
+                ...serieData,
+                coverImage: '',
+              };
+            }
+          }),
+        )
+      ).filter(Boolean);
 
       return { success: true, data: procesData, error: ' ' };
     } catch (e) {
@@ -57,7 +70,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     async (
       _event,
       serieName: string,
-      literatureForm: 'Manga' | 'Quadrinho' | 'childSeries',
+      literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | 'childSeries',
     ) => {
       try {
         const data = await storageManager.selectSerieData<Literatures | TieIn>(
@@ -65,12 +78,13 @@ export default function seriesHandlers(ipcMain: IpcMain) {
           literatureForm,
         );
 
+        if (!data) throw new Error('Dados da série não encontrados.');
+
         const updatedChapters = await Promise.all(
           (data.chapters ?? []).map(async (chapter) => ({
             ...chapter,
-            coverImage: await imageManager.encodeImage(
-              chapter.chapterPath || chapter.coverImage || '',
-              true,
+            coverImage: imageManager.getMediaUrl(
+              chapter.coverImage || chapter.chapterPath || '',
             ),
           })),
         );
@@ -80,9 +94,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         const updatedChildSeries = await Promise.all(
           childSeries.map(async (tieIn) => ({
             ...tieIn,
-            coverImage: tieIn.coverImage
-              ? await imageManager.encodeImage(tieIn.coverImage, true)
-              : '',
+            coverImage: imageManager.getMediaUrl(tieIn.coverImage || ''),
           })),
         );
 
@@ -90,7 +102,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
           success: true,
           data: {
             ...data,
-            coverImage: await imageManager.encodeImage(data.coverImage, true),
+            coverImage: imageManager.getMediaUrl(data.coverImage),
             chapters: updatedChapters,
             childSeries: updatedChildSeries,
           },

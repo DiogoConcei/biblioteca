@@ -13,8 +13,7 @@ export default class ImageManager extends LibrarySystem {
 
   private async getStorageManager() {
     if (!this._storageManager) {
-      const StorageManager = (await import('./StorageManager')).default;
-      this._storageManager = new StorageManager();
+      this._storageManager = (await import('./StorageManager')).default;
     }
     return this._storageManager;
   }
@@ -31,8 +30,6 @@ export default class ImageManager extends LibrarySystem {
       return imagePath;
     }
 
-    // Acho que HOJE eu faço o processamento da capa duas vezes
-    // Isso é algo que tem que ser averiguado
     if (parse.ext === '.webp' && parse.dir === this.showcaseImages) {
       return normalizedPath;
     }
@@ -54,7 +51,6 @@ export default class ImageManager extends LibrarySystem {
       const dir = path.dirname(destPath);
       await fse.ensureDir(dir);
 
-      // Se for uma imagem de vitrine (capa), redimensionamos para um tamanho razoável (ex: 300px de largura)
       const isShowcase = finalPath.includes('showcase images');
 
       if (await fse.pathExists(destPath)) {
@@ -132,6 +128,12 @@ export default class ImageManager extends LibrarySystem {
 
   public getMediaUrl(absolutePath: string): string {
     if (!absolutePath) return '';
+    if (
+      absolutePath.startsWith('lib-media://') ||
+      absolutePath.startsWith('http')
+    ) {
+      return absolutePath;
+    }
     const encoded = Buffer.from(absolutePath, 'utf-8').toString('base64');
     return `lib-media://local/${encoded}`;
   }
@@ -147,7 +149,6 @@ export default class ImageManager extends LibrarySystem {
     }
   }
 
-  // chapOut === dirPath
   public async normalizeChapter(dirPath: string): Promise<void> {
     try {
       const entries = await fse.readdir(dirPath, { withFileTypes: true });
@@ -222,7 +223,6 @@ export default class ImageManager extends LibrarySystem {
     }
   }
 
-  // Aqui é onde tem que ter o fallback
   public async generateCover(
     inputFile: string,
     outputPath: string,
@@ -297,15 +297,12 @@ export default class ImageManager extends LibrarySystem {
       const thumbDir = path.join(this.showcaseImages, 'thumbnails');
       await fse.ensureDir(thumbDir);
       
-      // Usa o nome original com sufixo. Adicionamos o tamanho do arquivo original na checagem
-      // para recriar a thumbnail caso a imagem original mude (ex: alteração de capa).
       const thumbPath = path.join(thumbDir, `${parse.name}_thumb.webp`);
       
       if (!(await fse.pathExists(thumbPath))) {
          if (!(await fse.pathExists(originalPath))) {
-            return '';
+            return this.getMediaUrl(originalPath);
          }
-         // Cria a miniatura de forma otimizada
          await sharp(originalPath)
            .resize(300, null, { withoutEnlargement: true })
            .webp({ quality: 80, effort: 4 })
@@ -315,7 +312,7 @@ export default class ImageManager extends LibrarySystem {
       return this.getMediaUrl(thumbPath);
     } catch (e) {
       console.error('Erro ao gerar thumbnail:', e);
-      return this.getMediaUrl(originalPath); // Fallback seguro
+      return this.getMediaUrl(originalPath);
     }
   }
 
@@ -337,7 +334,6 @@ export default class ImageManager extends LibrarySystem {
     return encoded;
   }
 
-  // Temporario
   public async saveNewCover(coverPath: string): Promise<string> {
     const destPath = path.join(this.showcaseImages, path.basename(coverPath));
     return await this.normalizeImage(coverPath, destPath);
@@ -388,6 +384,42 @@ export default class ImageManager extends LibrarySystem {
       return null;
     } catch {
       return null;
+    }
+  }
+
+  public async applyFilters(
+    filePath: string,
+    options: {
+      brightness?: number;
+      contrast?: number;
+      grayscale?: boolean;
+      sharpness?: number;
+    },
+  ): Promise<Buffer> {
+    try {
+      let pipeline = sharp(filePath);
+
+      if (options.brightness && options.brightness !== 1) {
+        pipeline = pipeline.modulate({ brightness: options.brightness });
+      }
+
+      if (options.contrast && options.contrast !== 1) {
+        const contrast = options.contrast;
+        pipeline = pipeline.linear(contrast, -(0.5 * contrast) + 0.5);
+      }
+
+      if (options.grayscale) {
+        pipeline = pipeline.grayscale();
+      }
+
+      if (options.sharpness && options.sharpness > 0) {
+        pipeline = pipeline.sharpen(options.sharpness);
+      }
+
+      return await pipeline.webp({ quality: 90 }).toBuffer();
+    } catch (e) {
+      console.error(`Erro ao aplicar filtros na imagem ${filePath}:`, e);
+      return await fse.readFile(filePath);
     }
   }
 }

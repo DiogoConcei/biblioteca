@@ -2,6 +2,20 @@ import { Comic } from 'electron/types/comic.interfaces';
 import { Manga } from 'electron/types/manga.interfaces';
 import { LiteratureChapter } from '../../electron/types/electron-auxiliar.interfaces';
 
+export enum ReadingStatus {
+  IN_PROGRESS = 'Em andamento',
+  COMPLETED = 'Completo',
+  PENDING = 'Pendente',
+  NONE = '',
+}
+
+export enum LiteratureForm {
+  MANGA = 'Manga',
+  COMIC = 'Quadrinho',
+  BOOK = 'Livro',
+  NONE = '',
+}
+
 export interface SerieData {
   name: string;
   sanitizedName: string;
@@ -16,12 +30,12 @@ export interface SerieForm {
   author?: string;
   language?: string;
   cover_path: string;
-  literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
+  literatureForm: LiteratureForm;
   collections: string[];
   tags: string[];
   privacy: 'Publica' | 'Privada' | '';
   autoBackup: 'Sim' | 'Não' | '';
-  readingStatus: 'Em andamento' | 'Completo' | 'Pendente' | '';
+  readingStatus: ReadingStatus;
   sanitizedName: string;
   chaptersPath: string;
   oldPath: string;
@@ -43,13 +57,13 @@ export interface SerieEditForm {
   chapters: LiteratureChapter[];
   totalChapters: number;
   chaptersRead: number;
-  literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
+  literatureForm: LiteratureForm;
   readingData: {
     lastChapterId: number;
     lastReadAt: string;
   };
   metadata: {
-    status: 'Em andamento' | 'Completo' | 'Pendente' | '';
+    status: ReadingStatus;
     collections: string[];
     recommendedBy?: string;
     originalOwner?: string;

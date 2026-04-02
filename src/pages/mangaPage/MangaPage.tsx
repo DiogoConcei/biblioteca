@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { Tag, Book } from 'lucide-react';
 
 import { Manga } from 'electron/types/manga.interfaces';
@@ -17,9 +17,14 @@ import useSerie from '../../hooks/useSerie';
 import styles from './MangaPage.module.scss';
 
 export default function MangaPage() {
+  const { pathname } = useLocation();
   const { manga_name: rawSerieName } = useParams<{ manga_name: string }>();
   const serie_name = decodeURIComponent(rawSerieName ?? '');
-  useSerie(serie_name, 'Manga');
+  
+  // Detecta o tipo de literatura baseado na rota
+  const literatureForm = pathname.startsWith('/Livro') ? 'Livro' : 'Manga';
+  useSerie(serie_name, literatureForm);
+
   const serie = useSerieStore((state) => state.serie) as Manga;
   const loading = useUIStore((state) => state.loading);
   const { favorites, recents } = useCollection();

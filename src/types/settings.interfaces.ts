@@ -1,5 +1,18 @@
 export type BackupFrequency = 'daily' | 'weekly' | 'monthly';
 export type ThemeMode = 'light' | 'dark' | 'system';
+export type ReadingMode = 'single' | 'double' | 'webtoon';
+export type TransitionEffect = 'none' | 'fade' | 'slide';
+
+export interface ViewerSettings {
+  readingMode: ReadingMode;
+  brightness: number;
+  contrast: number;
+  grayscale: boolean;
+  sharpness: number;
+  showPageNumbers: boolean;
+  wideScreen: boolean;
+  transitionEffect: TransitionEffect;
+}
 
 export interface ComicCoverRegenerationProgress {
   total: number;
@@ -40,6 +53,7 @@ export interface AppSettings {
   compactMode: boolean;
   sendLogsWithBugReport: boolean;
   driveConnected: boolean;
+  viewer: ViewerSettings;
 }
 
 export interface SystemResult<T = undefined> {

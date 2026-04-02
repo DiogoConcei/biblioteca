@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ListFilter, Settings, Play, Pencil, Dices } from 'lucide-react';
 
 import CustomSelect from '@/components/CustomSelect/CustomSelect';
-import { SerieForm } from '@/types/series.interfaces';
+import { LiteratureForm } from '@/types/series.interfaces';
 import useAction from '@/hooks/useAction';
 
 import { useUIStore } from '../../store/useUIStore';
@@ -19,7 +19,7 @@ export default function Home() {
   const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
   const [hoveredCover, setHoveredCover] = useState<string | null>(null);
   const [selectedLiteratureForm, setSelectedLiteratureForm] = useState<
-    SerieForm['literatureForm'] | ''
+    LiteratureForm | ''
   >('');
 
   const { lastChapter } = useAction();
@@ -136,15 +136,15 @@ export default function Home() {
                   value={selectedLiteratureForm}
                   onChange={(value) => {
                     setSelectedLiteratureForm(
-                      value as SerieForm['literatureForm'] | '',
+                      value as LiteratureForm | '',
                     );
                     setShowFilters(false); // fecha ao selecionar
                   }}
                   options={[
                     { value: '', label: 'Todos os formatos' },
-                    { value: 'Manga', label: 'Manga' },
-                    { value: 'Quadrinho', label: 'Quadrinho' },
-                    { value: 'Livro', label: 'Livro' },
+                    { value: LiteratureForm.MANGA, label: 'Manga' },
+                    { value: LiteratureForm.COMIC, label: 'Quadrinho' },
+                    { value: LiteratureForm.BOOK, label: 'Livro' },
                   ]}
                 />
               </div>

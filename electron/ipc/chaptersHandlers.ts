@@ -1,19 +1,13 @@
 import { IpcMain } from 'electron';
 
 import FileManager from '../services/FileManager';
-import MangaManager from '../services/MangaManager';
-import StorageManager from '../services/StorageManager';
-import ComicManager from '../services/ComicManager';
-import TieInManager from '../services/TieInManager.ts';
+import storageManager from '../services/StorageManager';
 import UserManager from '../services/UserManager.ts';
+import MediaFactory from '../services/MediaFactory';
 import { Literatures } from '../types/electron-auxiliar.interfaces.ts';
 
 export default function chaptersHandlers(ipcMain: IpcMain) {
   const fileManager = new FileManager();
-  const storageManager = new StorageManager();
-  const mangaManager = new MangaManager();
-  const comicManager = new ComicManager();
-  const tieManager = new TieInManager();
   const userManager = new UserManager();
 
   ipcMain.handle(
@@ -34,29 +28,19 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
     async (_event, serieName: string, chapter_id: number) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
-
-        if (!dataPath) {
+        if (!dataPath)
           throw new Error(`dataPath is undefined for serieName: ${serieName}`);
-        }
 
-        const LiteratureForm = fileManager.foundLiteratureForm(dataPath);
-        let chapterData: string[] | string = '';
+        const serieData = await storageManager.readSerieData(dataPath);
+        if (!serieData) throw new Error(`Série não encontrada: ${serieName}`);
 
-        switch (LiteratureForm) {
-          case 'Mangas':
-            chapterData = await mangaManager.getChapter(dataPath, chapter_id);
-            break;
-          case 'Comics':
-            chapterData = await comicManager.getChapter(dataPath, chapter_id);
-            break;
-          case 'childSeries':
-            chapterData = await tieManager.getChapter(dataPath, chapter_id);
-            break;
-          default:
-            break;
-        }
+        const chapter = serieData.chapters?.find((c) => c.id === chapter_id);
+        if (!chapter) throw new Error(`Capítulo ${chapter_id} não encontrado`);
 
-        return { success: true, data: chapterData };
+        const adapter = MediaFactory.getAdapter(chapter.chapterPath);
+        const content = await adapter.getPages(chapter.chapterPath);
+
+        return { success: true, data: content };
       } catch (e) {
         console.error(`Erro ao recuperar o capitulo: ${e}`);
         return { success: false, error: String(e) };
@@ -228,7 +212,13 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
           return null;
         }
 
-        const url = `/${serieData.name}/${serieData.id}/${encodeURIComponent(nextChapter.name)}/${nextChapter.id}/${nextChapter.page.lastPageRead}/${nextChapter.isRead}`;
+        const url = userManager.mountChapterUrl(
+          serieData,
+          nextChapter.id,
+          nextChapter.name,
+          nextChapter.page.lastPageRead,
+          nextChapter.isRead,
+        );
 
         return { success: true, data: url };
       } catch (e) {
@@ -259,7 +249,13 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
           return null;
         }
 
-        const url = `/${serieData.name}/${serieData.id}/${encodeURIComponent(prevChapter.name)}/${prevChapter.id}/${prevChapter.page.lastPageRead}/${prevChapter.isRead}`;
+        const url = userManager.mountChapterUrl(
+          serieData,
+          prevChapter.id,
+          prevChapter.name,
+          prevChapter.page.lastPageRead,
+          prevChapter.isRead,
+        );
 
         return { success: true, data: url };
       } catch (e) {

@@ -1,0 +1,348 @@
+@use "sass:color";
+@use '@/styles/variables' as *;
+
+.bookPage {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  color: $snow;
+  overflow-x: hidden;
+
+  // Background dinâmico e imersivo
+  .heroBackground {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60vh;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: blur(40px) brightness(0.4);
+    transform: scale(1.1); // Evita bordas brancas do blur
+    z-index: 0;
+  }
+
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      rgba($gunmetal, 0.2) 0%,
+      $gunmetal 50vh,
+      // Faz um fade suave para o fundo sólido
+      $gunmetal 100%
+    );
+    z-index: 1;
+  }
+
+  .contentWrapper {
+    position: relative;
+    z-index: 2;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+  }
+}
+
+.bookHeader {
+  display: flex;
+  gap: 60px;
+  align-items: flex-start;
+
+  @media (max-width: 860px) {
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+  }
+
+  .coverContainer {
+    flex-shrink: 0;
+    width: 320px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: translateY(-10px);
+    }
+
+    .coverImage {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: cover;
+    }
+  }
+
+  .bookMetadata {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+
+    @media (max-width: 860px) {
+      text-align: center;
+    }
+
+    .titleSection {
+      h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 0 0 10px 0;
+        line-height: 1.1;
+        letter-spacing: -0.5px;
+      }
+
+      .author {
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: rgba($snow, 0.7);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        @media (max-width: 860px) {
+          justify-content: center;
+        }
+      }
+    }
+
+    .infoGrid {
+      display: flex;
+      gap: 40px;
+      padding: 20px 0;
+      border-top: 1px solid rgba($snow, 0.1);
+      border-bottom: 1px solid rgba($snow, 0.1);
+
+      @media (max-width: 860px) {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+
+      .infoItem {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+
+        span {
+          font-size: 0.85rem;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          color: rgba($snow, 0.5);
+          font-weight: 600;
+        }
+
+        p {
+          font-size: 1.1rem;
+          font-weight: 500;
+          margin: 0;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+      }
+    }
+
+    .tagsContainer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+
+      @media (max-width: 860px) {
+        justify-content: center;
+      }
+
+      .tag {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba($amethyst, 0.15);
+        color: color.adjust($amethyst, $lightness: 10%);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border: 1px solid rgba($amethyst, 0.3);
+      }
+
+    }
+
+    .actionsContainer {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      margin-top: 30px;
+      width: 100%;
+
+      @media (max-width: 1024px) {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 25px;
+      }
+
+      @media (max-width: 860px) {
+        align-items: center;
+      }
+
+      .readButton {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: $amethyst;
+        color: $snow;
+        border: none;
+        padding: 18px 45px;
+        border-radius: 14px;
+        font-size: 1.2rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 25px rgba($amethyst, 0.3);
+        white-space: nowrap;
+
+        @media (max-width: 860px) {
+          width: 100%;
+        }
+
+        &:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 15px 30px rgba($amethyst, 0.4);
+          background: color.adjust($amethyst, $lightness: 5%);
+        }
+      }
+
+      .secondaryActions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        // Estilização sutil para os botões de ação (Favoritos, Coleção, Download)
+        // Usamos seletores mais específicos para não quebrar o layout interno dos componentes
+        & > * {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 54px;
+          padding: 0 15px; // Padding lateral em vez de largura fixa
+          background: transparent;
+          border-radius: 14px;
+          color: rgba($snow, 0.8);
+          cursor: pointer;
+          transition: all 0.2s ease;
+
+          &:hover {
+            border-color: rgba($snow, 0.4);
+            color: $snow;
+            transform: translateY(-2px);
+          }
+
+          // Garante que ícones fiquem com tamanho consistente
+          svg {
+            width: 22px;
+            height: 22px;
+          }
+        }
+
+        // Ajuste especial para o componente de Rating (estrelas)
+        // Ele não deve ser esmagado nem ter a borda cortada
+        & > div:last-child {
+          border: none;
+          background: transparent;
+          padding: 0;
+          &:hover {
+            transform: none;
+            background: transparent;
+          }
+        }
+      }
+    }
+  }
+}
+
+.filesSection {
+  background: rgba($snow, 0.03);
+  border: 1px solid rgba($snow, 0.05);
+  border-radius: 16px;
+  padding: 40px;
+
+  .sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 30px;
+
+    h3 {
+      font-size: 1.5rem;
+      margin: 0;
+      font-weight: 600;
+    }
+
+    color: $amethyst;
+  }
+
+  .filesList {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+
+    .fileItem {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba($gunmetal, 0.5);
+      padding: 20px 25px;
+      border-radius: 12px;
+      border: 1px solid rgba($snow, 0.05);
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba($snow, 0.05);
+        border-color: rgba($amethyst, 0.3);
+      }
+
+      .fileInfo {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        h4 {
+          margin: 0;
+          font-size: 1.1rem;
+          font-weight: 500;
+        }
+
+        .fileDate {
+          font-size: 0.85rem;
+          color: rgba($snow, 0.5);
+        }
+      }
+
+      .openFileBtn {
+        background: transparent;
+        color: $amethyst;
+        border: 2px solid $amethyst;
+        padding: 8px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: $amethyst;
+          color: $snow;
+        }
+      }
+    }
+  }
+}

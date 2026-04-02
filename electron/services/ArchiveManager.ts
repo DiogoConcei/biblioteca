@@ -466,4 +466,23 @@ export default class ArchiveManager extends LibrarySystem {
       throw err;
     }
   }
+
+  /**
+   * Lê o conteúdo de um arquivo específico dentro do archive para string.
+   */
+  public async readInternalFile(
+    archivePath: string,
+    internalPath: string,
+  ): Promise<string> {
+    try {
+      // O comando 'e' extrai arquivos, '-so' envia para stdout
+      // Usamos -y para responder sim a tudo e evitar travamentos
+      const cmd = `"${this.SEVEN_ZIP_PATH}" e "${archivePath}" "${internalPath}" -so -y`;
+      const { stdout } = await this.execAsync(cmd);
+      return stdout;
+    } catch (error) {
+      console.error(`Erro ao ler arquivo interno (${internalPath}):`, error);
+      throw error;
+    }
+  }
 }

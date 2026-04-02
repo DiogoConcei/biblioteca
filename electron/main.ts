@@ -8,6 +8,17 @@ import { registerHandlers } from './ipc';
 import DownloadManager from './services/DownloadManager';
 import MediaServer from './services/MediaServer';
 
+// Polyfill para URL.parse (ES2024), necessário para algumas versões do Node.js
+if (typeof URL.parse !== 'function') {
+  (URL as any).parse = (url: string, base?: string) => {
+    try {
+      return new URL(url, base);
+    } catch {
+      return null;
+    }
+  };
+}
+
 // Registrar o protocolo antes do app estar pronto (obrigatório para alguns tipos de protocolo)
 protocol.registerSchemesAsPrivileged([
   {

@@ -2,19 +2,45 @@ import { useNavigate } from 'react-router-dom';
 
 import { useUIStore } from '../store/useUIStore';
 import useSerieStore from '../store/useSerieStore';
+import useSettingsStore from '../store/useSettingsStore';
 import { ChapterView } from '../../electron/types/electron-auxiliar.interfaces';
 import useDownload from './useDownload';
 
 export default function useNavigation(currentChapter: ChapterView) {
   const chapters = useSerieStore((state) => state.chapters);
+  const serie = useSerieStore((state) => state.serie);
+  const clearSerie = useSerieStore((state) => state.clearSerie);
   const setError = useUIStore((state) => state.setError);
   const { downloadInReading } = useDownload();
   const navigate = useNavigate();
+  
+  const readingMode = useSettingsStore((state) => state.settings.viewer.readingMode);
+  const step = readingMode === 'double' ? 2 : 1;
+
+  const saveProgress = async () => {
+    try {
+      await window.electronAPI.chapters.saveLastRead(
+        currentChapter.serieName,
+        currentChapter.id,
+        currentChapter.currentPage,
+        currentChapter.quantityPages,
+      );
+
+      if (serie?.dataPath) {
+        await window.electronAPI.series.recentSerie(
+          serie.dataPath,
+          currentChapter.serieName,
+        );
+      }
+    } catch (e) {
+      console.error('Erro ao salvar progresso:', e);
+    }
+  };
 
   const nextPage = async () => {
     try {
-      if (currentChapter.currentPage < currentChapter.quantityPages - 1) {
-        currentChapter.setCurrentPage(currentChapter.currentPage + 1);
+      if (currentChapter.currentPage + step < currentChapter.quantityPages) {
+        currentChapter.setCurrentPage(currentChapter.currentPage + step);
       } else {
         await nextChapter();
       }
@@ -25,8 +51,11 @@ export default function useNavigation(currentChapter: ChapterView) {
 
   const prevPage = async () => {
     try {
-      if (currentChapter.currentPage > 0) {
-        currentChapter.setCurrentPage(currentChapter.currentPage - 1);
+      if (currentChapter.currentPage - step >= 0) {
+        currentChapter.setCurrentPage(currentChapter.currentPage - step);
+      } else if (currentChapter.currentPage > 0) {
+        // Se estivermos na página 1 em modo double, volta para 0
+        currentChapter.setCurrentPage(0);
       } else {
         await prevChapter();
       }
@@ -62,12 +91,7 @@ export default function useNavigation(currentChapter: ChapterView) {
 
       const nextChapterUrl = response.data;
 
-      await window.electronAPI.chapters.saveLastRead(
-        currentChapter.serieName,
-        currentChapter.id,
-        currentChapter.currentPage,
-        currentChapter.quantityPages,
-      );
+      await saveProgress();
 
       if (nextChapter.isDownloaded === 'downloaded' && nextChapterUrl) {
         navigate(nextChapterUrl);
@@ -98,12 +122,7 @@ export default function useNavigation(currentChapter: ChapterView) {
         prevChapter.id,
       );
       const prevChapterUrl = response.data;
-      await window.electronAPI.chapters.saveLastRead(
-        currentChapter.serieName,
-        currentChapter.id,
-        currentChapter.currentPage,
-        currentChapter.quantityPages,
-      );
+      await saveProgress();
       if (prevChapter.isDownloaded === 'downloaded' && prevChapterUrl) {
         navigate(prevChapterUrl);
       }
@@ -112,5 +131,23 @@ export default function useNavigation(currentChapter: ChapterView) {
     }
   };
 
-  return { nextPage, prevPage, nextChapter, prevChapter };
+  const goHome = async () => {
+    await saveProgress();
+    clearSerie();
+    navigate('/');
+  };
+
+  const goToSeriePage = async () => {
+    await saveProgress();
+    if (serie?.dataPath) {
+      const toSeriePage = await window.electronAPI.userAction.returnPage(
+        serie.dataPath,
+        currentChapter.serieName,
+      );
+      const seriePage = toSeriePage.data;
+      if (seriePage) navigate(seriePage);
+    }
+  };
+
+  return { nextPage, prevPage, nextChapter, prevChapter, goHome, goToSeriePage };
 }

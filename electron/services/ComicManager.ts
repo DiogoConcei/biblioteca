@@ -1,7 +1,7 @@
 import path from 'path';
 
 import FileManager from './FileManager';
-import StorageManager from './StorageManager';
+import storageManager from './StorageManager';
 import ImageManager from './ImageManager';
 import CollectionManager from './CollectionManager';
 import PdfManager from './PdfManager';
@@ -19,7 +19,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
   protected readonly imageManager: ImageManager = new ImageManager();
   protected readonly collectionManager: CollectionManager =
     new CollectionManager();
-  protected readonly storageManager: StorageManager = new StorageManager();
+  protected readonly storageManager = storageManager;
   protected readonly pdfManager: PdfManager = new PdfManager();
   protected readonly archiveManager: ArchiveManager = new ArchiveManager();
 

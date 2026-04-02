@@ -3,7 +3,7 @@ import path from 'path';
 import FileManager from './FileManager';
 import CollectionManager from './CollectionManager';
 import ImageManager from './ImageManager';
-import StorageManager from './StorageManager';
+import storageManager from './StorageManager';
 import { Manga, MangaChapter } from '../types/manga.interfaces';
 import { SerieForm } from '../../src/types/series.interfaces';
 import GraphSerie from './abstract/GraphSerie';
@@ -16,7 +16,7 @@ export default class MangaManager extends GraphSerie<Manga, MangaChapter> {
     new CollectionManager();
 
   protected readonly imageManager: ImageManager = new ImageManager();
-  protected readonly storageManager: StorageManager = new StorageManager();
+  protected readonly storageManager = storageManager;
   protected readonly pdfManager: PdfManager = new PdfManager();
   protected readonly archiveManager: ArchiveManager = new ArchiveManager();
 

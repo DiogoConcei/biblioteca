@@ -1,14 +1,13 @@
 import { IpcMain } from 'electron';
 
 import FileManager from '../services/FileManager';
-import StorageManager from '../services/StorageManager';
+import storageManager from '../services/StorageManager';
 import ValidationManager from '../services/ValidationManager';
 import MangaManager from '../services/MangaManager';
 import ComicManager from '../services/ComicManager';
 import TieInManager from '../services/TieInManager';
 
 export default function downloadHandlers(ipcMain: IpcMain) {
-  const storageManager = new StorageManager();
   const validationManager = new ValidationManager();
   const fileManager = new FileManager();
   const mangaManager = new MangaManager();

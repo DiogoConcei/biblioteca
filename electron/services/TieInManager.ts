@@ -6,12 +6,12 @@ import FileManager from './FileManager';
 import ImageManager from './ImageManager';
 import PdfManager from './PdfManager';
 import ArchiveManager from './ArchiveManager';
-import StorageManager from './StorageManager';
+import storageManager from './StorageManager';
 import { ComicTieIn, TieIn, ComicEdition } from '../types/comic.interfaces';
 
 export default class TieInManager extends ComicManager {
   protected readonly fileManager: FileManager = new FileManager();
-  protected readonly storageManager: StorageManager = new StorageManager();
+  protected readonly storageManager = storageManager;
   protected readonly imageManager: ImageManager = new ImageManager();
   protected readonly pdfManager: PdfManager = new PdfManager();
   protected readonly archiveManager: ArchiveManager = new ArchiveManager();

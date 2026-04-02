@@ -19,6 +19,8 @@ import AppearanceSettings from './pages/SettingsPage/AppearancesSettings/Appeara
 import PrivacySettings from './pages/SettingsPage/PrivacySettings/PrivacySettings';
 import SyncSettings from './pages/SettingsPage/SyncSettings/SyncSettings';
 import Downloads from './pages/downloads/Downloads';
+import BookViewer from './pages/bookViewer/BookViewer';
+import BookPage from './pages/bookPage/BookPage';
 
 const App = () => {
   return (
@@ -42,12 +44,17 @@ const App = () => {
             />
             <Route path="local-upload/serie" element={<Upload />} />
             <Route path="Manga/:manga_name/:manga_id" element={<MangaPage />} />
+            <Route path="Livro/:book_name/:book_id" element={<BookPage />} />
             <Route
               path="Quadrinho/:comic_name/:comic_id"
               element={<ComicPage />}
             />
             <Route path="TieIn/:tiein_name" element={<TieInPage />} />
           </Route>
+          <Route
+            path="book/:serie_name/:serie_id/:chapter_name/:chapter_id/:page/:isRead"
+            element={<BookViewer />}
+          />
           <Route
             path=":serie_name/:serie_id/:chapter_name/:chapter_id/:page/:isRead"
             element={<Viewer />}

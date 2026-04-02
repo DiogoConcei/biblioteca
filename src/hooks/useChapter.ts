@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useUIStore } from '../store/useUIStore';
 import useSerieStore from '../store/useSerieStore';
 import { ChapterView } from '../../electron/types/electron-auxiliar.interfaces';
+import { MediaContent } from '../../electron/types/media.interfaces';
 
 export default function useChapter(
   serieName: string,
@@ -12,6 +13,8 @@ export default function useChapter(
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const setError = useUIStore((s) => s.setError);
   const [pages, setPages] = useState<string[]>([]);
+  const [mediaType, setMediaType] = useState<'comic' | 'book' | 'pdf'>('comic');
+  const [originalPath, setOriginalPath] = useState<string | undefined>();
 
   const chapters = useSerieStore((state) => state.chapters);
   const chapter = chapters.find((ch) => ch.id === chapterId) || chapters[0];
@@ -32,15 +35,30 @@ export default function useChapter(
           chapterId,
         );
 
-        const data = response.data;
+        const content = response.data as MediaContent;
 
-        if (!data || data.length === 0) {
+        if (!content) {
           setPages([]);
           setError('Nenhuma página encontrada');
           return;
         }
 
-        setPages(data);
+        setMediaType(content.type);
+        setOriginalPath(content.originalPath);
+
+        if (Array.isArray(content.resources)) {
+          if (content.resources.length > 0) {
+            if (typeof content.resources[0] === 'string') {
+              setPages(content.resources as string[]);
+            } else {
+              // TODO: Lidar com ChapterResource[] para EPUB
+              setPages([]);
+            }
+          } else {
+            setPages([]);
+          }
+        }
+
         setCurrentPage(chapter.page?.lastPageRead || 0);
       } catch (e) {
         setIsLoading(false);
@@ -59,6 +77,8 @@ export default function useChapter(
     chapterName: chapter?.name || '',
     isLoading,
     setIsLoading,
+    type: mediaType,
+    originalPath,
     isDownloaded: chapter?.isDownloaded || 'not_downloaded',
     pages,
     quantityPages: pages.length,

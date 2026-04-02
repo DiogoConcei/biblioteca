@@ -6,15 +6,16 @@ import {
   LiteratureChapter,
 } from '../types/electron-auxiliar.interfaces.ts';
 import MangaManager from '../services/MangaManager.ts';
-import StorageManager from '../services/StorageManager.ts';
+import storageManager from '../services/StorageManager.ts';
 import ComicManager from '../services/ComicManager.ts';
 import TieInManager from '../services/TieInManager.ts';
+import BookManager from '../services/BookManager.ts';
 
 export default function uploadHandlers(ipcMain: IpcMain) {
-  const storageManager = new StorageManager();
   const comicManager = new ComicManager();
   const mangaManager = new MangaManager();
   const tieInManager = new TieInManager();
+  const bookManager = new BookManager();
 
   ipcMain.handle(
     'upload:process-data',
@@ -61,6 +62,9 @@ export default function uploadHandlers(ipcMain: IpcMain) {
           case 'Quadrinho':
             await comicManager.createSerie(serieData, tieInManager);
             break;
+          case 'Livro':
+            await bookManager.createSerie(serieData);
+            break;
           default:
             throw new Error('Tipo de literatura inválido');
         }
@@ -103,6 +107,9 @@ export default function uploadHandlers(ipcMain: IpcMain) {
               break;
             case 'Quadrinho':
               await comicManager.createSerie(s, tieInManager);
+              break;
+            case 'Livro':
+              await bookManager.createSerie(s);
               break;
             default:
               throw new Error(

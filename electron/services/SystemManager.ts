@@ -2,7 +2,7 @@ import fse from 'fs-extra';
 import path from 'path';
 
 import LibrarySystem from './abstract/LibrarySystem.ts';
-import StorageManager from './StorageManager.ts';
+import storageManager from './StorageManager.ts';
 import FileManager from './FileManager.ts';
 import ImageManager from './ImageManager.ts';
 import TieInManager from './TieInManager.ts';
@@ -20,7 +20,7 @@ import { Comic } from '../types/comic.interfaces.ts';
 
 export default class SystemManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
-  private readonly storageManager: StorageManager = new StorageManager();
+  private readonly storageManager = storageManager;
   private readonly tieManager: TieInManager = new TieInManager();
   private readonly imageManager: ImageManager = new ImageManager();
   private readonly pdfManager: PdfManager = new PdfManager();

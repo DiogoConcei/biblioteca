@@ -54,11 +54,8 @@ export interface PageControlProps {
 }
 
 export interface visualizerProps {
-  currentPage: number;
-  prevChapter: () => void;
+  chapter: ChapterView;
   setScale: React.Dispatch<React.SetStateAction<number>>;
-  nextChapter: () => void;
-  totalPages: number;
 }
 
 export interface dinamicNavProp {

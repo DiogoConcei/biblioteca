@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { LoaderCircle } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 
 import { ChapterView } from '@/types/components.interfaces';
+import useSettingsStore from '@/store/useSettingsStore';
 
 import useChapter from '../../hooks/useChapter';
 import useNavigation from '../../hooks/useNavigation';
@@ -32,9 +33,60 @@ export default function Viewer() {
   const [scale, setScale] = useState<number>(1);
   const lastCall = useRef<number>(0);
   const error = useUIStore((state) => state.error);
+  
+  const settings = useSettingsStore((state) => state.settings.viewer);
+
+  // Intersection Observer para o modo Webtoon
+  useEffect(() => {
+    if (settings.readingMode !== 'webtoon' || !chapter.pages) return;
+
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.3, // 30% da página visível para disparar
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const pageIndex = Number(entry.target.getAttribute('data-page-index'));
+          if (!isNaN(pageIndex) && pageIndex !== chapter.currentPage) {
+            chapter.setCurrentPage(pageIndex);
+          }
+        }
+      });
+    }, observerOptions);
+
+    // Observa todas as imagens do webtoon
+    const images = document.querySelectorAll(`.${styles.webtoonPage}`);
+    images.forEach((img) => observer.observe(img));
+
+    return () => observer.disconnect();
+  }, [settings.readingMode, chapter.pages, chapter.currentPage, chapter]);
+
+  // Memoiza a URL com filtros para evitar recalculação constante
+  const getFilteredUrl = useMemo(
+    () => (url: string) => {
+      if (!url) return '';
+
+      const params = [];
+      if (settings.brightness !== 1)
+        params.push(`brightness=${settings.brightness}`);
+      if (settings.contrast !== 1)
+        params.push(`contrast=${settings.contrast}`);
+      if (settings.grayscale) params.push(`grayscale=true`);
+      if (settings.sharpness > 0) params.push(`sharpness=${settings.sharpness}`);
+
+      if (params.length === 0) return url;
+
+      const connector = url.includes('?') ? '&' : '?';
+      return `${url}${connector}${params.join('&')}`;
+    },
+    [settings],
+  );
 
   useEffect(() => {
-    const debounceTime = 500; // 1/2 second debounce time
+    const debounceTime = 500;
 
     const handleKey = (event: KeyboardEvent) => {
       const now = Date.now();
@@ -58,9 +110,8 @@ export default function Viewer() {
     };
 
     window.addEventListener('keydown', handleKey);
-
     return () => window.removeEventListener('keydown', handleKey);
-  }, [chapterNavigation, chapter]);
+  }, [chapterNavigation, chapter, settings.readingMode]);
 
   if (!chapter.pages || !chapter.quantityPages) {
     return <Loading />;
@@ -70,28 +121,81 @@ export default function Viewer() {
     return <ErrorScreen error={error} serieName={chapter.serieName} />;
   }
 
+  const renderViewerContent = () => {
+    switch (settings.readingMode) {
+      case 'webtoon':
+        return (
+          <div className={styles.webtoonContainer}>
+            {chapter.pages.map((page, index) => (
+              <img
+                key={index}
+                data-page-index={index}
+                src={getFilteredUrl(page)}
+                alt={`Página ${index + 1}`}
+                className={styles.webtoonPage}
+                loading="lazy"
+                decoding="async"
+              />
+            ))}
+            <div className={styles.webtoonEnd}>
+               <button onClick={chapterNavigation.nextChapter}>Próximo Capítulo</button>
+            </div>
+          </div>
+        );
+
+      case 'double':
+        const secondPageIdx = chapter.currentPage + 1;
+        const hasSecondPage = secondPageIdx < chapter.pages.length;
+        
+        return (
+          <div className={styles.doublePageContainer}>
+            <div className={styles.doublePageWrapper}>
+               <img
+                  className={styles.doublePageImage}
+                  src={getFilteredUrl(chapter.pages[chapter.currentPage])}
+                  alt="página esquerda"
+               />
+               {hasSecondPage && (
+                  <img
+                    className={styles.doublePageImage}
+                    src={getFilteredUrl(chapter.pages[secondPageIdx])}
+                    alt="página direita"
+                  />
+               )}
+            </div>
+          </div>
+        );
+
+      case 'single':
+      default:
+        return (
+          <div className={styles.containerPage}>
+            <img
+              key={chapter.currentPage} // Força re-render para animação de transição
+              className={`${styles.chapterPage} ${styles[settings.transitionEffect] || ''}`}
+              draggable={false}
+              style={{
+                transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
+              }}
+              ref={elementRef}
+              src={getFilteredUrl(chapter.pages[chapter.currentPage])}
+              alt={`Página ${chapter.currentPage + 1}`}
+            />
+            {chapter.isLoading && <LoaderCircle className={styles.spinner} />}
+          </div>
+        );
+    }
+  };
+
   return (
-    <section className={styles.visualizer}>
+    <section className={`${styles.visualizer} ${settings.wideScreen ? styles.wide : ''}`}>
       <ViewerMenu
-        currentPage={chapter.currentPage}
-        nextChapter={chapterNavigation.nextChapter}
-        prevChapter={chapterNavigation.prevChapter}
-        totalPages={chapter.quantityPages}
+        chapter={chapter}
         setScale={setScale}
       />
-      <div className={styles.containerPage}>
-        <img
-          className={styles.chapterPage}
-          draggable={false}
-          style={{
-            transform: `scale(${scale})  translate(${position.x}px, ${position.y}px)`,
-          }}
-          ref={elementRef}
-          src={`${chapter.pages[chapter.currentPage]}`}
-          alt="pagina do capitulo"
-        />
-        {chapter.isLoading && <LoaderCircle className={styles.spinner} />}
-      </div>
+      
+      {renderViewerContent()}
+
       <div className={styles.pageControlWrapper}>
         <PageControl
           currentPage={chapter.currentPage}
@@ -100,6 +204,17 @@ export default function Viewer() {
           prevPage={chapterNavigation.prevPage}
         />
       </div>
+      
+      {settings.showPageNumbers && (
+        <div className={styles.pageIndicator}>
+          {settings.readingMode === 'double'
+            ? `${chapter.currentPage + 1}-${Math.min(
+                chapter.currentPage + 2,
+                chapter.quantityPages,
+              )} / ${chapter.quantityPages}`
+            : `${chapter.currentPage + 1} / ${chapter.quantityPages}`}
+        </div>
+      )}
     </section>
   );
 }

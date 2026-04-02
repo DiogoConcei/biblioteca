@@ -7,13 +7,13 @@ import {
   CreateCollectionDTO,
 } from '../../src/types/collections.interfaces';
 import LibrarySystem from './abstract/LibrarySystem';
-import StorageManager from './StorageManager';
+import storageManager from './StorageManager';
 import FileManager from './FileManager';
 import { Literatures } from '../types/electron-auxiliar.interfaces';
 import { TieIn } from '../types/comic.interfaces';
 
 export default class CollectionManager extends LibrarySystem {
-  private readonly storageManager = new StorageManager();
+  private readonly storageManager = storageManager;
   private readonly fileManager = new FileManager();
   private static readonly MAX_COLLECTION_ITEMS = 10000;
 

@@ -6,118 +6,181 @@ import { TieIn } from '../types/comic.interfaces';
 import {
   graphSerie,
   LiteratureChapter,
-  // Literatures,
   viewData,
   Literatures,
 } from '../types/electron-auxiliar.interfaces';
 import FileManager from './FileManager';
 import LibrarySystem from './abstract/LibrarySystem';
 
-export default class StorageManager extends LibrarySystem {
+class StorageManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
+  
+  // Cache de visualização (Home)
   private _viewDataCache: viewData[] | null = null;
+  
+  // Cache completo de séries (indexado por dataPath)
+  private _seriesCache: Map<string, Literatures | TieIn> = new Map();
 
-  invalidateCache(): void {
-    this._viewDataCache = null;
-  }
+  // Fila global de escrita para evitar corrupção
+  private _writeQueue: Promise<void> = Promise.resolve();
 
   constructor() {
     super();
   }
 
-  async writeData(serie: Literatures | TieIn): Promise<boolean> {
+  /**
+   * Enfileira uma operação de escrita para garantir que seja serializada globalmente.
+   */
+  private async enqueue<T>(task: () => Promise<T>): Promise<T> {
+    const result = this._writeQueue.then(task);
+    this._writeQueue = result.then(() => {}).catch(() => {});
+    return result;
+  }
+
+  /**
+   * Realiza uma escrita atômica usando um arquivo temporário.
+   */
+  private async atomicWrite(filePath: string, data: any): Promise<void> {
+    const tmpPath = `${filePath}.tmp`;
     try {
-      this.invalidateCache();
-      await fse.writeJSON(serie.dataPath, serie, { spaces: 2 });
-      return true;
-    } catch (e) {
-      console.error(`Erro em escrever dados da serie: ${e}`);
-      return false;
+      await fse.ensureDir(path.dirname(filePath));
+      await fse.writeJSON(tmpPath, data, { spaces: 2 });
+      await fse.move(tmpPath, filePath, { overwrite: true });
+    } catch (error) {
+      // Limpa o arquivo temporário em caso de erro
+      if (await fse.pathExists(tmpPath)) {
+        await fse.remove(tmpPath);
+      }
+      throw error;
     }
   }
 
-  async searchSerieById(serieId: number): Promise<Literatures | TieIn | null> {
-    const viewData = await this.getViewData();
+  /**
+   * Limpa o cache de visualização.
+   */
+  invalidateCache(): void {
+    this._viewDataCache = null;
+  }
 
-    if (viewData) {
-      const targetSerie = viewData.find((serie) => serie.id === serieId);
+  /**
+   * Escreve dados de uma série ou TieIn (Write-Through).
+   */
+  async writeData(serie: Literatures | TieIn): Promise<boolean> {
+    return this.enqueue(async () => {
+      try {
+        await this.atomicWrite(serie.dataPath, serie);
+        
+        // Atualiza Cache (Write-Through)
+        this._seriesCache.set(serie.dataPath, serie);
+        this.invalidateCache();
+        
+        return true;
+      } catch (e) {
+        console.error(`Erro em escrever dados da serie (${serie.name}): ${e}`);
+        return false;
+      }
+    });
+  }
+
+  /**
+   * Busca uma série pelo ID, consultando o cache primeiro.
+   */
+  async searchSerieById(serieId: number): Promise<Literatures | TieIn | null> {
+    // Tenta encontrar no cache de séries completo primeiro
+    for (const serie of this._seriesCache.values()) {
+      if (serie.id === serieId) return serie;
+    }
+
+    const viewDataList = await this.getViewData();
+    if (viewDataList) {
+      const targetSerie = viewDataList.find((serie) => serie.id === serieId);
       if (targetSerie) {
         return await this.readSerieData(targetSerie.dataPath);
       }
     }
 
     const dataPaths = await this.fileManager.getDataPaths();
-
     for (const dataPath of dataPaths) {
       const serieData = await this.readSerieData(dataPath);
-
-      if (!serieData || serieData.id !== serieId) {
-        continue;
+      if (serieData && serieData.id === serieId) {
+        return serieData;
       }
-
-      return serieData;
     }
 
     return null;
   }
 
-  async readSerieData<T extends graphSerie>(
-    dataPath: string,
-  ): Promise<T | null> {
+  /**
+   * Lê dados da série do disco ou cache.
+   */
+  async readSerieData<T extends graphSerie>(dataPath: string): Promise<T | null> {
+    // Consulta Cache
+    if (this._seriesCache.has(dataPath)) {
+      return this._seriesCache.get(dataPath) as T;
+    }
+
     try {
+      if (!(await fse.pathExists(dataPath))) return null;
+
       const serieData = (await fse.readJson(dataPath, {
         encoding: 'utf-8',
       })) as T;
 
-      if (serieData === null) {
-        return null;
+      if (serieData) {
+        this._seriesCache.set(dataPath, serieData);
       }
 
       return serieData;
     } catch (e) {
-      throw new Error(`Falha ao ler dados da serie selecionada: ${e}`);
-    }
-  }
-
-  async readTieInData(dataPath: string): Promise<TieIn | null> {
-    try {
-      const serieData = (await fse.readJson(dataPath, {
-        encoding: 'utf-8',
-      })) as TieIn;
-
-      if (!serieData) {
-        throw new Error('Arquivo lido, mas vazio ou inválido.');
-      }
-
-      return serieData;
-    } catch (e) {
-      console.error(`Erro ao ler dados da série: ${e}`);
+      console.error(`Falha ao ler dados da serie em ${dataPath}: ${e}`);
       return null;
     }
   }
 
+  /**
+   * Alias para ler TieIn com cache.
+   */
+  async readTieInData(dataPath: string): Promise<TieIn | null> {
+    return this.readSerieData<any>(dataPath);
+  }
+
+  /**
+   * Deleta um capítulo e invalida o cache.
+   */
   async deleteChapter(chapter: LiteratureChapter): Promise<boolean> {
     try {
-      this.invalidateCache();
       if (await fse.pathExists(chapter.chapterPath)) {
         await fse.remove(chapter.chapterPath);
         chapter.isDownloaded = 'not_downloaded';
         chapter.chapterPath = '';
 
+        // Invalida cache pois os dados da série (que contém o capítulo) mudaram
+        this.invalidateCache();
+        // Nota: O ideal seria atualizar a série no cache também, 
+        // mas aqui recebemos apenas o capítulo. 
+        // O StorageManager deve ser notificado da mudança na série pai.
+        
         return true;
       }
-
       return false;
     } catch (e) {
-      console.error('Falha e deletar capitulos: ', e);
+      console.error('Falha ao deletar capitulo: ', e);
       return false;
     }
   }
 
+  /**
+   * Seleciona dados de uma série, priorizando o cache.
+   */
   async selectSerieData<T extends Literatures | TieIn>(
     serieName: string,
     type?: 'Manga' | 'Quadrinho' | 'childSeries',
   ): Promise<T> {
+    // Tenta encontrar no cache primeiro
+    for (const serie of this._seriesCache.values()) {
+      if (serie.name === serieName) return serie as T;
+    }
+
     try {
       let targetFolder: string;
 
@@ -129,6 +192,9 @@ export default class StorageManager extends LibrarySystem {
           case 'Quadrinho':
             targetFolder = this.comicsData;
             break;
+          case 'Livro':
+            targetFolder = this.booksData;
+            break;
           case 'childSeries':
             targetFolder = this.childSeriesData;
             break;
@@ -136,17 +202,17 @@ export default class StorageManager extends LibrarySystem {
             targetFolder = this.mangasData;
         }
       } else {
-        // Se o tipo não for passado, tenta encontrar em todas as pastas
         const allFolders = [
           this.mangasData,
           this.comicsData,
+          this.booksData,
           this.childSeriesData,
         ];
         for (const folder of allFolders) {
           const files = await this.fileManager.foundFiles(folder);
           const found = files.find((f) => path.parse(f).name === serieName);
           if (found) {
-            return await fse.readJson(found, { encoding: 'utf-8' });
+            return await this.readSerieData<any>(found);
           }
         }
         throw new Error(`Série não encontrada: ${serieName}`);
@@ -158,20 +224,19 @@ export default class StorageManager extends LibrarySystem {
       );
 
       if (!serieDataPath) {
-        throw new Error(
-          `Nenhuma série encontrada com o nome: ${serieName} em ${type}`,
-        );
+        throw new Error(`Nenhuma série encontrada com o nome: ${serieName} em ${type}`);
       }
 
-      return await fse.readJson(serieDataPath, { encoding: 'utf-8' });
+      return await this.readSerieData<any>(serieDataPath);
     } catch (e) {
       console.error(`Erro ao selecionar dados da série (${serieName}):`, e);
       throw e;
     }
   }
 
-  // Refeito durante a reformulação de ComicManager
-
+  /**
+   * Retorna os dados simplificados para visualização (Home).
+   */
   async getViewData(): Promise<viewData[] | null> {
     try {
       if (this._viewDataCache) {
@@ -179,24 +244,20 @@ export default class StorageManager extends LibrarySystem {
       }
 
       const dataPaths = await this.fileManager.getDataPaths();
-
-      const viewData: viewData[] = await Promise.all(
+      const viewDataList: viewData[] = await Promise.all(
         dataPaths.map(async (dataPath) => {
           const serie = await this.readSerieData(dataPath);
           if (!serie) {
-            throw new Error(
-              `Erro ao trazer dados de visualização: serie invalida`,
-            );
+            throw new Error(`Erro ao carregar dados de visualização: serie em ${dataPath} é invalida`);
           }
-
-          return await this.mountViewData(serie);
+          return this.mountViewData(serie);
         }),
       );
 
-      this._viewDataCache = viewData;
-      return viewData;
+      this._viewDataCache = viewDataList;
+      return viewDataList;
     } catch (e) {
-      console.error(`Erro ao trazer dados de visualização:${e}`);
+      console.error(`Erro ao trazer dados de visualização: ${e}`);
       return null;
     }
   }
@@ -218,141 +279,69 @@ export default class StorageManager extends LibrarySystem {
     };
   }
 
+  /**
+   * Atualiza campos de uma série (Write-Through).
+   */
   async patchSerie(data: SerieEditForm): Promise<Literatures | null> {
-    const oldData = await this.readSerieData(data.dataPath);
+    return this.enqueue(async () => {
+      const oldData = await this.readSerieData(data.dataPath);
+      if (!oldData) return null;
 
-    if (!oldData) return null;
+      const changedFields = Object.fromEntries(
+        (Object.keys(data) as (keyof SerieEditForm)[])
+          .filter((k) => data[k] !== (oldData as any)[k])
+          .map((k) => [k, data[k]]),
+      ) as Partial<SerieEditForm>;
 
-    const changedFields = Object.fromEntries(
-      (Object.keys(data) as (keyof SerieEditForm)[])
-        .filter((k) => data[k] !== oldData[k])
-        .map((k) => [k, data[k]]),
-    ) as Partial<SerieEditForm>;
+      const updated: Literatures = {
+        ...oldData,
+        ...changedFields,
+      } as Literatures;
 
-    const updated: Literatures = {
-      ...oldData,
-      ...changedFields,
-    } as Literatures;
-
-    if (updated.name !== oldData.name) {
-      await this.fileManager.moveFiles(oldData, updated);
-    }
-
-    return updated;
-  }
-
-  async patchHelper(
-    oldData: Literatures,
-    updatedData: Literatures,
-  ): Promise<void> {
-    try {
-      const dir = path.dirname(oldData.dataPath);
-      const newPath = path.join(dir, `${updatedData.name}.json`);
-
-      const nameChanged = oldData.name !== updatedData.name;
-
-      if (nameChanged) {
-        await fse.ensureDir(dir);
-
-        if (await fse.pathExists(oldData.dataPath)) {
-          await fse.remove(oldData.dataPath);
-        }
-
-        updatedData.dataPath = newPath;
-
-        await fse.writeJson(newPath, updatedData, { spaces: 2 });
-      } else {
-        await fse.writeJson(oldData.dataPath, updatedData, { spaces: 2 });
-      }
-    } catch (e) {
-      console.error(
-        `Falha ao finalizar update da série: ${updatedData.name}`,
-        e,
-      );
-      throw e;
-    }
-  }
-
-  buildUpdatedSerie(
-    oldData: Literatures,
-    newData: SerieEditForm,
-  ): { hasChanges: boolean; data: Literatures } {
-    // any justificado: acesso dinâmico por chave não é inferível pelo TS
-    const updated: any = { ...oldData };
-    let hasChanges = false;
-
-    for (const key of Object.keys(newData)) {
-      const newValue = (newData as any)[key];
-      const oldValue = (oldData as any)[key];
-
-      if (!this.deepEqual(oldValue, newValue)) {
-        updated[key] = newValue;
-        hasChanges = true;
-      }
-    }
-
-    return { hasChanges, data: updated };
-  }
-
-  // any justificado: comparação de valores arbitrários
-  private deepEqual(a: any, b: any): boolean {
-    if (a === b) return true;
-
-    if (a === null || b === null) return a === b;
-    if (typeof a !== typeof b) return false;
-
-    if (typeof a !== 'object') return a === b;
-
-    if (Array.isArray(a) !== Array.isArray(b)) return false;
-
-    if (Array.isArray(a)) {
-      if (a.length !== b.length) return false;
-
-      for (let i = 0; i < a.length; i++) {
-        if (!this.deepEqual(a[i], b[i])) return false;
+      if (updated.name !== oldData.name) {
+        await this.fileManager.moveFiles(oldData, updated);
       }
 
-      return true;
-    }
+      await this.atomicWrite(updated.dataPath, updated);
+      
+      // Sincroniza Cache
+      this._seriesCache.set(updated.dataPath, updated);
+      this.invalidateCache();
 
-    const keysA = Object.keys(a);
-    const keysB = Object.keys(b);
-
-    if (keysA.length !== keysB.length) return false;
-
-    for (const key of keysA) {
-      if (!this.deepEqual(a[key], b[key])) return false;
-    }
-
-    return true;
+      return updated;
+    });
   }
 
+  /**
+   * Persiste uma série no disco com suporte a troca de nome (Write-Through).
+   */
   async persistSerie(
     oldData: Literatures,
     updated: Literatures,
   ): Promise<string> {
-    this.invalidateCache();
-    const oldPath = oldData.dataPath;
-    const dir = path.dirname(oldPath);
+    return this.enqueue(async () => {
+      const oldPath = oldData.dataPath;
+      const dir = path.dirname(oldPath);
 
-    const nameChanged = oldData.name !== updated.name;
-    const newPath = nameChanged
-      ? path.join(dir, `${updated.name}.json`)
-      : oldPath;
+      const nameChanged = oldData.name !== updated.name;
+      const newPath = nameChanged ? path.join(dir, `${updated.name}.json`) : oldPath;
 
-    // Se mudou nome, remove antigo antes de escrever
-    if (nameChanged && oldPath !== newPath) {
-      if (await fse.pathExists(oldPath)) {
-        await fse.remove(oldPath);
+      if (nameChanged && oldPath !== newPath) {
+        if (await fse.pathExists(oldPath)) {
+          await fse.remove(oldPath);
+          this._seriesCache.delete(oldPath); // Remove caminho antigo do cache
+        }
       }
-    }
 
-    updated.dataPath = newPath;
+      updated.dataPath = newPath;
+      await this.atomicWrite(newPath, updated);
 
-    await fse.ensureDir(dir);
-    await fse.writeJson(newPath, updated, { spaces: 2 });
+      // Sincroniza Cache
+      this._seriesCache.set(newPath, updated);
+      this.invalidateCache();
 
-    return newPath;
+      return newPath;
+    });
   }
 
   private mountViewData(serie: Literatures): viewData {
@@ -367,3 +356,7 @@ export default class StorageManager extends LibrarySystem {
     };
   }
 }
+
+// Singleton: Instância única exportada
+export const storageManager = new StorageManager();
+export default storageManager;

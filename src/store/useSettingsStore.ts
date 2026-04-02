@@ -29,6 +29,16 @@ export const defaultSettings: AppSettings = {
   compactMode: false,
   sendLogsWithBugReport: false,
   driveConnected: false,
+  viewer: {
+    readingMode: 'single',
+    brightness: 1.0,
+    contrast: 1.0,
+    grayscale: false,
+    sharpness: 0,
+    showPageNumbers: true,
+    wideScreen: false,
+    transitionEffect: 'none',
+  },
 };
 
 type PersistedKeys = keyof AppSettings;

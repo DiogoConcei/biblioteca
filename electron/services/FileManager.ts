@@ -52,7 +52,8 @@ export default class FileManager extends LibrarySystem {
       }
 
       return count;
-    } catch {
+    } catch (error) {
+      console.error(`Erro ao contar capítulos no diretório ${dir}:`, error);
       return 0;
     }
   }
@@ -81,7 +82,8 @@ export default class FileManager extends LibrarySystem {
             if (extSet.has(ext)) count++;
           }
           return count;
-        } catch {
+        } catch (error) {
+          console.error(`Erro ao contar capítulos no diretório ${dir}:`, error);
           return 0;
         }
       }),
@@ -339,14 +341,15 @@ export default class FileManager extends LibrarySystem {
   // Serve para pegar tods os caminhos de json
   public async getDataPaths(): Promise<string[]> {
     try {
-      const directories = [this.comicsData, this.mangasData];
+      const directories = [this.comicsData, this.mangasData, this.booksData];
 
       const contentArrays = await Promise.all(
-        directories.map(async (dir) =>
-          (await fse.readdir(dir, { withFileTypes: true })).map((item) =>
+        directories.map(async (dir) => {
+          if (!(await fse.pathExists(dir))) return [];
+          return (await fse.readdir(dir, { withFileTypes: true })).map((item) =>
             path.join(dir, item.name),
-          ),
-        ),
+          );
+        }),
       );
 
       return contentArrays.flat();
@@ -584,6 +587,7 @@ export default class FileManager extends LibrarySystem {
     const directories = [
       this.comicsData,
       this.mangasData,
+      this.booksData,
       this.childSeriesData,
     ];
 
@@ -591,6 +595,7 @@ export default class FileManager extends LibrarySystem {
       const allPaths = (
         await Promise.all(
           directories.map(async (dir) => {
+            if (!(await fse.pathExists(dir))) return [];
             const items = await fse.readdir(dir, { withFileTypes: true });
             return items.map((item) => path.join(dir, item.name));
           }),

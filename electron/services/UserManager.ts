@@ -1,6 +1,6 @@
 import FileSystem from './abstract/LibrarySystem';
 import CollectionManager from './CollectionManager';
-import StorageManager from './StorageManager';
+import storageManager from './StorageManager';
 import {
   ReadableSerie,
   LastReadCandidate,
@@ -11,7 +11,7 @@ import FileManager from './FileManager';
 
 export default class UserManager extends FileSystem {
   private readonly collManager: CollectionManager = new CollectionManager();
-  private readonly storageManager: StorageManager = new StorageManager();
+  private readonly storageManager = storageManager;
   private readonly fileManager: FileManager = new FileManager();
 
   constructor() {
@@ -138,7 +138,12 @@ export default class UserManager extends FileSystem {
     lastPageRead: number,
     isRead: boolean,
   ): string {
-    return `/${encodeURIComponent(serie.name)}/${serie.id}/${encodeURIComponent(chapterName)}/${chapterId}/${lastPageRead}/${isRead}`;
+    const prefix = serie.literatureForm === 'Livro' ? '/book' : '';
+    return `${prefix}/${encodeURIComponent(
+      serie.name,
+    )}/${serie.id}/${encodeURIComponent(
+      chapterName,
+    )}/${chapterId}/${lastPageRead}/${isRead}`;
   }
 
   private resolveChapterFromSerie(

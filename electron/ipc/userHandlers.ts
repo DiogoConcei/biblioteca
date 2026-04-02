@@ -1,10 +1,9 @@
 import { IpcMain } from 'electron';
 
-import StorageManager from '../services/StorageManager';
+import storageManager from '../services/StorageManager';
 import FileManager from '../services/FileManager';
 
 export default function userHandlers(ipcMain: IpcMain) {
-  const storageManager = new StorageManager();
   const fileManager = new FileManager();
 
   ipcMain.handle(
@@ -28,7 +27,11 @@ export default function userHandlers(ipcMain: IpcMain) {
 
         if (literatureForm === 'childSeries') {
           serieLink = `/TieIn/${encodeURIComponent(serieData.name)}`;
-        } else if (['Comics', 'Mangas'].includes(literatureForm)) {
+        } else if (
+          ['Comics', 'Mangas', 'Livro', 'Quadrinho', 'Manga'].includes(
+            literatureForm,
+          )
+        ) {
           serieLink = `/${serieData.literatureForm}/${serieData.name}/${serieData.id}`;
         }
 
