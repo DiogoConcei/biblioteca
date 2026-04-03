@@ -1,11 +1,12 @@
 import { FormEvent, useState } from 'react';
-import TimePicker from '../../../components/TimePicker/TimePicker';
-
-import styles from './BackupSettings.module.scss';
 
 import { BackupMeta, AppSettings } from '@/types/settings.interfaces';
-
 import useSystem from '@/hooks/useSystem';
+
+import TimePicker from '../../../components/TimePicker/TimePicker';
+import styles from './BackupSettings.module.scss';
+
+
 
 const defaultSettings: AppSettings = {
   backupAuto: false,
@@ -32,10 +33,6 @@ export default function BackupSettings() {
     'mensal',
   ];
 
-  const [toast, setToast] = useState<{
-    type: 'success' | 'error';
-    message: string;
-  } | null>(null);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [encrypt, setEncrypt] = useState(false);
   const [password, setPassword] = useState('');
@@ -44,24 +41,14 @@ export default function BackupSettings() {
   const [description, setDescription] = useState('');
   const [includeLargeFiles, setIncludeLargeFiles] = useState(false);
   const [busyAction, setBusyAction] = useState<string | null>(null);
-  const [operationLogs, setOperationLogs] = useState<string[]>([]);
-  const appendLog = (message: string) => {
-    setOperationLogs((prev) =>
-      [new Date().toLocaleTimeString() + ' • ' + message, ...prev].slice(0, 10),
-    );
-  };
 
   const persistSettings = async (partial: Partial<AppSettings>) => {
     const next = { ...settings, ...partial };
     setSettings(next);
     try {
       await systemManager.setSettings(partial);
-      setToast({ type: 'success', message: 'Configuração salva com sucesso.' });
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Erro ao salvar configuração';
-      setToast({ type: 'error', message });
-      appendLog(message);
+      console.error('Erro ao salvar configuração:', error);
     }
   };
 
@@ -69,38 +56,25 @@ export default function BackupSettings() {
     event.preventDefault();
 
     if (encrypt && password !== confirmPassword) {
-      setToast({
-        type: 'error',
-        message: 'A confirmação da senha não confere.',
-      });
       return;
     }
 
     setBusyAction('create-backup');
-    appendLog('Iniciando criação de backup manual...');
 
     try {
-      const result = await systemManager.createBackup({
+      await systemManager.createBackup({
         encrypt,
         password: encrypt ? password : undefined,
         description,
         includeLargeFiles,
       });
 
-      appendLog(`Backup criado em ${result.path ?? 'caminho não informado'}`);
-      setToast({
-        type: 'success',
-        message: `Backup criado: ${result.path ?? 'ok'}`,
-      });
       setBackups(await systemManager.getBackupList());
       setDescription('');
       setPassword('');
       setConfirmPassword('');
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Falha ao criar backup';
-      appendLog(message);
-      setToast({ type: 'error', message });
+      console.error('Falha ao criar backup:', error);
     } finally {
       setBusyAction(null);
     }

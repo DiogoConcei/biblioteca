@@ -1,6 +1,8 @@
-import styles from './SearchBar.module.scss';
 import { Search } from 'lucide-react';
+
 import { SearchBarProps } from '@/types/components.interfaces';
+
+import styles from './SearchBar.module.scss';
 
 export default function SearchBar({
   searchInput,

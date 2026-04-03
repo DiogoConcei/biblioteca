@@ -13,7 +13,7 @@ export interface Comic extends graphSerie<ComicEdition> {
   genre?: string;
   author?: string;
   language?: string;
-  literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
+  literatureForm: 'Manga' | 'Quadrinho' | 'Books' | '';
   readingData: {
     lastChapterId: number;
     lastReadAt: string;
@@ -48,7 +48,7 @@ export interface TieIn {
   coverImage: string;
   totalChapters: number;
   chaptersRead: number;
-  literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | '';
+  literatureForm: 'Manga' | 'Quadrinho' | 'Books' | '';
   chapters?: ComicEdition[];
   readingData: {
     lastChapterId: number;

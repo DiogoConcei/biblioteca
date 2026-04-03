@@ -30,6 +30,33 @@ export default class SystemManager extends LibrarySystem {
     super();
   }
 
+  /**
+   * Padroniza o campo literatureForm para 'Books' em todos os arquivos JSON de livros existentes.
+   */
+  public async clearBookForm(): Promise<void> {
+    try {
+      const booksPath = this.booksData;
+      if (!(await fse.pathExists(booksPath))) return;
+
+      const files = await fse.readdir(booksPath);
+      for (const file of files) {
+        if (file.endsWith('.json')) {
+          const filePath = path.join(booksPath, file);
+          const data = await fse.readJson(filePath);
+          if (data.literatureForm !== 'Books') {
+            data.literatureForm = 'Books';
+            await fse.writeJson(filePath, data, { spaces: 2 });
+            console.log(
+              `[SystemManager] Padronizado literatureForm para 'Books' em: ${file}`,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Erro ao limpar literatureForm dos livros:', e);
+    }
+  }
+
   public async regenerateComicCovers(
     onProgress?: (progress: ComicCoverRegenerationProgress) => void,
   ): Promise<ComicCoverRegenerationResult> {

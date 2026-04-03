@@ -7,6 +7,7 @@ import {
 } from 'react-hook-form';
 
 import { Manga, MangaChapter } from './manga.interfaces';
+import { Book, BookChapter } from './book.interfaces';
 import { Comic, ComicEdition, TieIn } from './comic.interfaces';
 import { Collection } from '../../src/types/collections.interfaces';
 import {
@@ -15,7 +16,7 @@ import {
   SerieEditForm,
 } from '../../src/types/series.interfaces';
 
-export type LiteratureChapter = ComicEdition | MangaChapter;
+export type LiteratureChapter = ComicEdition | MangaChapter | BookChapter;
 
 export type LiteraturesAttributes =
   | string
@@ -30,7 +31,7 @@ export type LiteraturesAttributes =
 
 export type DownloadStatus = 'not_downloaded' | 'downloading' | 'downloaded';
 
-export type Literatures = Manga | Comic;
+export type Literatures = Manga | Comic | Book;
 
 export interface NormalizedSerieData {
   id: number;

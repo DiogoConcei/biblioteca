@@ -1,4 +1,5 @@
 import { KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
+
 import { SelectProps, SelectOption } from '@/types/components.interfaces';
 
 import styles from './CustomSelect.module.scss';

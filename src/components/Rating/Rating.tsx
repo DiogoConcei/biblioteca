@@ -2,6 +2,7 @@ import { Star, StarOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { RatingProps } from '@/types/components.interfaces';
+
 import useAction from '../../hooks/useAction';
 import useClickOutside from '../../hooks/useClickOutside';
 import styles from './Rating.module.scss';

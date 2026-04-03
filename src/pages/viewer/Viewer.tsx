@@ -13,7 +13,6 @@ import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
 import Loading from '../../components/Loading/Loading';
 import PageControl from '../../components/PageControl/PageControl';
 import { useUIStore } from '../../store/useUIStore';
-
 import styles from './Viewer.module.scss';
 
 export default function Viewer() {
@@ -143,7 +142,7 @@ export default function Viewer() {
           </div>
         );
 
-      case 'double':
+      case 'double': {
         const secondPageIdx = chapter.currentPage + 1;
         const hasSecondPage = secondPageIdx < chapter.pages.length;
         
@@ -165,6 +164,7 @@ export default function Viewer() {
             </div>
           </div>
         );
+      }
 
       case 'single':
       default:

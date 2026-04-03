@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { Tag, BookOpen, User, Globe, LibraryBig } from 'lucide-react';
 
-import { Manga } from 'electron/types/manga.interfaces';
+import { Book } from 'electron/types/book.interfaces';
 import useAction from '@/hooks/useAction';
 
 import Loading from '../../components/Loading/Loading';
@@ -17,11 +17,11 @@ import styles from './BookPage.module.scss';
 export default function BookPage() {
   const { book_name: rawSerieName } = useParams<{ book_name: string }>();
   const serie_name = decodeURIComponent(rawSerieName ?? '');
-  
+
   // Hook customizado busca a série na base de Livros
-  useSerie(serie_name, 'Livro');
-  
-  const serie = useSerieStore((state) => state.serie) as Manga;
+  useSerie(serie_name, 'Books');
+
+  const serie = useSerieStore((state) => state.serie) as Book;
   const loading = useUIStore((state) => state.loading);
   const { lastChapter } = useAction();
 
@@ -70,7 +70,9 @@ export default function BookPage() {
           <div className={styles.bookMetadata}>
             <div className={styles.titleSection}>
               <h1>{serie.name}</h1>
-              <h2 className={styles.author}><User size={18} /> {serie.author || 'Autor Desconhecido'}</h2>
+              <h2 className={styles.author}>
+                <User size={18} /> {serie.author || 'Autor Desconhecido'}
+              </h2>
             </div>
 
             <div className={styles.infoGrid}>
@@ -80,7 +82,9 @@ export default function BookPage() {
               </div>
               <div className={styles.infoItem}>
                 <span>Idioma</span>
-                <p><Globe size={14} /> {serie.language || 'Desconhecido'}</p>
+                <p>
+                  <Globe size={14} /> {serie.language || 'Desconhecido'}
+                </p>
               </div>
               <div className={styles.infoItem}>
                 <span>Gênero</span>
@@ -121,17 +125,18 @@ export default function BookPage() {
             <LibraryBig size={24} />
             <h3>Arquivos do Livro</h3>
           </div>
-          
+
           <div className={styles.filesList}>
             {serie.chapters.map((chapter) => (
               <div key={chapter.id} className={styles.fileItem}>
                 <div className={styles.fileInfo}>
                   <h4>{chapter.name}</h4>
                   <span className={styles.fileDate}>
-                    Adicionado em {new Date(chapter.createdAt).toLocaleDateString()}
+                    Adicionado em{' '}
+                    {new Date(chapter.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                <Link 
+                <Link
                   to={`/book/${encodeURIComponent(serie.name)}/${serie.id}/${encodeURIComponent(chapter.name)}/${chapter.id}/${chapter.page?.lastPageRead || 0}/${chapter.isRead}`}
                   className={styles.openFileBtn}
                 >

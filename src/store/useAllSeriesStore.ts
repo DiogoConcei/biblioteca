@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+
 import { viewData } from '../../electron/types/electron-auxiliar.interfaces';
 import { useUIStore } from './useUIStore';
 

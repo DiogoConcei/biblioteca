@@ -100,9 +100,9 @@ export default class DownloadManager extends LibrarySystem {
       await this.simulateDownload(task);
 
       this.updateTaskStatus(task.id, 'completed');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Erro no download ${task.id}:`, error);
-      task.error = error.message;
+      task.error = error instanceof Error ? error.message : String(error);
       this.updateTaskStatus(task.id, 'error');
     } finally {
       this.activeDownloads--;

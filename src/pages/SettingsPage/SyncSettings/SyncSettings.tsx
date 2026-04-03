@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
 import useSystem from '@/hooks/useSystem';
+import { AppSettings } from '@/types/settings.interfaces';
 
 import styles from './SyncSettings.module.scss';
 
-import { AppSettings } from '@/types/settings.interfaces';
 
 const defaultSettings: AppSettings = {
   backupAuto: false,

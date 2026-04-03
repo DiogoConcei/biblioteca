@@ -1,4 +1,4 @@
-@use "sass:color";
+@use 'sass:color';
 @use '@/styles/variables' as *;
 
 .bookViewer {
@@ -15,15 +15,60 @@
     background-color: #f4ecd8; // Cor de fundo sépia para EPUBs
   }
 
+  &.uiHidden {
+    cursor: none; // Esconde o cursor para maior imersão
+  }
+
   .viewerHeader {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
     padding: 0.8rem 2rem;
-    background: rgba(20, 20, 20, 0.95);
+    background: transparent;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    backdrop-filter: blur(15px);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 100;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    opacity: 1;
+    visibility: visible;
+
+    &.hidden {
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-20px);
+    }
+
+    &:hover {
+      background: rgba(20, 20, 20, 0.7);
+      backdrop-filter: blur(15px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .leftSection {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+
+      .exitBtn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #ccc;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: $indian-red;
+          color: white;
+          transform: scale(1.1);
+        }
+      }
+    }
 
     .info {
       display: flex;
@@ -149,10 +194,37 @@
         transition: all 0.2s ease;
         color: #aaa;
         margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+
+        small {
+          background: rgba(255, 255, 255, 0.05);
+          color: rgba(255, 255, 255, 0.4);
+          padding: 2px 8px;
+          border-radius: 4px;
+          margin-right: 12px;
+          font-family: monospace;
+          font-size: 0.75rem;
+          min-width: 55px;
+          text-align: center;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        span {
+          flex: 1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
 
         &:hover {
           background: rgba(255, 255, 255, 0.05);
           color: white;
+
+          small {
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.1);
+          }
         }
 
         &.active {
@@ -161,6 +233,12 @@
           font-weight: 600;
           border-left: 3px solid $amethyst;
           border-radius: 4px 10px 10px 4px;
+
+          small {
+            color: $amethyst;
+            background: rgba($amethyst, 0.1);
+            border-color: rgba($amethyst, 0.2);
+          }
         }
       }
     }
@@ -178,8 +256,8 @@
       overflow: auto;
       display: flex;
       justify-content: center;
-      padding: 3rem;
-      background: radial-gradient(circle, #2a2a2a 0%, #1a1a1a 100%);
+      padding: 4rem 3rem;
+      background: #222;
       scrollbar-width: thin;
       scrollbar-color: $amethyst transparent;
 
@@ -192,7 +270,11 @@
       }
 
       .pdfCanvas {
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+        box-shadow:
+          0 0 0 1px rgba(0, 0, 0, 0.4),
+          0 8px 16px rgba(0, 0, 0, 0.4),
+          0 24px 48px rgba(0, 0, 0, 0.5);
+        border-radius: 1px;
         background: white;
       }
     }
@@ -221,9 +303,20 @@
   }
 
   .viewerFooter {
-    height: 4px;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 6px;
     width: 100%;
     background: rgba(255, 255, 255, 0.05);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1;
+    z-index: 100;
+
+    &.hidden {
+      opacity: 0;
+      transform: translateY(10px);
+    }
 
     .progressBar {
       width: 100%;
@@ -231,7 +324,11 @@
 
       .progressFill {
         height: 100%;
-        background: linear-gradient(90deg, $amethyst, color.adjust($amethyst, $lightness: 10%));
+        background: linear-gradient(
+          90deg,
+          $amethyst,
+          color.adjust($amethyst, $lightness: 10%)
+        );
         box-shadow: 0 0 10px rgba($amethyst, 0.5);
         transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
       }
@@ -240,7 +337,16 @@
 }
 
 @keyframes pulse {
-  0% { opacity: 0.7; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
-  100% { opacity: 0.7; transform: scale(1); }
+  0% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
 }

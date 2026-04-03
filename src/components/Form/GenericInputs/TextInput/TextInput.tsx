@@ -1,4 +1,5 @@
 import { FormTextInputProps } from 'electron/types/electron-auxiliar.interfaces';
+
 import styles from './TextInput.module.scss';
 
 export default function TextInput({

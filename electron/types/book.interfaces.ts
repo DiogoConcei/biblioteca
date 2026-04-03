@@ -1,6 +1,6 @@
 import { graphChapter, graphSerie } from './electron-auxiliar.interfaces';
 
-export interface Manga extends graphSerie<MangaChapter> {
+export interface Book extends graphSerie<BookChapter> {
   name: string;
   sanitizedName: string;
   genre?: string;
@@ -10,10 +10,10 @@ export interface Manga extends graphSerie<MangaChapter> {
   archivesPath: string;
   chaptersPath: string;
   dataPath: string;
-  chapters: MangaChapter[];
+  chapters: BookChapter[];
   totalChapters: number;
   chaptersRead: number;
-  literatureForm: 'Manga' | 'Quadrinho' | 'Books' | '';
+  literatureForm: 'Books';
   readingData: {
     lastChapterId: number;
     lastReadAt: string;
@@ -35,7 +35,7 @@ export interface Manga extends graphSerie<MangaChapter> {
   createdAt: string;
 }
 
-export interface MangaChapter extends graphChapter {
+export interface BookChapter extends graphChapter {
   id: number;
   serieName: string;
   name: string;
@@ -48,16 +48,5 @@ export interface MangaChapter extends graphChapter {
   page: {
     lastPageRead: number;
     favoritePage: number;
-  };
-}
-
-export interface MangaConfig {
-  config: {
-    settings: {
-      readingMode: 'single_page' | 'double_page' | 'vertical_scroll';
-      zoom: 'fit_width' | 'fit_height' | 'original_size';
-      lightMode: boolean;
-      fullScreen: boolean;
-    };
   };
 }

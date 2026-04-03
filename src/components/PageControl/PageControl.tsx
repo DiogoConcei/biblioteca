@@ -1,7 +1,7 @@
-import styles from './PageControl.module.scss';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
+import styles from './PageControl.module.scss';
 import { PageControlProps } from '../../types/components.interfaces';
 import useSettingsStore from '../../store/useSettingsStore';
 

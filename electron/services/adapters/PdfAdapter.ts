@@ -66,7 +66,7 @@ export default class PdfAdapter extends LibrarySystem implements MediaAdapter {
     const data = await fse.readFile(seriesPath);
     const loadingTask = pdfjsLib.getDocument({
       data: new Uint8Array(data),
-      // @ts-expect-error
+      // @ts-expect-error disableWorker is not in the type definition but works in this version
       disableWorker: true,
     });
 

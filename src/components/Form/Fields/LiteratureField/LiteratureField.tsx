@@ -12,8 +12,8 @@ export default function LiteratureField({ register, error }: FormInputProps) {
         <input type="radio" value="Quadrinho" id="Quadrinho" {...register} />
         <label htmlFor="Quadrinho">Quadrinho</label>
 
-        <input type="radio" value="Livro" id="Livro" {...register} />
-        <label htmlFor="Livro">Livro</label>
+        <input type="radio" value="Books" id="Books" {...register} />
+        <label htmlFor="Books">Livro</label>
       </div>
       {error && <p className="error">{error.message}</p>}
     </div>

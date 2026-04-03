@@ -1,6 +1,8 @@
 import { Bookmark, BookmarkCheck } from 'lucide-react';
-import useCollection from '../../hooks/useCollection';
+
 import { FavoriteProps } from '@/types/components.interfaces';
+
+import useCollection from '../../hooks/useCollection';
 import styles from './Favorite.module.scss';
 import useSerieStore from '../../store/useSerieStore';
 

@@ -1,17 +1,13 @@
 import { useState, useMemo } from 'react';
 
 import useSystem from '@/hooks/useSystem';
-
 import { ComicCoverRegenerationProgress } from '@/types/settings.interfaces';
+
 import styles from './SystemConfig.module.scss';
 
 export default function SystemConfig() {
   const systemManager = useSystem();
 
-  const [toast, setToast] = useState<{
-    type: 'success' | 'error';
-    message: string;
-  } | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
 
   const [resetType, setResetType] = useState<'soft' | 'full'>('soft');
@@ -22,11 +18,10 @@ export default function SystemConfig() {
     'credentials',
     'scraper cache',
   ];
-  const [backupBeforeReset, setBackupBeforeReset] = useState(true);
+  const [backupBeforeReset] = useState(true);
   const [preserve, setPreserve] = useState<string[]>([]);
   const [confirmResetInput, setConfirmResetInput] = useState('');
   const [showResetModal, setShowResetModal] = useState(false);
-  const [operationLogs, setOperationLogs] = useState<string[]>([]);
   const [coverRegenProgress, setCoverRegenProgress] =
     useState<ComicCoverRegenerationProgress | null>(null);
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -35,12 +30,6 @@ export default function SystemConfig() {
     () => (resetType === 'full' ? confirmResetInput.trim() === 'RESET' : true),
     [confirmResetInput, resetType],
   );
-
-  const appendLog = (message: string) => {
-    setOperationLogs((prev) =>
-      [new Date().toLocaleTimeString() + ' • ' + message, ...prev].slice(0, 10),
-    );
-  };
 
   const handleRegenerateComicCovers = async () => {
     setBusyAction('regenerate-covers');
@@ -51,33 +40,15 @@ export default function SystemConfig() {
       skipped: 0,
       failed: 0,
     });
-    appendLog('Iniciando regeneração global de capas dos quadrinhos...');
 
     try {
       const result = await systemManager.regenerateComicCovers();
-      appendLog(
-        `Regeneração finalizada: ${result.regenerated} regeneradas, ${result.skipped} íntegras, ${result.failed} falhas.`,
-      );
 
       if (result.failed > 0) {
-        const firstFailure = result.failures[0];
-        setToast({
-          type: 'error',
-          message: `Processo concluído com falhas (${result.failed}). Exemplo: ${firstFailure?.comic ?? 'N/A'} - ${firstFailure?.reason ?? ''}`,
-        });
-      } else {
-        setToast({
-          type: 'success',
-          message: `Processo concluído. ${result.regenerated} capas regeneradas com sucesso.`,
-        });
+        console.error(`Regeneração finalizada com falhas: ${result.failed}`);
       }
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Falha ao regenerar capas dos quadrinhos';
-      appendLog(message);
-      setToast({ type: 'error', message });
+      console.error('Falha ao regenerar capas dos quadrinhos:', error);
     } finally {
       setBusyAction(null);
     }
@@ -95,18 +66,12 @@ export default function SystemConfig() {
 
   const handleReset = async () => {
     if (!canConfirmReset) {
-      setToast({
-        type: 'error',
-        message: 'Digite RESET para confirmar reset completo.',
-      });
       return;
     }
     setBusyAction('reset');
-    appendLog(`Executando reset ${resetType}...`);
 
     try {
       if (backupBeforeReset) {
-        appendLog('Criando backup pré-reset...');
         await systemManager.createBackup({
           description: 'Backup automático pré-reset',
         });
@@ -118,14 +83,9 @@ export default function SystemConfig() {
         preserve,
       });
 
-      appendLog('Reset finalizado com sucesso.');
-      setToast({ type: 'success', message: 'Reset aplicado com sucesso.' });
       setShowResetModal(false);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Falha ao resetar';
-      appendLog(message);
-      setToast({ type: 'error', message });
+      console.error('Falha ao resetar:', error);
     } finally {
       setBusyAction(null);
     }

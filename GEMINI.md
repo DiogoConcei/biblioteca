@@ -92,6 +92,15 @@ interface MediaAdapter {
 
 ---
 
+## Segurança e Performance
+
+- **Validação de Caminhos:** O `MediaServer` deve validar todo `filePath` via `isPathSafe` antes de servir qualquer recurso através do protocolo `lib-media://`.
+- **Gerenciamento de Memória (PDF):** Todo componente que utilize `pdfjsLib.getDocument` DEVE implementar uma função de limpeza que chame `pdfDoc.destroy()` para evitar vazamentos de memória em documentos grandes.
+- **Sandboxing (EPUB):** O visualizador de EPUB deve utilizar um `iframe` com o atributo `sandbox="allow-same-origin"` para isolar o conteúdo do livro da aplicação principal.
+- **Protocolo lib-media://:** O host `local` e `archive` são as únicas formas permitidas de acessar arquivos de mídia do disco. O uso de `file://` é terminantemente proibido.
+
+---
+
 ## TypeScript
 
 - Sem `any`. Se o tipo não é conhecido, use `unknown` e faça narrowing explícito.

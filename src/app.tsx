@@ -44,7 +44,7 @@ const App = () => {
             />
             <Route path="local-upload/serie" element={<Upload />} />
             <Route path="Manga/:manga_name/:manga_id" element={<MangaPage />} />
-            <Route path="Livro/:book_name/:book_id" element={<BookPage />} />
+            <Route path="Books/:book_name/:book_id" element={<BookPage />} />
             <Route
               path="Quadrinho/:comic_name/:comic_id"
               element={<ComicPage />}

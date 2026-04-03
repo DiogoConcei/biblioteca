@@ -1,6 +1,6 @@
 import { IpcMain } from 'electron';
 
-import storageManager from '../services/StorageManager';
+import StorageManagerInstance from '../services/StorageManager';
 import FileManager from '../services/FileManager';
 
 export default function userHandlers(ipcMain: IpcMain) {
@@ -10,28 +10,33 @@ export default function userHandlers(ipcMain: IpcMain) {
     'chapter:return-page',
     async (_event, dataPath: string, serieName?: string) => {
       try {
-        const sDPath = serieName
-          ? await fileManager.getDataPath(serieName)
-          : dataPath;
+        // Prioriza o dataPath direto, pois é o identificador mais confiável.
+        // Só tenta buscar pelo nome se o dataPath original não estiver disponível.
+        let sDPath = dataPath;
+        if (!sDPath && serieName) {
+          sDPath = (await fileManager.getDataPath(serieName)) || '';
+        }
+
+        if (!sDPath) {
+          return { success: false, error: 'Caminho de dados não fornecido' };
+        }
 
         const [literatureForm, serieData] = await Promise.all([
           fileManager.foundLiteratureForm(sDPath),
-          storageManager.readSerieData(sDPath),
+          StorageManagerInstance.readSerieData(sDPath),
         ]);
 
         if (!serieData) {
-          return { success: false, error: 'Falha em recuperar dados' };
+          return { success: false, error: 'Falha em recuperar dados da série' };
         }
 
         let serieLink: string | null = null;
 
+        console.log(literatureForm);
+
         if (literatureForm === 'childSeries') {
           serieLink = `/TieIn/${encodeURIComponent(serieData.name)}`;
-        } else if (
-          ['Comics', 'Mangas', 'Livro', 'Quadrinho', 'Manga'].includes(
-            literatureForm,
-          )
-        ) {
+        } else if (['Comics', 'Mangas', 'Books'].includes(literatureForm)) {
           serieLink = `/${serieData.literatureForm}/${serieData.name}/${serieData.id}`;
         }
 

@@ -3,29 +3,29 @@
 ## 🚀 Performance e Otimização
 
 ### 1. Latência no Protocolo 'archive' (7-Zip CLI)
-**Problema:** Atualmente, o host `archive` do `MediaServer` utiliza o executável do 7-Zip para extrair arquivos individuais (HTML, imagens) para uma pasta de cache no disco antes de servi-los ao visualizador. Isso causa latência perceptível em arquivos grandes e gera I/O desnecessário.
-**Ação Necessária:** Implementar leitura direta via buffer em memória (stream) para arquivos ZIP/EPUB/CBZ, eliminando a dependência do executável externo para leitura de arquivos pequenos.
+**Problema:** Atualmente, o host `archive` do `MediaServer` utiliza o executável do 7-Zip para extrair arquivos para uma pasta de cache. Embora funcione com links relativos agora, gera I/O no disco.
+**Ação Necessária:** Migrar para leitura via buffer em memória (stream) para eliminar arquivos temporários.
 
-### 2. Memória do E-Reader (PDF.js)
-**Problema:** A renderização vetorial de PDFs grandes diretamente no frontend pode consumir quantidades significativas de RAM em capítulos com muitas páginas complexas.
-**Status:** Monitorando. Caso necessário, implementaremos um sistema de "virtualização de páginas" que descarrega do DOM as páginas que estão longe do scroll do usuário.
-
----
-
-## 📖 Experiência de Leitura (E-Reader)
-
-### 3. Customização de EPUB
-**Problema:** O `BookViewer` atual utiliza injeção de CSS estático para livros. O usuário ainda não consegue alterar o tamanho da fonte, o espaçamento entre linhas ou alternar entre temas (Ex: Modo Noite, Sépia, Alto Contraste) em tempo real.
-**Ação Necessária:** Criar um menu de configurações de tipografia específico para o `BookViewer`.
-
-### 4. Navegação por CFI (EPUB)
-**Problema:** O progresso de leitura em EPUBs é baseado no índice do arquivo HTML. Se o usuário estiver no meio de um capítulo longo e fechar o app, ele retornará para o início do capítulo, não para a frase exata onde parou.
-**Ação Necessária:** Implementar suporte a **CFI (Canonical Fragment Identifier)** para salvar a posição exata de leitura dentro do HTML.
+### 2. Memória em PDFs Extensos
+**Problema:** A renderização vetorial pode pesar em arquivos com centenas de páginas caso não haja virtualização.
+**Status:** Monitorando.
 
 ---
 
-## 🌐 Conectividade e Segurança
+## 📖 E-Reader (Livros)
 
-### 5. Segurança do MediaServer (LAN)
-**Problema:** O servidor de mídia para compartilhamento em rede local não possui autenticação ou token de sessão.
-**Ação Necessária:** Implementar um Handshake inicial com Token efêmero para garantir que apenas dispositivos autorizados acessem os arquivos da biblioteca.
+### 3. Falta de Customização de Texto (EPUB)
+**Problema:** O `BookViewer` ainda não permite trocar fontes ou cores de fundo dinamicamente.
+**Status:** Planejado para a próxima fase.
+
+### 4. Navegação por Ancoragem (EPUB)
+**Problema:** O progresso é salvo por arquivo de capítulo. Se o capítulo for muito longo, o usuário volta para o topo dele ao reiniciar.
+**Ação Necessária:** Implementar salvamento via CFI (Canonical Fragment Identifier).
+
+---
+
+## 🌐 Segurança
+
+### 5. MediaServer LAN sem Auth
+**Problema:** Endpoints de rede local estão abertos.
+**Status:** Necessário implementar Simple Token Auth.

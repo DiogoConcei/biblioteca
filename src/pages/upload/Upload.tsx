@@ -11,7 +11,6 @@ import StatusField from '../../components/Form/Fields/StatusField/StatusField';
 import CollectionsField from '../../components/Form/Fields/CollectionsField/CollectionsField';
 import TagsField from '../../components/Form/Fields/TagsField/TagsField';
 import Loading from '../../components/Loading/Loading';
-
 import { SerieData, SerieForm } from '../../types/series.interfaces';
 import styles from './Upload.module.scss';
 
@@ -46,7 +45,7 @@ export default function Upload() {
     initialSeriesFromLocation.length > 0
       ? initialSeriesFromLocation.map((s) => ({
           ...emptyForm,
-          ...(s as any),
+          ...(s as unknown as SerieForm),
         }))
       : [{ ...emptyForm }],
   );
@@ -95,11 +94,10 @@ export default function Upload() {
 
   const handlePrev = () => {
     saveCurrentForm();
-    const values = getValues();
     setCurrentIndex((i) => Math.max(i - 1, 0));
   };
 
-  const onSubmit = async (data: SerieForm) => {
+  const onSubmit = async () => {
     saveCurrentForm();
 
     // validação final: todas as séries precisam estar completas

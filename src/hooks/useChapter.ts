@@ -48,12 +48,9 @@ export default function useChapter(
 
         if (Array.isArray(content.resources)) {
           if (content.resources.length > 0) {
-            if (typeof content.resources[0] === 'string') {
-              setPages(content.resources as string[]);
-            } else {
-              // TODO: Lidar com ChapterResource[] para EPUB
-              setPages([]);
-            }
+            // Armazena os recursos independentemente de serem strings ou objetos
+            // O componente visualizador fará o cast necessário
+            setPages(content.resources as string[]);
           } else {
             setPages([]);
           }

@@ -1,4 +1,5 @@
 import path from 'path';
+
 import { MediaAdapter } from '../types/media.interfaces';
 import PdfAdapter from './adapters/PdfAdapter';
 import ArchiveAdapter from './adapters/ArchiveAdapter';

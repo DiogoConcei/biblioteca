@@ -1,6 +1,6 @@
-import useSystem from '@/hooks/useSystem';
 import { useState } from 'react';
 
+import useSystem from '@/hooks/useSystem';
 import { AppSettings } from '@/types/settings.interfaces';
 
 import styles from './AppearanceSettings.module.scss';

@@ -18,7 +18,6 @@ import { visualizerProps } from '../../types/components.interfaces';
 import useSettingsStore from '../../store/useSettingsStore';
 import useNavigation from '../../hooks/useNavigation';
 import CustomSelect from '../CustomSelect/CustomSelect';
-
 import styles from './ViewerMenu.module.scss';
 
 type MenuTab = 'navigation' | 'reading' | 'filters';
@@ -127,7 +126,7 @@ export default function ViewerMenu({ chapter, setScale }: visualizerProps) {
                   <label>Efeito de Transição</label>
                   <CustomSelect 
                     value={viewerSettings.transitionEffect}
-                    onChange={(val) => handleUpdateViewer('transitionEffect', val as any)}
+                    onChange={(val) => handleUpdateViewer('transitionEffect', val as string)}
                     options={[
                       { value: 'none', label: 'Nenhum' },
                       { value: 'fade', label: 'Fade' },

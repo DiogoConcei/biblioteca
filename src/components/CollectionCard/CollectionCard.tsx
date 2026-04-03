@@ -1,5 +1,7 @@
 import { Star, History } from 'lucide-react';
+
 import { Collection } from '@/types/collections.interfaces';
+
 import styles from './CollectionCard.module.scss';
 
 interface CollectionCardProps {

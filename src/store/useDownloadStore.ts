@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+
 import { DownloadTask } from '../../electron/types/download.interfaces';
 
 interface DownloadState {

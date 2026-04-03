@@ -4,7 +4,6 @@ import { EyeOff, Eye, ChevronLeft, ChevronRight, Trash } from 'lucide-react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 
 import useSerie from '../../hooks/useSerie';
-import useCollection from '../../hooks/useCollection';
 import useSerieStore from '../../store/useSerieStore';
 import { useUIStore } from '../../store/useUIStore';
 import Favorite from '../../components/FavoriteButton/Favorite';
@@ -34,11 +33,9 @@ export default function EditSerie() {
   }>();
   const serie_name = decodeURIComponent(rawSerieName ?? '');
   const navigate = useNavigate();
-  if (!rawSerieName || !lForm) {
-    return null;
-  }
 
-  useSerie(serie_name, lForm);
+  // Hooks devem ser chamados incondicionalmente no topo
+  useSerie(serie_name, lForm ?? '');
 
   const serie = useSerieStore((state) => state.serie) as Literatures;
   const chapters = useSerieStore((state) => state.chapters);
@@ -47,7 +44,7 @@ export default function EditSerie() {
   const setLoading = useUIStore((state) => state.setLoading);
   const error = useUIStore((state) => state.error);
   const setError = useUIStore((state) => state.setError);
-  const [oldChapters, setOldChapters] = useState<LiteratureChapter[]>([]);
+  const [, setOldChapters] = useState<LiteratureChapter[]>([]);
   const { handlePage, pageNumbers, totalPages, currentItems, currentPage } =
     usePagination();
 
@@ -101,7 +98,13 @@ export default function EditSerie() {
         }
       : undefined,
   });
+
   const chaptersRead = watch('chaptersRead');
+
+  // Retorno antecipado após todos os hooks
+  if (!rawSerieName || !lForm) {
+    return null;
+  }
 
   const isRead = async (e: React.MouseEvent, chapter: LiteratureChapter) => {
     e.stopPropagation();
@@ -210,7 +213,7 @@ export default function EditSerie() {
                 <h2>Capítulos</h2>
 
                 <ul className={styles.chaptersList}>
-                  {currentItems.map((chapter, idx) => (
+                  {currentItems.map((chapter) => (
                     <div key={chapter.id}>
                       <li
                         className={`${styles.chapter} ${
@@ -303,13 +306,6 @@ export default function EditSerie() {
             </div>
           </div>
           <div className={styles.checkInfo}>
-            {/* Conversão entre tipos apenas no futuro */}
-            {/* <LiteratureField
-              name="literatureForm"
-              register={register}
-              error={errors.literatureForm}
-            /> */}
-
             <BackupField
               register={register('metadata.autoBackup', { required: true })}
               error={errors.metadata?.autoBackup}

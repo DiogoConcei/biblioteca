@@ -1,5 +1,6 @@
-import styles from './Loading.module.scss';
 import { Radius } from 'lucide-react';
+
+import styles from './Loading.module.scss';
 
 export default function Loading() {
   return (

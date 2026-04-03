@@ -1,7 +1,3 @@
-import useDownload from '../../hooks/useDownload';
-import useAction from '../../hooks/useAction';
-import useSerieStore from '../../store/useSerieStore';
-import usePagination from '../../hooks/usePagination';
 import {
   ArrowDownUp,
   Upload,
@@ -15,6 +11,10 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import useDownload from '../../hooks/useDownload';
+import useAction from '../../hooks/useAction';
+import useSerieStore from '../../store/useSerieStore';
+import usePagination from '../../hooks/usePagination';
 import UploadPopUp from '../UploadPopUp/UploadPopUp';
 import styles from './ListView.module.scss';
 

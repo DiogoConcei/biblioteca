@@ -62,7 +62,7 @@ export default function uploadHandlers(ipcMain: IpcMain) {
           case 'Quadrinho':
             await comicManager.createSerie(serieData, tieInManager);
             break;
-          case 'Livro':
+          case 'Books':
             await bookManager.createSerie(serieData);
             break;
           default:
@@ -108,7 +108,7 @@ export default function uploadHandlers(ipcMain: IpcMain) {
             case 'Quadrinho':
               await comicManager.createSerie(s, tieInManager);
               break;
-            case 'Livro':
+            case 'Books':
               await bookManager.createSerie(s);
               break;
             default:

@@ -1,46 +1,48 @@
 # TASKS.md
 
 ## Em progresso
-- [ ] **[FEAT] E-Reader Proprietário (Fase 2: Renderer)**
-  - Implementar `BookViewer.tsx` para renderização de HTML/EPUB.
-  - Criar sistema de injeção de CSS para Temas (Dark, Sepia).
-  - Implementar navegação por capítulos (TOC).
-- [ ] **[FEAT] Automação de Metadados no Upload**
-  - Integrar `MetadataScraperService` no fluxo de `UploadPopUp.tsx`.
+
+- [ ] **[FEAT] E-Reader Proprietário (Fase 3: Customização)**
+  - Implementar menu de tipografia (Fonte, Tamanho, Espaçamento).
+  - Implementar Temas dinâmicos (Noite, Sépia, Dia) via Injeção de CSS.
+  - Suporte a CFI para salvamento de posição exata no EPUB.
+- [ ] **[OPTIMIZE] Zero-Disk I/O no MediaServer**
+  - Migrar extração do 7zip para leitura direta de buffer em memória para arquivos pequenos.
 
 ## A fazer
-- [ ] **[FEAT] Suporte Nativo a PDF (Zero-Extraction)**
-  - Migrar para renderização sob demanda via buffer em memória no `PdfAdapter`.
-- [ ] **[FEAT] Servidor de Mídia (LAN Sharing)**
-  - Finalizar `MediaServer.ts`.
-  - **SEGURANÇA:** Implementar Simple Token Auth para acesso via rede local.
+
+- [ ] **[FEAT] Automação de Metadados (MetadataScraperService)**
+- [ ] **[FEAT] Servidor de Mídia (LAN Sharing com Auth)**
 
 ## Débitos Técnicos & Bugs
-- [ ] **[OPTIMIZE] Stream de Memória no MediaServer**
-  - Substituir extração temporária do 7zip por leitura de buffer direto para CBZ/EPUB.
 
-## Bloqueado
-- [ ] **[FEAT] Sincronização Cloud (Google Drive/OneDrive)**
+- [ ] **[UI] Virtualização de Páginas no PDF** (Para livros > 1000 páginas).
 
 ## Feito (esta sessão)
-- [x] **[REFACT] StorageManager Robusto**
-  - Implementada Fila Global de Escrita (Serialized Writes).
-  - Implementado Cache Write-Through sincronizado.
-  - Implementada Escrita Atômica com Temporary Swap (.tmp).
-  - Padrão Singleton garantido em todo o projeto.
-- [x] **[FEAT] Melhorias no Viewer**
-  - Adicionado Modo Webtoon com Intersection Observer.
-  - Adicionado Modo Double Page com pares fixos de páginas.
-  - Implementadas Transições (Fade/Slide).
-- [x] **[FEAT] Pós-processamento de Imagem (Sharp)**
-  - Suporte a filtros (Brilho, Contraste, Nitidez, P&B) via query params no protocolo `lib-media://`.
-- [x] **[ARCH] Base para Múltiplos Formatos**
-  - Criada interface `MediaAdapter` e `MediaFactory`.
-  - Implementados `PdfAdapter`, `ArchiveAdapter` e o esqueleto do `EpubAdapter`.
-  - `MediaServer` agora suporta host `archive` para arquivos internos.
-- [x] **[REFACT] Viewer Menu**
-  - Organizado em abas, integrado com Settings Store e lógica movida para hooks.
-- [x] **[STYLING] Padronização de Status e Formatos via Enums.**
+
+- [x] **[SECURITY] Validação de Caminhos no MediaServer**
+  - Implementação de `isPathSafe` para evitar leitura de arquivos arbitrários via `lib-media://`.
+- [x] **[STABILITY] Gerenciamento de Memória no PDF Reader**
+  - Implementação de `pdfDoc.destroy()` no `BookViewer` para evitar leaks.
+- [x] **[SECURITY] Sandboxing do E-Reader**
+  - Adicionado `sandbox` ao iframe de EPUB e diretrizes no `GEMINI.md`.
+- [x] **[REFACT] StorageManager Singleton & Atomic**
+  - Fila global de escrita e cache Write-Through sincronizado.
+- [x] **[FEAT] Motor de E-Reader (PDF & EPUB)**
+  - Renderização vetorial de PDF no frontend.
+  - Parsing real de Manifesto EPUB (.opf) e Spine.
+  - Suporte a links relativos dentro de livros via protocolo `archive`.
+- [x] **[FEAT] BookPage Dedicada**
+  - Nova interface imersiva para literatura com Hero Background e Glassmorphism.
+- [x] **[FEAT] Melhorias no Viewer de Imagens**
+  - Modo Webtoon com Intersection Observer.
+  - Modo Double Page com pares fixos.
+  - Filtros Sharp (Brilho, Contraste, Nitidez, P&B) em tempo real.
+- [x] **[ARCH] MediaAdapter Pattern**
+  - Desacoplamento total via `MediaFactory`, `PdfAdapter`, `ArchiveAdapter` e `EpubAdapter`.
+- [x] **[FIX] Estabilidade e Segurança**
+  - Polyfills para `URL.parse`, correção de CSP para Workers e fim das dependências circulares.
 
 ## Contexto da próxima sessão
-Base de dados e arquitetura de mídia estabilizadas. O backend agora consegue entregar conteúdos de diversos formatos via protocolo virtual. Próximo grande passo: Implementação da interface do E-Reader para livros.
+
+O sistema agora é um verdadeiro leitor híbrido (Quadrinhos + Livros). O backend entrega capítulos reais de EPUB e o frontend renderiza PDF nativamente. Próximo foco: Refinar a experiência do E-Reader com controles de texto e temas.

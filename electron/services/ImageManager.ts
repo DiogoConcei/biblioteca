@@ -6,10 +6,11 @@ import fse from 'fs-extra';
 import LibrarySystem from './abstract/LibrarySystem';
 import FileManager from './FileManager';
 import { ComicEdition } from '../types/comic.interfaces.ts';
+import type { storageManager } from './StorageManager';
 
 export default class ImageManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
-  private _storageManager: any = null;
+  private _storageManager: typeof storageManager | null = null;
 
   private async getStorageManager() {
     if (!this._storageManager) {

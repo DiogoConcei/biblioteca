@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, protocol, net } from 'electron';
+import { app, BrowserWindow, ipcMain, protocol } from 'electron';
 import { fileURLToPath } from 'node:url';
 import path from 'path';
 import fse from 'fs-extra';
@@ -10,7 +10,10 @@ import MediaServer from './services/MediaServer';
 
 // Polyfill para URL.parse (ES2024), necessário para algumas versões do Node.js
 if (typeof URL.parse !== 'function') {
-  (URL as any).parse = (url: string, base?: string) => {
+  (URL as unknown as { parse: (url: string, base?: string) => URL | null }).parse = (
+    url: string,
+    base?: string,
+  ) => {
     try {
       return new URL(url, base);
     } catch {
@@ -34,7 +37,8 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 declare global {
-  const storageFolder: string;
+  // eslint-disable-next-line no-var
+  var storageFolder: string;
 }
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -51,11 +55,15 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, 'public')
   : RENDERER_DIST;
 
+let win: BrowserWindow | null;
+
 export function getMainWindow(): BrowserWindow | null {
   return win;
 }
 
-let win: BrowserWindow | null;
+export function getDownloadManager(): DownloadManager | null {
+  return downloadManager;
+}
 
 async function ensureAppFolders() {
   const userDataPath = app.getPath('userData');
@@ -79,7 +87,7 @@ async function ensureAppFolders() {
     path.join(storageFolder, 'data store', 'images files', 'dinamic images'),
   ];
 
-  await Promise.all(foldersToCreate.map(folder => fse.mkdirp(folder)));
+  await Promise.all(foldersToCreate.map((folder) => fse.mkdirp(folder)));
 
   global.storageFolder = storageFolder;
 
@@ -90,43 +98,47 @@ async function ensureAppFolders() {
   const fileWrites = [];
 
   if (!fse.existsSync(configJsonPath)) {
-    fileWrites.push(fse.writeJson(
-      configJsonPath,
-      {
-        settings: {
-          reading_mode: 'single_page',
-          zoom: 'fit_width',
-          ligth_mode: true,
-          full_screen: true,
+    fileWrites.push(
+      fse.writeJson(
+        configJsonPath,
+        {
+          settings: {
+            reading_mode: 'single_page',
+            zoom: 'fit_width',
+            ligth_mode: true,
+            full_screen: true,
+          },
+          metadata: { global_id: 0 },
         },
-        metadata: { global_id: 0 },
-      },
-      { spaces: 2 },
-    ));
+        { spaces: 2 },
+      ),
+    );
   }
 
   if (!fse.existsSync(collectionsJsonPath)) {
-    fileWrites.push(fse.writeJson(
-      collectionsJsonPath,
-      [
-        {
-          name: 'Favoritos',
-          description: 'Minhas séries favoritas.',
-          coverImage: '',
-          series: [],
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          name: 'Recentes',
-          description: 'Séries lidas recentemente',
-          coverImage: '',
-          series: [],
-          comments: [],
-          updatedAt: new Date().toISOString(),
-        },
-      ],
-      { spaces: 2 },
-    ));
+    fileWrites.push(
+      fse.writeJson(
+        collectionsJsonPath,
+        [
+          {
+            name: 'Favoritos',
+            description: 'Minhas séries favoritas.',
+            coverImage: '',
+            series: [],
+            updatedAt: new Date().toISOString(),
+          },
+          {
+            name: 'Recentes',
+            description: 'Séries lidas recentemente',
+            coverImage: '',
+            series: [],
+            comments: [],
+            updatedAt: new Date().toISOString(),
+          },
+        ],
+        { spaces: 2 },
+      ),
+    );
   }
 
   await Promise.all(fileWrites);
@@ -208,12 +220,12 @@ app.on('activate', () => {
 
 app.whenReady().then(async () => {
   // Inicializamos as pastas vitais primeiro (é rápido com Promise.all)
-  await ensureAppFolders().catch(err => console.error('Erro folders:', err));
-  
+  await ensureAppFolders().catch((err) => console.error('Erro folders:', err));
+
   // Registros síncronos de handlers e protocolos
   mediaServer.register();
   registerHandlers();
-  
+
   createWindow();
 });
 

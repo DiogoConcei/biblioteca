@@ -22,7 +22,7 @@ export default function MangaPage() {
   const serie_name = decodeURIComponent(rawSerieName ?? '');
   
   // Detecta o tipo de literatura baseado na rota
-  const literatureForm = pathname.startsWith('/Livro') ? 'Livro' : 'Manga';
+  const literatureForm = pathname.startsWith('/Books') ? 'Books' : 'Manga';
   useSerie(serie_name, literatureForm);
 
   const serie = useSerieStore((state) => state.serie) as Manga;

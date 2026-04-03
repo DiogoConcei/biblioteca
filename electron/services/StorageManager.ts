@@ -40,7 +40,7 @@ class StorageManager extends LibrarySystem {
   /**
    * Realiza uma escrita atômica usando um arquivo temporário.
    */
-  private async atomicWrite(filePath: string, data: any): Promise<void> {
+  private async atomicWrite(filePath: string, data: unknown): Promise<void> {
     const tmpPath = `${filePath}.tmp`;
     try {
       await fse.ensureDir(path.dirname(filePath));
@@ -141,7 +141,7 @@ class StorageManager extends LibrarySystem {
    * Alias para ler TieIn com cache.
    */
   async readTieInData(dataPath: string): Promise<TieIn | null> {
-    return this.readSerieData<any>(dataPath);
+    return this.readSerieData<TieIn>(dataPath);
   }
 
   /**
@@ -192,7 +192,7 @@ class StorageManager extends LibrarySystem {
           case 'Quadrinho':
             targetFolder = this.comicsData;
             break;
-          case 'Livro':
+          case 'Books':
             targetFolder = this.booksData;
             break;
           case 'childSeries':
@@ -212,7 +212,7 @@ class StorageManager extends LibrarySystem {
           const files = await this.fileManager.foundFiles(folder);
           const found = files.find((f) => path.parse(f).name === serieName);
           if (found) {
-            return await this.readSerieData<any>(found);
+            return await this.readSerieData<T>(found);
           }
         }
         throw new Error(`Série não encontrada: ${serieName}`);
@@ -227,7 +227,7 @@ class StorageManager extends LibrarySystem {
         throw new Error(`Nenhuma série encontrada com o nome: ${serieName} em ${type}`);
       }
 
-      return await this.readSerieData<any>(serieDataPath);
+      return await this.readSerieData<T>(serieDataPath);
     } catch (e) {
       console.error(`Erro ao selecionar dados da série (${serieName}):`, e);
       throw e;
@@ -289,7 +289,7 @@ class StorageManager extends LibrarySystem {
 
       const changedFields = Object.fromEntries(
         (Object.keys(data) as (keyof SerieEditForm)[])
-          .filter((k) => data[k] !== (oldData as any)[k])
+          .filter((k) => data[k] !== (oldData as Record<string, unknown>)[k])
           .map((k) => [k, data[k]]),
       ) as Partial<SerieEditForm>;
 

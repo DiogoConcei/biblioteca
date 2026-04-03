@@ -13,8 +13,10 @@ export default function useNavigation(currentChapter: ChapterView) {
   const setError = useUIStore((state) => state.setError);
   const { downloadInReading } = useDownload();
   const navigate = useNavigate();
-  
-  const readingMode = useSettingsStore((state) => state.settings.viewer.readingMode);
+
+  const readingMode = useSettingsStore(
+    (state) => state.settings.viewer.readingMode,
+  );
   const step = readingMode === 'double' ? 2 : 1;
 
   const saveProgress = async () => {
@@ -144,10 +146,19 @@ export default function useNavigation(currentChapter: ChapterView) {
         serie.dataPath,
         currentChapter.serieName,
       );
+
+      console.log(toSeriePage);
       const seriePage = toSeriePage.data;
       if (seriePage) navigate(seriePage);
     }
   };
 
-  return { nextPage, prevPage, nextChapter, prevChapter, goHome, goToSeriePage };
+  return {
+    nextPage,
+    prevPage,
+    nextChapter,
+    prevChapter,
+    goHome,
+    goToSeriePage,
+  };
 }

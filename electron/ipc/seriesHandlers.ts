@@ -70,7 +70,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     async (
       _event,
       serieName: string,
-      literatureForm: 'Manga' | 'Quadrinho' | 'Livro' | 'childSeries',
+      literatureForm: 'Manga' | 'Quadrinho' | 'Books' | 'childSeries',
     ) => {
       try {
         const data = await storageManager.selectSerieData<Literatures | TieIn>(

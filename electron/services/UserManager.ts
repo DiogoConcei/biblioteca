@@ -138,7 +138,7 @@ export default class UserManager extends FileSystem {
     lastPageRead: number,
     isRead: boolean,
   ): string {
-    const prefix = serie.literatureForm === 'Livro' ? '/book' : '';
+    const prefix = serie.literatureForm === 'Books' ? '/book' : '';
     return `${prefix}/${encodeURIComponent(
       serie.name,
     )}/${serie.id}/${encodeURIComponent(

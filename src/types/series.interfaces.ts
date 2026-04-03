@@ -1,5 +1,6 @@
 import { Comic } from 'electron/types/comic.interfaces';
 import { Manga } from 'electron/types/manga.interfaces';
+
 import { LiteratureChapter } from '../../electron/types/electron-auxiliar.interfaces';
 
 export enum ReadingStatus {
@@ -12,7 +13,7 @@ export enum ReadingStatus {
 export enum LiteratureForm {
   MANGA = 'Manga',
   COMIC = 'Quadrinho',
-  BOOK = 'Livro',
+  BOOK = 'Books',
   NONE = '',
 }
 

@@ -27,7 +27,7 @@ export default function UploadPopUp({
       return;
     }
 
-    const filesPath = Array.from(items).map((file: any) => file.path);
+    const filesPath = Array.from(items).map((file) => (file as File & { path?: string }).path || '');
 
     const response = await window.electronAPI.upload.uploadChapter(
       filesPath,
@@ -40,7 +40,9 @@ export default function UploadPopUp({
       return;
     }
 
-    const chapters = response.data.sort((a: any, b: any) => a.id - b.id);
+    const chapters = [...response.data].sort(
+      (a, b) => (a.id as number) - (b.id as number),
+    );
 
     setChapters(chapters);
     setIsOpen(false);

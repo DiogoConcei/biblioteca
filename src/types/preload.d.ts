@@ -1,6 +1,7 @@
 export {};
 
 import { ComicTieIn, TieIn } from 'electron/types/comic.interfaces.js';
+import { DownloadTask } from 'electron/types/download.interfaces.js';
 
 import {
   Collection,
@@ -22,15 +23,11 @@ import {
 declare global {
   interface Window {
     electronAPI: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      on: (channel: string, listener: (...args: any[]) => void) => void;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      off: (channel: string, listener: (...args: any[]) => void) => void;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      send: (channel: string, ...args: any[]) => void;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      invoke: (channel: string, ...args: any[]) => Promise<any>;
-      emit: (channel: string, ...args: any[]) => void;
+      on: (channel: string, listener: (event: unknown, ...args: unknown[]) => void) => void;
+      off: (channel: string, listener: (event: unknown, ...args: unknown[]) => void) => void;
+      send: (channel: string, ...args: unknown[]) => void;
+      invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
+      emit: (channel: string, ...args: unknown[]) => void;
 
       windowAction: {
         minimize: () => Promise<boolean>;
@@ -270,8 +267,8 @@ declare global {
           chapter_id: number,
         ) => Promise<boolean>;
 
-        getTasks: () => Promise<any[]>;
-        addTask: (taskData: any) => Promise<any>;
+        getTasks: () => Promise<DownloadTask[]>;
+        addTask: (taskData: Partial<DownloadTask>) => Promise<DownloadTask>;
         pauseTask: (taskId: string) => Promise<boolean>;
         resumeTask: (taskId: string) => Promise<boolean>;
         cancelTask: (taskId: string) => Promise<boolean>;

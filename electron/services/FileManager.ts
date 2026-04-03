@@ -429,8 +429,9 @@ export default class FileManager extends LibrarySystem {
 
         try {
           await fse.move(oldChapterPath, newChapterRoot, { overwrite: true });
-        } catch (err: any) {
-          if (err.code !== 'ENOENT') {
+        } catch (err: unknown) {
+          const error = err as { code?: string };
+          if (error.code !== 'ENOENT') {
             console.warn(`Falha ao mover capítulo ${chapter.name}:`, err);
           }
         }

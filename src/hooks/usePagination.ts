@@ -1,5 +1,6 @@
-import useSerieStore from '../store/useSerieStore';
 import { useState } from 'react';
+
+import useSerieStore from '../store/useSerieStore';
 
 export default function usePagination() {
   const chapters = useSerieStore((s) => s.chapters);
