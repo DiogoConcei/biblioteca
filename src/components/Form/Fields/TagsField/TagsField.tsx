@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Tag, XIcon } from 'lucide-react';
+import { Tag } from 'lucide-react';
 import { Controller, FieldValues } from 'react-hook-form';
 
 import { GenericControllerProps } from '../../../../../electron/types/electron-auxiliar.interfaces';

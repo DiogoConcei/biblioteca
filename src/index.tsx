@@ -5,7 +5,7 @@ import App from "./app";
 // Polyfill para URL.parse (ES2024), necessário para algumas versões do Electron/Chromium
 // e bibliotecas como pdfjs-dist v5+.
 if (typeof URL.parse !== 'function') {
-  (URL as any).parse = (url: string, base?: string) => {
+  (URL as unknown as { parse: (url: string, base?: string) => URL | null }).parse = (url: string, base?: string) => {
     try {
       return new URL(url, base);
     } catch {

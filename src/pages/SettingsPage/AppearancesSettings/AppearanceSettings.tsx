@@ -10,11 +10,29 @@ const defaultSettings: AppSettings = {
   backupSchedule: { frequency: 'weekly', time: '03:00' },
   backupRetention: 10,
   uploadBackupsToDrive: false,
-  themeMode: 'system',
+  themeMode: 'dark',
   accentColor: '#8963ba',
   compactMode: false,
   sendLogsWithBugReport: false,
   driveConnected: false,
+  viewer: {
+    readingMode: 'single',
+    brightness: 1.0,
+    contrast: 1.0,
+    grayscale: false,
+    sharpness: 0,
+    showPageNumbers: true,
+    wideScreen: false,
+    transitionEffect: 'none',
+    epub: {
+      theme: 'dark',
+      fontSize: 18,
+      fontFamily: 'serif',
+      lineHeight: 1.5,
+      margin: 10,
+    },
+
+  },
 };
 
 export default function AppearanceSettings() {

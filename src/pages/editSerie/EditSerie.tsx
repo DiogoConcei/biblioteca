@@ -17,7 +17,11 @@ import CollectionsField from '../../components/Form/Fields/CollectionsField/Coll
 import TagsField from '../../components/Form/Fields/TagsField/TagsField';
 import Loading from '../../components/Loading/Loading';
 import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
-import { SerieEditForm } from '../../types/series.interfaces';
+import {
+  LiteratureForm,
+  ReadingStatus,
+  SerieEditForm,
+} from '../../types/series.interfaces';
 import {
   Literatures,
   LiteratureChapter,
@@ -75,13 +79,13 @@ export default function EditSerie() {
           chapters: serie.chapters as LiteratureChapter[],
           totalChapters: serie.totalChapters,
           chaptersRead: serie.chaptersRead,
-          literatureForm: serie.literatureForm,
+          literatureForm: serie.literatureForm as LiteratureForm,
           readingData: {
             lastChapterId: serie.readingData.lastChapterId,
             lastReadAt: serie.readingData.lastReadAt,
           },
           metadata: {
-            status: serie.metadata.status,
+            status: serie.metadata.status as ReadingStatus,
             collections: serie.metadata.collections || [],
             recommendedBy: serie.metadata.recommendedBy,
             originalOwner: serie.metadata.originalOwner,

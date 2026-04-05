@@ -32,7 +32,7 @@ export default function CollectionView({
 }: FocusedCollectionViewProps) {
   const [showAll, setShowAll] = useState(false);
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [fallbackDescriptions, setFallbackDescriptions] = useState<
+  const [fallbackDescriptions] = useState<
     Record<number, string>
   >({});
   const titleRef = useRef<HTMLHeadingElement | null>(null);

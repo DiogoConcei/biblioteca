@@ -3,6 +3,17 @@ export type ThemeMode = 'light' | 'dark' | 'system';
 export type ReadingMode = 'single' | 'double' | 'webtoon';
 export type TransitionEffect = 'none' | 'fade' | 'slide';
 
+export type EpubTheme = 'light' | 'dark' | 'sepia';
+export type EpubFontFamily = 'serif' | 'sans-serif' | 'monospace';
+
+export interface EpubSettings {
+  theme: EpubTheme;
+  fontSize: number;
+  fontFamily: EpubFontFamily;
+  lineHeight: number;
+  margin: number;
+}
+
 export interface ViewerSettings {
   readingMode: ReadingMode;
   brightness: number;
@@ -12,6 +23,7 @@ export interface ViewerSettings {
   showPageNumbers: boolean;
   wideScreen: boolean;
   transitionEffect: TransitionEffect;
+  epub: EpubSettings;
 }
 
 export interface ComicCoverRegenerationProgress {

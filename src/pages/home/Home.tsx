@@ -17,7 +17,6 @@ export default function Home() {
   const [searchInput, setSearchInput] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
   const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
-  const [hoveredCover, setHoveredCover] = useState<string | null>(null);
   const [selectedLiteratureForm, setSelectedLiteratureForm] = useState<
     LiteratureForm | ''
   >('');
@@ -159,8 +158,6 @@ export default function Home() {
               onClick={clearSerie}
               key={serie.id}
               className={styles.serieLink}
-              onMouseEnter={() => setHoveredCover(serie.coverImage)}
-              onMouseLeave={() => setHoveredCover(null)}
             >
               <figure className={`${styles.coverCard} ${!loadedImages[serie.id] ? styles.skeleton : ''}`}>
                 <img 

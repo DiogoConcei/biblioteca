@@ -5,7 +5,7 @@ import {
   graphChapter,
   graphSerie,
 } from '../../types/electron-auxiliar.interfaces';
-import StorageManager from '../StorageManager';
+import type { StorageManager } from '../StorageManager';
 import ImageManager from '../ImageManager';
 import LibrarySystem from './LibrarySystem';
 import FileManager from '../FileManager';

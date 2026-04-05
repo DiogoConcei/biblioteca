@@ -12,7 +12,7 @@ import {
 import FileManager from './FileManager';
 import LibrarySystem from './abstract/LibrarySystem';
 
-class StorageManager extends LibrarySystem {
+export class StorageManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
   
   // Cache de visualização (Home)
@@ -358,5 +358,5 @@ class StorageManager extends LibrarySystem {
 }
 
 // Singleton: Instância única exportada
-export const storageManager = new StorageManager();
+const storageManager = new StorageManager();
 export default storageManager;

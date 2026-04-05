@@ -1,4 +1,8 @@
 import { graphChapter, graphSerie } from './electron-auxiliar.interfaces';
+import {
+  LiteratureForm,
+  ReadingStatus,
+} from '../../src/types/series.interfaces';
 
 export interface Book extends graphSerie<BookChapter> {
   name: string;
@@ -13,13 +17,13 @@ export interface Book extends graphSerie<BookChapter> {
   chapters: BookChapter[];
   totalChapters: number;
   chaptersRead: number;
-  literatureForm: 'Books';
+  literatureForm: LiteratureForm.BOOK;
   readingData: {
     lastChapterId: number;
     lastReadAt: string;
   };
   metadata: {
-    status: 'Em andamento' | 'Completo' | 'Pendente' | '';
+    status: ReadingStatus;
     collections: string[];
     recommendedBy?: string;
     originalOwner?: string;

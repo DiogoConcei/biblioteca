@@ -6,6 +6,7 @@ import {
   SerieInCollection,
 } from '../types/collections.interfaces';
 import { Literatures } from '../../electron/types/electron-auxiliar.interfaces';
+import { ReadingStatus } from '../types/series.interfaces';
 
 interface AddToCollectionInput {
   id: number;
@@ -154,7 +155,7 @@ const makeOptimisticSerie = (
     coverImage: input.coverImage,
     archivesPath: input.dataPath,
     totalChapters: input.totalChapters,
-    status: '',
+    status: ReadingStatus.NONE,
     recommendedBy: '',
     originalOwner: '',
     rating: 0,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 import { useUIStore } from '../store/useUIStore';
 import useSerieStore from '../store/useSerieStore';
@@ -66,9 +66,9 @@ export default function useChapter(
     }
 
     fetchPages();
-  }, [serieName, chapterId, chapter?.page?.lastPageRead, setError]);
+  }, [serieName, chapterId, chapter?.page?.lastPageRead, chapter, setError]);
 
-  return {
+  return useMemo(() => ({
     id: chapter?.id || 0,
     serieName: chapter?.serieName || '',
     chapterName: chapter?.name || '',
@@ -81,5 +81,15 @@ export default function useChapter(
     quantityPages: pages.length,
     currentPage,
     setCurrentPage,
-  };
+  }), [
+    chapter?.id,
+    chapter?.serieName,
+    chapter?.name,
+    chapter?.isDownloaded,
+    isLoading,
+    mediaType,
+    originalPath,
+    pages,
+    currentPage,
+  ]);
 }

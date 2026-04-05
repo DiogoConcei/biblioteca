@@ -24,7 +24,7 @@ export const defaultSettings: AppSettings = {
   backupSchedule: { frequency: 'weekly', time: '03:00' },
   backupRetention: 10,
   uploadBackupsToDrive: false,
-  themeMode: 'system',
+  themeMode: 'dark',
   accentColor: '#8963ba',
   compactMode: false,
   sendLogsWithBugReport: false,
@@ -38,6 +38,13 @@ export const defaultSettings: AppSettings = {
     showPageNumbers: true,
     wideScreen: false,
     transitionEffect: 'none',
+    epub: {
+      theme: 'dark',
+      fontSize: 18,
+      fontFamily: 'serif',
+      lineHeight: 1.5,
+      margin: 10,
+    },
   },
 };
 

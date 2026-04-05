@@ -12,15 +12,19 @@ import {
   Settings,
   Image as ImageIcon,
   Monitor,
+  Type,
+  Palette,
 } from 'lucide-react';
 
-import { visualizerProps } from '../../types/components.interfaces';
-import useSettingsStore from '../../store/useSettingsStore';
+import { TransitionEffect, EpubFontFamily } from '@/types/settings.interfaces';
+
 import useNavigation from '../../hooks/useNavigation';
+import useSettingsStore from '../../store/useSettingsStore';
+import { visualizerProps } from '../../types/components.interfaces';
 import CustomSelect from '../CustomSelect/CustomSelect';
 import styles from './ViewerMenu.module.scss';
 
-type MenuTab = 'navigation' | 'reading' | 'filters';
+type MenuTab = 'navigation' | 'reading' | 'filters' | 'appearance';
 
 export default function ViewerMenu({ chapter, setScale }: visualizerProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -41,6 +45,16 @@ export default function ViewerMenu({ chapter, setScale }: visualizerProps) {
     updateSetting('viewer', {
       ...viewerSettings,
       [key]: value
+    });
+  }, [updateSetting, viewerSettings]);
+
+  const handleUpdateEpub = useCallback(<K extends keyof typeof viewerSettings['epub']>(key: K, value: typeof viewerSettings['epub'][K]) => {
+    updateSetting('viewer', {
+      ...viewerSettings,
+      epub: {
+        ...viewerSettings.epub,
+        [key]: value
+      }
     });
   }, [updateSetting, viewerSettings]);
 
@@ -72,6 +86,15 @@ export default function ViewerMenu({ chapter, setScale }: visualizerProps) {
             >
               <Settings size={20} />
             </button>
+            {chapter.type === 'book' && (
+              <button 
+                className={activeTab === 'appearance' ? styles.active : ''} 
+                onClick={() => setActiveTab('appearance')}
+                title="Aparência"
+              >
+                <Type size={20} />
+              </button>
+            )}
             <button 
               className={activeTab === 'filters' ? styles.active : ''} 
               onClick={() => setActiveTab('filters')}
@@ -113,7 +136,7 @@ export default function ViewerMenu({ chapter, setScale }: visualizerProps) {
                   <label>Modo de Leitura</label>
                   <CustomSelect 
                     value={viewerSettings.readingMode}
-                    onChange={(val) => handleUpdateViewer('readingMode', val as any)}
+                    onChange={(val) => handleUpdateViewer('readingMode', val as unknown as 'single' | 'double' | 'webtoon')}
                     options={[
                       { value: 'single', label: 'Página Única' },
                       { value: 'double', label: 'Página Dupla' },
@@ -126,7 +149,7 @@ export default function ViewerMenu({ chapter, setScale }: visualizerProps) {
                   <label>Efeito de Transição</label>
                   <CustomSelect 
                     value={viewerSettings.transitionEffect}
-                    onChange={(val) => handleUpdateViewer('transitionEffect', val as string)}
+                    onChange={(val) => handleUpdateViewer('transitionEffect', val as TransitionEffect)}
                     options={[
                       { value: 'none', label: 'Nenhum' },
                       { value: 'fade', label: 'Fade' },
@@ -152,6 +175,80 @@ export default function ViewerMenu({ chapter, setScale }: visualizerProps) {
                     />
                     <span>Mostrar Números</span>
                   </label>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'appearance' && (
+              <div className={styles.appearanceTab}>
+                <div className={styles.themeGroup}>
+                  <label><Palette size={16} /> Tema</label>
+                  <div className={styles.themeOptions}>
+                    <button 
+                      className={`${styles.themeBtn} ${styles.light} ${viewerSettings.epub.theme === 'light' ? styles.selected : ''}`}
+                      onClick={() => handleUpdateEpub('theme', 'light')}
+                      title="Dia"
+                    />
+                    <button 
+                      className={`${styles.themeBtn} ${styles.sepia} ${viewerSettings.epub.theme === 'sepia' ? styles.selected : ''}`}
+                      onClick={() => handleUpdateEpub('theme', 'sepia')}
+                      title="Sépia"
+                    />
+                    <button 
+                      className={`${styles.themeBtn} ${styles.dark} ${viewerSettings.epub.theme === 'dark' ? styles.selected : ''}`}
+                      onClick={() => handleUpdateEpub('theme', 'dark')}
+                      title="Noite"
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.settingGroup}>
+                  <label>Fonte</label>
+                  <CustomSelect 
+                    value={viewerSettings.epub.fontFamily}
+                    onChange={(val) => handleUpdateEpub('fontFamily', val as EpubFontFamily)}
+                    options={[
+                      { value: 'serif', label: 'Serifada' },
+                      { value: 'sans-serif', label: 'Sem Serifa' },
+                      { value: 'monospace', label: 'Monospace' },
+                    ]}
+                  />
+                </div>
+
+                <div className={styles.sliderGroup}>
+                  <div className={styles.sliderLabel}>
+                    <span>Tamanho do Texto</span>
+                    <span>{viewerSettings.epub.fontSize}px</span>
+                  </div>
+                  <input 
+                    type="range" min="12" max="32" step="1"
+                    value={viewerSettings.epub.fontSize}
+                    onChange={(e) => handleUpdateEpub('fontSize', parseInt(e.target.value))}
+                  />
+                </div>
+
+                <div className={styles.sliderGroup}>
+                  <div className={styles.sliderLabel}>
+                    <span>Entrelinhamento</span>
+                    <span>{viewerSettings.epub.lineHeight}x</span>
+                  </div>
+                  <input 
+                    type="range" min="1" max="2.5" step="0.1"
+                    value={viewerSettings.epub.lineHeight}
+                    onChange={(e) => handleUpdateEpub('lineHeight', parseFloat(e.target.value))}
+                  />
+                </div>
+
+                <div className={styles.sliderGroup}>
+                  <div className={styles.sliderLabel}>
+                    <span>Margem Lateral</span>
+                    <span>{viewerSettings.epub.margin}%</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max="25" step="1"
+                    value={viewerSettings.epub.margin}
+                    onChange={(e) => handleUpdateEpub('margin', parseInt(e.target.value))}
+                  />
                 </div>
               </div>
             )}

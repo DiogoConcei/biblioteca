@@ -1,474 +1,395 @@
-import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
-import {
-  ChevronLeft,
-  ChevronRight,
-  ZoomIn,
-  ZoomOut,
-  List,
-  X,
-} from 'lucide-react';
-import pdfWorker from 'pdfjs-dist/legacy/build/pdf.worker.mjs?url';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ChevronLeft, List, X, BookOpen, Hash } from 'lucide-react';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Configuração obrigatória do worker do PDF.js para ambiente Vite/Web
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.mjs',
+  import.meta.url,
+).toString();
 
 import useChapter from '../../hooks/useChapter';
-import useSerie from '../../hooks/useSerie';
-import useNavigation from '../../hooks/useNavigation';
+import { useUIStore } from '../../store/useUIStore';
+import useSettingsStore from '../../store/useSettingsStore';
+import useClickOutside from '../../hooks/useClickOutside';
 import Loading from '../../components/Loading/Loading';
-import useSerieStore from '../../store/useSerieStore';
-import { ChapterResource } from '../../../electron/types/media.interfaces';
+import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
+import ViewerMenu from '../../components/ViewerMenu/ViewerMenu';
+import PageControl from '../../components/PageControl/PageControl';
 import styles from './BookViewer.module.scss';
+import { ChapterResource } from '../../../electron/types/media.interfaces';
 
-// Configuração do Worker do PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+interface PdfOutlineItem {
+  title: string;
+  dest?: unknown;
+  items?: PdfOutlineItem[];
+}
 
 export default function BookViewer() {
   const { serie_name: rawSerieName, chapter_id } = useParams<{
     serie_name: string;
     chapter_id: string;
   }>();
-
+  const navigate = useNavigate();
   const decode_serie_name = decodeURIComponent(rawSerieName ?? '');
+
   const chapter = useChapter(decode_serie_name, Number(chapter_id));
-  const serieFromStore = useSerieStore((state) => state.serie);
+  const { settings } = useSettingsStore();
+  const epubSettings = settings.viewer.epub;
 
-  // Carrega os dados da série no Store para permitir o salvamento de progresso
-  useSerie(decode_serie_name, 'Books');
+  const [scale, setScale] = useState<number>(1.2);
 
-  const { goToSeriePage } = useNavigation(chapter);
+  // Estados de Paginação e UI
+  const [internalPageIndex, setInternalPageIndex] = useState(0);
+  const [totalInternalPages, setTotalInternalPages] = useState(1);
+  const [pdfTotalPages, setPdfTotalPages] = useState(0);
+  const [isIndexOpen, setIsIndexOpen] = useState(false);
+  const [indexTab, setIndexTab] = useState<'summary' | 'pages'>('summary');
+  const [pdfOutline, setPdfOutline] = useState<PdfOutlineItem[] | null>(null);
 
-  // Estados de UI e Controle
-  const [showTOC, setShowTOC] = useState(false);
-  const [showUI, setShowUI] = useState(true);
-
-  // Estados PDF
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Referências
+  const [pdfDocument, setPdfDocument] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
-  const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
-  const [pageNum, setPageNum] = useState(1);
-  const [numPages, setNumPages] = useState(0);
-  const [scale, setScale] = useState(1.5);
-  const [pdfOutline, setPdfOutline] = useState<
-    { title: string; pageNumber: number }[]
-  >([]);
-  const [isRendering, setIsRendering] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  
+  const indexRef = useClickOutside<HTMLDivElement>(() => setIsIndexOpen(false));
+  const error = useUIStore((state) => state.error);
 
-  // --- Lógica de Escala Dinâmica (Fit to Width) ---
+  // 1. Ouvinte de mensagens do EPUB
   useEffect(() => {
-    if (!pdfDoc || chapter.type !== 'pdf' || !canvasRef.current) return;
-
-    const container = canvasRef.current.parentElement;
-    if (!container) return;
-
-    const updateScale = async () => {
-      try {
-        const page = await pdfDoc.getPage(pageNum);
-        const viewport = page.getViewport({ scale: 1 });
-
-        // Padding horizontal é 3rem de cada lado = 6rem total (96px)
-        const horizontalPadding = 96;
-        const availableWidth = container.clientWidth - horizontalPadding;
-        const newScale = availableWidth / viewport.width;
-
-        // Só atualiza se a mudança for significativa para evitar jittering
-        setScale((prev) =>
-          Math.abs(prev - newScale) > 0.01 ? newScale : prev,
-        );
-      } catch (err) {
-        console.error('[BookViewer] Erro ao calcular escala:', err);
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'EPUB_PAGES_COUNT') {
+        setTotalInternalPages(event.data.count as number);
       }
     };
 
-    const observer = new ResizeObserver(() => {
-      updateScale();
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // 2. Resetar estados quando o capítulo muda
+  useEffect(() => {
+    setPdfDocument(null);
+    setPdfTotalPages(0);
+    setPdfOutline(null);
+    setInternalPageIndex(0);
+    setTotalInternalPages(1);
+    setIsIndexOpen(false);
+  }, [chapter.originalPath, chapter.id]);
+
+  // 3. Carregamento do Documento PDF
+  useEffect(() => {
+    if (chapter.type !== 'pdf' || !chapter.originalPath) return;
+
+    let isMounted = true;
+    const loadingTask = pdfjsLib.getDocument(chapter.originalPath);
+    
+    loadingTask.promise.then(async (pdf) => {
+      if (!isMounted) {
+        pdf.destroy();
+        return;
+      }
+      setPdfDocument(pdf);
+      setPdfTotalPages(pdf.numPages);
+      
+      // Tenta carregar o sumário nativo do PDF
+      try {
+        const outline = await pdf.getOutline();
+        setPdfOutline(outline as PdfOutlineItem[]);
+      } catch (e) {
+        console.warn('[BookViewer] Sumário do PDF não disponível.', e);
+      }
+    }).catch((err) => {
+      console.error('[BookViewer] Erro ao carregar PDF:', err);
     });
 
-    observer.observe(container);
-    updateScale(); // Cálculo inicial
+    return () => { isMounted = false; };
+  }, [chapter.originalPath, chapter.type]);
 
-    return () => observer.disconnect();
-  }, [pdfDoc, pageNum, chapter.type]);
-
-  // Estados EPUB (Book)
-  const [currentChapterIdx, setCurrentChapterIdx] = useState(0);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  // --- Lógica de Imersão (Auto-hide UI) ---
+  // 4. Renderização da Página PDF
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    const handleActivity = () => {
-      setShowUI(true);
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        if (!showTOC) setShowUI(false);
-      }, 3000);
-    };
+    if (chapter.type !== 'pdf' || !pdfDocument || !canvasRef.current) return;
 
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('keydown', handleActivity);
+    let isMounted = true;
+    const pageNumber = chapter.currentPage + 1;
 
-    // Inicia o timer
-    timer = setTimeout(() => setShowUI(false), 3000);
+    if (pageNumber < 1 || pageNumber > pdfDocument.numPages) return;
 
-    return () => {
-      window.removeEventListener('mousemove', handleActivity);
-      window.removeEventListener('keydown', handleActivity);
-      clearTimeout(timer);
-    };
-  }, [showTOC, chapter]); // Adicionado chapter como dependência
-
-  const handleExit = async () => {
-    try {
-      await goToSeriePage();
-    } catch (err) {
-      console.error('[BookViewer] Erro ao sair:', err);
-      window.history.back();
-    }
-  };
-
-  useEffect(() => {
-    if (chapter.type === 'book' && chapter.pages.length > 0) {
-      setCurrentChapterIdx(chapter.currentPage || 0);
-    }
-  }, [chapter.type, chapter.pages, chapter.currentPage]);
-
-  // --- Lógica PDF ---
-  useEffect(() => {
-    let currentPdf: pdfjsLib.PDFDocumentProxy | null = null;
-
-    if (chapter.type === 'pdf' && chapter.originalPath) {
-      const loadingTask = pdfjsLib.getDocument(chapter.originalPath);
-      loadingTask.promise
-        .then((pdf) => {
-          currentPdf = pdf;
-          setPdfDoc(pdf);
-          setNumPages(pdf.numPages);
-          setPageNum(chapter.currentPage + 1 || 1);
-        })
-        .catch((err) => console.error('Erro ao carregar PDF:', err));
-    }
-
-    return () => {
-      if (currentPdf) {
-        currentPdf.destroy();
-      }
-    };
-  }, [chapter.originalPath, chapter.type, chapter.currentPage]);
-
-  // Extrair Sumário (Outline) do PDF
-  useEffect(() => {
-    if (!pdfDoc) return;
-
-    const loadOutline = async () => {
+    async function renderPage() {
       try {
-        const outline = await pdfDoc.getOutline();
-        if (outline) {
-          const flatOutline: { title: string; pageNumber: number }[] = [];
-          for (const item of outline) {
-            try {
-              if (item.dest) {
-                const dest =
-                  typeof item.dest === 'string'
-                    ? await pdfDoc.getDestination(item.dest)
-                    : (item.dest as unknown[]);
-
-                if (dest) {
-                  const pageIdx = await pdfDoc.getPageIndex(dest[0]);
-                  flatOutline.push({
-                    title: item.title,
-                    pageNumber: pageIdx + 1,
-                  });
-                }
-              }
-            } catch (destErr) {
-              console.warn('Erro ao processar item do sumário:', destErr);
-            }
-          }
-          setPdfOutline(flatOutline);
+        if (renderTaskRef.current) {
+          renderTaskRef.current.cancel();
+          renderTaskRef.current = null;
         }
-      } catch (err) {
-        console.warn('Falha ao carregar sumário do PDF:', err);
-      }
-    };
 
-    loadOutline();
-  }, [pdfDoc]);
+        if (!pdfDocument) return;
 
-  useEffect(() => {
-    if (!pdfDoc || chapter.type !== 'pdf') return;
-
-    let cancelled = false;
-    const { setCurrentPage } = chapter;
-
-    const renderPage = async () => {
-      setIsRendering(true);
-      try {
-        const page = await pdfDoc.getPage(pageNum);
-        if (cancelled) return;
-
+        const page = await pdfDocument.getPage(pageNumber);
         const viewport = page.getViewport({ scale });
-        const canvas = canvasRef.current;
-        if (!canvas || cancelled) return;
 
-        const context = canvas.getContext('2d');
-        if (!context || cancelled) return;
+        const offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.height = viewport.height;
+        offscreenCanvas.width = viewport.width;
+        const offscreenContext = offscreenCanvas.getContext('2d');
 
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+        if (!offscreenContext || !isMounted) return;
 
         const renderTask = page.render({
-          canvasContext: context,
+          canvasContext: offscreenContext,
           viewport,
-          // @ts-expect-error: A propriedade 'canvas' pode ser necessária em algumas versões de tipagem do PDF.js
-          canvas: canvas,
+          canvas: offscreenCanvas,
         });
         renderTaskRef.current = renderTask;
 
         await renderTask.promise;
 
-        if (!cancelled) {
-          setCurrentPage(pageNum - 1);
+        if (!isMounted) return;
+
+        const mainCanvas = canvasRef.current;
+        if (mainCanvas) {
+          mainCanvas.height = viewport.height;
+          mainCanvas.width = viewport.width;
+          mainCanvas.getContext('2d')?.drawImage(offscreenCanvas, 0, 0);
         }
-      } catch (err: unknown) {
-        const error = err as Error;
-        if (error.name !== 'RenderingCancelledException' && !cancelled) {
-          console.error('Erro ao renderizar página:', err);
+      } catch (err) {
+        if (err instanceof Error && err.name === 'RenderingCancelledException') {
+          return;
         }
-      } finally {
-        if (!cancelled) setIsRendering(false);
+        console.error('[BookViewer] Erro na renderização:', err);
       }
-    };
+    }
 
     renderPage();
-
-    return () => {
-      cancelled = true;
-      if (renderTaskRef.current) {
-        renderTaskRef.current.cancel();
-        renderTaskRef.current = null;
-      }
+    return () => { 
+      isMounted = false;
+      if (renderTaskRef.current) renderTaskRef.current.cancel();
     };
-  }, [pdfDoc, pageNum, scale]); // Removido 'chapter' para evitar loops de renderização
+  }, [pdfDocument, chapter.currentPage, scale, chapter.type]); 
 
-  // --- Lógica EPUB (Book) ---
-  const bookResources = (chapter.pages as unknown as ChapterResource[]) || [];
-  const currentResource = bookResources[currentChapterIdx];
+  // 5. Lógica de URL para EPUB
+  const currentEpubChapterUrl = useMemo(() => {
+    if (chapter.type !== 'book' || !chapter.pages[chapter.currentPage]) return null;
+    
+    const resource = chapter.pages[chapter.currentPage] as unknown as ChapterResource;
+    const url = new URL(resource.path);
+    url.searchParams.set('epub-theme', epubSettings.theme);
+    url.searchParams.set('epub-font-size', epubSettings.fontSize.toString());
+    url.searchParams.set('epub-font-family', epubSettings.fontFamily);
+    url.searchParams.set('epub-line-height', epubSettings.lineHeight.toString());
+    url.searchParams.set('epub-margin', epubSettings.margin.toString());
 
-  const handleIframeLoad = () => {
-    if (iframeRef.current) {
-      const doc = iframeRef.current.contentDocument;
-      if (doc) {
-        const style = doc.createElement('style');
-        style.textContent = `
-          body { 
-            color: #333; 
-            background-color: transparent !important;
-            font-family: 'Georgia', serif;
-            line-height: 1.6;
-            padding: 2rem 10% !important;
-            max-width: 900px;
-            margin: 0 auto;
-          }
-          img { max-width: 100%; height: auto; }
-        `;
-        doc.head.appendChild(style);
-      }
-    }
-  };
+    return url.toString();
+  }, [chapter.type, chapter.pages, chapter.currentPage, epubSettings]);
 
-  const changePage = (offset: number) => {
-    if (chapter.type === 'pdf') {
-      setPageNum((prev) => Math.min(Math.max(1, prev + offset), numPages));
-    } else {
-      setCurrentChapterIdx((prev) =>
-        Math.min(Math.max(0, prev + offset), bookResources.length - 1),
-      );
-    }
-  };
+  const goToInternalPage = useCallback((index: number) => {
+    const iframe = iframeRef.current;
+    if (!iframe || !iframe.contentWindow) return;
+    iframe.contentWindow.postMessage({ type: 'EPUB_GO_TO_PAGE', index }, '*');
+    setInternalPageIndex(index);
+  }, []);
 
-  // Navegação por Teclado
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') {
-        if (chapter.type === 'pdf') {
-          setPageNum((prev) => Math.max(1, prev - 1));
-        } else {
-          setCurrentChapterIdx((prev) => Math.max(0, prev - 1));
-        }
-      }
-      if (e.key === 'ArrowRight') {
-        if (chapter.type === 'pdf') {
-          setPageNum((prev) => Math.min(numPages, prev + 1));
-        } else {
-          setCurrentChapterIdx((prev) =>
-            Math.min(bookResources.length - 1, prev + 1),
-          );
-        }
-      }
-      if (e.key === 'Escape' && showTOC) setShowTOC(false);
-    };
+    return () => { if (pdfDocument) pdfDocument.destroy(); };
+  }, [pdfDocument]);
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showTOC, chapter.type, numPages, bookResources.length]);
+  const handleEpubLoad = useCallback(() => {
+    // Carregamento silencioso
+  }, []);
+
+  // Handlers de Navegação Unificados
+  const handleNextPage = useCallback(() => {
+    if (chapter.type === 'book') {
+      if (internalPageIndex < totalInternalPages - 1) {
+        goToInternalPage(internalPageIndex + 1);
+      } else if (chapter.currentPage < chapter.quantityPages - 1) {
+        setInternalPageIndex(0);
+        chapter.setCurrentPage(p => p + 1);
+      }
+    } else {
+      const total = pdfTotalPages || chapter.quantityPages;
+      chapter.setCurrentPage((p) => Math.min(p + 1, total - 1));
+    }
+  }, [chapter, internalPageIndex, totalInternalPages, goToInternalPage, pdfTotalPages]);
+
+  const handlePrevPage = useCallback(() => {
+    if (chapter.type === 'book') {
+      if (internalPageIndex > 0) {
+        goToInternalPage(internalPageIndex - 1);
+      } else if (chapter.currentPage > 0) {
+        chapter.setCurrentPage(p => p - 1);
+      }
+    } else {
+      chapter.setCurrentPage((p) => Math.max(0, p - 1));
+    }
+  }, [chapter, internalPageIndex, goToInternalPage]);
 
   if (chapter.isLoading) return <Loading />;
+  if (error) return <ErrorScreen error={error} serieName={chapter.serieName} />;
+
+  const handleBack = () => navigate(-1);
+  const chapterLabel = chapter.type === 'book' ? `Cap. ${chapter.currentPage + 1}` : '';
 
   return (
-    <main
-      className={`${styles.bookViewer} ${styles[chapter.type]} ${!showUI ? styles.uiHidden : ''}`}
-    >
-      <header
-        className={`${styles.viewerHeader} ${!showUI ? styles.hidden : ''}`}
-      >
-        <div className={styles.leftSection}>
-          <button
-            className={styles.exitBtn}
-            onClick={handleExit}
-            title="Sair do Leitor"
-          >
-            <X size={20} />
-          </button>
-          <div className={styles.info}>
-            <button
-              className={styles.tocBtn}
-              onClick={() => setShowTOC(!showTOC)}
-              title="Sumário"
-            >
-              <List size={20} />
-            </button>
-            <div className={styles.titleText}>
-              <h2>{decode_serie_name}</h2>
-              <span>
-                {chapter.type === 'book'
-                  ? currentResource?.label
-                  : chapter.chapterName}
-              </span>
+    <article className={styles.bookViewer}>
+      <ViewerMenu chapter={chapter} setScale={setScale} />
+
+      <section className={sectionContainerClass}>
+        <div
+          className={`${styles.renderContainer} ${chapter.type === 'book' ? styles[`theme-${epubSettings.theme}`] : ''}`}
+        >
+          {chapter.type === 'pdf' ? (
+            <div className={styles.pdfContainer}>
+              <canvas ref={canvasRef} className={styles.pdfCanvas} />
             </div>
-          </div>
-        </div>
-
-        <div className={styles.controls}>
-          <div className={styles.pagination}>
-            <button
-              onClick={() => changePage(-1)}
-              disabled={
-                chapter.type === 'pdf' ? pageNum <= 1 : currentChapterIdx === 0
-              }
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <span>
-              {chapter.type === 'pdf'
-                ? `${pageNum} / ${numPages}`
-                : `${currentChapterIdx + 1} / ${bookResources.length}`}
-            </span>
-            <button
-              onClick={() => changePage(1)}
-              disabled={
-                chapter.type === 'pdf'
-                  ? pageNum >= numPages
-                  : currentChapterIdx === bookResources.length - 1
-              }
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-
-          {chapter.type === 'pdf' && (
-            <div className={styles.zoom}>
-              <button onClick={() => setScale((s) => Math.max(0.5, s - 0.2))}>
-                <ZoomOut size={18} />
-              </button>
-              <span>{Math.round(scale * 100)}%</span>
-              <button onClick={() => setScale((s) => Math.min(3, s + 0.2))}>
-                <ZoomIn size={18} />
+          ) : chapter.type === 'book' && currentEpubChapterUrl ? (
+            <iframe
+              ref={iframeRef}
+              key={currentEpubChapterUrl}
+              src={currentEpubChapterUrl}
+              className={styles.epubFrame}
+              onLoad={handleEpubLoad}
+              sandbox="allow-same-origin allow-scripts"
+              title="E-Reader"
+            />
+          ) : (
+            <div className={styles.unsupported}>
+              <p>Formato não suportado ou arquivo não encontrado.</p>
+              <button onClick={handleBack}>
+                <ChevronLeft size={18} /> Voltar
               </button>
             </div>
           )}
         </div>
-      </header>
-
-      {showTOC && (
-        <aside className={styles.tocMenu}>
-          <h3>Índice</h3>
-          <ul>
-            {chapter.type === 'book' ? (
-              bookResources.map((res, idx) => (
-                <li
-                  key={res.id}
-                  className={currentChapterIdx === idx ? styles.active : ''}
-                  onClick={() => {
-                    setCurrentChapterIdx(idx);
-                    setShowTOC(false);
-                  }}
-                >
-                  {res.label}
-                </li>
-              ))
-            ) : pdfOutline.length > 0 ? (
-              pdfOutline.map((item, idx) => (
-                <li
-                  key={idx}
-                  className={
-                    pageNum >= item.pageNumber &&
-                    (!pdfOutline[idx + 1] ||
-                      pageNum < pdfOutline[idx + 1].pageNumber)
-                      ? styles.active
-                      : ''
-                  }
-                  onClick={() => {
-                    setPageNum(item.pageNumber);
-                    setShowTOC(false);
-                  }}
-                >
-                  <small>pág. {item.pageNumber}</small>
-                  <span>{item.title}</span>
-                </li>
-              ))
-            ) : (
-              <li className={styles.active}>Nenhum índice encontrado</li>
-            )}
-          </ul>
-        </aside>
-      )}
-
-      <section className={styles.contentContainer}>
-        {chapter.type === 'pdf' ? (
-          <div className={styles.canvasWrapper}>
-            {isRendering && (
-              <div className={styles.renderingOverlay}>Renderizando...</div>
-            )}
-            <canvas ref={canvasRef} className={styles.pdfCanvas} />
-          </div>
-        ) : (
-          <iframe
-            ref={iframeRef}
-            src={currentResource?.path}
-            className={styles.bookFrame}
-            onLoad={handleIframeLoad}
-            title="Leitor de Livro"
-            sandbox="allow-same-origin"
-          />
-        )}
       </section>
 
-      <footer
-        className={`${styles.viewerFooter} ${!showUI ? styles.hidden : ''}`}
-      >
-        <div className={styles.progressBar}>
-          <div
-            className={styles.progressFill}
-            style={{
-              width: `${
-                chapter.type === 'pdf'
-                  ? (pageNum / numPages) * 100
-                  : ((currentChapterIdx + 1) / bookResources.length) * 100
-              }%`,
-            }}
-          />
+      <div className={styles.controls}>
+        <div className={styles.leftGroup}>
+          <button 
+            className={`${styles.indexToggle} ${isIndexOpen ? styles.active : ''}`}
+            onClick={() => setIsIndexOpen(!isIndexOpen)}
+            title="Índice / Sumário"
+          >
+            <List size={20} />
+          </button>
+          <div className={styles.chapterInfo}>{chapterLabel}</div>
         </div>
-      </footer>
-    </main>
+
+        <PageControl
+          currentPage={chapter.type === 'book' ? internalPageIndex : chapter.currentPage}
+          TamPages={chapter.type === 'book' ? totalInternalPages : (pdfTotalPages || chapter.quantityPages)}
+          nextPage={handleNextPage}
+          prevPage={handlePrevPage}
+        />
+
+        {/* Modal de Índice/Sumário Unificado */}
+        {isIndexOpen && (
+          <div className={styles.indexOverlay}>
+            <aside className={styles.indexMenu} ref={indexRef}>
+              <header className={styles.indexHeader}>
+                <div className={styles.tabs}>
+                  <button 
+                    className={indexTab === 'summary' ? styles.active : ''} 
+                    onClick={() => setIndexTab('summary')}
+                  >
+                    <BookOpen size={16} /> Sumário
+                  </button>
+                  <button 
+                    className={indexTab === 'pages' ? styles.active : ''} 
+                    onClick={() => setIndexTab('pages')}
+                  >
+                    <Hash size={16} /> Páginas
+                  </button>
+                </div>
+                <button className={styles.closeBtn} onClick={() => setIsIndexOpen(false)}><X size={20} /></button>
+              </header>
+              
+              <div className={styles.indexContent}>
+                {indexTab === 'summary' ? (
+                  /* ABA SUMÁRIO */
+                  <div className={styles.summaryView}>
+                    {chapter.type === 'book' ? (
+                      <ul className={styles.indexList}>
+                        {(chapter.pages as unknown as ChapterResource[]).map((res, index) => (
+                          <li key={res.id}>
+                            <button 
+                              className={`${styles.indexItem} ${chapter.currentPage === index ? styles.current : ''}`}
+                              onClick={() => {
+                                chapter.setCurrentPage(index);
+                                setIsIndexOpen(false);
+                              }}
+                            >
+                              <span className={styles.num}>{index + 1}</span>
+                              <span className={styles.label}>{res.label}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      /* Sumário PDF (Nativo) */
+                      <div className={styles.pdfOutline}>
+                        {pdfOutline ? (
+                          <ul className={styles.outlineList}>
+                            {pdfOutline.map((item, i) => (
+                              <li key={i}>
+                                <button className={styles.outlineItem}>
+                                  {item.title}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className={styles.emptyMsg}>Estrutura de capítulos não disponível neste PDF.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* ABA PÁGINAS */
+                  <div className={styles.pagesView}>
+                    {chapter.type === 'book' ? (
+                      /* Páginas virtuais do EPUB */
+                      <div className={styles.pdfGrid}>
+                        {Array.from({ length: totalInternalPages }, (_, i) => (
+                          <button 
+                            key={i} 
+                            className={`${styles.pdfPageBtn} ${internalPageIndex === i ? styles.current : ''}`}
+                            onClick={() => {
+                              goToInternalPage(i);
+                              setIsIndexOpen(false);
+                            }}
+                          >
+                            {i + 1}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      /* Páginas reais do PDF */
+                      <div className={styles.pdfGrid}>
+                        {Array.from({ length: pdfTotalPages || chapter.quantityPages }, (_, i) => (
+                          <button 
+                            key={i} 
+                            className={`${styles.pdfPageBtn} ${chapter.currentPage === i ? styles.current : ''}`}
+                            onClick={() => {
+                              chapter.setCurrentPage(i);
+                              setIsIndexOpen(false);
+                            }}
+                          >
+                            {i + 1}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </aside>
+          </div>
+        )}
+      </div>
+    </article>
   );
 }
+
+const sectionContainerClass = styles.viewport;

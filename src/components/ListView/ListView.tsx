@@ -58,7 +58,7 @@ export default function ListView() {
       </div>
 
       <ul className={styles.chaptersList}>
-        {currentItems.map((chapter, idx) => (
+        {currentItems.map((chapter) => (
           <div key={chapter.id} onClick={(e) => openChapter(e, chapter)}>
             <li
               className={`${styles.chapter} ${

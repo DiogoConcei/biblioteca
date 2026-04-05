@@ -1,4 +1,8 @@
 import { graphChapter, graphSerie } from './electron-auxiliar.interfaces';
+import {
+  LiteratureForm,
+  ReadingStatus,
+} from '../../src/types/series.interfaces';
 
 export interface Comic extends graphSerie<ComicEdition> {
   id: number;
@@ -13,7 +17,7 @@ export interface Comic extends graphSerie<ComicEdition> {
   genre?: string;
   author?: string;
   language?: string;
-  literatureForm: 'Manga' | 'Quadrinho' | 'Books' | '';
+  literatureForm: LiteratureForm;
   readingData: {
     lastChapterId: number;
     lastReadAt: string;
@@ -21,7 +25,7 @@ export interface Comic extends graphSerie<ComicEdition> {
   chapters: ComicEdition[];
   childSeries?: ComicTieIn[];
   metadata: {
-    status: 'Em andamento' | 'Completo' | 'Pendente' | '';
+    status: ReadingStatus;
     collections: string[];
     recommendedBy?: string;
     originalOwner?: string;
@@ -48,7 +52,7 @@ export interface TieIn {
   coverImage: string;
   totalChapters: number;
   chaptersRead: number;
-  literatureForm: 'Manga' | 'Quadrinho' | 'Books' | '';
+  literatureForm: LiteratureForm;
   chapters?: ComicEdition[];
   readingData: {
     lastChapterId: number;
@@ -58,7 +62,7 @@ export interface TieIn {
     lastDownload: number;
     isFavorite: boolean;
     isCreated: boolean;
-    status: 'Em andamento' | 'Completo' | 'Pendente' | '';
+    status: ReadingStatus;
     rating?: number;
     recommendedBy?: string;
     originalOwner?: string;

@@ -30,8 +30,8 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
     set({ tasks: initialTasks, isInitialized: true });
 
     // Ouvir atualizações de progresso
-    window.electronAPI.on('download:progress-update', (_event, tasks: DownloadTask[]) => {
-      set({ tasks });
+    window.electronAPI.on('download:progress-update', (_event: unknown, tasks: unknown) => {
+      set({ tasks: tasks as DownloadTask[] });
     });
   },
 

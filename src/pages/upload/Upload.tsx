@@ -11,7 +11,12 @@ import StatusField from '../../components/Form/Fields/StatusField/StatusField';
 import CollectionsField from '../../components/Form/Fields/CollectionsField/CollectionsField';
 import TagsField from '../../components/Form/Fields/TagsField/TagsField';
 import Loading from '../../components/Loading/Loading';
-import { SerieData, SerieForm } from '../../types/series.interfaces';
+import {
+  LiteratureForm,
+  ReadingStatus,
+  SerieData,
+  SerieForm,
+} from '../../types/series.interfaces';
 import styles from './Upload.module.scss';
 
 export default function Upload() {
@@ -30,8 +35,8 @@ export default function Upload() {
     language: '',
     privacy: '',
     autoBackup: '',
-    readingStatus: '',
-    literatureForm: '' as SerieForm['literatureForm'],
+    readingStatus: ReadingStatus.NONE,
+    literatureForm: LiteratureForm.NONE,
     tags: [],
     collections: [],
     archivesPath: '',

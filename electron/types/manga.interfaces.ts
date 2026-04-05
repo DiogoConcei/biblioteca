@@ -1,4 +1,8 @@
 import { graphChapter, graphSerie } from './electron-auxiliar.interfaces';
+import {
+  LiteratureForm,
+  ReadingStatus,
+} from '../../src/types/series.interfaces';
 
 export interface Manga extends graphSerie<MangaChapter> {
   name: string;
@@ -13,13 +17,13 @@ export interface Manga extends graphSerie<MangaChapter> {
   chapters: MangaChapter[];
   totalChapters: number;
   chaptersRead: number;
-  literatureForm: 'Manga' | 'Quadrinho' | 'Books' | '';
+  literatureForm: LiteratureForm;
   readingData: {
     lastChapterId: number;
     lastReadAt: string;
   };
   metadata: {
-    status: 'Em andamento' | 'Completo' | 'Pendente' | '';
+    status: ReadingStatus;
     collections: string[];
     recommendedBy?: string;
     originalOwner?: string;

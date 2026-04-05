@@ -36,7 +36,7 @@ export default function userHandlers(ipcMain: IpcMain) {
 
         if (literatureForm === 'childSeries') {
           serieLink = `/TieIn/${encodeURIComponent(serieData.name)}`;
-        } else if (['Comics', 'Mangas', 'Books'].includes(literatureForm)) {
+        } else if (['Comics', 'Mangas', 'books'].includes(literatureForm)) {
           serieLink = `/${serieData.literatureForm}/${serieData.name}/${serieData.id}`;
         }
 

@@ -1,4 +1,4 @@
-import { X, House, Square, Maximize2, Minus, Settings } from 'lucide-react';
+import { X, House, Square, Maximize2, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 

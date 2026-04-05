@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
-import { LoaderCircle } from 'lucide-react';
 import { useParams } from 'react-router-dom';
+import { LoaderCircle } from 'lucide-react';
 
-import { ChapterView } from '@/types/components.interfaces';
 import useSettingsStore from '@/store/useSettingsStore';
 
-import useChapter from '../../hooks/useChapter';
-import useNavigation from '../../hooks/useNavigation';
-import useDrag from '../../hooks/useDrag';
+import { ChapterView } from '../../../electron/types/electron-auxiliar.interfaces';
 import ViewerMenu from '../../components/ViewerMenu/ViewerMenu';
 import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
 import Loading from '../../components/Loading/Loading';
 import PageControl from '../../components/PageControl/PageControl';
+import useChapter from '../../hooks/useChapter';
+import useDrag from '../../hooks/useDrag';
+import useNavigation from '../../hooks/useNavigation';
 import { useUIStore } from '../../store/useUIStore';
 import styles from './Viewer.module.scss';
 
@@ -125,7 +125,7 @@ export default function Viewer() {
       case 'webtoon':
         return (
           <div className={styles.webtoonContainer}>
-            {chapter.pages.map((page, index) => (
+            {chapter.pages.map((page: string, index: number) => (
               <img
                 key={index}
                 data-page-index={index}

@@ -13,6 +13,7 @@ import {
   LiteratureChapterAttributes,
   Status,
   viewData,
+  ChapterView,
 } from '../../electron/types/electron-auxiliar.interfaces';
 import { Collection, CreateCollectionDTO } from './collections.interfaces';
 import { SerieEditForm, SerieForm, SerieData } from './series.interfaces';
@@ -33,18 +34,6 @@ export interface ChaptersInfoProp {
   ) => void;
 }
 
-export interface ChapterView {
-  id: number;
-  serieName: string;
-  chapterName: string;
-  isLoading: boolean;
-  isDownloaded: DownloadStatus;
-  pages: string[];
-  quantityPages: number;
-  currentPage: number;
-  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-}
 
 export interface PageControlProps {
   currentPage: number;

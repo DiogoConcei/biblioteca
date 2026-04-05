@@ -14,25 +14,7 @@ export default class PdfAdapter extends LibrarySystem implements MediaAdapter {
   private readonly imageManager: ImageManager = new ImageManager();
 
   public async getPages(chapterPath: string): Promise<MediaContent> {
-    const outputDir = path.join(this.baseStorageFolder, 'temp_pdf', path.basename(chapterPath));
-    await fse.ensureDir(outputDir);
-
-    // Se já existem imagens extraídas, não re-processa
-    const existingFiles = await fse.readdir(outputDir);
-    const imageFiles = existingFiles.filter(f => f.endsWith('.jpeg')).sort();
-
-    if (imageFiles.length > 0) {
-      return {
-        type: 'pdf',
-        resources: imageFiles.map((f) =>
-          this.imageManager.getMediaUrl(path.join(outputDir, f)),
-        ),
-        originalPath: this.imageManager.getMediaUrl(chapterPath),
-        totalResources: imageFiles.length,
-      };
-    }
-
-    // Processamento PDF -> Imagens (Fallback/Pre-render)
+    // Processamento PDF -> Apenas para obter contagem de páginas
     const data = await fse.readFile(chapterPath);
     const pdf = await pdfjsLib.getDocument({
       data: new Uint8Array(data),
@@ -41,20 +23,15 @@ export default class PdfAdapter extends LibrarySystem implements MediaAdapter {
     }).promise;
 
     const totalPages = pdf.numPages;
-    const resources: string[] = [];
-
-    for (let i = 1; i <= totalPages; i++) {
-      const buffer = await this.renderPdfPageToBuffer(pdf, i, 1.5);
-      const fileName = `${String(i).padStart(4, '0')}.jpeg`;
-      const finalPath = path.join(outputDir, fileName);
-      await fse.writeFile(finalPath, buffer);
-      resources.push(this.imageManager.getMediaUrl(finalPath));
-    }
+    
+    // Retornamos o PDF original como recurso principal
+    // O visualizador (BookViewer) usará o pdf.js para renderizar via Canvas
+    const pdfUrl = this.imageManager.getMediaUrl(chapterPath);
 
     return {
       type: 'pdf',
-      resources,
-      originalPath: this.imageManager.getMediaUrl(chapterPath),
+      resources: [pdfUrl],
+      originalPath: pdfUrl,
       totalResources: totalPages,
     };
   }
