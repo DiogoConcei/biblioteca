@@ -3,92 +3,73 @@ import { useEffect, useState, useMemo } from 'react';
 import { useUIStore } from '../store/useUIStore';
 import useSerieStore from '../store/useSerieStore';
 import { ChapterView } from '../../electron/types/electron-auxiliar.interfaces';
-import { MediaContent } from '../../electron/types/media.interfaces';
 
-export default function useChapter(
-  serieName: string,
-  chapterId: number,
-): ChapterView {
-  const [currentPage, setCurrentPage] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const setError = useUIStore((s) => s.setError);
+export default function useChapter(serieName: string, chapterId: number) {
+  const serie = useSerieStore((state) => state.serie);
+  const setError = useUIStore((state) => state.setError);
+
+  const chapter = serie?.chapters?.find((c) => c.id === chapterId);
+
   const [pages, setPages] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [mediaType, setMediaType] = useState<'comic' | 'book' | 'pdf'>('comic');
+  const [currentPage, setCurrentPage] = useState(0);
   const [originalPath, setOriginalPath] = useState<string | undefined>();
-
-  const chapters = useSerieStore((state) => state.chapters);
-  const chapter = chapters.find((ch) => ch.id === chapterId) || chapters[0];
+  const [lastCfi, setLastCfi] = useState<string | undefined>();
 
   useEffect(() => {
-    async function fetchPages() {
-      if (!chapter) {
-        setIsLoading(false);
-        return;
-      }
-
+    const fetchChapter = async () => {
       setIsLoading(true);
-      setError(null);
-
       try {
-        const response = await window.electronAPI.chapters.getChapter(
-          serieName,
-          chapterId,
-        );
-
-        const content = response.data as MediaContent;
-
-        if (!content) {
-          setPages([]);
-          setError('Nenhuma página encontrada');
-          return;
+        const response = await window.electronAPI.chapters.getChapter(serieName, chapterId);
+        if (response.success && response.data) {
+          const resources = response.data.resources;
+          // Se for uma lista de objetos ChapterResource, extraímos apenas os paths (strings)
+          const pagesArray = resources.map((res) => 
+            typeof res === 'string' ? res : res.path
+          );
+          
+          setPages(pagesArray);
+          setMediaType(response.data.type);
+          setOriginalPath(response.data.originalPath);
+          setLastCfi(chapter?.page?.lastCfi);
+        } else {
+          setError(response.error || 'Erro desconhecido');
         }
-
-        setMediaType(content.type);
-        setOriginalPath(content.originalPath);
-
-        if (Array.isArray(content.resources)) {
-          if (content.resources.length > 0) {
-            // Armazena os recursos independentemente de serem strings ou objetos
-            // O componente visualizador fará o cast necessário
-            setPages(content.resources as string[]);
-          } else {
-            setPages([]);
-          }
-        }
-
-        setCurrentPage(chapter.page?.lastPageRead || 0);
-      } catch (e) {
-        setIsLoading(false);
-        setError('Erro ao carregar as páginas do capítulo.');
+      } catch (err) {
+        setError(String(err));
       } finally {
         setIsLoading(false);
       }
-    }
+    };
 
-    fetchPages();
-  }, [serieName, chapterId, chapter?.page?.lastPageRead, chapter, setError]);
+    fetchChapter();
+  }, [serieName, chapterId, setError, chapter?.page?.lastCfi]);
 
   return useMemo(() => ({
-    id: chapter?.id || 0,
-    serieName: chapter?.serieName || '',
-    chapterName: chapter?.name || '',
+    id: chapter?.id,
+    serieName,
+    chapterName: chapter?.name,
+    name: chapter?.name,
+    isDownloaded: chapter?.isDownloaded ?? 'not_downloaded',
     isLoading,
     setIsLoading,
     type: mediaType,
     originalPath,
-    isDownloaded: chapter?.isDownloaded || 'not_downloaded',
+    lastCfi,
     pages,
     quantityPages: pages.length,
     currentPage,
     setCurrentPage,
-  }), [
+  } as ChapterView & { lastCfi?: string }), [
     chapter?.id,
-    chapter?.serieName,
+    serieName,
     chapter?.name,
     chapter?.isDownloaded,
     isLoading,
     mediaType,
     originalPath,
+    lastCfi,
     pages,
     currentPage,
   ]);

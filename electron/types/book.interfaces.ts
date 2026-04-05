@@ -52,5 +52,6 @@ export interface BookChapter extends graphChapter {
   page: {
     lastPageRead: number;
     favoritePage: number;
+    lastCfi?: string;
   };
 }

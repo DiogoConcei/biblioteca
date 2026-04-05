@@ -1,33 +1,38 @@
 # TASKS.md
 
 ## Em progresso
-- [ ] **[FEAT] EPUB: Sincronização de Progresso (CFI)**
-  - Implementar salvamento de posição exata (CFI) para EPUB.
-  - Sincronização de progresso entre capítulos.
-- [ ] **[FEAT] Sincronização Cloud (Google Drive)**
-  - Implementar upload de progresso de leitura.
-  - Sincronização de configurações entre dispositivos.
+- [ ] **[FEAT] LAN Sharing: Leitura via Rede**
+  - Implementar Servidor HTTP paralelo para dispositivos móveis.
+  - Criar sistema de Auth via Simple Token.
+  - Desenvolver visualizador web simplificado para mobile.
+- [ ] **[FEAT] Scrapers de Capítulos**
+  - Implementar busca automática de novos capítulos para séries existentes.
+  - Integração com provedores externos para notificações de atualização.
+- [ ] **[FEAT] Upload: Finalização QR Code**
+  - Concluir fluxo de pareamento via QR Code.
+  - Implementar recebimento de arquivos via WebSocket/HTTP.
 
 ## Concluído recentemente
-- [x] **[FEAT] E-Reader Proprietário (Customização)**
-  - Implementado menu de tipografia (Fonte, Tamanho, Espaçamento, Margens).
-  - Implementado Temas dinâmicos (Noite, Sépia, Dia) via Injeção de CSS no Iframe.
-  - Corrigido carregamento de EPUBs (resolvido erro 404 de index.html através do EpubAdapter).
-- [x] **[FIX] Estabilização do BookViewer**
-  - Resolvido deadlock de renderização (loading infinito) em PDFs.
-  - Implementado Double Buffering no Canvas para eliminar flicker em trocas de página.
-  - Adicionado logs detalhados de processamento no frontend.
-- [x] **[PERF] Otimização de PDF**
-  - Refatorado `PdfAdapter` para evitar extração desnecessária de páginas para JPEG.
-  - Carregamento nativo do PDF original via URL `lib-media://`.
-- [x] **[FIX] Resiliência do MediaServer**
-  - Corrigido erro 403 Forbidden no host `archive` (resolução de caminhos aninhados).
-  - Implementada codificação Base64 segura para UTF-8 no transporte de paths.
-  - Adicionados identificadores únicos (hashes) para pastas de cache de extração.
-- [x] **[CORE] Limpeza de Código e Tipagem**
-  - Removido uso de `any` em todo o projeto, substituindo por `unknown` ou tipos específicos.
-  - Corrigida herança de interfaces de domínio (`Book`, `Comic`, `Manga`) usando Enums.
-  - Eliminados avisos de lint e erros de build pendentes.
+- [x] **[FEAT] Nova Arquitetura do Leitor EPUB (`react-reader` & `epub.js`)**
+  - Implementado motor de renderização `epub.js` para paginação nativa e perfeita.
+  - Carregamento de EPUB alterado para `ArrayBuffer` em memória, eliminando a necessidade de extração por capítulo e requisições fantasmas (`403 Forbidden`).
+  - Suporte total a CFI para preservação da posição exata e **Contador de Páginas Referencial** (Página X de Y).
+  - Implementado percentual de leitura e título dinâmico do capítulo no PageControl.
+  - Design Premium: Visual de "Página de Livro" com sombras em camadas, centralização e diagramação elegante.  - [x] **[CORE] Desacoplamento do MediaServer**
+  - Refatoração do monolítico `MediaServer.ts` em handlers de protocolo (`LocalMediaHandler`, `ArchiveMediaHandler`, `StorageMediaHandler`) usando padrão Strategy.
+  - Segurança reforçada: CSP atualizado e remoção do privilégio `allow-same-origin` (Prevenção de Iframe Escape).
+- [x] **[CORE] Tipagem Estrita (Zero Any)**
+  - Remoção completa de tipos `any` nos visualizadores e hooks.
+  - Definição de interfaces robustas para motores externos (`EpubRendition`, `EpubLocation`).
+- [x] **[FEAT] Índice & Sumário Unificado**
+  - Adicionado painel lateral com Sumário lógico (EPUB/PDF) e Salto por Páginas (grade numérica).
+- [x] **[FIX] Estabilização Crítica de PDF**
+  - Resolvido deadlock de renderização e loop de dependência no useEffect.
+  - Corrigido problema de "página única" (total de páginas agora lido do pdfDocument).
+  - Removidos indicadores visuais obstrutivos ("Carregando...") durante a troca de páginas.
+- [x] **[CORE] Padronização & Design**
+  - Definido Modo Escuro (Dark) como padrão global do sistema e do leitor.
+  - Limpeza total de tipagem (100% conformidade com lint e build).
 
 ## Contexto da próxima sessão
-O visualizador de EPUB agora suporta customização completa de aparência (Temas e Tipografia) e carrega corretamente os capítulos mapeados pelo EpubAdapter. O erro 404 de index.html foi resolvido usando URLs de recursos reais. Próximo foco: Implementar salvamento de posição exata (CFI) para EPUB ou Sincronização Cloud.
+O motor de leitura (PDF e EPUB) está totalmente estabilizado, com suporte a posição exata de leitura (CFI) funcional. O próximo grande desafio é a implementação do **LAN Sharing** para permitir a leitura da biblioteca em dispositivos móveis via rede local.

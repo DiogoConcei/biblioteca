@@ -151,6 +151,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       chapter_id: number,
       page_number: number,
       totalPages: number,
+      lastCfi?: string,
     ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke(
         'chapter:save-last-read',
@@ -158,6 +159,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
         chapter_id,
         page_number,
         totalPages,
+        lastCfi,
       ),
     acessLastRead: async (
       serieId: number,

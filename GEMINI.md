@@ -96,7 +96,7 @@ interface MediaAdapter {
 
 - **Validação de Caminhos:** O `MediaServer` deve validar todo `filePath` via `isPathSafe` antes de servir qualquer recurso através do protocolo `lib-media://`.
 - **Gerenciamento de Memória (PDF):** Todo componente que utilize `pdfjsLib.getDocument` DEVE implementar uma função de limpeza que chame `pdfDoc.destroy()` para evitar vazamentos de memória em documentos grandes.
-- **Sandboxing (EPUB):** O visualizador de EPUB deve utilizar um `iframe` com o atributo `sandbox="allow-same-origin allow-scripts"` para permitir a comunicação via postMessage mantendo a segurança.
+- **Sandboxing (EPUB):** O visualizador de EPUB deve utilizar um `iframe` com o atributo `sandbox="allow-scripts"` (sem `allow-same-origin`). O livro deve ser carregado via `ArrayBuffer` para permitir que a engine (`epub.js`) gerencie recursos internos sem precisar acessar o protocolo `lib-media://` como mesma origem, prevenindo ataques de escape de sandbox e acesso indevido ao sistema de arquivos.
 - **Protocolo lib-media://:** O host `local` e `archive` são as únicas formas permitidas de acessar arquivos de mídia do disco. O uso de `file://` é terminantemente proibido.
 
 ---

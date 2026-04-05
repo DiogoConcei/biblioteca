@@ -232,5 +232,6 @@ export interface graphChapter {
   page: {
     lastPageRead: number;
     favoritePage: number;
+    lastCfi?: string;
   };
 }

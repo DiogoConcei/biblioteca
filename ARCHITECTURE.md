@@ -55,9 +55,12 @@ Projetado para sequências de imagens.
 - **Transições:** Animações CSS integradas no hook de navegação.
 
 ### 📚 Book Viewer (E-Reader)
-(Em desenvolvimento) Projetado para leitura de texto fluido.
-- Consumirá recursos via host `archive` do `lib-media://`.
-- Foco em renderização de HTML estruturado em vez de imagens estáticas.
+Motor de leitura profissional para literatura textual (EPUB e PDF). A arquitetura é modular, com um componente orquestrador (`BookViewer`) e motores dedicados (`EpubViewer` e `PdfViewer`) isolando as complexidades de cada engine (`epub.js` e `pdf.js`).
+- **Engine Nativa (EPUB):** Utiliza a biblioteca padrão da indústria `epub.js` (via `react-reader`), processando todo o arquivo no frontend para garantir paginação perfeita e sumário interativo.
+- **Isolamento e Segurança:** O conteúdo do livro é carregado via `ArrayBuffer` no cliente e entregue ao motor de leitura (Iframe `src` isolado com `sandbox="allow-scripts"`). Isso elimina a necessidade de extrair recursos individuais via `lib-media://`, blindando a aplicação contra ataques de `Iframe Escape`.
+- **Tipagem Forte:** O sistema utiliza interfaces rigorosas para abstrair as engines de terceiros, garantindo 100% de cobertura TypeScript sem o uso de `any`.
+- **MediaServer Desacoplado:** O backend de mídia (`MediaServer`) atua como um roteador de estratégia, delegando a busca de arquivos para handlers específicos (`LocalMediaHandler`, `ArchiveMediaHandler`, `StorageMediaHandler`), garantindo alta coesão e facilidade de testes.
+- **Preservação de Posição:** O leitor EPUB usa marcadores CFI estritos para garantir que o parágrafo exato lido pelo usuário seja persistido no banco e recarregado, mantendo a coerência no **Contador de Páginas Referencial** (Página X de Y).
 
 ---
 

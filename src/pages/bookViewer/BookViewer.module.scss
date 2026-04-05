@@ -16,22 +16,10 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #111;
+    background-color: #121212; // Tom profundo para destacar o papel
     overflow: hidden;
     position: relative;
-
-    .initialLoaderOverlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: #1a1a1a;
-      z-index: 50;
-    }
+    padding: 2vh 0;
 
     .renderContainer {
       width: 100%;
@@ -40,21 +28,65 @@
       justify-content: center;
       align-items: center;
       transition: opacity 0.3s ease-in-out;
-      overflow: hidden; // Scroll acontece apenas no iframe agora
-      padding: 0; // Ocupa a tela toda
+      overflow: hidden; 
+      padding: 0;
+      box-sizing: border-box;
 
       &.dimmed {
         opacity: 0.7;
       }
 
       &.hidden {
-        visibility: hidden; // Mantém no DOM para o canvasRef funcionar, mas não exibe
+        visibility: hidden;
+      }
+    }
+
+    .epubPaper {
+      width: 95%;
+      max-width: 900px;
+      height: 96%;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      
+      // Sombras em camadas para profundidade premium
+      box-shadow: 
+        0 1px 2px rgba(0,0,0,0.1),
+        0 4px 8px rgba(0,0,0,0.1),
+        0 16px 32px rgba(0,0,0,0.2),
+        0 32px 64px rgba(0,0,0,0.2);
+      
+      // Bordas assimétricas para simular um livro
+      border-radius: 4px 12px 12px 4px;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+      // Detalhe de borda para simular espessura de páginas
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 4px;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.05);
+        border-left: 1px solid rgba(255, 255, 255, 0.05);
+        z-index: 10;
+        pointer-events: none;
       }
 
-      // Temas do Leitor (Fundo externo ao papel)
-      &.theme-light { background-color: #e0e0e0; }
-      &.theme-sepia { background-color: #d6cfbc; }
-      &.theme-dark { background-color: #111111; }
+      &.theme-light { 
+        background-color: #ffffff;
+        border: 1px solid rgba(0,0,0,0.05);
+      }
+      &.theme-sepia { 
+        background-color: #f4ecd8;
+        border: 1px solid rgba(0,0,0,0.05);
+      }
+      &.theme-dark { 
+        background-color: #1a1a1a;
+        border: 1px solid rgba(255,255,255,0.03);
+      }
     }
 
     .pdfContainer {
@@ -68,13 +100,6 @@
     .pdfCanvas {
       background-color: white;
       max-width: 100%;
-    }
-
-    .epubFrame {
-      width: 100%;
-      height: 100%;
-      border: none;
-      background-color: transparent;
     }
 
     .renderingIndicator {

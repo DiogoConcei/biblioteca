@@ -118,32 +118,24 @@ Contribuições são bem-vindas! Sinta-se à vontade para abrir uma **Issue** ou
 
 O desenvolvimento da Biblioteca está organizado em fases que priorizam a estabilidade do núcleo (Core), a eliminação de débitos técnicos e a expansão para novos formatos.
 
-### 🟢 Fase 1: Consolidação & Débito Técnico (Curto Prazo)
+### 🟢 Fase 1: Core & Estabilidade (Concluída)
 
-_Foco: Unificação de sistemas e melhoria da manutenibilidade._
+- **Refatoração do StorageManager:** Implementado sistema de cache em memória (Source of Truth) com fila de escrita serializada e gravação atômica, eliminando riscos de corrupção.
+- **Limpeza de Tipagem:** Remoção total de `any` e `@ts-ignore`, com adoção de tipagem forte em todo o projeto.
+- **Padronização de Status:** Unificação de Enums entre Frontend e Backend.
 
-- **Refatoração do StorageManager:** Eliminar as "gambiarras genéricas" de leitura de JSON e implementar um sistema de cache em memória sincronizado para evitar leituras excessivas de disco.
-- **Integração Total do Scraper:** Automatizar a busca de metadados durante o processo de Upload. O `MetadataScraperService` já possui os adaptadores (Jikan, Google Books), mas a UI ainda requer preenchimento manual excessivo.
-- **Padronização de Status:** Unificar o tratamento de status (`Pendente`, `Em andamento`, `Completo`) entre o backend Electron e os enums do Frontend.
+### 🟡 Fase 2: Experiência de Leitura & Formatos (Concluída)
 
-### 🟡 Fase 2: Experiência de Leitura & Formatos (Médio Prazo)
+- **Suporte Nativo a PDF (Zero-Extraction):** Renderização sob demanda usando `pdfjs-dist` com Double Buffering no Canvas, permitindo abertura instantânea e navegação fluida em arquivos gigantes.
+- **E-Reader Profissional (EPUB):** Motor de paginação horizontal por colunas dinâmicas (CSS Multi-column) com injeção de estilo lado-servidor.
+- **Customização de Aparência:** Controle total de temas (Dia, Noite, Sépia), tipografia (família de fontes, tamanho, entrelinhamento) e margens.
+- **Índice Unificado:** Painel lateral com Sumário lógico e Salto por Páginas para PDF e EPUB.
 
-_Foco: Expandir o que o usuário pode ler e como ele lê._
+### 🟠 Fase 3: Ecossistema & Conectividade (Em progresso)
 
-- **Suporte Nativo a PDF (Zero-Extraction):** Implementar renderização sob demanda usando `pdfjs-dist`. Em vez de extrair todas as páginas para o disco, a aplicação renderiza apenas a página atual solicitada, permitindo abertura instantânea de arquivos PDF gigantes.
-- **Módulo EPUB/Livros:** Implementar o `EpubAdapter` para suporte a literatura textual, permitindo ajuste de fonte, entrelinhamento e temas de leitura (sépia, noturno).
-- **Modos de Visualização Dinâmicos:**
-  - **Webtoon Mode:** Rolagem vertical contínua com pré-carregamento (lazy loading) inteligente.
-  - **Double Page Mode:** Visualização de duas páginas lado a lado com detecção de "Spread Pages" (páginas duplas que devem ser exibidas juntas).
-- **Pós-processamento de Imagem:** Filtros em tempo real via Sharp (Brilho, Contraste, Nitidez e Limpeza de ruído) para restaurar a qualidade de scans antigos.
-
-### 🟠 Fase 3: Ecossistema & Conectividade (Longo Prazo)
-
-_Foco: Sincronização e recursos avançados._
-
-- **Sincronização Cloud:** Implementar o upload de backups e progresso de leitura para Google Drive/OneDrive.
-- **Compartilhamento em Rede Local:** Transformar a Biblioteca em um servidor de mídia local, permitindo ler sua coleção em tablets ou celulares via navegador na mesma rede Wi-Fi.
-- **Sistema de Tie-ins Avançado:** Criar "Cronologias" onde o usuário pode seguir uma ordem de leitura que alterna automaticamente entre diferentes séries (comum em eventos de quadrinhos).
+- **Sincronização de Progresso (CFI):** Implementação do Canonical Fragment Identifier para salvar a posição exata em textos fluidos, garantindo persistência mesmo após trocas de fontes.
+- **Compartilhamento em Rede Local:** Transformar a Biblioteca em um servidor de mídia local, permitindo ler sua coleção em tablets ou celulares via navegador.
+- **Sistema de Tie-ins Avançado:** Criar "Cronologias" onde o usuário pode seguir uma ordem de leitura que alterna automaticamente entre diferentes séries.
 
 ---
 

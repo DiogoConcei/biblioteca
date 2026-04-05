@@ -317,6 +317,5 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
     );
   },
 );
-
 EpubViewer.displayName = 'EpubViewer';
 export default EpubViewer;

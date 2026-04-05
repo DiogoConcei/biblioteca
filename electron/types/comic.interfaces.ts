@@ -96,6 +96,7 @@ export interface ComicEdition extends graphChapter {
   page: {
     lastPageRead: number;
     favoritePage: number;
+    lastCfi?: string;
   };
 }
 

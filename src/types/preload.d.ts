@@ -139,6 +139,7 @@ declare global {
           chapter_id: number,
           page_number: number,
           totalPages: number,
+          lastCfi?: string,
         ) => Promise<APIResponse<void>>;
         acessLastRead: (
           serieId: number,

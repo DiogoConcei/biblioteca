@@ -40,7 +40,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         const adapter = MediaFactory.getAdapter(chapter.chapterPath);
         const content = await adapter.getPages(chapter.chapterPath);
 
-        return { success: true, data: content };
+        return { success: true, data: content, lastCfi: chapter.page.lastCfi };
       } catch (e) {
         console.error(`Erro ao recuperar o capitulo: ${e}`);
         return { success: false, error: String(e) };
@@ -56,6 +56,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
       chapter_id: number,
       page_number: number,
       totalPages: number,
+      cfi?: string,
     ) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
@@ -85,6 +86,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
                 chapter.page?.lastPageRead ?? 0,
                 page_number,
               ),
+              lastCfi: cfi || chapter.page.lastCfi,
             },
             isRead: chapter.isRead || isLastPage,
           };
@@ -159,25 +161,6 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         };
       }
 
-      if (chapter.isDownloaded === 'not_downloaded') {
-        const dataPath = serie.dataPath;
-        const LiteratureForm = fileManager.foundLiteratureForm(dataPath);
-
-        switch (LiteratureForm) {
-          case 'Mangas':
-            await mangaManager.createChapterById(dataPath, chapter.id);
-            break;
-          case 'Comics':
-            await comicManager.createChapterById(dataPath, chapter.id);
-            break;
-          case 'childSeries':
-            await tieManager.createChapterById(dataPath, chapter.id);
-            break;
-          default:
-            break;
-        }
-      }
-
       const url = userManager.mountChapterUrl(
         serie,
         chapter.id,
@@ -186,7 +169,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         chapter.isRead,
       );
 
-      return { success: true, data: [url, serie] };
+      return { success: true, data: [url, serie, chapter.page.lastCfi] };
     } catch (e) {
       console.error(`Erro ao acessar último capítulo lido: ${e}`);
       return { success: false, error: String(e) };
@@ -220,7 +203,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
           nextChapter.isRead,
         );
 
-        return { success: true, data: url };
+        return { success: true, data: url, lastCfi: nextChapter.page.lastCfi };
       } catch (e) {
         console.error(`Erro ao buscar próximo capítulo: ${e}`);
         return { success: false, error: String(e) };
@@ -257,7 +240,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
           prevChapter.isRead,
         );
 
-        return { success: true, data: url };
+        return { success: true, data: url, lastCfi: prevChapter.page.lastCfi };
       } catch (e) {
         console.error(`Erro ao buscar capítulo anterior: ${e}`);
         return { success: false, error: String(e) };
