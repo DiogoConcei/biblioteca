@@ -40,6 +40,9 @@ export interface PageControlProps {
   TamPages: number;
   prevPage: () => void;
   nextPage: () => void;
+  goToPage?: (page: number) => void;
+  percent?: number;
+  chapterLabel?: string;
 }
 
 export interface visualizerProps {

@@ -10,6 +10,9 @@ export default function PageControl({
   TamPages,
   nextPage,
   prevPage,
+  goToPage,
+  percent,
+  chapterLabel,
 }: PageControlProps) {
   const [progress, setProgress] = useState(currentPage / TamPages);
   const readingMode = useSettingsStore((state) => state.settings.viewer.readingMode);
@@ -34,11 +37,20 @@ export default function PageControl({
     >
       <ChevronLeft onClick={handlePrevPage} />
       <div className={styles.pageProgress}>
-        <p>
-          {readingMode === 'double'
-            ? `${currentPage + 1}-${Math.min(currentPage + 2, TamPages)}`
-            : currentPage + 1}
-        </p>
+        {percent !== undefined && percent >= 0 ? (
+          <div className={styles.epubProgress}>
+            {chapterLabel && <span className={styles.chapterLabel}>{chapterLabel}</span>}
+            <span className={styles.percent}>{percent}%</span>
+          </div>
+        ) : percent === -1 ? (
+          <span className={styles.percent}>...</span>
+        ) : (
+          <p>
+            {readingMode === 'double'
+              ? `${currentPage + 1}-${Math.min(currentPage + 2, TamPages)}`
+              : currentPage + 1}
+          </p>
+        )}
         <input
           type="range"
           min={0}
@@ -48,12 +60,9 @@ export default function PageControl({
           onChange={(e) => {
             const newPage = Number(e.target.value);
             if (newPage !== currentPage) {
-              // Aqui chamamos as funções de navegação. 
-              // Como o slider pode pular várias páginas, 
-              // o ideal seria uma função setPage direta no hook, 
-              // mas para manter a compatibilidade vamos apenas atualizar o progresso visual
-              // e o Viewer lidará com a mudança de estado via setCurrentPage se passássemos ela.
-              // Por enquanto, o next/prev dão conta se o usuário mover um por um.
+              if (goToPage) {
+                goToPage(newPage);
+              }
             }
           }}
           className={styles.rangeSlider}

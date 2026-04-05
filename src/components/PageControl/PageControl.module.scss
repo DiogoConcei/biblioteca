@@ -84,5 +84,27 @@
         background: transparent;
       }
     }
+
+    .epubProgress {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .chapterLabel {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary, #888);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+
+    .percent {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: $snow;
+    }
   }
 }
