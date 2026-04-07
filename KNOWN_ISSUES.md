@@ -28,3 +28,15 @@
 ### 4. Customização de Texto (EPUB)
 **Problema:** O `BookViewer` inicialmente utilizava injeção de CSS estático, impedindo a troca de fontes, cores de fundo ou espaçamento em tempo real.
 **Status:** **Resolvido** na Fase 2 do E-Reader com a implementação de menus de configurações de tipografia e temas.
+
+### 5. Renderização de PDF no Mobile (LAN)
+**Problema:** PDFs exibem ícones de imagem quebrada no mobile, indicando falha na rota de renderização servida pelo servidor LAN.
+**Status:** **Em investigação**. Provável erro de contexto ou falta de dependências de Canvas no processo Main ao rodar fora do Electron puro.
+
+### 6. Visualização de EPUB no Mobile (LAN)
+**Problema:** EPUBs apresentam bugs visuais ou de carregamento no iframe mobile.
+**Status:** **Em investigação**. Necessário validar links relativos dentro do iframe quando servidos via LAN Server.
+
+### 7. Download sob Demanda falhando no Mobile
+**Problema:** Clicar em capítulos não baixados no mobile resulta em erro silencioso ou travamento, mesmo com a implementação de download On-the-Fly.
+**Status:** **Em investigação**. Suspeita de timeout na requisição HTTP ou erro de permissão de escrita ao acionar managers do Main.

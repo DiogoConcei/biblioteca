@@ -6,13 +6,31 @@ import path from 'path';
 import { randomBytes } from 'crypto';
 import { Bonjour } from 'bonjour-service';
 import * as QRCode from 'qrcode';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+
+// Configuração do worker para o ambiente Node.js do LanServer
+if (typeof window === 'undefined') {
+  // @ts-expect-error - Propriedade interna do pdfjs para Node
+  pdfjsLib.GlobalWorkerOptions.workerSrc = ''; 
+}
 
 import storageManager from './StorageManager';
 import { LocalMediaHandler } from './protocols/LocalMediaHandler';
 import { ArchiveMediaHandler } from './protocols/ArchiveMediaHandler';
 import MediaFactory from './MediaFactory';
+import { MediaContent } from '../../electron/types/media.interfaces';
+import FileManager from './FileManager';
+import MangaManager from './MangaManager';
+import ComicManager from './ComicManager';
+import TieInManager from './TieInManager';
+import PdfAdapter from './adapters/PdfAdapter';
 
 export class LanServer {
+  private fileManager = new FileManager();
+  private pdfAdapter = new PdfAdapter();
+  private mangaManager = new MangaManager();
+  private comicManager = new ComicManager();
+  private tieManager = new TieInManager();
   private app: Express;
   private server: http.Server | null = null;
   private token: string | null = null;
@@ -108,17 +126,50 @@ export class LanServer {
           return;
         }
 
-        const chapter = serie.chapters?.find(c => c.id === chapterId);
+        let chapter = serie.chapters?.find(c => c.id === chapterId);
         if (!chapter) {
           res.status(404).json({ error: 'Chapter not found' });
           return;
         }
 
-        if (!chapter.chapterPath) {
-          res.status(400).json({ error: 'O caminho do capítulo está vazio. Verifique se o download foi concluído no Desktop.' });
+        // Se o capítulo não estiver baixado, tentar baixar na hora (On-the-Fly)
+        if (!chapter.chapterPath || chapter.isDownloaded !== 'downloaded') {
+          try {
+            console.log(`[LanServer] Capítulo não baixado. Tentando baixar na hora: ${chapter.name}`);
+            const literatureForm = this.fileManager.foundLiteratureForm(serie.dataPath);
+            
+            switch (literatureForm) {
+              case 'Mangas':
+                await mangaManager.createChapterById(serie.dataPath, chapter.id);
+                break;
+              case 'Comics':
+                await comicManager.createChapterById(serie.dataPath, chapter.id);
+                break;
+              case 'childSeries':
+                await tieManager.createChapterById(serie.dataPath, chapter.id);
+                break;
+              default:
+                throw new Error(`Formato de literatura desconhecido: ${literatureForm}`);
+            }
+
+            // Reler a série para pegar o chapterPath atualizado
+            const updatedSerie = await storageManager.readSerieData(serie.dataPath);
+            if (updatedSerie) {
+               chapter = updatedSerie.chapters?.find(c => c.id === chapterId);
+            }
+          } catch (dlError) {
+             console.error(`[LanServer] Falha ao baixar capítulo sob demanda:`, dlError);
+             res.status(500).json({ error: 'Falha ao tentar baixar o capítulo do servidor remoto.' });
+             return;
+          }
+        }
+
+        if (!chapter || !chapter.chapterPath) {
+          res.status(400).json({ error: 'O caminho do capítulo continua vazio após tentativa de download.' });
           return;
         }
 
+        let content: MediaContent;
         try {
           const adapter = MediaFactory.getAdapter(chapter.chapterPath);
           content = await adapter.getPages(chapter.chapterPath);
@@ -134,18 +185,49 @@ export class LanServer {
           throw innerError;
         }
 
-        // Transformar URLs lib-media:// para URLs HTTP do LanServer
-        const transformedResources = content.resources.map(resource => {
-          if (resource.startsWith('lib-media://local/')) {
-            const encodedPath = resource.replace('lib-media://local/', '');
-            return `/api/media/local?path=${encodeURIComponent(encodedPath)}&token=${this.token}`;
+        // Se for PDF, transformamos em uma lista de imagens virtuais para o mobile
+        if (content.type === 'pdf' && content.totalResources > 0) {
+          const pdfPathEncoded = Buffer.from(chapter.chapterPath).toString('base64');
+          const pdfImages = [];
+          for (let i = 1; i <= content.totalResources; i++) {
+            // Rota interna que renderiza a página sob demanda
+            pdfImages.push(`/api/media/pdf/page?path=${pdfPathEncoded}&page=${i}&token=${this.token}`);
           }
-          if (resource.startsWith('lib-media://archive/')) {
-            const normalizedPath = resource.replace('lib-media://archive/', '');
-            const parts = normalizedPath.split('/').filter(Boolean);
-            const encodedZip = parts[0];
-            const internalPath = parts.slice(1).join('/');
-            return `/api/media/archive?zipPath=${encodedZip}&internalPath=${encodeURIComponent(internalPath)}&token=${this.token}`;
+          return res.json({
+            ...content,
+            type: 'comic', // Tratamos como comic no mobile para usar o visualizador de imagens
+            resources: pdfImages
+          });
+        }
+
+        // Transformar URLs lib-media:// para URLs HTTP do LanServer
+        const transformedResources = content.resources.map((resource: Record<string, unknown> | string) => {
+          if (typeof resource === 'string') {
+            if (resource.startsWith('lib-media://local/')) {
+              const encodedPath = resource.replace('lib-media://local/', '');
+              return `/api/media/local?path=${encodeURIComponent(encodedPath)}&token=${this.token}`;
+            }
+            if (resource.startsWith('lib-media://archive/')) {
+              const normalizedPath = resource.replace('lib-media://archive/', '');
+              const parts = normalizedPath.split('/').filter(Boolean);
+              const encodedZip = parts[0];
+              const internalPath = parts.slice(1).join('/');
+              return `/api/media/archive?zipPath=${encodedZip}&internalPath=${encodeURIComponent(internalPath)}&token=${this.token}`;
+            }
+            return resource;
+          } else if (resource && resource.path && typeof resource.path === 'string') {
+            let newPath = resource.path;
+            if (newPath.startsWith('lib-media://local/')) {
+              const encodedPath = newPath.replace('lib-media://local/', '');
+              newPath = `/api/media/local?path=${encodeURIComponent(encodedPath)}&token=${this.token}`;
+            } else if (newPath.startsWith('lib-media://archive/')) {
+              const normalizedPath = newPath.replace('lib-media://archive/', '');
+              const parts = normalizedPath.split('/').filter(Boolean);
+              const encodedZip = parts[0];
+              const internalPath = parts.slice(1).join('/');
+              newPath = `/api/media/archive?zipPath=${encodedZip}&internalPath=${encodeURIComponent(internalPath)}&token=${this.token}`;
+            }
+            return { ...resource, path: newPath };
           }
           return resource;
         });
@@ -161,6 +243,58 @@ export class LanServer {
           message: error instanceof Error ? error.message : 'Erro interno desconhecido',
           stack: error instanceof Error ? error.stack : undefined
         });
+      }
+    });
+
+    this.app.get('/api/media/pdf/page', async (req: Request, res: Response) => {
+      let pdf: pdfjsLib.PDFDocumentProxy | null = null;
+      try {
+        const encodedPath = req.query.path as string;
+        const pageNum = parseInt(req.query.page as string, 10);
+        
+        if (!encodedPath || isNaN(pageNum)) {
+          return res.status(400).send('Missing parameters');
+        }
+
+        const filePath = Buffer.from(encodedPath, 'base64').toString('utf-8');
+        
+        const pdfData = await fse.readFile(filePath);
+        pdf = await pdfjsLib.getDocument({
+          data: new Uint8Array(pdfData),
+          disableWorker: true,
+          verbosity: 0
+        }).promise;
+
+        const { createCanvas } = await import('@napi-rs/canvas');
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 1.5 }); 
+
+        const canvas = createCanvas(viewport.width, viewport.height);
+        const context = canvas.getContext('2d');
+
+        await page.render({
+          canvas: canvas as unknown as HTMLCanvasElement,
+          canvasContext: context as unknown as CanvasRenderingContext2D,
+          viewport,
+        }).promise;
+
+        const buffer = canvas.toBuffer('image/jpeg', 0.8);
+        res.set('Content-Type', 'image/jpeg');
+        res.set('Cache-Control', 'public, max-age=3600'); // Cache de 1 hora para as páginas
+        res.send(buffer);
+      } catch (error) {
+        console.error('[LanServer] Erro ao renderizar página PDF:', error);
+        if (!res.headersSent) {
+          res.status(500).send(String(error));
+        }
+      } finally {
+        if (pdf) {
+          try {
+            await pdf.destroy();
+          } catch (e) {
+            // Silencioso
+          }
+        }
       }
     });
 
@@ -242,6 +376,12 @@ export class LanServer {
       this.token = randomBytes(4).toString('hex').toUpperCase();
 
       this.server = this.app.listen(port, '0.0.0.0', async () => {
+        // Aumentar o timeout para 2 minutos para suportar downloads longos sob demanda
+        if (this.server) {
+          this.server.timeout = 120000; 
+          this.server.keepAliveTimeout = 60000;
+        }
+
         const localIp = this.getLocalIp();
         const url = `http://${localIp}:${port}`;
 
@@ -253,13 +393,13 @@ export class LanServer {
           // Iniciar mDNS (Bonjour)
           this.bonjour = new Bonjour();
           this.bonjour.publish({
-            name: 'Biblioteca - LegacyReader',
+            name: `Biblioteca - ${os.hostname()}`,
             type: 'http',
             port: port,
             txt: { token: this.token }
           });
 
-          console.log(`[LanServer] Servidor rodando em ${url} (mDNS: biblioteca.local)`);
+          console.log(`[LanServer] Servidor rodando em ${url} (mDNS: ${os.hostname().toLowerCase()}.local)`);
         } catch (err) {
           console.error('[LanServer] Erro ao iniciar serviços auxiliares:', err);
         }
@@ -301,6 +441,7 @@ export class LanServer {
     return {
       active: !!this.server,
       url: this.server ? `http://${this.getLocalIp()}:${port}` : '',
+      hostname: os.hostname().toLowerCase(),
       token: this.token || '',
       qrCode: this.qrCode || ''
     };

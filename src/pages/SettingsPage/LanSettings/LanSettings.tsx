@@ -66,7 +66,7 @@ export default function LanSettings() {
                 </p>
                 <p>
                   <strong>Hostname: </strong>
-                  <code>http://biblioteca.local:3030</code>
+                  <code>http://{lanStatus.hostname || 'biblioteca'}.local:3030</code>
                 </p>
                 <p>
                   <strong>Token de Sessão: </strong>

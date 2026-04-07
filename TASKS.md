@@ -9,13 +9,13 @@
   - Implementar recebimento de arquivos via WebSocket/HTTP.
 
 ## Concluído recentemente
+- [x] **[FIX] LAN Sharing: Estabilidade e Compatibilidade Total**
+  - Implementado renderizador de PDF no servidor (`/api/media/pdf/page`) para visualização nativa no mobile.
+  - Ajustado sandbox do visualizador de EPUB para permitir carregamento de recursos internos (CSS/Imagens).
+  - Implementado sistema de **Download On-Demand** no servidor LAN, permitindo baixar capítulos remotamente.
+  - Corrigido problema de variável indefinida (`content`) na transformação de recursos complexos.
+  - Adicionado suporte a Hostname Real (`meu-pc.local`) para descoberta via rede.
 - [x] **[FEAT] LAN Sharing: Ecossistema de Leitura Web**
-  - Implementado sistema de descoberta via mDNS (`biblioteca.local`).
-  - Adicionado gerador de QR Code para conexão instantânea (URL + Token).
-  - Desenvolvido Visualizador Web (SPA) com navegação de séries, capítulos e leitura vertical (Webtoon).
-  - Corrigido processamento de imagens e codificação de caminhos (`encodeURIComponent`) para exibição mobile.
-  - Adicionado tratamento robusto de erros (`ENOENT`) com mensagens claras no frontend mobile.
-- [x] **[FIX] LAN Sharing: Exibição de Imagens Mobile**
   - Corrigido problema de codificação de caracteres especiais (`+`, `/`) na Query String das imagens via `encodeURIComponent`.
   - Adicionado logs detalhados de erro no `LanServer` para diagnóstico de falhas de I/O e permissão.
 - [x] **[FEAT] Nova Arquitetura do Leitor EPUB (`react-reader` & `epub.js`)**

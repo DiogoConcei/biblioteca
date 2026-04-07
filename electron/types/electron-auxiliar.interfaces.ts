@@ -239,6 +239,7 @@ export interface graphChapter {
 export interface LanStatus {
   active: boolean;
   url: string;
+  hostname?: string;
   token: string;
   qrCode?: string;
 }

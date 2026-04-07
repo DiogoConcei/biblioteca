@@ -241,16 +241,22 @@ function App() {
         </div>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {chapters.sort((a,b) => b.id - a.id).map((chapter) => (
-            <div 
-              key={chapter.id} 
-              onClick={() => handleChapterClick(chapter)}
-              style={{ background: '#1a1a1a', padding: '15px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-            >
-              <span style={{ fontWeight: '500' }}>{chapter.name}</span>
-              {chapter.isRead && <span style={{ color: '#4caf50', fontSize: '0.8rem' }}>Lido</span>}
-            </div>
-          ))}
+          {chapters.sort((a,b) => b.id - a.id).map((chapter: Chapter) => {
+            const isNotDownloaded = !chapter.chapterPath || chapter.isDownloaded === 'not_downloaded';
+            return (
+              <div 
+                key={chapter.id} 
+                onClick={() => handleChapterClick(chapter)}
+                style={{ background: '#1a1a1a', padding: '15px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ fontWeight: '500', color: isNotDownloaded ? '#bbb' : 'white' }}>{chapter.name}</span>
+                  {isNotDownloaded && <span style={{ color: '#ffb74d', fontSize: '0.75rem' }}>⬇️ Requer download (pode demorar)</span>}
+                </div>
+                {chapter.isRead && <span style={{ color: '#4caf50', fontSize: '0.8rem', flexShrink: 0 }}>Lido</span>}
+              </div>
+            );
+          })}
         </div>
         {loading && <p style={{ textAlign: 'center', marginTop: '20px' }}>Carregando conteúdo...</p>}
       </div>
@@ -259,27 +265,52 @@ function App() {
 
   // RENDERIZAÇÃO DO VISUALIZADOR
   if (view === 'viewer' && selectedChapter && chapterContent) {
+    const isBook = chapterContent.type === 'book';
+
     return (
-      <div style={{ background: '#000', minHeight: '100vh' }}>
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.8)', padding: '15px', display: 'flex', alignItems: 'center', gap: '15px', zIndex: 100 }}>
-           <button onClick={() => setView('series')} style={{ background: 'transparent', color: 'white', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}>←</button>
+      <div style={{ background: isBook ? '#f5f5f5' : '#000', minHeight: '100vh' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.9)', padding: '15px', display: 'flex', alignItems: 'center', gap: '15px', zIndex: 100, borderBottom: '1px solid #333' }}>
+           <button onClick={() => setView('series')} style={{ background: 'transparent', color: 'white', border: 'none', fontSize: '1.2rem', cursor: 'pointer', padding: '5px' }}>←</button>
            <span style={{ color: 'white', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedChapter.name}</span>
         </div>
         
-        <div style={{ paddingTop: '60px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {chapterContent.resources.map((pageUrl, idx) => (
-            <img 
-              key={idx} 
-              src={`${baseUrl}${pageUrl}`} 
-              alt={`Página ${idx + 1}`} 
-              style={{ width: '100%', maxWidth: '800px', display: 'block' }} 
-              loading="lazy"
-            />
-          ))}
+        <div style={{ paddingTop: '70px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isBook ? '30px' : '0', paddingBottom: '20px' }}>
+          {chapterContent.resources.map((resource: string | { path: string }, idx) => {
+            const url = typeof resource === 'string' ? resource : resource.path;
+            const fullUrl = `${baseUrl}${url}`;
+
+            if (isBook) {
+              return (
+                <div key={idx} style={{ width: '95%', maxWidth: '900px', background: 'white', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', border: '1px solid #ddd' }}>
+                  <iframe 
+                    src={fullUrl} 
+                    title={`Página ${idx + 1}`}
+                    loading="lazy"
+                    sandbox="allow-scripts allow-same-origin"
+                    style={{ width: '100%', height: '85vh', border: 'none' }}
+                  />
+                </div>
+              );
+            }
+
+            return (
+              <img 
+                key={idx} 
+                src={fullUrl} 
+                alt={`Página ${idx + 1}`} 
+                style={{ width: '100%', maxWidth: '850px', display: 'block' }} 
+                loading="lazy"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+                  console.error('Falha ao carregar página:', fullUrl);
+                }}
+              />
+            );
+          })}
         </div>
         
-        <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-           <button onClick={() => { setView('series'); window.scrollTo(0, 0); }} style={{ background: '#8963ba', color: 'white', border: 'none', padding: '12px 30px', borderRadius: '8px', fontWeight: 'bold' }}>Fim do Capítulo</button>
+        <div style={{ padding: '40px 20px', textAlign: 'center', background: isBook ? '#eee' : 'transparent' }}>
+           <button onClick={() => { setView('series'); window.scrollTo(0, 0); }} style={{ background: '#8963ba', color: 'white', border: 'none', padding: '14px 40px', borderRadius: '30px', fontWeight: 'bold', fontSize: '1.1rem', boxShadow: '0 4px 12px rgba(137, 99, 186, 0.4)' }}>Concluir Leitura</button>
         </div>
       </div>
     );
