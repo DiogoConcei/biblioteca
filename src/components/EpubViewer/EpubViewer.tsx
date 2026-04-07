@@ -70,7 +70,7 @@ interface EpubViewerProps {
     percent: number,
     chapterLabel: string,
   ) => void;
-  onTocLoaded: (toc: any[]) => void;
+  onTocLoaded: (toc: { href?: string; label?: string; title?: string }[]) => void;
 }
 
 export interface EpubViewerRef {
@@ -85,7 +85,7 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
     ref,
   ) => {
     const renditionRef = useRef<EpubRendition | null>(null);
-    const tocRef = useRef<any[]>([]);
+    const tocRef = useRef<{ href?: string; label?: string; title?: string }[]>([]);
     const [isReady, setIsReady] = useState(false);
     const [buffer, setBuffer] = useState<ArrayBuffer | null>(null);
 
@@ -219,8 +219,8 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
                     '';
                   const tocItem = tocRef.current.find(
                     (item) =>
-                      item.href?.includes(currentHref) ||
-                      currentHref?.includes(item.href),
+                      (item.href && item.href.includes(currentHref)) ||
+                      (item.href && currentHref?.includes(item.href)),
                   );
                   const chapterLabel = tocItem?.label || tocItem?.title || '';
 
@@ -287,8 +287,8 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
                       '';
                     const tocItem = tocRef.current.find(
                       (item) =>
-                        item.href?.includes(currentHref) ||
-                        currentHref?.includes(item.href),
+                        (item.href && item.href.includes(currentHref)) ||
+                        (item.href && currentHref?.includes(item.href)),
                     );
                     const chapterLabel = tocItem?.label || tocItem?.title || '';
 

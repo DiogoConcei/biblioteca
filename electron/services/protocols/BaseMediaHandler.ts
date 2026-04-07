@@ -1,6 +1,7 @@
 import { net } from 'electron';
 import path from 'path';
 import { pathToFileURL } from 'url';
+
 import LibrarySystem from '../abstract/LibrarySystem';
 
 export abstract class BaseMediaHandler extends LibrarySystem {

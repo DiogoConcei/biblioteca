@@ -1,4 +1,5 @@
 import path from 'path';
+
 import { BaseMediaHandler } from './BaseMediaHandler';
 
 export class StorageMediaHandler extends BaseMediaHandler {

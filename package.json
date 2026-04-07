@@ -6,7 +6,8 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "npm run build:mobile && tsc && vite build",
+    "build:mobile": "vite build -c vite.mobile.config.ts",
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win",
     "dist:linux": "npm run build && electron-builder --linux",
@@ -19,7 +20,8 @@
     "productName": "Biblioteca",
     "files": [
       "dist/",
-      "dist-electron/"
+      "dist-electron/",
+      "dist-mobile/"
     ],
     "directories": {
       "output": "release"
@@ -42,7 +44,9 @@
     "@types/fs-extra": "^11.0.4",
     "@types/mime-types": "^3.0.1",
     "@types/react-router-dom": "^5.3.3",
+    "cors": "^2.8.6",
     "epubjs": "^0.3.93",
+    "express": "^5.2.1",
     "file-type": "^21.1.1",
     "immer": "^10.1.1",
     "lodash": "^4.17.23",
@@ -62,6 +66,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.27.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/jsonfile": "^6.1.4",
     "@types/pdfjs-dist": "^2.10.377",
     "@types/react": "^18.3.23",

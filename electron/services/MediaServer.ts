@@ -1,4 +1,5 @@
 import { protocol } from 'electron';
+
 import LibrarySystem from './abstract/LibrarySystem';
 import ImageManager from './ImageManager';
 import { LocalMediaHandler } from './protocols/LocalMediaHandler';
@@ -6,7 +7,7 @@ import { StorageMediaHandler } from './protocols/StorageMediaHandler';
 import { ArchiveMediaHandler } from './protocols/ArchiveMediaHandler';
 
 export default class MediaServer extends LibrarySystem {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   private readonly imageManager: ImageManager = new ImageManager();
   
   private localHandler = new LocalMediaHandler();

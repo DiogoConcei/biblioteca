@@ -1,0 +1,102 @@
+@use '@/styles/variables' as *;
+
+.card {
+  padding: $spacing-2;
+  color: $snow;
+  font-size: $font-lg;
+
+  article {
+    display: flex;
+    flex-direction: column;
+    padding: $spacing-2;
+    gap: $spacing-2;
+
+    h2 {
+      font-size: $font-2xl;
+      color: $snow;
+    }
+
+    p {
+      color: $snow;
+      margin-bottom: $spacing-2;
+    }
+  }
+
+  .actions {
+    display: flex;
+    margin-bottom: $spacing-4;
+
+    button {
+      @include interactive-button;
+      padding: $spacing-2 $spacing-4;
+      color: $snow;
+      border: 1px solid $amethyst;
+      background: $amethyst;
+      border-radius: $radius-md;
+      font-size: $font-lg;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out;
+
+      &:hover {
+        background-color: darken($amethyst, 10%);
+      }
+    }
+  }
+
+  .errorText {
+    color: $indian-red;
+    font-weight: bold;
+    margin-bottom: $spacing-2;
+  }
+
+  .inlineSettings {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
+    background-color: #1e1e1e;
+    padding: $spacing-3;
+    border-radius: $radius-md;
+    border: 1px solid #333;
+
+    p {
+      margin: 0;
+      font-size: $font-lg;
+      display: flex;
+      align-items: center;
+      gap: $spacing-2;
+
+      strong {
+        color: #bbb;
+      }
+    }
+
+    .link {
+      color: $amethyst;
+      text-decoration: none;
+      font-weight: bold;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    code {
+      background: #000;
+      padding: 4px 8px;
+      border-radius: $radius-sm;
+      font-family: monospace;
+      color: #00ff00;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+    }
+
+    .warningInfo {
+      margin-top: $spacing-3;
+      font-size: $font-sm;
+      color: #888;
+      border-top: 1px solid #333;
+      padding-top: $spacing-2;
+    }
+  }
+}

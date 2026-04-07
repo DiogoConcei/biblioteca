@@ -79,6 +79,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     pickImage: () => ipcRenderer.invoke('system:pick-image'),
   },
 
+  lan: {
+    start: () => ipcRenderer.invoke('lan:start'),
+    stop: () => ipcRenderer.invoke('lan:stop'),
+    getStatus: () => ipcRenderer.invoke('lan:status'),
+  },
+
   webUtilities: {
     getPathForFile: (file: File): string => webUtils.getPathForFile(file),
     readFileAsDataUrl: (path: string) =>

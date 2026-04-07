@@ -8,6 +8,10 @@
 
 ## 🐛 Bugs e Instabilidades
 
-### 1. MediaServer LAN sem Auth
-**Problema:** Endpoints de rede local estão abertos.
-**Status:** Necessário implementar Simple Token Auth.
+### 1. Imagens não carregam no LAN Sharing (Mobile)
+**Problema:** A versão mobile do LAN Sharing consegue listar a biblioteca, mas as imagens das capas não são renderizadas (permanecem em branco ou erro de carregamento).
+**Status:** Em investigação. Tentativas de correção via codificação Unicode e alteração de rotas para Query String foram realizadas, mas o problema persiste.
+
+### 2. MediaServer LAN com Auth Básica
+**Problema:** Implementado sistema de Simple Token Auth, mas ainda requer validação de robustez em diferentes navegadores mobile.
+**Status:** Funcional, mas em fase de testes.

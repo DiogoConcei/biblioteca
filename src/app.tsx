@@ -18,6 +18,7 @@ import ErrorBoundary from './providers/ErrorBoundary';
 import AppearanceSettings from './pages/SettingsPage/AppearancesSettings/AppearanceSettings';
 import PrivacySettings from './pages/SettingsPage/PrivacySettings/PrivacySettings';
 import SyncSettings from './pages/SettingsPage/SyncSettings/SyncSettings';
+import LanSettings from './pages/SettingsPage/LanSettings/LanSettings';
 import Downloads from './pages/downloads/Downloads';
 import BookViewer from './pages/bookViewer/BookViewer';
 import BookPage from './pages/bookPage/BookPage';
@@ -37,6 +38,7 @@ const App = () => {
               <Route path="appearance" element={<AppearanceSettings />} />
               <Route path="privacy" element={<PrivacySettings />} />
               <Route path="sync" element={<SyncSettings />} />
+              <Route path="lan" element={<LanSettings />} />
             </Route>
             <Route
               path="edit/serie/:serie_name/:literature_form"

@@ -11,7 +11,7 @@ interface PdfViewerProps {
   path: string;
   currentPage: number;
   scale: number;
-  onPdfLoaded: (pdf: pdfjsLib.PDFDocumentProxy, totalPages: number, outline: any[]) => void;
+  onPdfLoaded: (pdf: pdfjsLib.PDFDocumentProxy, totalPages: number, outline: { href?: string; label?: string; title?: string }[]) => void;
 }
 
 export default function PdfViewer({ path, currentPage, scale, onPdfLoaded }: PdfViewerProps) {
@@ -44,7 +44,7 @@ export default function PdfViewer({ path, currentPage, scale, onPdfLoaded }: Pdf
     });
 
     return () => { isMounted = false; };
-  }, [path]);
+  }, [path, onPdfLoaded]);
 
   // 2. Renderização da Página
   useEffect(() => {

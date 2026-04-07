@@ -11,7 +11,6 @@ import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
 import ViewerMenu from '../../components/ViewerMenu/ViewerMenu';
 import PageControl from '../../components/PageControl/PageControl';
 import styles from './BookViewer.module.scss';
-
 import EpubViewer, { EpubViewerRef } from '../../components/EpubViewer/EpubViewer';
 import PdfViewer from '../../components/PdfViewer/PdfViewer';
 
@@ -39,7 +38,7 @@ export default function BookViewer() {
   // Estados de UI
   const [isIndexOpen, setIsIndexOpen] = useState(false);
   const [indexTab, setIndexTab] = useState<'summary' | 'pages'>('summary');
-  const [toc, setToc] = useState<any[]>([]);
+  const [toc, setToc] = useState<{ href?: string; label?: string; title?: string }[]>([]);
   
   // Referências
   const epubRef = useRef<EpubViewerRef>(null);

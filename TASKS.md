@@ -2,9 +2,10 @@
 
 ## Em progresso
 - [ ] **[FEAT] LAN Sharing: Leitura via Rede**
-  - Implementar Servidor HTTP paralelo para dispositivos móveis.
-  - Criar sistema de Auth via Simple Token.
-  - Desenvolver visualizador web simplificado para mobile.
+  - [x] Implementar Servidor HTTP paralelo (Express) para dispositivos móveis.
+  - [x] Criar sistema de Auth via Simple Token.
+  - [ ] Resolver falha na exibição de imagens (capas/páginas) na versão mobile.
+  - [ ] Desenvolver visualizador de capítulos web para mobile.
 - [ ] **[FEAT] Scrapers de Capítulos**
   - Implementar busca automática de novos capítulos para séries existentes.
   - Integração com provedores externos para notificações de atualização.
@@ -18,7 +19,8 @@
   - Carregamento de EPUB alterado para `ArrayBuffer` em memória, eliminando a necessidade de extração por capítulo e requisições fantasmas (`403 Forbidden`).
   - Suporte total a CFI para preservação da posição exata e **Contador de Páginas Referencial** (Página X de Y).
   - Implementado percentual de leitura e título dinâmico do capítulo no PageControl.
-  - Design Premium: Visual de "Página de Livro" com sombras em camadas, centralização e diagramação elegante.  - [x] **[CORE] Desacoplamento do MediaServer**
+  - Design Premium: Visual de "Página de Livro" com sombras em camadas, centralização e diagramação elegante.
+- [x] **[CORE] Desacoplamento do MediaServer**
   - Refatoração do monolítico `MediaServer.ts` em handlers de protocolo (`LocalMediaHandler`, `ArchiveMediaHandler`, `StorageMediaHandler`) usando padrão Strategy.
   - Segurança reforçada: CSP atualizado e remoção do privilégio `allow-same-origin` (Prevenção de Iframe Escape).
 - [x] **[CORE] Tipagem Estrita (Zero Any)**
@@ -35,4 +37,4 @@
   - Limpeza total de tipagem (100% conformidade com lint e build).
 
 ## Contexto da próxima sessão
-O motor de leitura (PDF e EPUB) está totalmente estabilizado, com suporte a posição exata de leitura (CFI) funcional. O próximo grande desafio é a implementação do **LAN Sharing** para permitir a leitura da biblioteca em dispositivos móveis via rede local.
+A base do **LAN Sharing** foi implementada, incluindo o servidor Express e a SPA mobile básica. No entanto, as imagens (capas e páginas) não estão sendo exibidas no dispositivo móvel, mesmo após ajustes na codificação de caminhos. O próximo passo deve focar na investigação da entrega desses ativos via HTTP e, em seguida, prosseguir para os **Scrapers de Capítulos**.

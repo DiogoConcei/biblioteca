@@ -7,6 +7,7 @@ import downloadHandlers from './downloadHandlers.ts';
 import userHandlers from './userHandlers.ts';
 import chaptersHandlers from './chaptersHandlers.ts';
 import systemHandlers from './systemHandlers.ts';
+import lanHandlers from './lanHandlers.ts';
 import MetadataScraperService from '../services/MetadataManager';
 
 export function registerHandlers() {
@@ -19,6 +20,7 @@ export function registerHandlers() {
   chaptersHandlers(ipcMain);
   downloadHandlers(ipcMain);
   systemHandlers(ipcMain);
+  lanHandlers(ipcMain);
 
   ipcMain.handle('metadata:fetch', async (_event, input) => {
     try {

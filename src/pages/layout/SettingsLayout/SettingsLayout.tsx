@@ -9,6 +9,7 @@ export default function SettingsLayout() {
     { label: 'Aparência', path: 'appearance' },
     { label: 'Privacidade', path: 'privacy' },
     { label: 'Sincronização', path: 'sync' },
+    { label: 'Compartilhamento (LAN)', path: 'lan' },
   ];
 
   return (

@@ -79,6 +79,12 @@ declare global {
         >;
       };
 
+      lan: {
+        start: () => Promise<{ success: boolean; active: boolean; url: string; token: string; error?: string }>;
+        stop: () => Promise<{ success: boolean; active: boolean; url: string; token: string; error?: string }>;
+        getStatus: () => Promise<{ success: boolean; active: boolean; url: string; token: string }>;
+      };
+
       webUtilities: {
         getPathForFile: (file: File) => string;
         readFileAsDataUrl: (path: string) => string;
