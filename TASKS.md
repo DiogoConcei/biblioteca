@@ -1,11 +1,6 @@
 # TASKS.md
 
 ## Em progresso
-- [ ] **[FEAT] LAN Sharing: Leitura via Rede**
-  - [x] Implementar Servidor HTTP paralelo (Express) para dispositivos móveis.
-  - [x] Criar sistema de Auth via Simple Token.
-  - [ ] Resolver falha na exibição de imagens (capas/páginas) na versão mobile.
-  - [ ] Desenvolver visualizador de capítulos web para mobile.
 - [ ] **[FEAT] Scrapers de Capítulos**
   - Implementar busca automática de novos capítulos para séries existentes.
   - Integração com provedores externos para notificações de atualização.
@@ -14,6 +9,15 @@
   - Implementar recebimento de arquivos via WebSocket/HTTP.
 
 ## Concluído recentemente
+- [x] **[FEAT] LAN Sharing: Ecossistema de Leitura Web**
+  - Implementado sistema de descoberta via mDNS (`biblioteca.local`).
+  - Adicionado gerador de QR Code para conexão instantânea (URL + Token).
+  - Desenvolvido Visualizador Web (SPA) com navegação de séries, capítulos e leitura vertical (Webtoon).
+  - Corrigido processamento de imagens e codificação de caminhos (`encodeURIComponent`) para exibição mobile.
+  - Adicionado tratamento robusto de erros (`ENOENT`) com mensagens claras no frontend mobile.
+- [x] **[FIX] LAN Sharing: Exibição de Imagens Mobile**
+  - Corrigido problema de codificação de caracteres especiais (`+`, `/`) na Query String das imagens via `encodeURIComponent`.
+  - Adicionado logs detalhados de erro no `LanServer` para diagnóstico de falhas de I/O e permissão.
 - [x] **[FEAT] Nova Arquitetura do Leitor EPUB (`react-reader` & `epub.js`)**
   - Implementado motor de renderização `epub.js` para paginação nativa e perfeita.
   - Carregamento de EPUB alterado para `ArrayBuffer` em memória, eliminando a necessidade de extração por capítulo e requisições fantasmas (`403 Forbidden`).
@@ -37,4 +41,4 @@
   - Limpeza total de tipagem (100% conformidade com lint e build).
 
 ## Contexto da próxima sessão
-A base do **LAN Sharing** foi implementada, incluindo o servidor Express e a SPA mobile básica. No entanto, as imagens (capas e páginas) não estão sendo exibidas no dispositivo móvel, mesmo após ajustes na codificação de caminhos. O próximo passo deve focar na investigação da entrega desses ativos via HTTP e, em seguida, prosseguir para os **Scrapers de Capítulos**.
+O sistema de **LAN Sharing** está totalmente funcional, com suporte a mDNS, QR Code de conexão automática e um visualizador de capítulos web para dispositivos móveis. A leitura de quadrinhos e mangás via rede foi estabilizada. O próximo passo é iniciar o desenvolvimento dos **Scrapers de Capítulos** para automação da biblioteca.

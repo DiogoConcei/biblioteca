@@ -13,6 +13,7 @@ import {
   viewData,
   APIResponse,
   LiteratureChapter,
+  LanStatus,
 } from '../../electron/types/electron-auxiliar.interfaces.js';
 import { SerieData, SerieEditForm, SerieForm } from './series.interfaces.ts';
 import {
@@ -80,9 +81,9 @@ declare global {
       };
 
       lan: {
-        start: () => Promise<{ success: boolean; active: boolean; url: string; token: string; error?: string }>;
-        stop: () => Promise<{ success: boolean; active: boolean; url: string; token: string; error?: string }>;
-        getStatus: () => Promise<{ success: boolean; active: boolean; url: string; token: string }>;
+        start: () => Promise<{ success: boolean } & LanStatus & { error?: string }>;
+        stop: () => Promise<{ success: boolean } & LanStatus & { error?: string }>;
+        getStatus: () => Promise<LanStatus>;
       };
 
       webUtilities: {

@@ -16,6 +16,8 @@ Stack: Electron, React, TypeScript, Zustand, MUI, SCSS Modules, pdfjs-dist, Shar
 - Não instale dependências sem perguntar primeiro.
 - Prefira alterações cirúrgicas. Se a tarefa é corrigir uma função, não reescreva
   o arquivo inteiro.
+- O arquivo `KNOWN_ISSUES.md` NUNCA deve ser sobrescrito. Seu conteúdo deve ser
+  sempre somado/acumulado.
 - Sempre que terminar uma tarefa, atualize a seção "Contexto da próxima sessão"
   no TASKS.md.
 
@@ -61,6 +63,10 @@ interface MediaAdapter {
   paralelo ao protocolo existente — não substitui nem altera o lib-media://.
 - O servidor LAN deve ter token de sessão obrigatório. Não implemente
   endpoints abertos na rede local.
+- O servidor LAN deve utilizar mDNS (Bonjour) para descoberta facilitada
+  (`biblioteca.local`) e QR Code para conexão automática no mobile.
+- Todas as rotas de mídia LAN devem realizar a transformação de caminhos
+  `lib-media://` para rotas HTTP internas de forma transparente.
 
 ---
 

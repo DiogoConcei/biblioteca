@@ -235,3 +235,10 @@ export interface graphChapter {
     lastCfi?: string;
   };
 }
+
+export interface LanStatus {
+  active: boolean;
+  url: string;
+  token: string;
+  qrCode?: string;
+}

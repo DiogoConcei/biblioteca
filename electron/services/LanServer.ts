@@ -4,15 +4,20 @@ import http from 'http';
 import os from 'os';
 import path from 'path';
 import { randomBytes } from 'crypto';
+import { Bonjour } from 'bonjour-service';
+import * as QRCode from 'qrcode';
 
 import storageManager from './StorageManager';
 import { LocalMediaHandler } from './protocols/LocalMediaHandler';
 import { ArchiveMediaHandler } from './protocols/ArchiveMediaHandler';
+import MediaFactory from './MediaFactory';
 
 export class LanServer {
   private app: Express;
   private server: http.Server | null = null;
   private token: string | null = null;
+  private qrCode: string | null = null;
+  private bonjour: Bonjour | null = null;
   private localMediaHandler = new LocalMediaHandler();
   private archiveMediaHandler = new ArchiveMediaHandler();
   
@@ -75,6 +80,90 @@ export class LanServer {
       }
     });
 
+    // Rota para listar capítulos de uma série
+    this.app.get('/api/series/:id/chapters', async (req: Request, res: Response) => {
+      try {
+        const serieId = parseInt(req.params.id, 10);
+        const serie = await storageManager.searchSerieById(serieId);
+        if (!serie) {
+          res.status(404).json({ error: 'Series not found' });
+          return;
+        }
+
+        res.json(serie.chapters || []);
+      } catch (error) {
+        res.status(500).json({ error: String(error) });
+      }
+    });
+
+    // Rota para obter conteúdo de um capítulo (páginas/livro)
+    this.app.get('/api/series/:id/chapters/:chapterId', async (req: Request, res: Response) => {
+      try {
+        const serieId = parseInt(req.params.id, 10);
+        const chapterId = parseInt(req.params.chapterId, 10);
+
+        const serie = await storageManager.searchSerieById(serieId);
+        if (!serie) {
+          res.status(404).json({ error: 'Series not found' });
+          return;
+        }
+
+        const chapter = serie.chapters?.find(c => c.id === chapterId);
+        if (!chapter) {
+          res.status(404).json({ error: 'Chapter not found' });
+          return;
+        }
+
+        if (!chapter.chapterPath) {
+          res.status(400).json({ error: 'O caminho do capítulo está vazio. Verifique se o download foi concluído no Desktop.' });
+          return;
+        }
+
+        try {
+          const adapter = MediaFactory.getAdapter(chapter.chapterPath);
+          content = await adapter.getPages(chapter.chapterPath);
+        } catch (innerError: unknown) {
+          const errorAsAny = innerError as { code?: string };
+          if (errorAsAny && errorAsAny.code === 'ENOENT') {
+            res.status(404).json({ 
+              error: 'Arquivo não encontrado',
+              message: `O arquivo físico do capítulo não existe mais no disco do servidor: ${chapter.chapterPath}`
+            });
+            return;
+          }
+          throw innerError;
+        }
+
+        // Transformar URLs lib-media:// para URLs HTTP do LanServer
+        const transformedResources = content.resources.map(resource => {
+          if (resource.startsWith('lib-media://local/')) {
+            const encodedPath = resource.replace('lib-media://local/', '');
+            return `/api/media/local?path=${encodeURIComponent(encodedPath)}&token=${this.token}`;
+          }
+          if (resource.startsWith('lib-media://archive/')) {
+            const normalizedPath = resource.replace('lib-media://archive/', '');
+            const parts = normalizedPath.split('/').filter(Boolean);
+            const encodedZip = parts[0];
+            const internalPath = parts.slice(1).join('/');
+            return `/api/media/archive?zipPath=${encodedZip}&internalPath=${encodeURIComponent(internalPath)}&token=${this.token}`;
+          }
+          return resource;
+        });
+
+        res.json({
+          ...content,
+          resources: transformedResources
+        });
+      } catch (error) {
+        console.error(`[LanServer] Erro ao obter conteúdo do capítulo:`, error);
+        res.status(500).json({ 
+          error: String(error),
+          message: error instanceof Error ? error.message : 'Erro interno desconhecido',
+          stack: error instanceof Error ? error.stack : undefined
+        });
+      }
+    });
+
     this.app.get('/api/media/local', async (req: Request, res: Response) => {
       try {
         const pathParam = req.query.path as string;
@@ -87,6 +176,7 @@ export class LanServer {
         const response = await this.localMediaHandler.handle(url);
         
         if (!response.ok) {
+          console.error(`[LanServer] Erro ao servir mídia local: ${response.status} ${response.statusText} para o caminho decodificado.`);
           res.status(response.status).send(response.statusText);
           return;
         }
@@ -95,6 +185,7 @@ export class LanServer {
         res.set('Content-Type', response.headers.get('Content-Type') || 'application/octet-stream');
         res.send(Buffer.from(buffer));
       } catch (error) {
+        console.error(`[LanServer] Exceção na rota /api/media/local: ${error}`);
         res.status(500).json({ error: String(error) });
       }
     });
@@ -113,6 +204,7 @@ export class LanServer {
         const response = await this.archiveMediaHandler.handle(url);
         
         if (!response.ok) {
+          console.error(`[LanServer] Erro ao servir mídia de arquivo: ${response.status} ${response.statusText}`);
           res.status(response.status).send(response.statusText);
           return;
         }
@@ -121,6 +213,7 @@ export class LanServer {
         res.set('Content-Type', response.headers.get('Content-Type') || 'application/octet-stream');
         res.send(Buffer.from(buffer));
       } catch (error) {
+        console.error(`[LanServer] Exceção na rota /api/media/archive: ${error}`);
         res.status(500).json({ error: String(error) });
       }
     });
@@ -135,23 +228,47 @@ export class LanServer {
     });
   }
 
-  public start(port = 3030): Promise<{ active: boolean, url: string, token: string }> {
+  public start(port = 3030): Promise<{ active: boolean, url: string, token: string, qrCode?: string }> {
     return new Promise((resolve, reject) => {
       if (this.server) {
         return resolve({ 
           active: true, 
           url: `http://${this.getLocalIp()}:${port}`, 
-          token: this.token! 
+          token: this.token!,
+          qrCode: this.qrCode || undefined
         });
       }
 
       this.token = randomBytes(4).toString('hex').toUpperCase();
 
-      this.server = this.app.listen(port, '0.0.0.0', () => {
+      this.server = this.app.listen(port, '0.0.0.0', async () => {
+        const localIp = this.getLocalIp();
+        const url = `http://${localIp}:${port}`;
+
+        try {
+          // Gerar QR Code com URL de conexão automática
+          // A URL no QR Code inclui o token e aponta para a raiz da SPA mobile
+          this.qrCode = await QRCode.toDataURL(`${url}/?token=${this.token}&host=${localIp}:${port}`);
+          
+          // Iniciar mDNS (Bonjour)
+          this.bonjour = new Bonjour();
+          this.bonjour.publish({
+            name: 'Biblioteca - LegacyReader',
+            type: 'http',
+            port: port,
+            txt: { token: this.token }
+          });
+
+          console.log(`[LanServer] Servidor rodando em ${url} (mDNS: biblioteca.local)`);
+        } catch (err) {
+          console.error('[LanServer] Erro ao iniciar serviços auxiliares:', err);
+        }
+
         resolve({
           active: true,
-          url: `http://${this.getLocalIp()}:${port}`,
-          token: this.token!
+          url: url,
+          token: this.token!,
+          qrCode: this.qrCode || undefined
         });
       }).on('error', (err) => {
         reject(err);
@@ -161,10 +278,16 @@ export class LanServer {
 
   public stop(): Promise<void> {
     return new Promise((resolve) => {
+      if (this.bonjour) {
+        this.bonjour.destroy();
+        this.bonjour = null;
+      }
+
       if (this.server) {
         this.server.close(() => {
           this.server = null;
           this.token = null;
+          this.qrCode = null;
           resolve();
         });
       } else {
@@ -174,10 +297,12 @@ export class LanServer {
   }
 
   public getStatus() {
+    const port = this.server ? (this.server.address() as import('net').AddressInfo).port : 0;
     return {
       active: !!this.server,
-      url: this.server ? `http://${this.getLocalIp()}:${(this.server.address() as import('net').AddressInfo).port}` : '',
-      token: this.token || ''
+      url: this.server ? `http://${this.getLocalIp()}:${port}` : '',
+      token: this.token || '',
+      qrCode: this.qrCode || ''
     };
   }
 
