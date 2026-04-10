@@ -13,20 +13,21 @@
     gap: $spacing-2;
   }
 
-  .lanStatus {
+  .actions {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     gap: $spacing-2;
     margin-bottom: $spacing-4;
 
     button {
       @include interactive-button;
-      padding: $spacing-2 $spacing-4;
+      padding: $spacing-1 $spacing-3;
       color: $snow;
       border: 1px solid $amethyst;
       background: $amethyst;
       border-radius: $radius-md;
-      font-size: $font-lg;
+      font-size: $font-base;
       font-weight: bold;
       cursor: pointer;
       transition: background-color 0.2s ease-in-out;
