@@ -4,12 +4,15 @@ interface Chapter {
   id: number;
   name: string;
   isRead: boolean;
+  chapterPath?: string;
+  isDownloaded?: 'not_downloaded' | 'downloading' | 'downloaded';
 }
 
 interface Serie {
   id: number;
   name: string;
   coverImage?: string;
+  dataPath: string;
 }
 
 interface ChapterContent {
@@ -31,17 +34,56 @@ function App() {
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [chapterContent, setChapterContent] = useState<ChapterContent | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingChapters, setLoadingChapters] = useState<Record<number, 'loading' | 'success' | 'error'>>({});
+  const [downloadStatus, setDownloadStatus] = useState<string[]>([]);
 
-  // Efeito para carregar parâmetros da URL (QR Code)
+  // Polling para status de download
+  useEffect(() => {
+    let interval: number | undefined;
+
+    const hasLoading = Object.values(loadingChapters).some(s => s === 'loading');
+    
+    if (hasLoading) {
+      interval = window.setInterval(async () => {
+        try {
+          const baseUrl = host.startsWith('http') ? host : `http://${host}`;
+          const res = await fetch(`${baseUrl}/api/download-status?token=${token}`);
+          if (res.ok) {
+            const data = await res.json();
+            setDownloadStatus(data.activeDownloads || []);
+          }
+        } catch (err) {
+          console.error('Erro ao buscar status de download:', err);
+        }
+      }, 2000);
+    } else {
+      setDownloadStatus([]);
+    }
+
+    return () => clearInterval(interval);
+  }, [loadingChapters, host, token]);
+
+  // Efeito para carregar parâmetros da URL (QR Code) ou localStorage
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlToken = params.get('token');
     const urlHost = params.get('host');
 
-    if (urlToken && urlHost) {
-      setToken(urlToken);
-      setHost(urlHost);
-      autoConnect(urlHost, urlToken);
+    const storedToken = localStorage.getItem('lan_token');
+    const storedHost = localStorage.getItem('lan_host');
+
+    const finalToken = urlToken || storedToken;
+    const finalHost = urlHost || storedHost;
+
+    if (finalToken && finalHost) {
+      setToken(finalToken);
+      setHost(finalHost);
+      autoConnect(finalHost, finalToken);
+      
+      // Se veio da URL, limpar os parâmetros para URL ficar limpa
+      if (urlToken && urlHost) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -54,6 +96,8 @@ function App() {
       });
       
       if (res.ok) {
+        localStorage.setItem('lan_token', t);
+        localStorage.setItem('lan_host', h);
         setConnected(true);
         fetchLibrary(url, t);
       }
@@ -84,6 +128,8 @@ function App() {
       });
       
       if (res.ok) {
+        localStorage.setItem('lan_token', token);
+        localStorage.setItem('lan_host', host);
         setConnected(true);
         fetchLibrary(url, token);
       } else {
@@ -128,28 +174,68 @@ function App() {
 
   const handleChapterClick = async (chapter: Chapter) => {
     if (!selectedSerie) return;
+
+    // Se já estiver carregando este capítulo, não faz nada
+    if (loadingChapters[chapter.id] === 'loading') return;
+
     setSelectedChapter(chapter);
-    setLoading(true);
+    setLoadingChapters(prev => ({ ...prev, [chapter.id]: 'loading' }));
+
     try {
       const baseUrl = host.startsWith('http') ? host : `http://${host}`;
       const res = await fetch(`${baseUrl}/api/series/${selectedSerie.id}/chapters/${chapter.id}?token=${token}`);
+
       if (res.ok) {
         const data = await res.json();
         setChapterContent(data);
-        setView('viewer');
-        window.scrollTo(0, 0);
+        setLoadingChapters(prev => ({ ...prev, [chapter.id]: 'success' }));
+
+        // Pequeno delay para mostrar o verde antes de abrir
+        setTimeout(() => {
+          setView('viewer');
+          window.scrollTo(0, 0);
+        }, 300);
       } else {
+        setLoadingChapters(prev => ({ ...prev, [chapter.id]: 'error' }));
         const errorData = await res.json().catch(() => ({}));
         const msg = errorData.message || errorData.error || 'Erro desconhecido';
-        alert(`Erro ao abrir capítulo: ${msg} (Status: ${res.status})`);
+        console.error(`Erro ao abrir capítulo: ${msg} (Status: ${res.status})`);
       }
     } catch (err) {
-      console.error(err);
-      alert(`Falha de conexão ao tentar abrir o capítulo: ${String(err)}`);
-    } finally {
-      setLoading(false);
+      setLoadingChapters(prev => ({ ...prev, [chapter.id]: 'error' }));
+      console.error('Falha de conexão:', err);
     }
   };
+
+  const handleDeleteChapter = async (e: React.MouseEvent, chapter: Chapter) => {
+    e.stopPropagation(); // Não abrir a leitura ao clicar na lixeira
+    if (!selectedSerie) return;
+    
+    if (!window.confirm(`Tem certeza que deseja excluir o download de "${chapter.name}"?`)) return;
+
+    try {
+      const baseUrl = host.startsWith('http') ? host : `http://${host}`;
+      const res = await fetch(`${baseUrl}/api/series/${selectedSerie.id}/chapters/${chapter.id}?token=${token}`, {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        // Atualizar estado local
+        setChapters(prev => prev.map(c => 
+          c.id === chapter.id 
+            ? { ...c, chapterPath: undefined, isDownloaded: 'not_downloaded' as const } 
+            : c
+        ));
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(`Erro ao excluir: ${data.error || 'Desconhecido'}`);
+      }
+    } catch (err) {
+      console.error('Falha ao excluir capítulo:', err);
+      alert('Erro de conexão ao tentar excluir.');
+    }
+  };
+
 
   if (!connected) {
     return (
@@ -179,13 +265,33 @@ function App() {
 
   const baseUrl = host.startsWith('http') ? host : `http://${host}`;
 
+  // RENDERIZAÇÃO DO OVERLAY DE LOADING GLOBAL
+  const globalLoading = Object.values(loadingChapters).some(s => s === 'loading');
+
   // RENDERIZAÇÃO DA BIBLIOTECA
   if (view === 'library') {
     return (
       <div style={{ padding: '15px' }}>
+        {globalLoading && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px' }}>
+             <div className="spinner" style={{ fontSize: '3rem' }}>⚙️</div>
+             <p style={{ color: 'white', fontWeight: 'bold' }}>Processando no Servidor...</p>
+             <p style={{ color: '#888', fontSize: '0.9rem' }}>Isso pode levar alguns segundos.</p>
+          </div>
+        )}
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h1 style={{ fontSize: '1.5rem', margin: 0 }}>Biblioteca</h1>
-          <button onClick={() => { setConnected(false); setToken(''); }} style={{ background: 'transparent', color: '#ff4444', border: 'none', cursor: 'pointer', fontSize: '1rem' }}>Sair</button>
+          <button 
+            onClick={() => { 
+              setConnected(false); 
+              setToken(''); 
+              localStorage.removeItem('lan_token');
+              localStorage.removeItem('lan_host');
+            }} 
+            style={{ background: 'transparent', color: '#ff4444', border: 'none', cursor: 'pointer', fontSize: '1rem' }}
+          >
+            Sair
+          </button>
         </header>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(105px, 1fr))', gap: '12px' }}>
           {library.map((item) => {
@@ -218,7 +324,7 @@ function App() {
             );
           })}
         </div>
-        {loading && <p style={{ textAlign: 'center', marginTop: '20px', color: '#888' }}>Carregando...</p>}
+        {(loading || globalLoading) && <p style={{ textAlign: 'center', marginTop: '20px', color: '#888' }}>Carregando...</p>}
       </div>
     );
   }
@@ -227,6 +333,13 @@ function App() {
   if (view === 'series' && selectedSerie) {
     return (
       <div style={{ padding: '20px' }}>
+        {globalLoading && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px' }}>
+             <div className="spinner" style={{ fontSize: '3rem' }}>⚙️</div>
+             <p style={{ color: 'white', fontWeight: 'bold' }}>{downloadStatus.length > 0 ? 'Baixando do Servidor...' : 'Preparando Capítulo...'}</p>
+             <p style={{ color: '#888', fontSize: '0.9rem' }}>Aguarde a finalização do processamento.</p>
+          </div>
+        )}
         <button onClick={() => setView('library')} style={{ background: '#333', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '8px', marginBottom: '20px', cursor: 'pointer' }}>← Voltar</button>
         <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
            <div style={{ width: '100px', height: '140px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
@@ -243,22 +356,57 @@ function App() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {chapters.sort((a,b) => b.id - a.id).map((chapter: Chapter) => {
             const isNotDownloaded = !chapter.chapterPath || chapter.isDownloaded === 'not_downloaded';
+            const state = loadingChapters[chapter.id];
+            const isDownloadingInServer = downloadStatus.includes(`${selectedSerie.id}-${chapter.id}`);
+
             return (
               <div 
                 key={chapter.id} 
                 onClick={() => handleChapterClick(chapter)}
-                style={{ background: '#1a1a1a', padding: '15px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+                style={{ 
+                  background: '#1a1a1a', 
+                  padding: '15px', 
+                  borderRadius: '10px', 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  cursor: 'pointer',
+                  border: state === 'error' ? '1px solid #ff4444' : '1px solid transparent',
+                  transition: 'all 0.3s ease',
+                  opacity: globalLoading && state !== 'loading' ? 0.5 : 1
+                }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <span style={{ fontWeight: '500', color: isNotDownloaded ? '#bbb' : 'white' }}>{chapter.name}</span>
-                  {isNotDownloaded && <span style={{ color: '#ffb74d', fontSize: '0.75rem' }}>⬇️ Requer download (pode demorar)</span>}
+                  {isNotDownloaded && !state && <span style={{ color: '#ffb74d', fontSize: '0.75rem' }}>⬇️ Requer download</span>}
+                  {state === 'loading' && (
+                    <span style={{ color: '#8963ba', fontSize: '0.75rem' }}>
+                      {isDownloadingInServer ? '⚡ Baixando do servidor remoto...' : '⏳ Processando arquivos...'}
+                    </span>
+                  )}
+                  {state === 'error' && <span style={{ color: '#ff4444', fontSize: '0.75rem' }}>❌ Falha no download. Tente novamente.</span>}
                 </div>
-                {chapter.isRead && <span style={{ color: '#4caf50', fontSize: '0.8rem', flexShrink: 0 }}>Lido</span>}
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  {!isNotDownloaded && (
+                    <button 
+                      onClick={(e) => handleDeleteChapter(e, chapter)}
+                      style={{ background: 'transparent', border: 'none', fontSize: '1.2rem', cursor: 'pointer', padding: '5px' }}
+                      title="Excluir download"
+                    >
+                      🗑️
+                    </button>
+                  )}
+                  {state === 'loading' && <span className="spinner" style={{ fontSize: '1.2rem' }}>⚙️</span>}
+                  {state === 'success' && <span style={{ color: '#4caf50', fontSize: '1.2rem' }}>✅</span>}
+                  {state === 'error' && <span style={{ color: '#ff4444', fontSize: '1.2rem' }}>⚠️</span>}
+                  {chapter.isRead && !state && <span style={{ color: '#4caf50', fontSize: '0.8rem', flexShrink: 0 }}>Lido</span>}
+                </div>
               </div>
             );
           })}
         </div>
-        {loading && <p style={{ textAlign: 'center', marginTop: '20px' }}>Carregando conteúdo...</p>}
+        {(loading || globalLoading) && <p style={{ textAlign: 'center', marginTop: '20px' }}>Carregando conteúdo...</p>}
       </div>
     );
   }
@@ -310,7 +458,31 @@ function App() {
         </div>
         
         <div style={{ padding: '40px 20px', textAlign: 'center', background: isBook ? '#eee' : 'transparent' }}>
-           <button onClick={() => { setView('series'); window.scrollTo(0, 0); }} style={{ background: '#8963ba', color: 'white', border: 'none', padding: '14px 40px', borderRadius: '30px', fontWeight: 'bold', fontSize: '1.1rem', boxShadow: '0 4px 12px rgba(137, 99, 186, 0.4)' }}>Concluir Leitura</button>
+           <button 
+            onClick={async () => { 
+              // Sincronizar leitura com o servidor
+              if (selectedSerie && selectedChapter) {
+                try {
+                  const baseUrl = host.startsWith('http') ? host : `http://${host}`;
+                  await fetch(`${baseUrl}/api/series/${selectedSerie.id}/chapters/${selectedChapter.id}/read?token=${token}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ isRead: true })
+                  });
+                  
+                  // Atualizar estado local para refletir na lista
+                  setChapters(prev => prev.map(c => c.id === selectedChapter.id ? { ...c, isRead: true } : c));
+                } catch (err) {
+                  console.error('Falha ao sincronizar leitura:', err);
+                }
+              }
+              setView('series'); 
+              window.scrollTo(0, 0); 
+            }} 
+            style={{ background: '#8963ba', color: 'white', border: 'none', padding: '14px 40px', borderRadius: '30px', fontWeight: 'bold', fontSize: '1.1rem', boxShadow: '0 4px 12px rgba(137, 99, 186, 0.4)' }}
+           >
+            Concluir Leitura
+           </button>
         </div>
       </div>
     );

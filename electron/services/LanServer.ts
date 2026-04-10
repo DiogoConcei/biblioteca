@@ -7,6 +7,7 @@ import { randomBytes } from 'crypto';
 import { Bonjour } from 'bonjour-service';
 import * as QRCode from 'qrcode';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import fse from 'fs-extra';
 
 // Configuração do worker para o ambiente Node.js do LanServer
 if (typeof window === 'undefined') {
@@ -23,6 +24,7 @@ import FileManager from './FileManager';
 import MangaManager from './MangaManager';
 import ComicManager from './ComicManager';
 import TieInManager from './TieInManager';
+import BookManager from './BookManager';
 import PdfAdapter from './adapters/PdfAdapter';
 
 export class LanServer {
@@ -31,6 +33,7 @@ export class LanServer {
   private mangaManager = new MangaManager();
   private comicManager = new ComicManager();
   private tieManager = new TieInManager();
+  private bookManager = new BookManager();
   private app: Express;
   private server: http.Server | null = null;
   private token: string | null = null;
@@ -38,6 +41,7 @@ export class LanServer {
   private bonjour: Bonjour | null = null;
   private localMediaHandler = new LocalMediaHandler();
   private archiveMediaHandler = new ArchiveMediaHandler();
+  private activeDownloads: Set<string> = new Set(); // Rastreia "serieId-chapterId"
   
   constructor() {
     this.app = express();
@@ -66,6 +70,59 @@ export class LanServer {
   private setupRoutes() {
     this.app.get('/api/verify', (req: Request, res: Response) => {
       res.json({ valid: true });
+    });
+
+    this.app.get('/api/download-status', (req: Request, res: Response) => {
+      res.json({ activeDownloads: Array.from(this.activeDownloads) });
+    });
+
+    // Rota para atualizar status de leitura
+    this.app.post('/api/series/:id/chapters/:chapterId/read', async (req: Request, res: Response) => {
+      try {
+        const serieId = parseInt(req.params.id, 10);
+        const chapterId = parseInt(req.params.chapterId, 10);
+        const { isRead } = req.body;
+
+        const serie = await storageManager.searchSerieById(serieId);
+        if (!serie) return res.status(404).json({ error: 'Series not found' });
+
+        const chapter = serie.chapters?.find(c => c.id === chapterId);
+        if (!chapter) return res.status(404).json({ error: 'Chapter not found' });
+
+        chapter.isRead = !!isRead;
+        await storageManager.writeData(serie);
+
+        console.log(`[LanServer] Progresso sincronizado: ${serie.name} - ${chapter.name} (${isRead ? 'Lido' : 'Não lido'})`);
+        res.json({ success: true });
+      } catch (error) {
+        res.status(500).json({ error: String(error) });
+      }
+    });
+
+    // Rota para deletar um capítulo baixado
+    this.app.delete('/api/series/:id/chapters/:chapterId', async (req: Request, res: Response) => {
+      try {
+        const serieId = parseInt(req.params.id, 10);
+        const chapterId = parseInt(req.params.chapterId, 10);
+
+        const serie = await storageManager.searchSerieById(serieId);
+        if (!serie) return res.status(404).json({ error: 'Series not found' });
+
+        const chapter = serie.chapters?.find(c => c.id === chapterId);
+        if (!chapter) return res.status(404).json({ error: 'Chapter not found' });
+
+        const response = await storageManager.deleteChapter(chapter);
+        
+        if (response) {
+          await storageManager.writeData(serie);
+          console.log(`[LanServer] Capítulo deletado: ${serie.name} - ${chapter.name}`);
+          res.json({ success: true });
+        } else {
+          res.status(400).json({ error: 'O arquivo não existia no disco ou já foi deletado.' });
+        }
+      } catch (error) {
+        res.status(500).json({ error: String(error) });
+      }
     });
 
     this.app.get('/api/library', async (req: Request, res: Response) => {
@@ -134,19 +191,25 @@ export class LanServer {
 
         // Se o capítulo não estiver baixado, tentar baixar na hora (On-the-Fly)
         if (!chapter.chapterPath || chapter.isDownloaded !== 'downloaded') {
+          const downloadKey = `${serieId}-${chapterId}`;
           try {
+            this.activeDownloads.add(downloadKey);
             console.log(`[LanServer] Capítulo não baixado. Tentando baixar na hora: ${chapter.name}`);
             const literatureForm = this.fileManager.foundLiteratureForm(serie.dataPath);
             
             switch (literatureForm) {
               case 'Mangas':
-                await mangaManager.createChapterById(serie.dataPath, chapter.id);
+                await this.mangaManager.createChapterById(serie.dataPath, chapter.id);
                 break;
               case 'Comics':
-                await comicManager.createChapterById(serie.dataPath, chapter.id);
+                await this.comicManager.createChapterById(serie.dataPath, chapter.id);
                 break;
               case 'childSeries':
-                await tieManager.createChapterById(serie.dataPath, chapter.id);
+                await this.tieManager.createChapterById(serie.dataPath, chapter.id);
+                break;
+              case 'books':
+              case 'Books':
+                await this.bookManager.createChapterById(serie.dataPath, chapter.id);
                 break;
               default:
                 throw new Error(`Formato de literatura desconhecido: ${literatureForm}`);
@@ -161,6 +224,8 @@ export class LanServer {
              console.error(`[LanServer] Falha ao baixar capítulo sob demanda:`, dlError);
              res.status(500).json({ error: 'Falha ao tentar baixar o capítulo do servidor remoto.' });
              return;
+          } finally {
+            this.activeDownloads.delete(downloadKey);
           }
         }
 
@@ -267,7 +332,8 @@ export class LanServer {
 
         const { createCanvas } = await import('@napi-rs/canvas');
         const page = await pdf.getPage(pageNum);
-        const viewport = page.getViewport({ scale: 1.5 }); 
+        // Escala 3.0 gera imagens nítidas para telas mobile de alta densidade (retina/OLED)
+        const viewport = page.getViewport({ scale: 3.0 }); 
 
         const canvas = createCanvas(viewport.width, viewport.height);
         const context = canvas.getContext('2d');
@@ -278,9 +344,11 @@ export class LanServer {
           viewport,
         }).promise;
 
-        const buffer = canvas.toBuffer('image/jpeg', 0.8);
+        // Compressão 90% para evitar artefatos em textos e linhas finas
+        const buffer = canvas.toBuffer('image/jpeg', 0.9);
         res.set('Content-Type', 'image/jpeg');
-        res.set('Cache-Control', 'public, max-age=3600'); // Cache de 1 hora para as páginas
+        // Cache imutável por 1 ano: como cada página de PDF é fixa, o mobile lê do disco/RAM instantaneamente após a primeira vez
+        res.set('Cache-Control', 'public, max-age=31536000, immutable'); 
         res.send(buffer);
       } catch (error) {
         console.error('[LanServer] Erro ao renderizar página PDF:', error);

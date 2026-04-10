@@ -3,7 +3,7 @@
 ## 🚀 Performance e Otimização
 
 ### 1. Latência no Protocolo 'archive' (7-Zip CLI)
-**Problema:** Atualmente, o host `archive` do `MediaServer` utiliza o executável do 7-Zip para extrair arquivos individuais (HTML, imagens) para uma pasta de cache no disco antes de servi-los ao visualizador. Isso causa latência perceptível em arquivos grandes e gera I/O desnecessário.
+**Problema:** Atualmente, o host `archive` do `MediaServer` utiliza o executável do 7-zip para extrair arquivos individuais (HTML, imagens) para uma pasta de cache no disco antes de servi-los ao visualizador. Isso causa latência perceptível em arquivos grandes e gera I/O desnecessário.
 **Status:** Melhorado com cache por hash de arquivo. EPUBs agora são lidos via `ArrayBuffer` no cliente e não sofrem desse gargalo de extração por capítulo.
 **Ação Futura:** Migrar para leitura direta via buffer em memória (stream) para arquivos ZIP/CBZ para eliminar totalmente a dependência do executável externo e I/O de disco temporário.
 
@@ -31,7 +31,7 @@
 
 ### 5. Renderização de PDF no Mobile (LAN)
 **Problema:** PDFs exibem ícones de imagem quebrada no mobile, indicando falha na rota de renderização servida pelo servidor LAN.
-**Status:** **Em investigação**. Provável erro de contexto ou falta de dependências de Canvas no processo Main ao rodar fora do Electron puro.
+**Status:** **Resolvido**. Implementada renderização via `pdf.js` e `node-canvas` no servidor com escala 3.0 para alta nitidez.
 
 ### 6. Visualização de EPUB no Mobile (LAN)
 **Problema:** EPUBs apresentam bugs visuais ou de carregamento no iframe mobile.
@@ -39,4 +39,9 @@
 
 ### 7. Download sob Demanda falhando no Mobile
 **Problema:** Clicar em capítulos não baixados no mobile resulta em erro silencioso ou travamento, mesmo com a implementação de download On-the-Fly.
-**Status:** **Em investigação**. Suspeita de timeout na requisição HTTP ou erro de permissão de escrita ao acionar managers do Main.
+**Status:** **Parcialmente Resolvido**. Corrigido o `ReferenceError: mangaManager is not defined` via uso de `this.`.
+**Novo Bug:** `TypeError: this.bookManager.createChapterById is not a function`. Identificado que o `BookManager` possui uma interface de download diferente dos demais Managers.
+
+### 8. Erros de Codificação de Caracteres no Log
+**Problema:** Logs do servidor exibem caracteres quebrados (ex: `Mang├í D┼ìj┼ì`) em sistemas Windows devido à codificação do terminal.
+**Status:** **Monitorando**. Impacto apenas visual no log do desenvolvedor.
