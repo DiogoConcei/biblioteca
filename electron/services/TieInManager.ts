@@ -7,6 +7,10 @@ import ImageManager from './ImageManager';
 import PdfManager from './PdfManager';
 import ArchiveManager from './ArchiveManager';
 import storageManager from './StorageManager';
+import {
+  LiteratureForm,
+  ReadingStatus,
+} from '../../src/types/series.interfaces';
 import { ComicTieIn, TieIn, ComicEdition } from '../types/comic.interfaces';
 
 export default class TieInManager extends ComicManager {
@@ -191,7 +195,7 @@ export default class TieInManager extends ComicManager {
       chaptersRead: 0,
       dataPath: '',
       coverImage: '',
-      literatureForm: 'Quadrinho',
+      literatureForm: LiteratureForm.COMIC,
       chapters: [],
       readingData: {
         lastChapterId: 0,
@@ -201,7 +205,7 @@ export default class TieInManager extends ComicManager {
         lastDownload: 0,
         isFavorite: false,
         isCreated: false,
-        status: 'Pendente',
+        status: ReadingStatus.PENDING,
         originalOwner: '',
         recommendedBy: '',
         rating: 0,

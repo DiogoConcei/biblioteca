@@ -116,6 +116,24 @@ export default function BookViewer() {
     }
   }, [chapter.type]);
 
+  // Handlers estabilizados para evitar loops de re-renderização
+  const handlePdfLoaded = useCallback((_pdf: unknown, total: number, outline: { href?: string; label?: string; title?: string }[]) => {
+    setTotalPages(total);
+    setToc(outline);
+  }, []);
+
+  const handleLocationChange = useCallback((cfi: string, page: number, total: number, percent: number, chapterLabel: string) => {
+    setCurrentCfi(cfi);
+    setCurrentPage(page);
+    setTotalPages(total);
+    setReadingPercent(percent);
+    setCurrentChapterLabel(chapterLabel);
+  }, []);
+
+  const handleTocLoaded = useCallback((tocData: { href?: string; label?: string; title?: string }[]) => {
+    setToc(tocData);
+  }, []);
+
   if (chapter.isLoading) return <Loading />;
   if (error) return <ErrorScreen error={error} serieName={chapter.serieName} />;
 
@@ -136,10 +154,7 @@ export default function BookViewer() {
               path={chapter.originalPath}
               currentPage={currentPage}
               scale={scale}
-              onPdfLoaded={(_pdf, total, outline) => {
-                setTotalPages(total);
-                setToc(outline);
-              }}
+              onPdfLoaded={handlePdfLoaded}
             />
           ) : chapter.type === 'book' && epubUrl ? (
             <div className={`${styles.epubPaper} ${styles[`theme-${epubSettings.theme}`]}`}>
@@ -149,14 +164,8 @@ export default function BookViewer() {
                 lastCfi={chapter.lastCfi}
                 settings={epubSettings}
                 readingMode={settings.viewer.readingMode}
-                onTocLoaded={setToc}
-                onLocationChange={(cfi, page, total, percent, chapterLabel) => {
-                  setCurrentCfi(cfi);
-                  setCurrentPage(page);
-                  setTotalPages(total);
-                  setReadingPercent(percent);
-                  setCurrentChapterLabel(chapterLabel);
-                }}
+                onTocLoaded={handleTocLoaded}
+                onLocationChange={handleLocationChange}
               />
             </div>
           ) : (
@@ -211,7 +220,15 @@ export default function BookViewer() {
                   <ul className={styles.indexList}>
                     {toc.map((item, index) => (
                       <li key={index}>
-                        <button className={styles.indexItem} onClick={() => setIsIndexOpen(false)}>
+                        <button 
+                          className={styles.indexItem} 
+                          onClick={() => {
+                            if (chapter.type === 'book' && epubRef.current && item.href) {
+                              epubRef.current.goToLocation(item.href);
+                            }
+                            setIsIndexOpen(false);
+                          }}
+                        >
                           <span className={styles.label}>{item.label || item.title}</span>
                         </button>
                       </li>

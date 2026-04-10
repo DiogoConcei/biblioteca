@@ -8,6 +8,8 @@ import {
 import { EpubView } from 'react-reader';
 
 import { EpubSettings } from '../../types/settings.interfaces';
+import Loading from '../Loading/Loading';
+import styles from './EpubViewer.module.scss';
 
 // Interfaces para tipagem forte do motor epub.js
 interface EpubLocation {
@@ -51,6 +53,7 @@ interface EpubRendition {
     };
     spine: {
       get: (target: string) => { title: string } | null;
+      length: number;
     };
   };
   manager?: {
@@ -77,6 +80,7 @@ export interface EpubViewerRef {
   nextPage: () => void;
   prevPage: () => void;
   goToPage: (page: number) => void;
+  goToLocation: (href: string) => void;
 }
 
 const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
@@ -88,6 +92,7 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
     const tocRef = useRef<{ href?: string; label?: string; title?: string }[]>([]);
     const [isReady, setIsReady] = useState(false);
     const [buffer, setBuffer] = useState<ArrayBuffer | null>(null);
+    const [initialLocationLoaded, setInitialLocationLoaded] = useState(false);
 
     // Expõe métodos para o componente pai (BookViewer)
     useImperativeHandle(ref, () => ({
@@ -106,6 +111,13 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
           renditionRef.current.display(cfi);
         }
       },
+      goToLocation: (href: string) => {
+        if (renditionRef.current) {
+          renditionRef.current.display(href).catch((err) => {
+            console.error('[EPUB] Erro ao navegar para localização:', href, err);
+          });
+        }
+      },
     }));
 
     // Busca o EPUB e converte para ArrayBuffer
@@ -113,6 +125,10 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
       if (!url) return;
 
       let isMounted = true;
+      setBuffer(null);
+      setInitialLocationLoaded(false);
+      setIsReady(false);
+
       fetch(url)
         .then((response) => {
           if (!response.ok) throw new Error('Falha ao carregar EPUB');
@@ -156,7 +172,7 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
           body: {
             background: 'transparent !important',
             color: `${colors.text} !important`,
-            padding: '40px 60px !important', // Padding mais generoso para estilo livro
+            padding: '40px 60px !important',
             'line-height': `${epubSettings.lineHeight} !important`,
           },
           a: { color: `${colors.link} !important` },
@@ -171,32 +187,23 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
 
     if (!buffer) {
       return (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100%',
-            color: '#888',
-          }}
-        >
-          Carregando Leitor...
+        <div className={styles.loadingOverlay}>
+          <Loading />
         </div>
       );
     }
 
     return (
-      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <div className={styles.container}>
+        {!initialLocationLoaded && (
+          <div className={styles.loadingOverlay} style={{ position: 'absolute', zIndex: 10, background: 'inherit' }}>
+            <Loading />
+          </div>
+        )}
         <EpubView
           url={buffer}
-          location={lastCfi || null}
+          location={null}
           locationChanged={(epubcfi: string) => {
-            console.log('[EPUB] locationChanged:', {
-              locationsLength: renditionRef.current?.book?.locations?.length,
-              locationsTotal: renditionRef.current?.book?.locations?.total,
-              isReady,
-              epubcfi,
-            });
             if (
               renditionRef.current &&
               renditionRef.current.book.locations.total > 0
@@ -212,7 +219,6 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
                       epubcfi,
                     ) ?? 0;
 
-                  // Busca o título no TOC pelo href
                   const currentHref =
                     location.start.href ||
                     renditionRef.current?.location?.start?.href ||
@@ -224,7 +230,6 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
                   );
                   const chapterLabel = tocItem?.label || tocItem?.title || '';
 
-                  // As locations são 1-indexed. Usamos page - 1 para a UI (index 0).
                   onLocationChange(
                     epubcfi,
                     page > 0 ? page - 1 : 0,
@@ -236,14 +241,12 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
                 }
               }
             }
-            // Fallback se locations não estiverem geradas ainda
             onLocationChange(epubcfi, 0, 1, -1, '');
           }}
           getRendition={(rendition) => {
             const epubRendition = rendition as unknown as EpubRendition;
             renditionRef.current = epubRendition;
 
-            // Força o layout desde o início
             if (typeof epubRendition.spread === 'function') {
               epubRendition.spread(readingMode === 'single' ? 'none' : 'auto');
             }
@@ -263,11 +266,46 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
             }
 
             epubRendition.book.ready
-              .then(() => {
+              .then(async () => {
                 setIsReady(true);
-                return epubRendition.book.locations.generate(1600);
+                // Sanitização: não tenta display se lastCfi for vazio ou nulo
+                const initialTarget = lastCfi && lastCfi.trim() !== '' ? lastCfi : undefined;
+
+                if (initialTarget && !initialLocationLoaded) {
+                  try {
+                    console.log('[EPUB] Restaurando lastCfi:', initialTarget);
+                    // Forçamos o display do target
+                    await epubRendition.display(initialTarget);
+                  } catch (err) {
+                    console.error('[EPUB] Falha ao restaurar lastCfi, tentando início:', err);
+                    try {
+                      await epubRendition.display();
+                    } catch (innerErr) {
+                      console.error('[EPUB] Falha crítica ao iniciar livro:', innerErr);
+                    }
+                  } finally {
+                    setInitialLocationLoaded(true);
+                  }
+                } else {
+                  // Se não houver lastCfi, forçamos a renderização do início se não estiver carregado
+                  if (!initialLocationLoaded) {
+                    try {
+                      await epubRendition.display();
+                    } catch (err) {
+                      console.error('[EPUB] Erro ao carregar primeira seção:', err);
+                    }
+                    setInitialLocationLoaded(true);
+                  }
+                }
+
+                // Só gera localizações se o spine tiver conteúdo
+                if (epubRendition.book.spine && epubRendition.book.spine.length > 0) {
+                  return epubRendition.book.locations.generate(1600);
+                }
+                return [];
               })
               .then(() => {
+                // Atualiza progresso inicial após as localizações serem geradas
                 const location = epubRendition.currentLocation();
                 if (location && location.start) {
                   const page = location.start.location;
@@ -301,6 +339,10 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
                     );
                   }
                 }
+              })
+              .catch((err) => {
+                console.error('[EPUB] Erro no processamento pós-carregamento:', err);
+                setInitialLocationLoaded(true); // Garante a saída do loading
               });
           }}
           tocChanged={(toc) => {

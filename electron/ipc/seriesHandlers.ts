@@ -34,7 +34,6 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         await Promise.all(
           getData.map(async (serieData) => {
             try {
-              // Usa Thumbnail via protocolo: super rápido, zero memory leak
               const encodedImage = await imageManager.getThumbnailUrl(
                 serieData.coverImage,
               );
@@ -48,7 +47,6 @@ export default function seriesHandlers(ipcMain: IpcMain) {
                 `Aviso: Falha ao carregar miniatura para ${serieData.name}:`,
                 err,
               );
-              // Fallback para imagem vazia ou path original em caso de erro
               return {
                 ...serieData,
                 coverImage: '',
@@ -58,10 +56,10 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         )
       ).filter(Boolean);
 
-      return { success: true, data: procesData, error: ' ' };
+      return { success: true, data: procesData };
     } catch (e) {
       console.error(`Falha em recuperar todas as séries: ${e}`);
-      return { success: false, data: '', error: String(e) };
+      return { success: false, error: String(e) };
     }
   });
 

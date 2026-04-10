@@ -32,8 +32,6 @@ export default function userHandlers(ipcMain: IpcMain) {
 
         let serieLink: string | null = null;
 
-        console.log(literatureForm);
-
         if (literatureForm === 'childSeries') {
           serieLink = `/TieIn/${encodeURIComponent(serieData.name)}`;
         } else if (['Comics', 'Mangas', 'books'].includes(literatureForm)) {

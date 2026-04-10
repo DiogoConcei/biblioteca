@@ -9,5 +9,5 @@ export default function useAllSeries() {
     fetchAllSeries();
   }, [fetchAllSeries]);
 
-  return series && series.length > 0 ? series : null;
+  return series;
 }

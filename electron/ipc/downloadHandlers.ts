@@ -6,6 +6,7 @@ import ValidationManager from '../services/ValidationManager';
 import MangaManager from '../services/MangaManager';
 import ComicManager from '../services/ComicManager';
 import TieInManager from '../services/TieInManager';
+import BookManager from '../services/BookManager';
 
 export default function downloadHandlers(ipcMain: IpcMain) {
   const validationManager = new ValidationManager();
@@ -13,12 +14,22 @@ export default function downloadHandlers(ipcMain: IpcMain) {
   const mangaManager = new MangaManager();
   const comicManager = new ComicManager();
   const tieManager = new TieInManager();
+  const bookManager = new BookManager();
 
   ipcMain.handle(
     'donwload:multiple',
     async (_event, dataPath: string, quantity: number) => {
+      const literatureForm = fileManager.foundLiteratureForm(dataPath);
       try {
-        await mangaManager.createMultipleChapters(dataPath, quantity);
+        if (literatureForm === 'Mangas') {
+          await mangaManager.createMultipleChapters(dataPath, quantity);
+        } else if (literatureForm === 'Comics') {
+          await comicManager.createMultipleChapters(dataPath, quantity);
+        } else if (literatureForm === 'childSeries') {
+          await tieManager.createMultipleChapters(dataPath, quantity);
+        } else if (literatureForm === 'books' || literatureForm === 'Books') {
+          await bookManager.createMultipleChapters(dataPath, quantity);
+        }
         return true;
       } catch (e) {
         console.error('Falha em baixar multiplos capitulos');
@@ -38,6 +49,8 @@ export default function downloadHandlers(ipcMain: IpcMain) {
           await comicManager.createChapterById(dataPath, chapter_id);
         } else if (literatureForm === 'childSeries') {
           await tieManager.createChapterById(dataPath, chapter_id);
+        } else if (literatureForm === 'books' || literatureForm === 'Books') {
+          await bookManager.createChapterById(dataPath, chapter_id);
         }
 
         return true;
@@ -116,6 +129,10 @@ export default function downloadHandlers(ipcMain: IpcMain) {
             break;
           case 'childSeries':
             await tieManager.createChapterById(dataPath, chapter_id);
+            break;
+          case 'books':
+          case 'Books':
+            await bookManager.createChapterById(dataPath, chapter_id);
             break;
           default:
             break;

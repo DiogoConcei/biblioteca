@@ -5,11 +5,16 @@ import fse from 'fs-extra';
 
 import LibrarySystem from './abstract/LibrarySystem';
 import FileManager from './FileManager';
+import ArchiveManager from './ArchiveManager.ts';
+import PdfManager from './PdfManager.ts';
 import { ComicEdition } from '../types/comic.interfaces.ts';
 import { StorageManager } from './StorageManager';
 
 export default class ImageManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
+  private readonly archiveManager: ArchiveManager = new ArchiveManager();
+  private readonly pdfManager: PdfManager = new PdfManager();
+
   private _storageManager: StorageManager | null = null;
 
   private async getStorageManager() {
@@ -153,14 +158,13 @@ export default class ImageManager extends LibrarySystem {
   public async normalizeChapter(dirPath: string): Promise<void> {
     try {
       const entries = await fse.readdir(dirPath, { withFileTypes: true });
-      const storageManager = await this.getStorageManager();
 
       const dirs = entries
         .filter((e) => e.isDirectory())
         .map((e) => path.join(dirPath, e.name));
 
       for (const dir of dirs) {
-        await storageManager.fixComicDir(dir, dirPath);
+        await this.archiveManager.fixComicDir(dir, dirPath);
       }
 
       const files = await fse.readdir(dirPath, { withFileTypes: true });
@@ -231,17 +235,16 @@ export default class ImageManager extends LibrarySystem {
     if (!inputFile) return '';
     let resultCover: string = '';
     const ext = path.extname(inputFile);
-    const storageManager = await this.getStorageManager();
 
     try {
       if (ext === '.pdf') {
-        resultCover = await storageManager.extractCoverFromPdf(
+        resultCover = await this.pdfManager.extractCoverFromPdf(
           inputFile,
           outputPath,
         );
       } else {
         try {
-          resultCover = await storageManager.extractCoverWith7zip(
+          resultCover = await this.archiveManager.extractCoverWith7zip(
             inputFile,
             outputPath,
           );
@@ -252,9 +255,9 @@ export default class ImageManager extends LibrarySystem {
         } catch (err) {
           console.warn('⚠️ Falha na extração principal:', err);
 
-          await storageManager.cleanupExtractedCover(outputPath);
+          await this.archiveManager.cleanupExtractedCover(outputPath);
 
-          resultCover = await storageManager.safeExtract(
+          resultCover = await this.archiveManager.safeExtract(
             inputFile,
             outputPath,
           );
@@ -297,19 +300,19 @@ export default class ImageManager extends LibrarySystem {
       const parse = path.parse(originalPath);
       const thumbDir = path.join(this.showcaseImages, 'thumbnails');
       await fse.ensureDir(thumbDir);
-      
+
       const thumbPath = path.join(thumbDir, `${parse.name}_thumb.webp`);
-      
+
       if (!(await fse.pathExists(thumbPath))) {
-         if (!(await fse.pathExists(originalPath))) {
-            return this.getMediaUrl(originalPath);
-         }
-         await sharp(originalPath)
-           .resize(300, null, { withoutEnlargement: true })
-           .webp({ quality: 80, effort: 4 })
-           .toFile(thumbPath);
+        if (!(await fse.pathExists(originalPath))) {
+          return this.getMediaUrl(originalPath);
+        }
+        await sharp(originalPath)
+          .resize(300, null, { withoutEnlargement: true })
+          .webp({ quality: 80, effort: 4 })
+          .toFile(thumbPath);
       }
-      
+
       return this.getMediaUrl(thumbPath);
     } catch (e) {
       console.error('Erro ao gerar thumbnail:', e);

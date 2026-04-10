@@ -1,3 +1,4 @@
+@use 'sass:color';
 @use '@/styles/variables' as *;
 
 .card {
@@ -10,20 +11,12 @@
     flex-direction: column;
     padding: $spacing-2;
     gap: $spacing-2;
-
-    h2 {
-      font-size: $font-2xl;
-      color: $snow;
-    }
-
-    p {
-      color: $snow;
-      margin-bottom: $spacing-2;
-    }
   }
 
-  .actions {
+  .lanStatus {
     display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
     margin-bottom: $spacing-4;
 
     button {
@@ -39,7 +32,7 @@
       transition: background-color 0.2s ease-in-out;
 
       &:hover {
-        background-color: darken($amethyst, 10%);
+        background-color: color.adjust($amethyst, $lightness: -10%);
       }
     }
   }
@@ -50,7 +43,7 @@
     margin-bottom: $spacing-2;
   }
 
-    .inlineSettings {
+  .inlineSettings {
     display: flex;
     flex-direction: column;
     gap: $spacing-2;

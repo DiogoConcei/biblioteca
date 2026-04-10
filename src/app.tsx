@@ -19,6 +19,7 @@ import AppearanceSettings from './pages/SettingsPage/AppearancesSettings/Appeara
 import PrivacySettings from './pages/SettingsPage/PrivacySettings/PrivacySettings';
 import SyncSettings from './pages/SettingsPage/SyncSettings/SyncSettings';
 import LanSettings from './pages/SettingsPage/LanSettings/LanSettings';
+import ResetSettings from './pages/SettingsPage/ResetSettings/ResetSettings';
 import Downloads from './pages/downloads/Downloads';
 import BookViewer from './pages/bookViewer/BookViewer';
 import BookPage from './pages/bookPage/BookPage';
@@ -39,6 +40,7 @@ const App = () => {
               <Route path="privacy" element={<PrivacySettings />} />
               <Route path="sync" element={<SyncSettings />} />
               <Route path="lan" element={<LanSettings />} />
+              <Route path="reset" element={<ResetSettings />} />
             </Route>
             <Route
               path="edit/serie/:serie_name/:literature_form"

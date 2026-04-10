@@ -1,0 +1,193 @@
+@use 'sass:color';
+@use '@/styles/variables' as *;
+
+.container {
+  padding: $spacing-4;
+  color: $snow;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+  max-width: 800px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-4;
+  border: 1px solid rgba($snow, 0.1);
+  border-radius: $radius-lg;
+  background: rgba($gunmetal, 0.3);
+
+  h2 {
+    font-size: $font-2xl;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+  }
+
+  p {
+    margin: 0;
+    line-height: 1.6;
+    color: rgba($snow, 0.8);
+  }
+}
+
+.dangerZone {
+  border-color: rgba($indian-red, 0.3);
+  background: rgba($indian-red, 0.05);
+
+  h2 {
+    color: $weak-indian-red;
+  }
+}
+
+.infoList {
+  list-style: none;
+  padding: 0;
+  margin: $spacing-2 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-2;
+    font-size: $font-base;
+
+    &::before {
+      content: "•";
+      color: $amethyst;
+    }
+  }
+}
+
+.actions {
+  display: flex;
+  gap: $spacing-3;
+  margin-top: $spacing-2;
+
+  button {
+    @include interactive-button;
+    padding: $spacing-2 $spacing-4;
+    border-radius: $radius-md;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+
+    &.primary {
+      background: $amethyst;
+      color: $snow;
+
+      &:hover:not(:disabled) {
+        background: color.adjust($amethyst, $lightness: 5%);
+        transform: translateY(-1px);
+      }
+    }
+
+    &.danger {
+      background: $strong-indian-red;
+      color: $snow;
+
+      &:hover:not(:disabled) {
+        background: $indian-red;
+        transform: translateY(-1px);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  width: min(500px, 95vw);
+  background: $gunmetal;
+  border: 1px solid rgba($snow, 0.2);
+  padding: $spacing-6;
+  border-radius: $radius-xl;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+
+  h3 {
+    margin: 0;
+    font-size: $font-xl;
+    color: $weak-indian-red;
+  }
+
+  .confirmationText {
+    font-size: $font-sm;
+    color: rgba($snow, 0.6);
+    margin-top: $spacing-2;
+  }
+
+  input {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba($snow, 0.2);
+    padding: $spacing-2 $spacing-3;
+    border-radius: $radius-md;
+    color: $snow;
+    width: 100%;
+    margin-top: $spacing-1;
+    font-size: $font-base;
+
+    &:focus {
+      outline: none;
+      border-color: $amethyst;
+    }
+  }
+
+  .modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: $spacing-3;
+    margin-top: $spacing-2;
+
+    button {
+      @include interactive-button;
+      padding: $spacing-2 $spacing-4;
+      border-radius: $radius-md;
+      font-weight: 600;
+
+      &.cancel {
+        background: transparent;
+        border: 1px solid rgba($snow, 0.2);
+        color: $snow;
+
+        &:hover {
+          background: rgba($snow, 0.05);
+        }
+      }
+
+      &.confirm {
+        background: $strong-indian-red;
+        color: $snow;
+
+        &:hover:not(:disabled) {
+          background: $indian-red;
+        }
+
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+}

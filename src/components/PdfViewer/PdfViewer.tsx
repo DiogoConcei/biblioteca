@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 
+import Loading from '../Loading/Loading';
+import styles from './PdfViewer.module.scss';
+
 // Configuração obrigatória do worker do PDF.js para ambiente Vite/Web
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.mjs',
@@ -16,6 +19,7 @@ interface PdfViewerProps {
 
 export default function PdfViewer({ path, currentPage, scale, onPdfLoaded }: PdfViewerProps) {
   const [pdfDocument, setPdfDocument] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const renderTaskRef = useRef<pdfjsLib.RenderTask | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -24,6 +28,7 @@ export default function PdfViewer({ path, currentPage, scale, onPdfLoaded }: Pdf
     if (!path) return;
 
     let isMounted = true;
+    setIsLoading(true);
     const loadingTask = pdfjsLib.getDocument(path);
     
     loadingTask.promise.then(async (pdf) => {
@@ -35,12 +40,15 @@ export default function PdfViewer({ path, currentPage, scale, onPdfLoaded }: Pdf
       
       try {
         const outline = await pdf.getOutline();
-        onPdfLoaded(pdf, pdf.numPages, outline);
+        onPdfLoaded(pdf, pdf.numPages, outline || []);
       } catch (e) {
         onPdfLoaded(pdf, pdf.numPages, []);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
     }).catch((err) => {
       console.error('[PdfViewer] Erro ao carregar PDF:', err);
+      if (isMounted) setIsLoading(false);
     });
 
     return () => { isMounted = false; };
@@ -48,7 +56,7 @@ export default function PdfViewer({ path, currentPage, scale, onPdfLoaded }: Pdf
 
   // 2. Renderização da Página
   useEffect(() => {
-    if (!pdfDocument || !canvasRef.current) return;
+    if (!pdfDocument || !canvasRef.current || isLoading) return;
 
     let isMounted = true;
     const pageNumber = currentPage + 1;
@@ -104,11 +112,19 @@ export default function PdfViewer({ path, currentPage, scale, onPdfLoaded }: Pdf
       isMounted = false;
       if (renderTaskRef.current) renderTaskRef.current.cancel();
     };
-  }, [pdfDocument, currentPage, scale]);
+  }, [pdfDocument, currentPage, scale, isLoading]);
+
+  if (isLoading) {
+    return (
+      <div className={styles.container}>
+        <Loading />
+      </div>
+    );
+  }
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'min-content', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)' }}>
-      <canvas ref={canvasRef} style={{ backgroundColor: 'white', maxWidth: '100%' }} />
+    <div className={styles.pdfWrapper}>
+      <canvas ref={canvasRef} className={styles.canvas} />
     </div>
   );
 }

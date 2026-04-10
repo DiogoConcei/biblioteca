@@ -39,8 +39,9 @@
 
 ### 7. Download sob Demanda falhando no Mobile
 **Problema:** Clicar em capítulos não baixados no mobile resulta em erro silencioso ou travamento, mesmo com a implementação de download On-the-Fly.
-**Status:** **Parcialmente Resolvido**. Corrigido o `ReferenceError: mangaManager is not defined` via uso de `this.`.
-**Novo Bug:** `TypeError: this.bookManager.createChapterById is not a function`. Identificado que o `BookManager` possui uma interface de download diferente dos demais Managers.
+**Status:** **Resolvido**. 
+- Corrigido o `ReferenceError: mangaManager is not defined` via uso de `this.`.
+- Corrigido o `TypeError: this.bookManager.createChapterById is not a function` ao refatorar o `BookManager` para estender `GraphSerie`, garantindo uma interface de download consistente para todos os managers.
 
 ### 8. Erros de Codificação de Caracteres no Log
 **Problema:** Logs do servidor exibem caracteres quebrados (ex: `Mang├í D┼ìj┼ì`) em sistemas Windows devido à codificação do terminal.

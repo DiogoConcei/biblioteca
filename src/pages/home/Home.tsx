@@ -85,7 +85,9 @@ export default function Home() {
     const randomIndex = Math.floor(Math.random() * filteredSeries.length);
     const randomSerie = filteredSeries[randomIndex];
     clearSerie();
-    navigate(`/${randomSerie.literatureForm}/${randomSerie.name}/${randomSerie.id}`);
+    navigate(
+      `/${randomSerie.literatureForm}/${randomSerie.name}/${randomSerie.id}`,
+    );
   };
 
   if (loading || !series) {
@@ -134,9 +136,7 @@ export default function Home() {
                   label=""
                   value={selectedLiteratureForm}
                   onChange={(value) => {
-                    setSelectedLiteratureForm(
-                      value as LiteratureForm | '',
-                    );
+                    setSelectedLiteratureForm(value as LiteratureForm | '');
                     setShowFilters(false); // fecha ao selecionar
                   }}
                   options={[
@@ -159,9 +159,11 @@ export default function Home() {
               key={serie.id}
               className={styles.serieLink}
             >
-              <figure className={`${styles.coverCard} ${!loadedImages[serie.id] ? styles.skeleton : ''}`}>
-                <img 
-                  src={`${serie.coverImage}`} 
+              <figure
+                className={`${styles.coverCard} ${!loadedImages[serie.id] ? styles.skeleton : ''}`}
+              >
+                <img
+                  src={`${serie.coverImage}`}
                   alt={`Série: ${serie.name}`}
                   decoding="async"
                   loading="lazy"

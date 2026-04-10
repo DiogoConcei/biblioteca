@@ -7,6 +7,7 @@ import {
   Literatures,
 } from '../types/electron-auxiliar.interfaces';
 import { Comic, TieIn } from '../types/comic.interfaces';
+import { ReadingStatus } from '../../src/types/series.interfaces';
 import FileManager from './FileManager';
 
 export default class UserManager extends FileSystem {
@@ -23,12 +24,12 @@ export default class UserManager extends FileSystem {
       // Pequeno detalhe: atualizar o timestamp de última leitura ao adicionar aos recentes
       if ('readingData' in serieData) {
         serieData.readingData.lastReadAt = new Date().toISOString();
-        
+
         // Se a série estava Pendente e foi aberta, muda para Em andamento
         if (serieData.metadata.status === 'Pendente') {
-          serieData.metadata.status = 'Em andamento';
+          serieData.metadata.status = ReadingStatus.IN_PROGRESS;
         }
-        
+
         await this.storageManager.writeData(serieData);
       }
 
@@ -116,11 +117,14 @@ export default class UserManager extends FileSystem {
 
       // Atualização automática de status
       if (serieData.chaptersRead === serieData.totalChapters) {
-        serieData.metadata.status = 'Completo';
+        serieData.metadata.status = ReadingStatus.COMPLETED;
       } else if (serieData.chaptersRead > 0 || isRead) {
         // Se leu algo ou marcou como lido, e não está completo, está "Em andamento"
-        if (serieData.metadata.status === 'Pendente' || serieData.metadata.status === 'Completo') {
-           serieData.metadata.status = 'Em andamento';
+        if (
+          serieData.metadata.status === 'Pendente' ||
+          serieData.metadata.status === 'Completo'
+        ) {
+          serieData.metadata.status = ReadingStatus.IN_PROGRESS;
         }
       }
 

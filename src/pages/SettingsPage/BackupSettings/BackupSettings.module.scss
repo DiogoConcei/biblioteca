@@ -16,10 +16,6 @@
     font-weight: 600;
   }
 
-  /* ===================================================== */
-  /* FORM PRINCIPAL */
-  /* ===================================================== */
-
   .form {
     display: flex;
     flex-direction: column;
@@ -37,12 +33,11 @@
     input[type='text'] {
       @include interactive-button;
       flex: 1;
+      color: $snow;
       padding: $spacing-1;
       border: 1px solid $amethyst;
       border-radius: $radius-sm;
     }
-
-    /* ---------- CHECKBOX CUSTOM ---------- */
 
     input[type='checkbox'] {
       display: none;

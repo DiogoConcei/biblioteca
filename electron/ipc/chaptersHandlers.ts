@@ -5,6 +5,7 @@ import storageManager from '../services/StorageManager';
 import UserManager from '../services/UserManager.ts';
 import MediaFactory from '../services/MediaFactory';
 import { Literatures } from '../types/electron-auxiliar.interfaces.ts';
+import { ReadingStatus } from '../../src/types/series.interfaces.ts';
 
 export default function chaptersHandlers(ipcMain: IpcMain) {
   const fileManager = new FileManager();
@@ -110,12 +111,12 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         // Atualização automática de status
         let updatedStatus = serieData.metadata.status;
         if (updatedChaptersRead === serieData.totalChapters) {
-          updatedStatus = 'Completo';
+          updatedStatus = ReadingStatus.COMPLETED;
         } else if (
-          updatedStatus === 'Completo' &&
+          updatedStatus === ReadingStatus.COMPLETED &&
           updatedChaptersRead < serieData.totalChapters
         ) {
-          updatedStatus = 'Em andamento';
+          updatedStatus = ReadingStatus.IN_PROGRESS;
         }
 
         const updatedSerieData: Literatures = {

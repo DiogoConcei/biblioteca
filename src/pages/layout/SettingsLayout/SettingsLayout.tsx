@@ -10,6 +10,7 @@ export default function SettingsLayout() {
     { label: 'Privacidade', path: 'privacy' },
     { label: 'Sincronização', path: 'sync' },
     { label: 'Compartilhamento (LAN)', path: 'lan' },
+    { label: 'Sistema e Restauração', path: 'reset' },
   ];
 
   return (

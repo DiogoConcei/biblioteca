@@ -1,0 +1,22 @@
+@use '@/styles/variables' as *;
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.pdfWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: min-content;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.canvas {
+  background-color: white;
+  max-width: 100%;
+}

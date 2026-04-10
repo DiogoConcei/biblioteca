@@ -1,5 +1,6 @@
 import fse from 'fs-extra';
 import path from 'path';
+import { app, shell } from 'electron';
 
 import LibrarySystem from './abstract/LibrarySystem.ts';
 import storageManager from './StorageManager.ts';
@@ -294,35 +295,51 @@ export default class SystemManager extends LibrarySystem {
     }
 
     if (options.level === 'full') {
+      const collectionsBackup =
+        preserve.includes('collections') &&
+        (await fse.pathExists(this.appCollections))
+          ? await fse.readJson(this.appCollections)
+          : null;
+
       const contents = await fse.readdir(this.baseStorageFolder);
 
+      // Tenta limpar cada item individualmente
       for (const item of contents) {
         const fullPath = path.join(this.baseStorageFolder, item);
 
         if (fullPath !== this.backupFolder) {
-          await fse.remove(fullPath);
+          try {
+            // Em Windows, as vezes o item está preso por outro processo (ex: scanner de arquivos)
+            // Tentamos mover para a lixeira primeiro
+            await shell.trashItem(fullPath);
+          } catch (e) {
+            console.warn(`Falha ao enviar para lixeira, tentando deleção permanente: ${fullPath}`);
+            try {
+              await fse.remove(fullPath);
+            } catch (err) {
+              console.error(`Falha crítica ao remover item no reset: ${fullPath}`, err);
+            }
+          }
         }
       }
-      // await this.fileManager.regenAppFolders();
-    }
 
-    const collectionsBackup =
-      preserve.includes('collections') &&
-      (await fse.pathExists(this.appCollections))
-        ? await fse.readJson(this.appCollections)
-        : null;
+      // Garante que as pastas base existam após a limpeza
+      await fse.ensureDir(this.dataStorage);
+      await fse.ensureDir(this.userLibrary);
+      await fse.ensureDir(this.configFolder);
 
-    await Promise.all([
-      fse.remove(this.dataStorage),
-      fse.remove(this.userLibrary),
-    ]);
-    await fse.mkdirp(this.dataStorage);
-    await fse.mkdirp(this.userLibrary);
+      if (collectionsBackup) {
+        await fse.ensureDir(this.appConfigFolder);
+        await fse.writeJson(this.appCollections, collectionsBackup, {
+          spaces: 2,
+        });
+      }
 
-    if (collectionsBackup) {
-      await fse.writeJson(this.appCollections, collectionsBackup, {
-        spaces: 2,
-      });
+      // Pequeno delay para garantir que o SO liberou os handles de arquivo
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      app.relaunch();
+      app.exit(0);
     }
   }
 

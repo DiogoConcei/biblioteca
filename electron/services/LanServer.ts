@@ -338,15 +338,20 @@ export class LanServer {
         const canvas = createCanvas(viewport.width, viewport.height);
         const context = canvas.getContext('2d');
 
+        // Configurações de suavização para maximizar a nitidez de textos e linhas finas
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = 'high';
+
         await page.render({
           canvas: canvas as unknown as HTMLCanvasElement,
           canvasContext: context as unknown as CanvasRenderingContext2D,
           viewport,
         }).promise;
 
-        // Compressão 90% para evitar artefatos em textos e linhas finas
-        const buffer = canvas.toBuffer('image/jpeg', 0.9);
-        res.set('Content-Type', 'image/jpeg');
+        // O formato PNG é lossless (sem perdas), eliminando artefatos de compressão JPEG em textos.
+        // Em redes locais (LAN), o aumento no tamanho do arquivo é compensado pela nitidez extrema.
+        const buffer = canvas.toBuffer('image/png');
+        res.set('Content-Type', 'image/png');
         // Cache imutável por 1 ano: como cada página de PDF é fixa, o mobile lê do disco/RAM instantaneamente após a primeira vez
         res.set('Cache-Control', 'public, max-age=31536000, immutable'); 
         res.send(buffer);

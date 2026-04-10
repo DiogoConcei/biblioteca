@@ -14,10 +14,10 @@ import LibrarySystem from './abstract/LibrarySystem';
 
 export class StorageManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
-  
+
   // Cache de visualização (Home)
   private _viewDataCache: viewData[] | null = null;
-  
+
   // Cache completo de séries (indexado por dataPath)
   private _seriesCache: Map<string, Literatures | TieIn> = new Map();
 
@@ -69,11 +69,11 @@ export class StorageManager extends LibrarySystem {
     return this.enqueue(async () => {
       try {
         await this.atomicWrite(serie.dataPath, serie);
-        
+
         // Atualiza Cache (Write-Through)
         this._seriesCache.set(serie.dataPath, serie);
         this.invalidateCache();
-        
+
         return true;
       } catch (e) {
         console.error(`Erro em escrever dados da serie (${serie.name}): ${e}`);
@@ -113,7 +113,9 @@ export class StorageManager extends LibrarySystem {
   /**
    * Lê dados da série do disco ou cache.
    */
-  async readSerieData<T extends graphSerie>(dataPath: string): Promise<T | null> {
+  async readSerieData<T extends graphSerie>(
+    dataPath: string,
+  ): Promise<T | null> {
     // Consulta Cache
     if (this._seriesCache.has(dataPath)) {
       return this._seriesCache.get(dataPath) as T;
@@ -150,16 +152,18 @@ export class StorageManager extends LibrarySystem {
   async deleteChapter(chapter: LiteratureChapter): Promise<boolean> {
     try {
       if (await fse.pathExists(chapter.chapterPath)) {
-        await fse.remove(chapter.chapterPath);
+        // Se o caminho do capítulo for diferente do arquivo original (ex: cache de mangá), removemos do disco.
+        // Se for igual (ex: livros PDF/EPUB), mantemos o arquivo original e apenas resetamos o status.
+        if (chapter.chapterPath !== chapter.archivesPath) {
+          await fse.remove(chapter.chapterPath);
+        }
+
         chapter.isDownloaded = 'not_downloaded';
         chapter.chapterPath = '';
 
         // Invalida cache pois os dados da série (que contém o capítulo) mudaram
         this.invalidateCache();
-        // Nota: O ideal seria atualizar a série no cache também, 
-        // mas aqui recebemos apenas o capítulo. 
-        // O StorageManager deve ser notificado da mudança na série pai.
-        
+
         return true;
       }
       return false;
@@ -174,7 +178,7 @@ export class StorageManager extends LibrarySystem {
    */
   async selectSerieData<T extends Literatures | TieIn>(
     serieName: string,
-    type?: 'Manga' | 'Quadrinho' | 'childSeries',
+    type?: 'Manga' | 'Quadrinho' | 'childSeries' | 'Books',
   ): Promise<T> {
     // Tenta encontrar no cache primeiro
     for (const serie of this._seriesCache.values()) {
@@ -224,7 +228,9 @@ export class StorageManager extends LibrarySystem {
       );
 
       if (!serieDataPath) {
-        throw new Error(`Nenhuma série encontrada com o nome: ${serieName} em ${type}`);
+        throw new Error(
+          `Nenhuma série encontrada com o nome: ${serieName} em ${type}`,
+        );
       }
 
       return await this.readSerieData<T>(serieDataPath);
@@ -248,7 +254,9 @@ export class StorageManager extends LibrarySystem {
         dataPaths.map(async (dataPath) => {
           const serie = await this.readSerieData(dataPath);
           if (!serie) {
-            throw new Error(`Erro ao carregar dados de visualização: serie em ${dataPath} é invalida`);
+            throw new Error(
+              `Erro ao carregar dados de visualização: serie em ${dataPath} é invalida`,
+            );
           }
           return this.mountViewData(serie);
         }),
@@ -303,7 +311,7 @@ export class StorageManager extends LibrarySystem {
       }
 
       await this.atomicWrite(updated.dataPath, updated);
-      
+
       // Sincroniza Cache
       this._seriesCache.set(updated.dataPath, updated);
       this.invalidateCache();
@@ -324,7 +332,9 @@ export class StorageManager extends LibrarySystem {
       const dir = path.dirname(oldPath);
 
       const nameChanged = oldData.name !== updated.name;
-      const newPath = nameChanged ? path.join(dir, `${updated.name}.json`) : oldPath;
+      const newPath = nameChanged
+        ? path.join(dir, `${updated.name}.json`)
+        : oldPath;
 
       if (nameChanged && oldPath !== newPath) {
         if (await fse.pathExists(oldPath)) {
@@ -354,6 +364,26 @@ export class StorageManager extends LibrarySystem {
       totalChapters: serie.totalChapters,
       literatureForm: serie.literatureForm,
     };
+  }
+
+  buildUpdatedSerie(
+    oldData: Literatures,
+    newData: SerieEditForm,
+  ): { hasChanges: boolean; data: Literatures } {
+    const updated = { ...oldData } as Record<string, unknown>;
+    let hasChanges = false;
+
+    for (const key of Object.keys(newData)) {
+      const newValue = (newData as Record<string, unknown>)[key];
+      const oldValue = (oldData as Record<string, unknown>)[key];
+
+      if (!this.deepEqual(oldValue, newValue)) {
+        updated[key] = newValue;
+        hasChanges = true;
+      }
+    }
+
+    return { hasChanges, data: updated as unknown as Literatures };
   }
 }
 

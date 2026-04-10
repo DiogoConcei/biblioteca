@@ -100,14 +100,31 @@ export default class FileManager extends LibrarySystem {
     try {
       if (!serieData.chapters) return;
 
-      await fse.move(oldPath, serieData.archivesPath);
+      const stats = await fse.stat(oldPath);
+      if (stats.isFile()) {
+        await fse.ensureDir(serieData.archivesPath);
+        const fileName = path.basename(oldPath);
+        await fse.move(oldPath, path.join(serieData.archivesPath, fileName));
+      } else {
+        await fse.move(oldPath, serieData.archivesPath);
+      }
 
       serieData.chapters = serieData.chapters.map((c) => {
         const fileName = path.basename(c.archivesPath);
+        const newArchivesPath = path.join(
+          this.userLibrary,
+          c.serieName,
+          fileName,
+        );
 
         return {
           ...c,
-          archivesPath: path.join(this.userLibrary, c.serieName, fileName),
+          archivesPath: newArchivesPath,
+          // Para livros, o chapterPath é o próprio arquivo original (PDF/EPUB)
+          chapterPath:
+            serieData.literatureForm === 'Books'
+              ? newArchivesPath
+              : c.chapterPath,
         };
       });
     } catch (error) {

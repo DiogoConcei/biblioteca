@@ -39,6 +39,7 @@ export abstract class BaseMediaHandler extends LibrarySystem {
     else if (ext === '.webp') mimeType = 'image/webp';
     else if (ext === '.svg') mimeType = 'image/svg+xml';
     else if (ext === '.pdf') mimeType = 'application/pdf';
+    else if (ext === '.epub') mimeType = 'application/epub+zip';
 
     const response = await net.fetch(pathToFileURL(filePath).toString());
     const headers = new Headers(response.headers);
