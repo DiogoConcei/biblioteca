@@ -15,34 +15,23 @@
 
 ## 🐛 Bugs e Instabilidades
 
-### 1. Imagens não carregam no LAN Sharing (Mobile)
+### 1. Erro Input file is missing no Sharp (Windows MAX_PATH)
+**Problema:** O Windows possui um limite de 260 caracteres para caminhos de arquivo (`MAX_PATH`). Quando o caminho de uma capa extraída ou pasta de capítulo excedia esse limite, a biblioteca `sharp` (via `libvips`) falhava ao ler o arquivo, mesmo que ele existisse fisicamente.
+**Status:** **Resolvido**. Implementada a **Virtualização de Caminhos** no `FileManager.ts`, utilizando prefixos curtos (8 caracteres) e hashes (6 caracteres) para nomes físicos de pastas e imagens. Isso garante que os caminhos permaneçam bem abaixo do limite do sistema operacional.
+
+### 2. Erro No Section Found no EpubViewer
+**Problema:** Tentativa de carregar uma localização (CFI) inválida ou corrompida causava o crash do leitor de EPUB.
+**Status:** **Resolvido**. Implementada validação de CFI e fallback automático para o início do livro em caso de erro, garantindo que o livro abra sempre.
+
+### 3. Imagens não carregam no LAN Sharing (Mobile)
 **Status:** **Resolvido**. Corrigido via `encodeURIComponent` no frontend mobile e transformação de URLs `lib-media://` em rotas HTTP no servidor LAN.
 
-### 2. MediaServer LAN com Auth Básica
-**Status:** **Resolvido e Validado**. O sistema de Token via Query String e Headers está funcional e integrado ao sistema de auto-conexão via QR Code.
-
-### 3. Sincronização de Progresso (CFI)
+### 4. Sincronização de Progresso (CFI)
 **Problema:** O progresso de leitura em EPUBs era baseado no índice do arquivo HTML. Se o usuário estivesse no meio de um capítulo longo, retornaria para o topo dele ao reiniciar.
 **Status:** **Resolvido** para EPUB com suporte total a CFI (Canonical Fragment Identifier). Mantido no registro para garantir paridade em futuros formatos de texto fluido.
 
-### 4. Customização de Texto (EPUB)
-**Problema:** O `BookViewer` inicialmente utilizava injeção de CSS estático, impedindo a troca de fontes, cores de fundo ou espaçamento em tempo real.
-**Status:** **Resolvido** na Fase 2 do E-Reader com a implementação de menus de configurações de tipografia e temas.
-
-### 5. Renderização de PDF no Mobile (LAN)
-**Problema:** PDFs exibem ícones de imagem quebrada no mobile, indicando falha na rota de renderização servida pelo servidor LAN.
-**Status:** **Resolvido**. Implementada renderização via `pdf.js` e `node-canvas` no servidor com escala 3.0 para alta nitidez.
-
-### 6. Visualização de EPUB no Mobile (LAN)
-**Problema:** EPUBs apresentam bugs visuais ou de carregamento no iframe mobile.
-**Status:** **Em investigação**. Necessário validar links relativos dentro do iframe quando servidos via LAN Server.
-
-### 7. Download sob Demanda falhando no Mobile
+### 5. Download sob Demanda falhando no Mobile
 **Problema:** Clicar em capítulos não baixados no mobile resulta em erro silencioso ou travamento, mesmo com a implementação de download On-the-Fly.
 **Status:** **Resolvido**. 
 - Corrigido o `ReferenceError: mangaManager is not defined` via uso de `this.`.
 - Corrigido o `TypeError: this.bookManager.createChapterById is not a function` ao refatorar o `BookManager` para estender `GraphSerie`, garantindo uma interface de download consistente para todos os managers.
-
-### 8. Erros de Codificação de Caracteres no Log
-**Problema:** Logs do servidor exibem caracteres quebrados (ex: `Mang├í D┼ìj┼ì`) em sistemas Windows devido à codificação do terminal.
-**Status:** **Monitorando**. Impacto apenas visual no log do desenvolvedor.

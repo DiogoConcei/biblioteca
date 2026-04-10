@@ -101,6 +101,7 @@ interface MediaAdapter {
 ## Segurança e Performance
 
 - **Validação de Caminhos:** O `MediaServer` deve validar todo `filePath` via `isPathSafe` antes de servir qualquer recurso através do protocolo `lib-media://`.
+- **Virtualização de Caminhos (MAX_PATH):** Todo caminho físico gerado para capítulos ou capas (thumbnails/showcase) DEVE ser virtualizado via `FileManager.buildChapterPath` ou `FileManager.buildImagePath`. É terminantemente proibido utilizar o nome original da série ou capítulo diretamente no sistema de arquivos para evitar erros de estoiro de limite de caracteres (260 caracteres) no Windows, o que causa falhas silenciosas em bibliotecas nativas como `sharp`.
 - **Gerenciamento de Memória (PDF):** Todo componente que utilize `pdfjsLib.getDocument` DEVE implementar uma função de limpeza que chame `pdfDoc.destroy()` para evitar vazamentos de memória em documentos grandes.
 - **Sandboxing (EPUB):** O visualizador de EPUB deve utilizar um `iframe` com o atributo `sandbox="allow-scripts"` (sem `allow-same-origin`). O livro deve ser carregado via `ArrayBuffer` para permitir que a engine (`epub.js`) gerencie recursos internos sem precisar acessar o protocolo `lib-media://` como mesma origem, prevenindo ataques de escape de sandbox e acesso indevido ao sistema de arquivos.
 - **Protocolo lib-media://:** O host `local` e `archive` são as únicas formas permitidas de acessar arquivos de mídia do disco. O uso de `file://` é terminantemente proibido.

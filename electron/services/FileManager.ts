@@ -294,31 +294,13 @@ export default class FileManager extends LibrarySystem {
     originalName: string,
     ext = '.webp',
   ): string {
-    const max = 260;
-    const min = 6;
-    const safeName = this.sanitizeFilename(originalName);
     const resolvedDir = path.resolve(dirPath);
-
-    const staticLength = resolvedDir.length + path.sep.length + ext.length;
-
-    const maxBaseLength = max - staticLength;
-    if (maxBaseLength < min) {
-      const fallback = randomUUID().slice(0, min);
-      return path.join(resolvedDir, fallback + ext);
-    }
-
-    const base =
-      safeName.length > maxBaseLength
-        ? safeName.slice(0, maxBaseLength)
-        : safeName;
-
-    let finalPath = path.join(resolvedDir, base + ext);
-
-    if (finalPath.length > max) {
-      finalPath = path.join(resolvedDir, randomUUID().slice(0, min) + ext);
-    }
-
-    return finalPath;
+    const safeBase = this.sanitizeFilename(originalName).slice(0, 8);
+    const shortHash = randomUUID().slice(0, 6);
+    
+    // Formato ultra-curto: prefixo(8) + separador + hash(6) + ext
+    // Ex: spider-m_a1b2c3.webp
+    return path.join(resolvedDir, `${safeBase}_-${shortHash}${ext}`);
   }
 
   private extractPageIndex(filename: string): string | null {
@@ -381,47 +363,21 @@ export default class FileManager extends LibrarySystem {
     serieName: string,
     chapterName: string,
   ): string {
-    const max = 260;
-    const min = 8;
-    const safeSerie = this.sanitizeFilename(serieName);
-    const safeChapter = this.sanitizeFilename(chapterName);
-
     const resolvedBase = path.resolve(baseDir);
+    
+    const safeSerie = this.sanitizeFilename(serieName).slice(0, 8);
+    const safeChapter = this.sanitizeFilename(chapterName).slice(0, 8);
+    
+    const serieHash = randomUUID().slice(0, 6);
+    const chapterHash = randomUUID().slice(0, 6);
 
-    const staticLength = resolvedBase.length + path.sep.length * 2;
-
-    const remaining = max - staticLength;
-
-    if (remaining <= min * 2) {
-      const s = randomUUID().slice(0, min);
-      const c = randomUUID().slice(0, min);
-      return path.join(resolvedBase, s, c);
-    }
-
-    const maxSerieLen = Math.floor(remaining * 0.4);
-    const maxChapterLen = remaining - maxSerieLen;
-
-    const finalSerie =
-      safeSerie.length > maxSerieLen
-        ? safeSerie.slice(0, maxSerieLen)
-        : safeSerie;
-
-    const finalChapter =
-      safeChapter.length > maxChapterLen
-        ? safeChapter.slice(0, maxChapterLen)
-        : safeChapter;
-
-    let finalPath = path.join(resolvedBase, finalSerie, finalChapter);
-
-    if (finalPath.length > max) {
-      finalPath = path.join(
-        resolvedBase,
-        randomUUID().slice(0, min),
-        randomUUID().slice(0, min),
-      );
-    }
-
-    return finalPath;
+    // Formato: baseDir / serie(8)_hash(6) / chapter(8)_hash(6)
+    // Ex: .../Quadrinho/Spider-M_a1b2c3/spider-m_d4e5f6
+    return path.join(
+      resolvedBase,
+      `${safeSerie}_-${serieHash}`,
+      `${safeChapter}_-${chapterHash}`
+    );
   }
 
   public async moveFiles(oldData: Literatures, updated: Literatures) {

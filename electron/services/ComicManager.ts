@@ -232,9 +232,14 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
 
   async createSerie(
     serie: SerieForm,
-    tieInManager?: ITieInManager,
+    tieInManager?: ITieInManager & { generateChildCovers: (childs: ComicTieIn[], basePath: string) => Promise<void> },
   ): Promise<void> {
     const serieData = await this.processSerieData(serie);
+
+    // Gera as capas para cada edição (capítulo) do quadrinho principal
+    if (serieData.chapters && serieData.chapters.length > 0) {
+      await this.createEditionCovers(serie.oldPath, serieData.chapters);
+    }
 
     if (
       tieInManager &&
@@ -242,6 +247,8 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
       serieData.childSeries.length > 0
     ) {
       await tieInManager.processTieInData(serie.oldPath, serieData.childSeries);
+      // Extrai as capas para as child series (Tie-ins)
+      await tieInManager.generateChildCovers(serieData.childSeries, serie.oldPath);
     }
 
     await this.processCovers(serieData);
