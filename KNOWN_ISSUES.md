@@ -1,5 +1,10 @@
 # KNOWN_ISSUES.md
 
+### 2. Erro "Loading Book" no Mobile (EPUB)
+**Problema:** Ao tentar abrir arquivos EPUB no visualizador mobile, a engine `epub.js` retorna "Error loading book".
+**Causa Provável:** Possível restrição de CORS no servidor LAN ou MIME type incompatível ao servir o arquivo binário completo pelo endpoint `/api/media/local`.
+**Status:** Investigando.
+
 ## 🚀 Performance e Otimização
 
 ### 1. Latência no Protocolo 'archive' (7-Zip CLI)

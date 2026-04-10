@@ -1,6 +1,9 @@
 # TASKS.md
 
 ## Em progresso
+- [ ] **[FEAT] Busca Automática de Metadados (Sinopse/Capa)**
+  - Integrar o `MetadataManager` ao processo de Upload para preenchimento automático das séries.
+  - Criar interface/botão no front-end para acionar a busca manual via IPC.
 - [ ] **[FEAT] Scrapers de Capítulos**
   - Implementar busca automática de novos capítulos para séries existentes.
   - Integração com provedores externos para notificações de atualização.

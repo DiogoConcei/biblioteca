@@ -1,5 +1,6 @@
 import fse from 'fs-extra';
 import path from 'path';
+import { isDeepStrictEqual } from 'node:util';
 
 import { SerieData, SerieEditForm } from '../../src/types/series.interfaces';
 import { TieIn } from '../types/comic.interfaces';
@@ -358,6 +359,7 @@ export class StorageManager extends LibrarySystem {
     return {
       id: serie.id,
       name: serie.name,
+      description: serie.description,
       coverImage: serie.coverImage,
       chaptersRead: serie.chaptersRead,
       dataPath: serie.dataPath,
@@ -377,7 +379,7 @@ export class StorageManager extends LibrarySystem {
       const newValue = (newData as Record<string, unknown>)[key];
       const oldValue = (oldData as Record<string, unknown>)[key];
 
-      if (!this.deepEqual(oldValue, newValue)) {
+      if (!isDeepStrictEqual(oldValue, newValue)) {
         updated[key] = newValue;
         hasChanges = true;
       }

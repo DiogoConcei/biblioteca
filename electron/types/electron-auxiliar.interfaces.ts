@@ -51,6 +51,7 @@ export interface NormalizedSerieData {
 export interface viewData {
   id: number;
   name: string;
+  description?: string;
   coverImage: string;
   chaptersRead: number;
   dataPath: string;
@@ -186,6 +187,7 @@ export interface graphSerie<C extends graphChapter = graphChapter> {
   id: number;
   name: string;
   sanitizedName: string;
+  description?: string;
   genre?: string;
   author?: string;
   language?: string;

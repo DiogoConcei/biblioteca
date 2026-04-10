@@ -250,6 +250,17 @@ export class LanServer {
           throw innerError;
         }
 
+        // Se for EPUB, retornamos o arquivo direto para o mobile processar via epub.js
+        if (chapter.chapterPath.toLowerCase().endsWith('.epub')) {
+          const encodedPath = Buffer.from(chapter.chapterPath).toString('base64');
+          return res.json({
+            ...content,
+            type: 'epub',
+            totalResources: 1,
+            resources: [`/api/media/local?path=${encodeURIComponent(encodedPath)}&token=${this.token}`]
+          });
+        }
+
         // Se for PDF, transformamos em uma lista de imagens virtuais para o mobile
         if (content.type === 'pdf' && content.totalResources > 0) {
           const pdfPathEncoded = Buffer.from(chapter.chapterPath).toString('base64');

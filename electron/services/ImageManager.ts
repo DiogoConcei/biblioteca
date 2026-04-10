@@ -146,8 +146,15 @@ export default class ImageManager extends LibrarySystem {
 
   public async readFileAsDataUrl(rawPath: string): Promise<string> {
     try {
-      const buffer = await fse.readFile(rawPath);
-      const mimeType = (await this.getMime(rawPath)) || 'image/webp';
+      let finalPath = rawPath;
+
+      if (rawPath.startsWith('lib-media://local/')) {
+        const base64Part = rawPath.replace('lib-media://local/', '');
+        finalPath = Buffer.from(base64Part, 'base64').toString('utf-8');
+      }
+
+      const buffer = await fse.readFile(finalPath);
+      const mimeType = (await this.getMime(finalPath)) || 'image/webp';
       return `data:${mimeType};base64,${buffer.toString('base64')}`;
     } catch (e) {
       console.error('Erro ao ler arquivo como Base64:', e);

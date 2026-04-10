@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ReactReader } from 'react-reader';
 
 interface Chapter {
   id: number;
@@ -33,6 +34,7 @@ function App() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [chapterContent, setChapterContent] = useState<ChapterContent | null>(null);
+  const [epubLocation, setEpubLocation] = useState<string | number>(0);
   const [loading, setLoading] = useState(false);
   const [loadingChapters, setLoadingChapters] = useState<Record<number, 'loading' | 'success' | 'error'>>({});
   const [downloadStatus, setDownloadStatus] = useState<string[]>([]);
@@ -237,6 +239,26 @@ function App() {
   };
 
 
+  const handleFinishReading = async () => {
+    if (selectedSerie && selectedChapter) {
+      try {
+        const baseUrl = host.startsWith('http') ? host : `http://${host}`;
+        await fetch(`${baseUrl}/api/series/${selectedSerie.id}/chapters/${selectedChapter.id}/read?token=${token}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isRead: true })
+        });
+        
+        // Atualizar estado local para refletir na lista
+        setChapters(prev => prev.map(c => c.id === selectedChapter.id ? { ...c, isRead: true } : c));
+      } catch (err) {
+        console.error('Falha ao sincronizar leitura:', err);
+      }
+    }
+    setView('series'); 
+    window.scrollTo(0, 0); 
+  };
+
   if (!connected) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '50px', padding: '20px' }}>
@@ -414,7 +436,42 @@ function App() {
   // RENDERIZAÇÃO DO VISUALIZADOR
   if (view === 'viewer' && selectedChapter && chapterContent) {
     const isBook = chapterContent.type === 'book';
+    const isEpub = chapterContent.type === 'epub';
 
+    // RENDERIZADOR DEDICADO PARA EPUB (PAGINADO)
+    if (isEpub) {
+      return (
+        <div style={{ background: '#fff', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: 'rgba(0,0,0,0.9)', padding: '15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 100, borderBottom: '1px solid #333' }}>
+             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', overflow: 'hidden' }}>
+                <button onClick={() => setView('series')} style={{ background: 'transparent', color: 'white', border: 'none', fontSize: '1.2rem', cursor: 'pointer', padding: '5px' }}>←</button>
+                <span style={{ color: 'white', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedChapter.name}</span>
+             </div>
+             <button 
+                onClick={handleFinishReading}
+                style={{ background: '#8963ba', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '8px', fontWeight: 'bold' }}
+              >
+                Lido
+              </button>
+          </div>
+          
+          <div style={{ flex: 1, position: 'relative' }}>
+            <ReactReader
+              url={`${baseUrl}${chapterContent.resources[0]}`}
+              location={epubLocation}
+              locationChanged={(loc: string) => setEpubLocation(loc)}
+              swipeable={true}
+              epubOptions={{
+                allowPopups: true,
+                allowScriptedContent: true,
+              }}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // RENDERIZADOR CLÁSSICO PARA COMICS/PDF (SCROLL VERTICAL)
     return (
       <div style={{ background: isBook ? '#f5f5f5' : '#000', minHeight: '100vh' }}>
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.9)', padding: '15px', display: 'flex', alignItems: 'center', gap: '15px', zIndex: 100, borderBottom: '1px solid #333' }}>
@@ -459,26 +516,7 @@ function App() {
         
         <div style={{ padding: '40px 20px', textAlign: 'center', background: isBook ? '#eee' : 'transparent' }}>
            <button 
-            onClick={async () => { 
-              // Sincronizar leitura com o servidor
-              if (selectedSerie && selectedChapter) {
-                try {
-                  const baseUrl = host.startsWith('http') ? host : `http://${host}`;
-                  await fetch(`${baseUrl}/api/series/${selectedSerie.id}/chapters/${selectedChapter.id}/read?token=${token}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ isRead: true })
-                  });
-                  
-                  // Atualizar estado local para refletir na lista
-                  setChapters(prev => prev.map(c => c.id === selectedChapter.id ? { ...c, isRead: true } : c));
-                } catch (err) {
-                  console.error('Falha ao sincronizar leitura:', err);
-                }
-              }
-              setView('series'); 
-              window.scrollTo(0, 0); 
-            }} 
+            onClick={handleFinishReading} 
             style={{ background: '#8963ba', color: 'white', border: 'none', padding: '14px 40px', borderRadius: '30px', fontWeight: 'bold', fontSize: '1.1rem', boxShadow: '0 4px 12px rgba(137, 99, 186, 0.4)' }}
            >
             Concluir Leitura

@@ -26,6 +26,11 @@ export default function collectionHandlers(ipcMain: IpcMain) {
           const updatedSeries = [];
 
           for (const serie of collection.series) {
+            // Busca dados atualizados da série para garantir que campos como 'description' estejam presentes
+            const serieData = await collectionsOperations.mountSerieInfo(
+              await collectionsOperations['fileManager'].getDataPath(serie.name),
+            );
+
             const encodedCover = await imageManager.encodeImage(
               serie.coverImage,
             );
@@ -38,7 +43,9 @@ export default function collectionHandlers(ipcMain: IpcMain) {
 
             updatedSeries.push({
               ...serie,
+              ...serieData, // Mescla com dados frescos (incluindo a nova descrição)
               coverImage: encodedCover,
+              backgroundImage: serie.backgroundImage,
             });
           }
 
