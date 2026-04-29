@@ -1,16 +1,12 @@
 import path from 'path';
 import fse from 'fs-extra';
-import { app } from 'electron';
+// import { app } from 'electron';
 
 import { AppConfig } from '../../types/settings.interfaces';
 
 export default abstract class LibrarySystem {
-  // O app.getPath só funciona se o app estiver pronto.
-  // Em alguns casos de teste ou instanciamento precoce, pode falhar.
-  // Usamos um getter para garantir que pegamos o caminho correto sempre.
-
   get baseStorageFolder(): string {
-    return path.join(app.getPath('userData'), 'storage');
+    return path.join('C:\\Users\\diogo\\AppData\\Roaming\\biblioteca', 'storage');
   }
 
   protected get backupFolder(): string {

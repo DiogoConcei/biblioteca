@@ -41,9 +41,13 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         const adapter = MediaFactory.getAdapter(chapter.chapterPath);
         const content = await adapter.getPages(chapter.chapterPath);
 
-        return { success: true, data: content, lastCfi: chapter.page.lastCfi };
+        return {
+          success: true,
+          data: content,
+          lastCfi: chapter.page.lastCfi,
+          lastPageRead: chapter.page.lastPageRead,
+        };
       } catch (e) {
-        console.error(`Erro ao recuperar o capitulo: ${e}`);
         return { success: false, error: String(e) };
       }
     },
@@ -244,6 +248,43 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         return { success: true, data: url, lastCfi: prevChapter.page.lastCfi };
       } catch (e) {
         console.error(`Erro ao buscar capítulo anterior: ${e}`);
+        return { success: false, error: String(e) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    'chapter:reorder',
+    async (_event, dataPath: string, newOrderIds: number[]) => {
+      try {
+        const serie = await storageManager.readSerieData<Literatures>(dataPath);
+        if (!serie || !serie.chapters) {
+          throw new Error('Série ou capítulos não encontrados.');
+        }
+
+        const chaptersMap = new Map(serie.chapters.map((c) => [c.id, c]));
+
+        const reorderedChapters = newOrderIds
+          .map((id) => chaptersMap.get(id))
+          .filter((c): c is Literatures['chapters'][0] => !!c);
+
+        if (reorderedChapters.length !== serie.chapters.length) {
+          throw new Error(
+            'Inconsistência na quantidade de capítulos reordenados.',
+          );
+        }
+
+        reorderedChapters.forEach((chapter, index) => {
+          chapter.id = index + 1;
+        });
+
+        serie.chapters = reorderedChapters;
+        serie.totalChapters = reorderedChapters.length;
+
+        await storageManager.writeData(serie);
+        return { success: true };
+      } catch (e) {
+        console.error(`Erro ao reordenar capítulos: ${e}`);
         return { success: false, error: String(e) };
       }
     },

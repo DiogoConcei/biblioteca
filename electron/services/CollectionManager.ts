@@ -72,20 +72,9 @@ export default class CollectionManager extends LibrarySystem {
 
   public async getCollection(name: string): Promise<Collection | null> {
     try {
-      const data = await this.getCollections();
-      const rawName = name.toLocaleLowerCase().trim();
-
-      if (!data) return null;
-
-      const collection = data.find(
-        (col) => col.name.toLocaleLowerCase().trim() === rawName,
-      );
-
-      if (!collection) return null;
-
-      return collection;
+      return await this.findCollectionByName(name);
     } catch (e) {
-      console.error('Erro ao obter a coleção de favoritos: ', e);
+      console.error(`Erro ao obter a coleção ${name}: `, e);
       return null;
     }
   }
@@ -93,35 +82,21 @@ export default class CollectionManager extends LibrarySystem {
   //   Avaliar a necessidade
   public async getDefaultCollections(): Promise<Collection[] | null> {
     try {
-      const data = await this.getCollections();
-      if (!data) return null;
-
-      const favorites = data.find(
-        (col) => col.name.toLocaleLowerCase().trim() === 'favoritos',
-      );
-
-      const recentes = data.find(
-        (col) => col.name.toLocaleLowerCase().trim() === 'recentes',
-      );
+      const favorites = await this.findCollectionByName('favoritos');
+      const recentes = await this.findCollectionByName('recentes');
 
       if (!favorites || !recentes) return null;
 
       return [favorites, recentes];
     } catch (e) {
-      console.error('Erro ao obter a coleção de favoritos: ', e);
+      console.error('Erro ao obter coleções padrão: ', e);
       return null;
     }
   }
 
   public async getFavorites(): Promise<Collection | null> {
     try {
-      const data = await this.getCollections();
-      if (!data) return null;
-
-      const favorites = data.find(
-        (col) => col.name.toLocaleLowerCase().trim() === 'Favoritos',
-      );
-      return favorites || null;
+      return await this.findCollectionByName('favoritos');
     } catch (e) {
       console.error('Erro ao obter a coleção de favoritos: ', e);
       return null;
@@ -160,17 +135,23 @@ export default class CollectionManager extends LibrarySystem {
 
   public async getLastRead(): Promise<Collection | null> {
     try {
-      const data = await this.getCollections();
-      if (!data) return null;
-
-      const recents = data.find(
-        (col) => col.name.toLocaleLowerCase().trim() === 'recentes',
-      );
-      return recents || null;
+      return await this.findCollectionByName('recentes');
     } catch (e) {
       console.error('Erro ao obter a coleção de recentes: ', e);
       return null;
     }
+  }
+
+  private async findCollectionByName(name: string): Promise<Collection | null> {
+    const collections = await this.getCollections();
+    if (!collections) return null;
+
+    const normalizedSearch = name.toLocaleLowerCase().trim();
+    return (
+      collections.find(
+        (col) => col.name.toLocaleLowerCase().trim() === normalizedSearch,
+      ) || null
+    );
   }
 
   public async quicklyCreate(name: string): Promise<boolean> {
@@ -616,11 +597,19 @@ export default class CollectionManager extends LibrarySystem {
   }
 
   public async mountSerieInfo(dataPath: string): Promise<SerieInCollection> {
-    const date = new Date().toISOString();
-    const serie = (await this.storageManager.readSerieData(
-      dataPath,
-    )) as Literatures;
+    try {
+      const serie = (await this.storageManager.readSerieData(
+        dataPath,
+      )) as Literatures;
 
+      return this.toSerieInCollection(serie);
+    } catch (e) {
+      console.error('Erro ao montar informações da série:', e);
+      throw e;
+    }
+  }
+
+  private toSerieInCollection(serie: Literatures | TieIn): SerieInCollection {
     return {
       id: serie.id,
       name: serie.name,
@@ -633,18 +622,15 @@ export default class CollectionManager extends LibrarySystem {
       totalChapters: serie.totalChapters,
       recommendedBy: serie.metadata.recommendedBy || '',
       originalOwner: serie.metadata.originalOwner || '',
-      addAt: date,
+      addAt: new Date().toISOString(),
       position: 0,
     };
   }
 
   public async clearCollection(collectionName: string): Promise<boolean> {
     try {
-      const emptyCollection = await this.mountEmptyCollection(collectionName);
-
-      await this.updateCollection(emptyCollection);
-
-      return true;
+      const emptyCollection = this.mountEmptyCollection(collectionName);
+      return await this.updateCollection(emptyCollection);
     } catch (e) {
       console.error('Falha em resetar a coleção: ', e);
       return false;
@@ -657,13 +643,7 @@ export default class CollectionManager extends LibrarySystem {
   ): Promise<boolean> {
     try {
       const collection = await this.getCollection(collectionName);
-
-      if (!collection) return false;
-
-      const result = collection.series.find((serie) => serie.id === serieId);
-
-      if (result) return true;
-      else return false;
+      return collection?.series.some((serie) => serie.id === serieId) ?? false;
     } catch (e) {
       console.error('Falha em verificar se a coleção já possui a série: ', e);
       return false;
@@ -673,39 +653,28 @@ export default class CollectionManager extends LibrarySystem {
   public async updateSerie(dataPath: string): Promise<boolean> {
     try {
       const collections = await this.getCollections();
-      const updatedSerie = await this.mountSerieInfo(dataPath);
-
       if (!collections) return false;
 
-      const toUpdate = collections.filter((col) =>
-        col.series.some((serie) => serie.id === updatedSerie.id),
-      );
+      const updatedSerieInfo = await this.mountSerieInfo(dataPath);
+      const now = new Date().toISOString();
 
-      const updatedCols: Collection[] = toUpdate.map((col) => {
-        const updatedSeries = col.series.map((serie) => {
-          if (serie.id === updatedSerie.id) {
-            return {
-              ...updatedSerie,
-              backgroundImage: serie.backgroundImage ?? null,
-            };
-          }
+      const updatedData = collections.map((col) => {
+        const serieIndex = col.series.findIndex((s) => s.id === updatedSerieInfo.id);
+        if (serieIndex === -1) return col;
 
-          return serie;
-        });
-
-        return {
-          ...col,
-          series: updatedSeries,
+        const updatedSeries = [...col.series];
+        updatedSeries[serieIndex] = {
+          ...updatedSerieInfo,
+          backgroundImage: col.series[serieIndex].backgroundImage ?? null,
         };
+
+        return { ...col, series: updatedSeries, updatedAt: now };
       });
 
-      for (const collection of updatedCols) {
-        await this.updateCollection(collection);
-      }
-
+      await fse.writeJson(this.appCollections, updatedData, { spaces: 2 });
       return true;
     } catch (e) {
-      console.error('Falha em atualizar dados da série: ', e);
+      console.error('Falha em atualizar dados da série nas coleções: ', e);
       return false;
     }
   }
@@ -714,13 +683,11 @@ export default class CollectionManager extends LibrarySystem {
     collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
   ): Collection {
     const date = new Date().toISOString();
-
     return {
       name: collection.name.trim(),
       description: collection.description || '',
       coverImage: collection.coverImage || '',
       series: collection.series || [],
-
       createdAt: date,
       updatedAt: date,
     };
@@ -728,7 +695,6 @@ export default class CollectionManager extends LibrarySystem {
 
   private mountEmptyCollection(name: string): Collection {
     const date = new Date().toISOString();
-
     return {
       name,
       description: '',
@@ -745,9 +711,7 @@ export default class CollectionManager extends LibrarySystem {
     const dataPath = await this.fileManager.getDataPath(serie.name);
     const serieData = await this.storageManager.readSerieData(dataPath);
 
-    if (!serieData) {
-      throw new Error('The code is broken');
-    }
+    if (!serieData) throw new Error(`Dados não encontrados para a série: ${serie.name}`);
 
     return {
       ...serie,
@@ -758,20 +722,12 @@ export default class CollectionManager extends LibrarySystem {
   private async updateCollection(collection: Collection): Promise<boolean> {
     try {
       const collections = await this.getCollections();
-      const newDate = new Date().toISOString();
-
       if (!collections) return false;
 
-      const updatedData = collections.map((col) => {
-        if (col.name === collection.name) {
-          return {
-            ...collection,
-            updatedAt: newDate,
-          };
-        }
-
-        return col;
-      });
+      const now = new Date().toISOString();
+      const updatedData = collections.map((col) =>
+        col.name === collection.name ? { ...collection, updatedAt: now } : col,
+      );
 
       await fse.writeJson(this.appCollections, updatedData, { spaces: 2 });
       return true;
@@ -779,27 +735,5 @@ export default class CollectionManager extends LibrarySystem {
       console.error('Falha em atualizar a coleção: ', e);
       return false;
     }
-  }
-
-  private async mountEmptySerieInfo(
-    serie: Literatures | TieIn,
-  ): Promise<SerieInCollection> {
-    const date = new Date().toISOString();
-
-    return {
-      id: serie.id,
-      name: serie.name,
-      coverImage: serie.coverImage,
-      archivesPath: serie.archivesPath,
-      description: serie.description || '',
-      backgroundImage: null,
-      status: serie.metadata.status,
-      rating: serie.metadata.rating || 0,
-      totalChapters: serie.totalChapters,
-      recommendedBy: serie.metadata.recommendedBy || '',
-      originalOwner: serie.metadata.originalOwner || '',
-      addAt: date,
-      position: 0,
-    };
   }
 }

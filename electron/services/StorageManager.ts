@@ -3,15 +3,17 @@ import path from 'path';
 import { isDeepStrictEqual } from 'node:util';
 
 import { SerieData, SerieEditForm } from '../../src/types/series.interfaces';
-import { TieIn } from '../types/comic.interfaces';
+import { Comic, ComicEdition, TieIn } from '../types/comic.interfaces';
 import {
   graphSerie,
   LiteratureChapter,
   viewData,
   Literatures,
+  graphChapter,
 } from '../types/electron-auxiliar.interfaces';
 import FileManager from './FileManager';
 import LibrarySystem from './abstract/LibrarySystem';
+import GraphSerie from './abstract/GraphSerie';
 
 export class StorageManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();

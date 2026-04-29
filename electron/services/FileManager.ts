@@ -189,27 +189,29 @@ export default class FileManager extends LibrarySystem {
     return '';
   }
 
-  public sanitizeFilename(fileName: string): string {
-    return (
-      fileName
-        .replaceAll(/\s+/g, '_')
-
-        // .replaceAll(/[<>:"/\\|?*\x00-\x1F#!]/g, '_')
-        .replaceAll(/[^a-zA-Z0-9._-]/g, '_')
-
-        .replaceAll(/_{2,}/g, '_')
-
-        .replaceAll(/\.{2,}/g, '.')
-
-        .replaceAll(/^-+|-+$/g, '')
-
-        .replaceAll(/[. ]+$/g, '')
-        .replaceAll('#', '')
-        .replaceAll('.pdf', '')
-        .trim()
-    );
+  private transliterate(text: string): string {
+    return text
+      .normalize('NFD') // decompõe "ã" em "a" + "~"
+      .replace(/[\u0300-\u036f]/g, '') // remove os diacríticos (acentos)
+      .replace(/[øØ]/g, 'o') // casos que NFD não cobre
+      .replace(/[æÆ]/g, 'ae')
+      .replace(/[ðÐ]/g, 'd')
+      .replace(/[þÞ]/g, 'th')
+      .replace(/[ß]/g, 'ss');
   }
 
+  public sanitizeFilename(fileName: string): string {
+    return this.transliterate(fileName) // 👈 entra aqui primeiro
+      .replaceAll(/\s+/g, '_')
+      .replaceAll(/[^a-zA-Z0-9._-]/g, '_')
+      .replaceAll(/_{2,}/g, '_')
+      .replaceAll(/\.{2,}/g, '.')
+      .replaceAll(/^-+|-+$/g, '')
+      .replaceAll(/[. ]+$/g, '')
+      .replaceAll('#', '')
+      .replaceAll('.pdf', '')
+      .trim();
+  }
   public sanitizeDirName(dirName: string) {
     return this.sanitizeFilename(dirName).replaceAll('.', '_').trim();
   }
@@ -295,14 +297,35 @@ export default class FileManager extends LibrarySystem {
     ext = '.webp',
   ): string {
     const resolvedDir = path.resolve(dirPath);
-    const safeBase = this.sanitizeFilename(originalName).slice(0, 8);
-    const shortHash = randomUUID().slice(0, 6);
-    
-    // Formato ultra-curto: prefixo(8) + separador + hash(6) + ext
-    // Ex: spider-m_a1b2c3.webp
-    return path.join(resolvedDir, `${safeBase}_-${shortHash}${ext}`);
-  }
 
+    // Padrão 1: "Nome.pdf-001" ou "Nome-001" → número no sufixo após hífen
+    // Padrão 2: "P00003" → o nome inteiro É o número
+    const suffixMatch = originalName.match(/[-](\d{2,6})$/);
+    const fullNumberMatch = originalName.match(/^[A-Za-z]?(\d{3,6})$/);
+
+    let pageNumber: string | null = null;
+    let baseName: string;
+
+    if (suffixMatch) {
+      pageNumber = suffixMatch[1].padStart(4, '0');
+      baseName = originalName.slice(0, suffixMatch.index); // remove o "-001" do final
+    } else if (fullNumberMatch) {
+      pageNumber = fullNumberMatch[1].padStart(4, '0');
+      baseName = originalName; // mantém o nome inteiro, já é curto
+    } else {
+      pageNumber = null;
+      baseName = originalName;
+    }
+
+    const safeBase = this.sanitizeFilename(baseName).slice(0, 8);
+    const shortHash = randomUUID().slice(0, 6);
+
+    const filename = pageNumber
+      ? `${safeBase}_${pageNumber}-${shortHash}${ext}`
+      : `${safeBase}_-${shortHash}${ext}`;
+
+    return path.join(resolvedDir, filename);
+  }
   private extractPageIndex(filename: string): string | null {
     const match = filename.match(/-(\d{3,4})(?=\.[^.]+$)/);
     return match ? match[1] : null;
@@ -364,10 +387,10 @@ export default class FileManager extends LibrarySystem {
     chapterName: string,
   ): string {
     const resolvedBase = path.resolve(baseDir);
-    
+
     const safeSerie = this.sanitizeFilename(serieName).slice(0, 8);
     const safeChapter = this.sanitizeFilename(chapterName).slice(0, 8);
-    
+
     const serieHash = randomUUID().slice(0, 6);
     const chapterHash = randomUUID().slice(0, 6);
 
@@ -376,7 +399,7 @@ export default class FileManager extends LibrarySystem {
     return path.join(
       resolvedBase,
       `${safeSerie}_-${serieHash}`,
-      `${safeChapter}_-${chapterHash}`
+      `${safeChapter}_-${chapterHash}`,
     );
   }
 

@@ -2,15 +2,15 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ListFilter, Settings, Play, Pencil, Dices } from 'lucide-react';
 
+import Loading from '@/components/Loading/Loading';
 import CustomSelect from '@/components/CustomSelect/CustomSelect';
 import { LiteratureForm } from '@/types/series.interfaces';
 import useAction from '@/hooks/useAction';
+import { useUIStore } from '@/store/useUIStore';
+import useSerieStore from '@/store/useSerieStore';
+import useAllSeries from '@/hooks/useAllSeries';
+import SearchBar from '@/components/SearchBar/SearchBar';
 
-import { useUIStore } from '../../store/useUIStore';
-import useSerieStore from '../../store/useSerieStore';
-import useAllSeries from '../../hooks/useAllSeries';
-import Loading from '../../components/Loading/Loading';
-import SearchBar from '../../components/SearchBar/SearchBar';
 import styles from './Home.module.scss';
 
 export default function Home() {

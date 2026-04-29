@@ -2,18 +2,22 @@ import { BrowserWindow, ipcMain } from 'electron';
 import { v4 as uuidv4 } from 'uuid';
 
 import LibrarySystem from './abstract/LibrarySystem';
+import storageManager from './StorageManager';
+import ImageManager from './ImageManager';
 import { DownloadTask, DownloadTaskStatus } from '../types/download.interfaces';
+import { viewData } from '../types/electron-auxiliar.interfaces.ts';
 
 export default class DownloadManager extends LibrarySystem {
   private tasks: Map<string, DownloadTask> = new Map();
   private activeDownloads: number = 0;
   private readonly MAX_CONCURRENT_DOWNLOADS = 3;
   private mainWindow: BrowserWindow | null = null;
+  private readonly storageManager = storageManager;
+  private readonly imageManager: ImageManager = new ImageManager();
 
   constructor(mainWindow: BrowserWindow | null) {
     super();
     this.mainWindow = mainWindow;
-    this.setupIpc();
   }
 
   private setupIpc() {
@@ -154,5 +158,33 @@ export default class DownloadManager extends LibrarySystem {
         Array.from(this.tasks.values()),
       );
     }
+  }
+
+  public async getSeriesWithDownloads(): Promise<viewData[]> {
+    const allViewData = await this.storageManager.getViewData();
+    if (!allViewData) return [];
+
+    const seriesWithDownloads: viewData[] = [];
+
+    for (const serie of allViewData) {
+      const fullSerie = await this.storageManager.readSerieData(serie.dataPath);
+      if (!fullSerie || !fullSerie.chapters) continue;
+
+      const hasDownloads = fullSerie.chapters.some(
+        (chapter) => chapter.isDownloaded === 'downloaded',
+      );
+
+      if (hasDownloads) {
+        const coverUrl = await this.imageManager.getThumbnailUrl(
+          fullSerie.coverImage,
+        );
+        seriesWithDownloads.push({
+          ...serie,
+          coverImage: coverUrl,
+        });
+      }
+    }
+
+    return seriesWithDownloads;
   }
 }

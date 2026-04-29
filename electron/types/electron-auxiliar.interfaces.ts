@@ -110,6 +110,7 @@ export interface ChapterView {
   pages: string[];
   quantityPages: number;
   currentPage: number;
+  lastPageRead?: number;
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -213,6 +214,7 @@ export interface graphSerie<C extends graphChapter = graphChapter> {
     rating?: number;
     isFavorite: boolean;
     autoBackup: 'Sim' | 'Não' | '';
+    compiledComic?: boolean;
   };
   comments: string[];
   tags: string[];

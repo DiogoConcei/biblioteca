@@ -290,4 +290,28 @@ export default class TieInManager extends ComicManager {
       throw e;
     }
   }
+
+  public async resolveCoverSourceArchive(
+    candidatePath: string,
+  ): Promise<string> {
+    if (!candidatePath) return '';
+
+    const normalizedPath = path.resolve(candidatePath);
+
+    if (!(await fse.pathExists(normalizedPath))) {
+      return '';
+    }
+
+    const stats = await fse.stat(normalizedPath);
+
+    if (stats.isFile()) {
+      return normalizedPath;
+    }
+
+    if (!stats.isDirectory()) {
+      return '';
+    }
+
+    return this.fileManager.findFirstChapter(normalizedPath);
+  }
 }

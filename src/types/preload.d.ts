@@ -78,6 +78,7 @@ declare global {
         regenerateComicCovers: () => Promise<
           SystemResult<ComicCoverRegenerationResult>
         >;
+        getSeriesWithDownloads: () => Promise<APIResponse<viewData[]>>;
       };
 
       lan: {
@@ -159,6 +160,10 @@ declare global {
           serieName: string,
           chapter_id: number,
         ) => Promise<APIResponse<string>>;
+        reorderChapters: (
+          dataPath: string,
+          newOrderIds: number[],
+        ) => Promise<APIResponse<void>>;
       };
 
       collections: {

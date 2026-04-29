@@ -64,7 +64,10 @@ export default function useAction() {
       // Atualização automática de status no frontend para feedback instantâneo
       if (newValue === serie.totalChapters) {
         updateSerie('metadata.status', 'Completo');
-      } else if (serie.metadata.status === 'Completo' && newValue < serie.totalChapters) {
+      } else if (
+        serie.metadata.status === 'Completo' &&
+        newValue < serie.totalChapters
+      ) {
         updateSerie('metadata.status', 'Em andamento');
       }
     }
@@ -102,12 +105,19 @@ export default function useAction() {
 
     if (safeOpen) {
       // Registra como recente ao abrir
-      window.electronAPI.series.recentSerie(dataPath, serieName);
+      const result = await window.electronAPI.series.recentSerie(
+        dataPath,
+        serieName,
+      );
+
+      if (!result.success) {
+        setError(`Não foi possível registar a série no histórico de recentes`);
+      }
 
       // Pequenos detalhes: Atualiza o store local para refletir a abertura
       updateSerie('readingData.lastChapterId', chapterId);
       updateSerie('readingData.lastReadAt', new Date().toISOString());
-      
+
       if (serie.metadata.status === 'Pendente') {
         updateSerie('metadata.status', 'Em andamento');
       }

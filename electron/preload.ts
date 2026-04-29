@@ -77,6 +77,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     regenerateComicCovers: () =>
       ipcRenderer.invoke('system:regenerate-comic-covers'),
     pickImage: () => ipcRenderer.invoke('system:pick-image'),
+    getSeriesWithDownloads: () =>
+      ipcRenderer.invoke('system:get-series-with-downloads'),
   },
 
   lan: {
@@ -181,6 +183,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
       chapter_id: number,
     ): Promise<APIResponse<string>> =>
       ipcRenderer.invoke('chapter:get-prev-chapter', serieName, chapter_id),
+    reorderChapters: async (
+      dataPath: string,
+      newOrderIds: number[],
+    ): Promise<APIResponse<void>> =>
+      ipcRenderer.invoke('chapter:reorder', dataPath, newOrderIds),
   },
 
   collections: {
