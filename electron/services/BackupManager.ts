@@ -1,5 +1,6 @@
 import fse from 'fs-extra';
 import path from 'path';
+
 import LibrarySystem from './abstract/LibrarySystem.ts';
 import ConfigManager from './ConfigManager.ts';
 import { BackupMeta } from '../types/electron-auxiliar.interfaces.ts';

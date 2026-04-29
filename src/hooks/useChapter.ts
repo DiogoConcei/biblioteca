@@ -7,7 +7,6 @@ import { ChapterView } from '../../electron/types/electron-auxiliar.interfaces';
 export default function useChapter(serieName: string, chapterId: number) {
   const serie = useSerieStore((state) => state.serie);
   const setError = useUIStore((state) => state.setError);
-  const error = useUIStore((state) => state.error);
 
   const chapter = serie?.chapters?.find((c) => c.id === chapterId);
 

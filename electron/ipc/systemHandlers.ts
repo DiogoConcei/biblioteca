@@ -109,7 +109,7 @@ export default function systemHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle('system:reset-application', async (_event, _options) => {
+  ipcMain.handle('system:reset-application', async () => {
     try {
       // await systemManager.resetApplication(options);
       return { success: true };

@@ -65,6 +65,11 @@ export interface APIResponse<T> {
   error?: string;
 }
 
+export interface ChapterResponse<T> extends APIResponse<T> {
+  lastCfi?: string;
+  lastPageRead?: number;
+}
+
 export type LiteratureForms = 'Manga' | 'Quadrinho';
 
 export type LiteratureChapterAttributes = string | number | boolean;

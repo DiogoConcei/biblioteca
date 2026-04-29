@@ -12,6 +12,7 @@ import {
   Literatures,
   viewData,
   APIResponse,
+  ChapterResponse,
   LiteratureChapter,
   LanStatus,
 } from '../../electron/types/electron-auxiliar.interfaces.js';
@@ -141,7 +142,7 @@ declare global {
         getChapter: (
           serieName: string,
           chapter_id: number,
-        ) => Promise<APIResponse<MediaContent>>;
+        ) => Promise<ChapterResponse<MediaContent>>;
         saveLastRead: (
           serieName: string,
           chapter_id: number,
