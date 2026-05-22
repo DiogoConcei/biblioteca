@@ -74,36 +74,6 @@ export type LiteratureForms = 'Manga' | 'Quadrinho';
 
 export type LiteratureChapterAttributes = string | number | boolean;
 
-export interface FormTextInputProps {
-  msg: string;
-  register: UseFormRegisterReturn;
-  error?: FieldError;
-}
-
-export interface FormInputProps {
-  register: UseFormRegisterReturn;
-  error?: FieldError;
-}
-
-export interface FormControllerProps {
-  control: Control<SerieEditForm>;
-  label?: string;
-}
-
-export interface GenericControllerProps<T extends FieldValues = FieldValues> {
-  control: Control<T>;
-  name: Path<T>;
-}
-
-export interface FavoriteProps {
-  serie: Literatures;
-  setFavorites: React.Dispatch<React.SetStateAction<Collection | undefined>>;
-}
-
-export interface RatingProps {
-  serie: Literatures;
-}
-
 export interface ChapterView {
   id: number;
   serieName: string;
@@ -116,6 +86,7 @@ export interface ChapterView {
   quantityPages: number;
   currentPage: number;
   lastPageRead?: number;
+  lastCfi?: string;
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }

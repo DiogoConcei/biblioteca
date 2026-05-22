@@ -110,3 +110,14 @@ export interface ComicConfig {
     };
   };
 }
+
+export enum ComicCategory {
+  NORMAL = 0,
+  SPECIAL = 1,
+  EXTRA = 2,
+}
+
+export interface ITieInManager {
+  processTieInData(basePath: string, childSeries: ComicTieIn[]): Promise<void>;
+  resolveCoverSourceArchive(candidatePath: string): Promise<string>;
+}

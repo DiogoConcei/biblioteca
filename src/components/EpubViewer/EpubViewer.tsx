@@ -8,6 +8,7 @@ import {
 import { EpubView } from 'react-reader';
 
 import { EpubSettings } from '../../types/settings.interfaces';
+import { EpubViewerRef } from '../../types/components.interfaces';
 import Loading from '../Loading/Loading';
 import styles from './EpubViewer.module.scss';
 
@@ -65,7 +66,7 @@ interface EpubViewerProps {
   url: string;
   lastCfi?: string;
   settings: EpubSettings;
-  readingMode: 'single' | 'double' | 'webtoon';
+  readingMode: 'single' | 'double' | 'vertical';
   onLocationChange: (
     cfi: string,
     page: number,
@@ -74,13 +75,6 @@ interface EpubViewerProps {
     chapterLabel: string,
   ) => void;
   onTocLoaded: (toc: { href?: string; label?: string; title?: string }[]) => void;
-}
-
-export interface EpubViewerRef {
-  nextPage: () => void;
-  prevPage: () => void;
-  goToPage: (page: number) => void;
-  goToLocation: (href: string) => void;
 }
 
 const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(

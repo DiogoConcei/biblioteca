@@ -2,29 +2,13 @@ import fse from 'fs-extra';
 import path from 'path';
 
 import LibrarySystem from './abstract/LibrarySystem';
+import {
+  MetadataFetchInput,
+  MetadataType,
+  ScrapedMetadata,
+} from '../types/metadata.interfaces';
 
-export type MetadataType = 'manga' | 'comic';
-
-export interface MetadataFetchInput {
-  title: string;
-  type: MetadataType;
-  year?: number;
-  author?: string;
-}
-
-export interface ScrapedMetadata {
-  title: string;
-  altTitles?: string[];
-  description: string;
-  authors?: string[];
-  artists?: string[];
-  genres?: string[];
-  publishedAt?: string;
-  status?: 'ongoing' | 'completed' | 'unknown';
-  coverUrl?: string;
-  source: string;
-  scrapedAt: string;
-}
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 interface CandidateMetadata {
   title: string;
@@ -91,7 +75,6 @@ interface GoogleBookItem {
   };
 }
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 10000;
 const MAX_RETRIES = 3;
 

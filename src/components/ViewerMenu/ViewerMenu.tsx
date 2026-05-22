@@ -136,11 +136,11 @@ export default function ViewerMenu({ chapter, setScale }: visualizerProps) {
                   <label>Modo de Leitura</label>
                   <CustomSelect 
                     value={viewerSettings.readingMode}
-                    onChange={(val) => handleUpdateViewer('readingMode', val as unknown as 'single' | 'double' | 'webtoon')}
+                    onChange={(val) => handleUpdateViewer('readingMode', val as unknown as 'single' | 'double' | 'vertical')}
                     options={[
                       { value: 'single', label: 'Página Única' },
                       { value: 'double', label: 'Página Dupla' },
-                      { value: 'webtoon', label: 'Webtoon' },
+                      { value: 'vertical', label: 'Leitura Vertical' },
                     ]}
                   />
                 </div>

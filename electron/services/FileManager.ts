@@ -6,12 +6,7 @@ import { randomUUID } from 'crypto';
 
 import LibrarySystem from './abstract/LibrarySystem';
 import { Literatures } from '../types/electron-auxiliar.interfaces';
-
-enum ComicCategory {
-  NORMAL = 0,
-  SPECIAL = 1,
-  EXTRA = 2,
-}
+import { ComicCategory } from '../types/comic.interfaces';
 
 export default class FileManager extends LibrarySystem {
   public async searchChapters(

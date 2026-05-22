@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Tag } from 'lucide-react';
 import { Controller, FieldValues } from 'react-hook-form';
 
-import { GenericControllerProps } from '../../../../../electron/types/electron-auxiliar.interfaces';
+import { GenericControllerProps } from '@/types/components.interfaces';
 import styles from './TagsField.module.scss';
 
 export default function TagsField<T extends FieldValues>({

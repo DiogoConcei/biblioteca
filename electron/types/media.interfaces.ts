@@ -24,3 +24,25 @@ export interface MediaAdapter {
    */
   getCover(seriesPath: string): Promise<string>;
 }
+
+export interface ExtractCoverInput {
+  inputPath: string;
+  outputDir: string;
+  preferredWidth?: number;
+}
+
+export interface ExtractCoverMetadata {
+  sourceType: 'pdf' | 'archive';
+  selectedCandidate?: string;
+  candidateCount: number;
+  partialExtraction: boolean;
+  usedArchiveFallbackMode?: boolean;
+  elapsedMs: number;
+}
+
+export interface ExtractCoverResult {
+  success: boolean;
+  coverPath?: string;
+  error?: string;
+  metadata?: ExtractCoverMetadata;
+}

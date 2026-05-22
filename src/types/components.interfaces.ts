@@ -242,3 +242,14 @@ export default interface CustomTimePickerProps {
   dropdownClassName?: string;
   label?: string;
 }
+
+export interface EpubViewerRef {
+  nextPage: () => void;
+  prevPage: () => void;
+  goToPage: (page: number) => void;
+  goToLocation: (href: string) => void;
+}
+
+export interface PdfViewerRef {
+  goToDestination: (dest: unknown) => Promise<void>;
+}

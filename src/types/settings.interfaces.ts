@@ -1,6 +1,6 @@
 export type BackupFrequency = 'daily' | 'weekly' | 'monthly';
 export type ThemeMode = 'light' | 'dark' | 'system';
-export type ReadingMode = 'single' | 'double' | 'webtoon';
+export type ReadingMode = 'single' | 'double' | 'vertical';
 export type TransitionEffect = 'none' | 'fade' | 'slide';
 
 export type EpubTheme = 'light' | 'dark' | 'sepia';

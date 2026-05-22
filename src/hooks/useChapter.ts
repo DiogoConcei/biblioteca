@@ -82,7 +82,7 @@ export default function useChapter(serieName: string, chapterId: number) {
         quantityPages: pages.length,
         currentPage,
         setCurrentPage,
-      }) as ChapterView & { lastCfi?: string },
+      }) as ChapterView,
     [
       chapter?.id,
       serieName,

@@ -1,4 +1,4 @@
-import { FormInputProps } from "electron/types/electron-auxiliar.interfaces";
+import { FormInputProps } from "@/types/components.interfaces";
 import "./LiteratureField.scss";
 
 export default function LiteratureField({ register, error }: FormInputProps) {

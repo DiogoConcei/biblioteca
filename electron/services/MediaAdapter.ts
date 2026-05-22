@@ -9,29 +9,13 @@ import { fileTypeFromBuffer } from 'file-type';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { createCanvas } from '@napi-rs/canvas';
 
+import {
+  ExtractCoverInput,
+  ExtractCoverMetadata,
+  ExtractCoverResult,
+} from '../types/media.interfaces';
+
 import FileManager from './FileManager';
-
-export interface ExtractCoverInput {
-  inputPath: string;
-  outputDir: string;
-  preferredWidth?: number;
-}
-
-export interface ExtractCoverMetadata {
-  sourceType: 'pdf' | 'archive';
-  selectedCandidate?: string;
-  candidateCount: number;
-  partialExtraction: boolean;
-  usedArchiveFallbackMode?: boolean;
-  elapsedMs: number;
-}
-
-export interface ExtractCoverResult {
-  success: boolean;
-  coverPath?: string;
-  error?: string;
-  metadata?: ExtractCoverMetadata;
-}
 
 interface MediaArchiveAdapterConfig {
   sevenZipPath?: string;

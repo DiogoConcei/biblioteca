@@ -6,8 +6,7 @@ import {
   Collection,
   CreateCollectionDTO,
 } from '../../src/types/collections.interfaces';
-
-export type MetadataType = 'manga' | 'comic';
+import { MetadataType } from '../types/metadata.interfaces';
 
 export default function collectionHandlers(ipcMain: IpcMain) {
   const collectionsOperations = new CollectionsManager();

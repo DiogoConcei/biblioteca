@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { LoaderCircle } from 'lucide-react';
 
 import useSettingsStore from '@/store/useSettingsStore';
+import { getFilteredUrl } from '@/utils/imageFilters';
 
 import { ChapterView } from '../../../electron/types/electron-auxiliar.interfaces';
 import ViewerMenu from '../../components/ViewerMenu/ViewerMenu';
@@ -15,11 +15,15 @@ import useNavigation from '../../hooks/useNavigation';
 import { useUIStore } from '../../store/useUIStore';
 import styles from './Viewer.module.scss';
 
+// Sub-components e Utilities
+import WebtoonView from './components/WebtoonView';
+import DoublePageView from './components/DoublePageView';
+import SinglePageView from './components/SinglePageView';
+
 export default function Viewer() {
   const { serie_name: rawSerieName, chapter_id } = useParams<{
     serie_name: string;
     chapter_id: string;
-    LiteratureForm: string;
   }>();
   const decode_serie_name = decodeURIComponent(rawSerieName ?? '');
 
@@ -27,60 +31,18 @@ export default function Viewer() {
     decode_serie_name,
     Number(chapter_id),
   );
+
   const { position, elementRef } = useDrag(chapter);
   const chapterNavigation = useNavigation(chapter);
   const [scale, setScale] = useState<number>(1);
   const lastCall = useRef<number>(0);
   const error = useUIStore((state) => state.error);
-  
+
   const settings = useSettingsStore((state) => state.settings.viewer);
 
-  // Intersection Observer para o modo Webtoon
-  useEffect(() => {
-    if (settings.readingMode !== 'webtoon' || !chapter.pages) return;
-
-    const observerOptions = {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.3, // 30% da página visível para disparar
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const pageIndex = Number(entry.target.getAttribute('data-page-index'));
-          if (!isNaN(pageIndex) && pageIndex !== chapter.currentPage) {
-            chapter.setCurrentPage(pageIndex);
-          }
-        }
-      });
-    }, observerOptions);
-
-    // Observa todas as imagens do webtoon
-    const images = document.querySelectorAll(`.${styles.webtoonPage}`);
-    images.forEach((img) => observer.observe(img));
-
-    return () => observer.disconnect();
-  }, [settings.readingMode, chapter.pages, chapter.currentPage, chapter]);
-
-  // Memoiza a URL com filtros para evitar recalculação constante
-  const getFilteredUrl = useMemo(
-    () => (url: string) => {
-      if (!url) return '';
-
-      const params = [];
-      if (settings.brightness !== 1)
-        params.push(`brightness=${settings.brightness}`);
-      if (settings.contrast !== 1)
-        params.push(`contrast=${settings.contrast}`);
-      if (settings.grayscale) params.push(`grayscale=true`);
-      if (settings.sharpness > 0) params.push(`sharpness=${settings.sharpness}`);
-
-      if (params.length === 0) return url;
-
-      const connector = url.includes('?') ? '&' : '?';
-      return `${url}${connector}${params.join('&')}`;
-    },
+  // Memoiza a URL com filtros
+  const filterUrl = useCallback(
+    (url: string) => getFilteredUrl(url, settings),
     [settings],
   );
 
@@ -110,7 +72,7 @@ export default function Viewer() {
 
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [chapterNavigation, chapter, settings.readingMode]);
+  }, [chapterNavigation, chapter]);
 
   if (!chapter.pages || !chapter.quantityPages) {
     return <Loading />;
@@ -122,78 +84,51 @@ export default function Viewer() {
 
   const renderViewerContent = () => {
     switch (settings.readingMode) {
-      case 'webtoon':
+      case 'vertical':
         return (
-          <div className={styles.webtoonContainer}>
-            {chapter.pages.map((page: string, index: number) => (
-              <img
-                key={index}
-                data-page-index={index}
-                src={getFilteredUrl(page)}
-                alt={`Página ${index + 1}`}
-                className={styles.webtoonPage}
-                loading="lazy"
-                decoding="async"
-              />
-            ))}
-            <div className={styles.webtoonEnd}>
-               <button onClick={chapterNavigation.nextChapter}>Próximo Capítulo</button>
-            </div>
-          </div>
+          <WebtoonView
+            pages={chapter.pages}
+            currentPage={chapter.currentPage}
+            setCurrentPage={chapter.setCurrentPage}
+            nextChapter={chapterNavigation.nextChapter}
+            getFilteredUrl={filterUrl}
+            isWide={settings.wideScreen}
+          />
         );
 
-      case 'double': {
-        const secondPageIdx = chapter.currentPage + 1;
-        const hasSecondPage = secondPageIdx < chapter.pages.length;
-        
+      case 'double':
         return (
-          <div className={styles.doublePageContainer}>
-            <div className={styles.doublePageWrapper}>
-               <img
-                  className={styles.doublePageImage}
-                  src={getFilteredUrl(chapter.pages[chapter.currentPage])}
-                  alt="página esquerda"
-               />
-               {hasSecondPage && (
-                  <img
-                    className={styles.doublePageImage}
-                    src={getFilteredUrl(chapter.pages[secondPageIdx])}
-                    alt="página direita"
-                  />
-               )}
-            </div>
-          </div>
+          <DoublePageView
+            pages={chapter.pages}
+            currentPage={chapter.currentPage}
+            getFilteredUrl={filterUrl}
+          />
         );
-      }
 
       case 'single':
       default:
         return (
-          <div className={styles.containerPage}>
-            <img
-              key={chapter.currentPage} // Força re-render para animação de transição
-              className={`${styles.chapterPage} ${styles[settings.transitionEffect] || ''}`}
-              draggable={false}
-              style={{
-                transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
-              }}
-              ref={elementRef}
-              src={getFilteredUrl(chapter.pages[chapter.currentPage])}
-              alt={`Página ${chapter.currentPage + 1}`}
-            />
-            {chapter.isLoading && <LoaderCircle className={styles.spinner} />}
-          </div>
+          <SinglePageView
+            page={chapter.pages[chapter.currentPage]}
+            currentPage={chapter.currentPage}
+            getFilteredUrl={filterUrl}
+            scale={scale}
+            position={position}
+            elementRef={elementRef}
+            transitionEffect={settings.transitionEffect}
+            isLoading={chapter.isLoading}
+            isWide={settings.wideScreen}
+          />
         );
     }
   };
 
   return (
-    <section className={`${styles.visualizer} ${settings.wideScreen ? styles.wide : ''}`}>
-      <ViewerMenu
-        chapter={chapter}
-        setScale={setScale}
-      />
-      
+    <section
+      className={`${styles.visualizer} ${settings.wideScreen ? styles.wide : ''}`}
+    >
+      <ViewerMenu chapter={chapter} setScale={setScale} />
+
       {renderViewerContent()}
 
       <div className={styles.pageControlWrapper}>
@@ -204,7 +139,7 @@ export default function Viewer() {
           prevPage={chapterNavigation.prevPage}
         />
       </div>
-      
+
       {settings.showPageNumbers && (
         <div className={styles.pageIndicator}>
           {settings.readingMode === 'double'

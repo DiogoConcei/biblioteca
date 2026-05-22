@@ -10,10 +10,9 @@ import Loading from '../../components/Loading/Loading';
 import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
 import ViewerMenu from '../../components/ViewerMenu/ViewerMenu';
 import PageControl from '../../components/PageControl/PageControl';
+import { EpubViewerRef, PdfViewerRef } from '../../types/components.interfaces';
 import styles from './BookViewer.module.scss';
-import EpubViewer, {
-  EpubViewerRef,
-} from '../../components/EpubViewer/EpubViewer';
+import EpubViewer from '../../components/EpubViewer/EpubViewer';
 import PdfViewer from '../../components/PdfViewer/PdfViewer';
 
 export default function BookViewer() {
@@ -41,11 +40,12 @@ export default function BookViewer() {
   const [isIndexOpen, setIsIndexOpen] = useState(false);
   const [indexTab, setIndexTab] = useState<'summary' | 'pages'>('summary');
   const [toc, setToc] = useState<
-    { href?: string; label?: string; title?: string }[]
+    { href?: string; label?: string; title?: string; dest?: unknown }[]
   >([]);
 
   // Referências
   const epubRef = useRef<EpubViewerRef>(null);
+  const pdfRef = useRef<PdfViewerRef>(null);
   const indexRef = useClickOutside<HTMLDivElement>(() => setIsIndexOpen(false));
   const error = useUIStore((state) => state.error);
 
@@ -84,21 +84,27 @@ export default function BookViewer() {
     if (chapter.type === 'book') {
       if (epubRef.current) epubRef.current.nextPage();
     } else {
-      if (currentPage < totalPages - 1) {
-        setCurrentPage((p) => p + 1);
+      const step = settings.viewer.readingMode === 'double' ? 2 : 1;
+      if (currentPage + step < totalPages) {
+        setCurrentPage((p) => p + step);
+      } else if (currentPage < totalPages - 1) {
+        setCurrentPage(totalPages - 1);
       }
     }
-  }, [chapter.type, currentPage, totalPages]);
+  }, [chapter.type, currentPage, totalPages, settings.viewer.readingMode]);
 
   const handlePrevPage = useCallback(() => {
     if (chapter.type === 'book') {
       if (epubRef.current) epubRef.current.prevPage();
     } else {
-      if (currentPage > 0) {
-        setCurrentPage((p) => p - 1);
+      const step = settings.viewer.readingMode === 'double' ? 2 : 1;
+      if (currentPage - step >= 0) {
+        setCurrentPage((p) => p - step);
+      } else if (currentPage > 0) {
+        setCurrentPage(0);
       }
     }
-  }, [chapter.type, currentPage]);
+  }, [chapter.type, currentPage, settings.viewer.readingMode]);
 
   // Navegação por Teclado
   useEffect(() => {
@@ -207,10 +213,13 @@ export default function BookViewer() {
         <div className={styles.renderContainer}>
           {chapter.type === 'pdf' && chapter.originalPath ? (
             <PdfViewer
+              ref={pdfRef}
               path={chapter.originalPath}
               currentPage={currentPage}
               scale={scale}
+              readingMode={settings.viewer.readingMode}
               onPdfLoaded={handlePdfLoaded}
+              onPageChange={setCurrentPage}
             />
           ) : chapter.type === 'book' && epubUrl ? (
             <div
@@ -302,6 +311,12 @@ export default function BookViewer() {
                               item.href
                             ) {
                               epubRef.current.goToLocation(item.href);
+                            } else if (
+                              chapter.type === 'pdf' &&
+                              pdfRef.current &&
+                              item.dest
+                            ) {
+                              void pdfRef.current.goToDestination(item.dest);
                             }
                             setIsIndexOpen(false);
                           }}

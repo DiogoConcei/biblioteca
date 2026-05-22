@@ -1,4 +1,4 @@
-import { FormInputProps } from "../../../../../electron/types/electron-auxiliar.interfaces";
+import { FormInputProps } from "@/types/components.interfaces";
 import "./BackupField.scss";
 
 export default function BackupField({ register, error }: FormInputProps) {

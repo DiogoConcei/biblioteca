@@ -1,4 +1,4 @@
-import { FormTextInputProps } from 'electron/types/electron-auxiliar.interfaces';
+import { FormTextInputProps } from '@/types/components.interfaces';
 
 import styles from './TextInput.module.scss';
 

@@ -7,18 +7,13 @@ import ImageManager from './ImageManager';
 import CollectionManager from './CollectionManager';
 import PdfManager from './PdfManager';
 import ArchiveManager from './ArchiveManager';
-import { Comic, ComicEdition, ComicTieIn } from '../types/comic.interfaces';
+import { Comic, ComicEdition, ComicTieIn, ITieInManager } from '../types/comic.interfaces';
 import { SerieForm } from '../../src/types/series.interfaces';
 import GraphSerie from './abstract/GraphSerie';
 import {
   ComicCoverRegenerationProgress,
   ComicCoverRegenerationResult,
 } from '../types/electron-auxiliar.interfaces.ts';
-
-interface ITieInManager {
-  processTieInData(basePath: string, childSeries: ComicTieIn[]): Promise<void>;
-  resolveCoverSourceArchive(candidatePath: string): Promise<string>;
-}
 
 export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
   protected readonly fileManager: FileManager = new FileManager();
