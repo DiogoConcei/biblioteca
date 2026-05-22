@@ -76,7 +76,7 @@ export default function EditSerie() {
           archivesPath: serie.archivesPath,
           chaptersPath: serie.chaptersPath,
           dataPath: serie.dataPath,
-          chapters: serie.chapters as LiteratureChapter[],
+          chapters: chapters as LiteratureChapter[],
           totalChapters: serie.totalChapters,
           chaptersRead: serie.chaptersRead,
           literatureForm: serie.literatureForm as LiteratureForm,
@@ -212,7 +212,7 @@ export default function EditSerie() {
             />
             <TagsField control={control} name={'tags'} />
 
-            {serie.chapters && serie.chapters.length > 0 ? (
+            {chapters && chapters.length > 0 ? (
               <div className={styles.Control}>
                 <h2>Capítulos</h2>
 

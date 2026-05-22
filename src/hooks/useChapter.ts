@@ -5,10 +5,10 @@ import useSerieStore from '../store/useSerieStore';
 import { ChapterView } from '../../electron/types/electron-auxiliar.interfaces';
 
 export default function useChapter(serieName: string, chapterId: number) {
-  const serie = useSerieStore((state) => state.serie);
   const setError = useUIStore((state) => state.setError);
 
-  const chapter = serie?.chapters?.find((c) => c.id === chapterId);
+  const chapters = useSerieStore((state) => state.chapters);
+  const chapter = chapters.find((c) => c.id === chapterId);
 
   const [pages, setPages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);

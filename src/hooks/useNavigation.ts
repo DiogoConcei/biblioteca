@@ -7,8 +7,6 @@ import { ChapterView } from '../../electron/types/electron-auxiliar.interfaces';
 import useDownload from './useDownload';
 
 export default function useNavigation(currentChapter: ChapterView) {
-  const chapters = useSerieStore((state) => state.chapters);
-  const serie = useSerieStore((state) => state.serie);
   const clearSerie = useSerieStore((state) => state.clearSerie);
   const setError = useUIStore((state) => state.setError);
   const { downloadInReading } = useDownload();
@@ -20,6 +18,8 @@ export default function useNavigation(currentChapter: ChapterView) {
   const step = readingMode === 'double' ? 2 : 1;
 
   const saveProgress = async () => {
+    const { serie } = useSerieStore.getState();
+
     try {
       await window.electronAPI.chapters.saveLastRead(
         currentChapter.serieName,
@@ -71,6 +71,8 @@ export default function useNavigation(currentChapter: ChapterView) {
 
     currentChapter.setIsLoading(true);
 
+    // Acessa o estado mais recente via getState() para evitar stale closures
+    const { chapters } = useSerieStore.getState();
     const nextChapterId = currentChapter.id + 1;
 
     if (nextChapterId > chapters.length) {
@@ -79,23 +81,26 @@ export default function useNavigation(currentChapter: ChapterView) {
     }
 
     try {
-      const nextChapter =
+      const nextChapterData =
         chapters.find((ch) => ch.id === nextChapterId) || chapters[0];
 
-      if (nextChapter.isDownloaded === 'not_downloaded') {
-        await downloadInReading(nextChapter);
+      let isDownloaded = nextChapterData.isDownloaded === 'downloaded';
+
+      if (!isDownloaded) {
+        // downloadInReading retorna boolean, usamos o retorno em vez de confiar no objeto local
+        isDownloaded = await downloadInReading(nextChapterData);
       }
 
       const response = await window.electronAPI.chapters.getNextChapter(
-        nextChapter.serieName,
-        nextChapter.id,
+        nextChapterData.serieName,
+        nextChapterData.id,
       );
 
       const nextChapterUrl = response.data;
 
       await saveProgress();
 
-      if (nextChapter.isDownloaded === 'downloaded' && nextChapterUrl) {
+      if (isDownloaded && nextChapterUrl) {
         navigate(nextChapterUrl);
       }
     } catch (e) {
@@ -111,21 +116,26 @@ export default function useNavigation(currentChapter: ChapterView) {
     const prevChapterId = currentChapter.id - 1;
 
     if (prevChapterId < 1) return;
+
+    const { chapters } = useSerieStore.getState();
+
     try {
-      const prevChapter =
+      const prevChapterData =
         chapters.find((ch) => ch.id === prevChapterId) || chapters[0];
 
-      if (prevChapter.isDownloaded === 'not_downloaded') {
-        await downloadInReading(prevChapter);
+      let isDownloaded = prevChapterData.isDownloaded === 'downloaded';
+
+      if (!isDownloaded) {
+        isDownloaded = await downloadInReading(prevChapterData);
       }
 
       const response = await window.electronAPI.chapters.getPrevChapter(
-        prevChapter.serieName,
-        prevChapter.id,
+        prevChapterData.serieName,
+        prevChapterData.id,
       );
       const prevChapterUrl = response.data;
       await saveProgress();
-      if (prevChapter.isDownloaded === 'downloaded' && prevChapterUrl) {
+      if (isDownloaded && prevChapterUrl) {
         navigate(prevChapterUrl);
       }
     } catch (e) {
@@ -141,13 +151,14 @@ export default function useNavigation(currentChapter: ChapterView) {
 
   const goToSeriePage = async () => {
     await saveProgress();
+    const { serie } = useSerieStore.getState();
+
     if (serie?.dataPath) {
       const toSeriePage = await window.electronAPI.userAction.returnPage(
         serie.dataPath,
         currentChapter.serieName,
       );
 
-      console.log(toSeriePage);
       const seriePage = toSeriePage.data;
       if (seriePage) navigate(seriePage);
     }

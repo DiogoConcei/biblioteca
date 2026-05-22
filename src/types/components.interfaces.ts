@@ -47,6 +47,7 @@ export interface PageControlProps {
 
 export interface visualizerProps {
   chapter: ChapterView;
+  scale: number;
   setScale: React.Dispatch<React.SetStateAction<number>>;
 }
 

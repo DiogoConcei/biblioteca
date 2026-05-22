@@ -193,7 +193,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         }
 
         const nextChapter = serieData.chapters?.find(
-          (chapter) => chapter.id === chapter_id + 1,
+          (chapter) => chapter.id === chapter_id,
         );
 
         if (!nextChapter) {
@@ -210,7 +210,6 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
         return { success: true, data: url, lastCfi: nextChapter.page.lastCfi };
       } catch (e) {
-        console.error(`Erro ao buscar próximo capítulo: ${e}`);
         return { success: false, error: String(e) };
       }
     },

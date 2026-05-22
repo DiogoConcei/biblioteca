@@ -21,18 +21,20 @@ export default function Viewer() {
     chapter_id: string;
     LiteratureForm: string;
   }>();
+
   const decode_serie_name = decodeURIComponent(rawSerieName ?? '');
 
   const chapter: ChapterView = useChapter(
     decode_serie_name,
     Number(chapter_id),
   );
+
   const { position, elementRef } = useDrag(chapter);
   const chapterNavigation = useNavigation(chapter);
   const [scale, setScale] = useState<number>(1);
   const lastCall = useRef<number>(0);
   const error = useUIStore((state) => state.error);
-  
+
   const settings = useSettingsStore((state) => state.settings.viewer);
 
   // Intersection Observer para o modo Webtoon
@@ -48,7 +50,9 @@ export default function Viewer() {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          const pageIndex = Number(entry.target.getAttribute('data-page-index'));
+          const pageIndex = Number(
+            entry.target.getAttribute('data-page-index'),
+          );
           if (!isNaN(pageIndex) && pageIndex !== chapter.currentPage) {
             chapter.setCurrentPage(pageIndex);
           }
@@ -71,10 +75,10 @@ export default function Viewer() {
       const params = [];
       if (settings.brightness !== 1)
         params.push(`brightness=${settings.brightness}`);
-      if (settings.contrast !== 1)
-        params.push(`contrast=${settings.contrast}`);
+      if (settings.contrast !== 1) params.push(`contrast=${settings.contrast}`);
       if (settings.grayscale) params.push(`grayscale=true`);
-      if (settings.sharpness > 0) params.push(`sharpness=${settings.sharpness}`);
+      if (settings.sharpness > 0)
+        params.push(`sharpness=${settings.sharpness}`);
 
       if (params.length === 0) return url;
 
@@ -137,7 +141,9 @@ export default function Viewer() {
               />
             ))}
             <div className={styles.webtoonEnd}>
-               <button onClick={chapterNavigation.nextChapter}>Próximo Capítulo</button>
+              <button onClick={chapterNavigation.nextChapter}>
+                Próximo Capítulo
+              </button>
             </div>
           </div>
         );
@@ -145,22 +151,22 @@ export default function Viewer() {
       case 'double': {
         const secondPageIdx = chapter.currentPage + 1;
         const hasSecondPage = secondPageIdx < chapter.pages.length;
-        
+
         return (
           <div className={styles.doublePageContainer}>
             <div className={styles.doublePageWrapper}>
-               <img
+              <img
+                className={styles.doublePageImage}
+                src={getFilteredUrl(chapter.pages[chapter.currentPage])}
+                alt="página esquerda"
+              />
+              {hasSecondPage && (
+                <img
                   className={styles.doublePageImage}
-                  src={getFilteredUrl(chapter.pages[chapter.currentPage])}
-                  alt="página esquerda"
-               />
-               {hasSecondPage && (
-                  <img
-                    className={styles.doublePageImage}
-                    src={getFilteredUrl(chapter.pages[secondPageIdx])}
-                    alt="página direita"
-                  />
-               )}
+                  src={getFilteredUrl(chapter.pages[secondPageIdx])}
+                  alt="página direita"
+                />
+              )}
             </div>
           </div>
         );
@@ -191,9 +197,10 @@ export default function Viewer() {
     <section className={`${styles.visualizer} ${settings.wideScreen ? styles.wide : ''}`}>
       <ViewerMenu
         chapter={chapter}
+        scale={scale}
         setScale={setScale}
       />
-      
+
       {renderViewerContent()}
 
       <div className={styles.pageControlWrapper}>
@@ -204,7 +211,7 @@ export default function Viewer() {
           prevPage={chapterNavigation.prevPage}
         />
       </div>
-      
+
       {settings.showPageNumbers && (
         <div className={styles.pageIndicator}>
           {settings.readingMode === 'double'

@@ -28,7 +28,7 @@ export default function TieInPage() {
     return <ErrorScreen error={error} serieName={serie.name} />;
   }
 
-  if (loading || !serie || !serie.chapters) {
+  if (loading || !serie) {
     return <Loading />;
   }
 
