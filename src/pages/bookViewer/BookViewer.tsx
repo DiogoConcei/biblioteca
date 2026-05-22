@@ -207,7 +207,7 @@ export default function BookViewer() {
 
   return (
     <article className={styles.bookViewer}>
-      <ViewerMenu chapter={chapter} setScale={setScale} />
+      <ViewerMenu chapter={chapter} scale={scale} setScale={setScale} />
 
       <section className={styles.viewport}>
         <div className={styles.renderContainer}>

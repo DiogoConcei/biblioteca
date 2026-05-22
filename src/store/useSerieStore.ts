@@ -10,8 +10,10 @@ import {
 } from '../../electron/types/electron-auxiliar.interfaces';
 import { useUIStore } from './useUIStore';
 
+type StoreSerie = Omit<Literatures, 'chapters'> | Omit<TieIn, 'chapters'>;
+
 interface UseSerieStore {
-  serie: Literatures | TieIn | null;
+  serie: StoreSerie | null;
   chapters: LiteratureChapter[];
 
   fetchSerie: (serieName: string, literatureForm: string) => Promise<void>;
@@ -36,7 +38,12 @@ const useSerieStore = create<UseSerieStore>((set) => ({
   },
 
   setSerie: (serie) => {
-    set({ serie, chapters: serie?.chapters ?? [] });
+    if (!serie) {
+      set({ serie: null, chapters: [] });
+      return;
+    }
+    const { chapters, ...rest } = serie;
+    set({ serie: rest as StoreSerie, chapters: chapters ?? [] });
   },
 
   fetchSerie: async (serieName, literatureForm) => {
@@ -53,7 +60,8 @@ const useSerieStore = create<UseSerieStore>((set) => ({
       if (!response.success || !response.data)
         throw new Error(response.error || 'Erro ao buscar série');
 
-      set({ serie: response.data, chapters: response.data.chapters });
+      const { chapters, ...rest } = response.data;
+      set({ serie: rest as StoreSerie, chapters: chapters ?? [] });
     } catch (e) {
       controlFetching(false, (e as Error).message);
     } finally {
@@ -72,7 +80,7 @@ const useSerieStore = create<UseSerieStore>((set) => ({
       for (let i = 0; i < keys.length - 1; i++)
         cursor = cursor[keys[i]] as Record<string, unknown>;
       cursor[keys.at(-1)!] = newValue;
-      return { serie: updated };
+      return { serie: updated as StoreSerie };
     });
   },
 

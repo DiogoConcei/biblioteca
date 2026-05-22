@@ -42,7 +42,7 @@ export default function MangaPage() {
       : [];
   };
 
-  if (loading || !serie || !serie.chapters) {
+  if (loading || !serie) {
     return <Loading />;
   }
 

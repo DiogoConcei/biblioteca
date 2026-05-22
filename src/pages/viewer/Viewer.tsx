@@ -25,6 +25,7 @@ export default function Viewer() {
     serie_name: string;
     chapter_id: string;
   }>();
+
   const decode_serie_name = decodeURIComponent(rawSerieName ?? '');
 
   const chapter: ChapterView = useChapter(
@@ -40,7 +41,7 @@ export default function Viewer() {
 
   const settings = useSettingsStore((state) => state.settings.viewer);
 
-  // Memoiza a URL com filtros
+  // Memoiza a URL com filtros usando a utilidade global
   const filterUrl = useCallback(
     (url: string) => getFilteredUrl(url, settings),
     [settings],
@@ -127,7 +128,11 @@ export default function Viewer() {
     <section
       className={`${styles.visualizer} ${settings.wideScreen ? styles.wide : ''}`}
     >
-      <ViewerMenu chapter={chapter} setScale={setScale} />
+      <ViewerMenu 
+        chapter={chapter} 
+        scale={scale}
+        setScale={setScale} 
+      />
 
       {renderViewerContent()}
 

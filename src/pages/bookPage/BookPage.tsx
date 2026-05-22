@@ -22,10 +22,11 @@ export default function BookPage() {
   useSerie(serie_name, 'Books');
 
   const serie = useSerieStore((state) => state.serie) as Book;
+  const chapters = useSerieStore((state) => state.chapters);
   const loading = useUIStore((state) => state.loading);
   const { lastChapter } = useAction();
 
-  if (loading || !serie || !serie.chapters) {
+  if (loading || !serie) {
     return <Loading />;
   }
 
@@ -43,7 +44,7 @@ export default function BookPage() {
   // Cálculo de progresso de leitura
   // Livros geralmente têm 1 "capítulo" (o arquivo PDF/EPUB em si).
   // A leitura é baseada na página salva daquele arquivo.
-  const mainFile = serie.chapters[0];
+  const mainFile = chapters[0];
   const currentPage = mainFile?.page?.lastPageRead || 0;
 
   return (
@@ -127,7 +128,7 @@ export default function BookPage() {
           </div>
 
           <div className={styles.filesList}>
-            {serie.chapters.map((chapter) => (
+            {chapters.map((chapter) => (
               <div key={chapter.id} className={styles.fileItem}>
                 <div className={styles.fileInfo}>
                   <h4>{chapter.name}</h4>

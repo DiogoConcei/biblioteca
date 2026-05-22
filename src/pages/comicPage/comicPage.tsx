@@ -36,7 +36,7 @@ export default function ComicPage() {
     return <ErrorScreen error={error} serieName={serie.name} />;
   }
 
-  if (loading || !serie || !serie.chapters) {
+  if (loading || !serie) {
     return <Loading />;
   }
 

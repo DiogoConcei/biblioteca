@@ -26,7 +26,7 @@ import styles from './ViewerMenu.module.scss';
 
 type MenuTab = 'navigation' | 'reading' | 'filters' | 'appearance';
 
-export default function ViewerMenu({ chapter, setScale }: visualizerProps) {
+export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<MenuTab>('navigation');
   
@@ -108,14 +108,30 @@ export default function ViewerMenu({ chapter, setScale }: visualizerProps) {
             {activeTab === 'navigation' && (
               <div className={styles.navigationTab}>
                 <div className={styles.chapterNav}>
-                  <button onClick={prevChapter} title="Capítulo Anterior"><ChevronsLeft /></button>
-                  <span className={styles.currentChapterName}>{chapterName}</span>
-                  <button onClick={nextChapter} title="Próximo Capítulo"><ChevronsRight /></button>
+                  <span 
+                    className={styles.currentChapterName} 
+                    title={chapterName}
+                  >
+                    {chapterName}
+                  </span>
+                  
+                  <div className={styles.navButtons}>
+                    <button onClick={prevChapter} title="Capítulo Anterior">
+                      <ChevronsLeft size={20} />
+                      <span>Anterior</span>
+                    </button>
+                    <button onClick={nextChapter} title="Próximo Capítulo">
+                      <span>Próximo</span>
+                      <ChevronsRight size={20} />
+                    </button>
+                  </div>
                 </div>
                 
                 <div className={styles.zoomActions}>
                    <button onClick={() => setScale(s => Math.max(0.5, s - 0.1))} title="Diminuir Zoom"><ZoomOut /></button>
-                   <button onClick={() => setScale(1)} className={styles.resetBtn}>100%</button>
+                   <button onClick={() => setScale(1)} className={styles.resetBtn}>
+                    {Math.round(scale * 100)}%
+                   </button>
                    <button onClick={() => setScale(s => Math.min(3, s + 0.1))} title="Aumentar Zoom"><ZoomIn /></button>
                 </div>
 

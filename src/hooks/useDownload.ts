@@ -3,30 +3,38 @@ import useSerieStore from '../store/useSerieStore';
 import { useUIStore } from '../store/useUIStore';
 
 export default function useDownload() {
-  const dataPath = useSerieStore((state) => state.serie?.dataPath);
   const updateChapter = useSerieStore((state) => state.updateChapter);
   const setError = useUIStore((state) => state.setError);
 
-  const downloadInReading = async (readingChapter: LiteratureChapter) => {
+  const downloadInReading = async (
+    readingChapter: LiteratureChapter,
+  ): Promise<boolean> => {
     if (
       readingChapter.isDownloaded === 'downloaded' ||
       readingChapter.isDownloaded === 'downloading'
     )
-      return;
+      return true;
 
     updateChapter(readingChapter.id, 'isDownloaded', 'downloading');
 
     try {
-      await window.electronAPI.download.readingDownload(
+      const response = await window.electronAPI.download.readingDownload(
         readingChapter.serieName,
         readingChapter.id,
       );
 
+      if (!response) {
+        setError('Falha ao baixar capítulo');
+        updateChapter(readingChapter.id, 'isDownloaded', 'not_downloaded');
+        return false;
+      }
+
       updateChapter(readingChapter.id, 'isDownloaded', 'downloaded');
+      return true;
     } catch {
       setError('Falha ao baixar o capítulo');
-
       updateChapter(readingChapter.id, 'isDownloaded', 'not_downloaded');
+      return false;
     }
   };
 
@@ -35,40 +43,50 @@ export default function useDownload() {
     selectedChapter: LiteratureChapter,
   ) => {
     e.stopPropagation();
-    if (selectedChapter.isDownloaded === 'downloaded') {
-      updateChapter(selectedChapter.id, 'isDownloaded', 'downloading');
+    const { serie, chapters } = useSerieStore.getState();
+    const dataPath = serie?.dataPath;
+
+    // Busca o capítulo mais atualizado para evitar stale closures
+    const freshChapter =
+      chapters.find((ch) => ch.id === selectedChapter.id) || selectedChapter;
+
+    if (freshChapter.isDownloaded === 'downloaded') {
+      updateChapter(freshChapter.id, 'isDownloaded', 'downloading');
 
       const success = await window.electronAPI.download.singleRemove(
         dataPath!,
-        selectedChapter.id,
+        freshChapter.id,
       );
 
       if (!success) {
         setError('Falha ao remover o capítulo');
-        updateChapter(selectedChapter.id, 'isDownloaded', 'downloaded');
+        updateChapter(freshChapter.id, 'isDownloaded', 'downloaded');
         return;
       }
 
-      updateChapter(selectedChapter.id, 'isDownloaded', 'not_downloaded');
+      updateChapter(freshChapter.id, 'isDownloaded', 'not_downloaded');
     } else {
-      updateChapter(selectedChapter.id, 'isDownloaded', 'downloading');
+      updateChapter(freshChapter.id, 'isDownloaded', 'downloading');
 
       const success = await window.electronAPI.download.singleDownload(
         dataPath!,
-        selectedChapter.id,
+        freshChapter.id,
       );
 
       if (!success) {
         setError('Falha ao baixar capítulo');
-        updateChapter(selectedChapter.id, 'isDownloaded', 'not_downloaded');
+        updateChapter(freshChapter.id, 'isDownloaded', 'not_downloaded');
         return;
       }
 
-      updateChapter(selectedChapter.id, 'isDownloaded', 'downloaded');
+      updateChapter(freshChapter.id, 'isDownloaded', 'downloaded');
     }
   };
 
   const downloadMultipleChapters = async (quantity: number) => {
+    const { serie } = useSerieStore.getState();
+    const dataPath = serie?.dataPath;
+
     try {
       const response = await window.electronAPI.download.multipleDownload(
         dataPath!,
