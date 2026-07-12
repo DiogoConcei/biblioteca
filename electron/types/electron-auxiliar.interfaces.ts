@@ -1,19 +1,9 @@
-import {
-  FieldError,
-  Control,
-  FieldValues,
-  Path,
-  UseFormRegisterReturn,
-} from 'react-hook-form';
-
 import { Manga, MangaChapter } from './manga.interfaces';
 import { Book, BookChapter } from './book.interfaces';
 import { Comic, ComicEdition, TieIn } from './comic.interfaces';
-import { Collection } from '../../src/types/collections.interfaces';
 import {
   ReadingStatus,
   LiteratureForm,
-  SerieEditForm,
 } from '../../src/types/series.interfaces';
 
 export type LiteratureChapter = ComicEdition | MangaChapter | BookChapter;

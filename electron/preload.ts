@@ -176,7 +176,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getNextChapter: async (
       serieName: string,
       chapter_id: number,
-    ): Promise<APIResponse<string>> =>
+    ): Promise<APIResponse<number>> =>
       ipcRenderer.invoke('chapter:get-next-chapter', serieName, chapter_id),
     getPrevChapter: async (
       serieName: string,

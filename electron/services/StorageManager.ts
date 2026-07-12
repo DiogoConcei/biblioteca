@@ -338,6 +338,7 @@ export class StorageManager extends LibrarySystem {
         : oldPath;
 
       if (nameChanged && oldPath !== newPath) {
+        await this.fileManager.moveFiles(oldData, updated);
         if (await fse.pathExists(oldPath)) {
           await fse.remove(oldPath);
           this._seriesCache.delete(oldPath); // Remove caminho antigo do cache

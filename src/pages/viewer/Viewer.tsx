@@ -14,8 +14,6 @@ import useDrag from '../../hooks/useDrag';
 import useNavigation from '../../hooks/useNavigation';
 import { useUIStore } from '../../store/useUIStore';
 import styles from './Viewer.module.scss';
-
-// Sub-components e Utilities
 import WebtoonView from './components/WebtoonView';
 import DoublePageView from './components/DoublePageView';
 import SinglePageView from './components/SinglePageView';
@@ -128,11 +126,7 @@ export default function Viewer() {
     <section
       className={`${styles.visualizer} ${settings.wideScreen ? styles.wide : ''}`}
     >
-      <ViewerMenu 
-        chapter={chapter} 
-        scale={scale}
-        setScale={setScale} 
-      />
+      <ViewerMenu chapter={chapter} scale={scale} setScale={setScale} />
 
       {renderViewerContent()}
 

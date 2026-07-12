@@ -363,6 +363,13 @@ export default class ImageManager extends LibrarySystem {
       return actualCover;
     }
 
+    if (
+      typeof cover === 'string' &&
+      (cover.startsWith('lib-media://') || cover === actualCover)
+    ) {
+      return actualCover;
+    }
+
     return await this.saveNewCover(cover);
   }
 

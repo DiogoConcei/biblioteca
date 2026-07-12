@@ -38,11 +38,14 @@ export default function useChapter(serieName: string, chapterId: number) {
           setMediaType(response.data.type);
           setOriginalPath(response.data.originalPath);
           setLastCfi(response.lastCfi || chapter?.page?.lastCfi);
-          setLastPageRead(
+
+          const resolvedLastPage =
             response.lastPageRead !== undefined
               ? response.lastPageRead
-              : chapter?.page?.lastPageRead,
-          );
+              : chapter?.page?.lastPageRead;
+
+          setLastPageRead(resolvedLastPage);
+          setCurrentPage(resolvedLastPage ?? 0);
         } else {
           setError(
             'Infelizmente não conseguimos encontrar o seu capítulo. Tente baixar novamente ou verifique a página de configurações para mais detalhes.',

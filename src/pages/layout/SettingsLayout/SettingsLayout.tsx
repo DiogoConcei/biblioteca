@@ -4,7 +4,7 @@ import styles from './SettingsLayout.module.scss';
 
 export default function SettingsLayout() {
   const sections = [
-    { label: 'Ajustes Rápidos', path: '' },
+    { label: 'Séries', path: '' },
     { label: 'Backup', path: 'backup' },
     { label: 'Aparência', path: 'appearance' },
     { label: 'Privacidade', path: 'privacy' },

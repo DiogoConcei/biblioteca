@@ -69,20 +69,21 @@ export default function useNavigation(currentChapter: ChapterView) {
   const nextChapter = async () => {
     if (currentChapter.isLoading) return;
 
-    currentChapter.setIsLoading(true);
-
     // Acessa o estado mais recente via getState() para evitar stale closures
     const { chapters } = useSerieStore.getState();
-    const nextChapterId = currentChapter.id + 1;
+    const currentIndex = chapters.findIndex(
+      (ch) => Number(ch.id) === Number(currentChapter.id),
+    );
 
-    if (nextChapterId > chapters.length) {
+    if (currentIndex === -1 || currentIndex >= chapters.length - 1) {
       currentChapter.setIsLoading(false);
       return;
     }
 
+    currentChapter.setIsLoading(true);
+
     try {
-      const nextChapterData =
-        chapters.find((ch) => ch.id === nextChapterId) || chapters[0];
+      const nextChapterData = chapters[currentIndex + 1];
 
       let isDownloaded = nextChapterData.isDownloaded === 'downloaded';
 
@@ -113,15 +114,15 @@ export default function useNavigation(currentChapter: ChapterView) {
   const prevChapter = async () => {
     if (currentChapter.isLoading) return;
 
-    const prevChapterId = currentChapter.id - 1;
-
-    if (prevChapterId < 1) return;
-
     const { chapters } = useSerieStore.getState();
+    const currentIndex = chapters.findIndex(
+      (ch) => Number(ch.id) === Number(currentChapter.id),
+    );
+
+    if (currentIndex <= 0) return;
 
     try {
-      const prevChapterData =
-        chapters.find((ch) => ch.id === prevChapterId) || chapters[0];
+      const prevChapterData = chapters[currentIndex - 1];
 
       let isDownloaded = prevChapterData.isDownloaded === 'downloaded';
 
@@ -139,7 +140,7 @@ export default function useNavigation(currentChapter: ChapterView) {
         navigate(prevChapterUrl);
       }
     } catch (e) {
-      setError('Falha ao solicitar o próximo capítulo.');
+      setError('Falha ao solicitar o capítulo anterior.');
     }
   };
 

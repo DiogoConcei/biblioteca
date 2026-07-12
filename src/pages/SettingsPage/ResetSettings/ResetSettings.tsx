@@ -1,55 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   AlertTriangle,
   Trash2,
   RefreshCw,
   ShieldAlert,
-  ArrowUp,
-  ArrowDown,
-  SortAsc,
-  Save,
-  Download,
 } from 'lucide-react';
 
 import useSystem from '@/hooks/useSystem';
-import useAllSeries from '@/hooks/useAllSeries';
-import {
-  LiteratureChapter,
-  viewData,
-} from '@/../electron/types/electron-auxiliar.interfaces';
+import { ComicCoverRegenerationProgress } from '@/types/settings.interfaces';
 
 import styles from './ResetSettings.module.scss';
 
 export default function ResetSettings() {
   const systemManager = useSystem();
-  const allSeries = useAllSeries();
 
   const [showFullResetModal, setShowFullResetModal] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [isResetting, setIsResetting] = useState(false);
 
-  // Estados para reordenação
-  const [selectedSeriePath, setSelectedSeriePath] = useState('');
-  const [chapters, setChapters] = useState<LiteratureChapter[]>([]);
-  const [isSavingOrder, setIsSavingOrder] = useState(false);
-
-  // Estado para séries baixadas
-  const [downloadedSeries, setDownloadedSeries] = useState<viewData[]>([]);
-
-  useEffect(() => {
-    const fetchDownloadedSeries = async () => {
-      try {
-        const response = await window.electronAPI.system.getSeriesWithDownloads();
-        if (response.success && response.data) {
-          setDownloadedSeries(response.data);
-        }
-      } catch (error) {
-        console.error('Erro ao buscar séries com download:', error);
-      }
-    };
-
-    fetchDownloadedSeries();
-  }, []);
+  // Estados para diagnóstico
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [coverRegenProgress, setCoverRegenProgress] =
+    useState<ComicCoverRegenerationProgress | null>(null);
 
   const handleSoftReset = async () => {
     if (!window.confirm('Deseja limpar os logs e arquivos temporários?')) return;
@@ -78,81 +50,72 @@ export default function ResetSettings() {
     }
   };
 
-  const handleSelectSerie = async (dataPath: string) => {
-    setSelectedSeriePath(dataPath);
-    if (!dataPath) {
-      setChapters([]);
-      return;
-    }
-
-    const serie = allSeries?.find((s) => s.dataPath === dataPath);
-    if (!serie) return;
+  const handleRegenerateComicCovers = async () => {
+    setBusyAction('regenerate-covers');
+    setCoverRegenProgress({
+      total: 0,
+      processed: 0,
+      regenerated: 0,
+      skipped: 0,
+      failed: 0,
+    });
 
     try {
-      const response = await window.electronAPI.series.getSerie(
-        serie.name,
-        serie.literatureForm,
-      );
-      if (response.success && response.data) {
-        setChapters(response.data.chapters || []);
+      const result = await systemManager.regenerateComicCovers();
+
+      if (result.failed > 0) {
+        console.error(`Regeneração finalizada com falhas: ${result.failed}`);
       }
     } catch (error) {
-      console.error('Erro ao buscar capítulos:', error);
-    }
-  };
-
-  const moveChapter = (index: number, direction: 'up' | 'down') => {
-    const newChapters = [...chapters];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-
-    if (targetIndex < 0 || targetIndex >= newChapters.length) return;
-
-    [newChapters[index], newChapters[targetIndex]] = [
-      newChapters[targetIndex],
-      newChapters[index],
-    ];
-    setChapters(newChapters);
-  };
-
-  const autoSortChapters = () => {
-    const sorted = [...chapters].sort((a, b) =>
-      a.name.localeCompare(b.name, undefined, {
-        numeric: true,
-        sensitivity: 'base',
-      }),
-    );
-    setChapters(sorted);
-  };
-
-  const handleSaveOrder = async () => {
-    if (!selectedSeriePath || chapters.length === 0) return;
-
-    setIsSavingOrder(true);
-    try {
-      const chapterIds = chapters.map((c) => c.id);
-      const response = await window.electronAPI.chapters.reorderChapters(
-        selectedSeriePath,
-        chapterIds,
-      );
-
-      if (response.success) {
-
-        alert('Ordem dos capítulos salva com sucesso!');
-      } else {
-        alert('Erro ao salvar ordem: ' + response.error);
-      }
-    } catch (error) {
-      console.error('Erro ao salvar ordem:', error);
-      alert('Falha ao salvar a nova ordem.');
+      console.error('Falha ao regenerar capas dos quadrinhos:', error);
     } finally {
-      setIsSavingOrder(false);
+      setBusyAction(null);
     }
   };
-
-  const mangaSeries = allSeries?.filter((s) => s.literatureForm === 'Manga') || [];
 
   return (
     <div className={styles.container}>
+      <article className={styles.diagnostic}>
+        <h2>Ações de manutenção e diagnóstico de suporte</h2>
+
+        <button
+          type="button"
+          onClick={() => void systemManager.createDebugBundle()}
+          aria-label="Criar pacote de debug"
+        >
+          Criar debug bundle
+        </button>
+
+        <button
+          type="button"
+          onClick={() => void handleRegenerateComicCovers()}
+          disabled={busyAction === 'regenerate-covers'}
+          aria-label="Regerar todas as capas dos quadrinhos"
+        >
+          {busyAction === 'regenerate-covers'
+            ? 'Regenerando capas...'
+            : 'Regerar todas as capas dos quadrinhos'}
+        </button>
+
+        {coverRegenProgress && (
+          <div className={styles.progressBlock}>
+            <strong>Progresso da regeneração</strong>
+            <progress
+              max={Math.max(coverRegenProgress.total, 1)}
+              value={coverRegenProgress.processed}
+            />
+            <small>
+              {coverRegenProgress.processed}/{coverRegenProgress.total} •
+              Regeneradas: {coverRegenProgress.regenerated} • Íntegras:{' '}
+              {coverRegenProgress.skipped} • Falhas: {coverRegenProgress.failed}
+            </small>
+            {coverRegenProgress.currentComic && (
+              <small>Atual: {coverRegenProgress.currentComic}</small>
+            )}
+          </div>
+        )}
+      </article>
+
       <section className={styles.section}>
         <h2>
           <RefreshCw size={24} /> Sistema e Manutenção
@@ -171,92 +134,6 @@ export default function ResetSettings() {
           <li>Remove apenas arquivos de log e cache temporário.</li>
           <li>Sua biblioteca e configurações permanecem intactas.</li>
         </ul>
-      </section>
-
-      <section className={styles.reorderSection}>
-        <h2>
-          <SortAsc size={24} /> Reordenação de Capítulos (Mangás)
-        </h2>
-        <p>
-          Se os capítulos estiverem fora de ordem, use esta ferramenta para
-          corrigir a sequência.
-        </p>
-
-        <select
-          className={styles.serieSelect}
-          value={selectedSeriePath}
-          onChange={(e) => handleSelectSerie(e.target.value)}
-        >
-          <option value="">Selecione um Mangá...</option>
-          {mangaSeries.map((serie) => (
-            <option key={serie.id} value={serie.dataPath}>
-              {serie.name}
-            </option>
-          ))}
-        </select>
-
-        {chapters.length > 0 && (
-          <>
-            <div className={styles.chapterList}>
-              {chapters.map((chapter, index) => (
-                <div key={`${chapter.id}-${index}`} className={styles.chapterItem}>
-                  <span>{chapter.name}</span>
-                  <div className={styles.chapterActions}>
-                    <button
-                      title="Subir"
-                      onClick={() => moveChapter(index, 'up')}
-                      disabled={index === 0}
-                    >
-                      <ArrowUp size={14} />
-                    </button>
-                    <button
-                      title="Descer"
-                      onClick={() => moveChapter(index, 'down')}
-                      disabled={index === chapters.length - 1}
-                    >
-                      <ArrowDown size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className={styles.mainActions}>
-              <button className={styles.primary} onClick={autoSortChapters}>
-                <SortAsc size={16} /> Ordenar Automaticamente
-              </button>
-              <button
-                className={styles.primary}
-                onClick={handleSaveOrder}
-                disabled={isSavingOrder}
-              >
-                <Save size={16} /> {isSavingOrder ? 'Salvando...' : 'Salvar Nova Ordem'}
-              </button>
-            </div>
-          </>
-        )}
-      </section>
-
-      <section className={styles.downloadSection}>
-        <h2>
-          <Download size={24} /> Séries com Download
-        </h2>
-        <p>
-          Estas são as séries que possuem conteúdo baixado localmente em seu dispositivo.
-        </p>
-
-        {downloadedSeries.length > 0 ? (
-          <div className={styles.coverGrid}>
-            {downloadedSeries.map((serie) => (
-              <div key={serie.id} className={styles.coverItem}>
-                <img src={serie.coverImage} alt={serie.name} title={serie.name} />
-                <span className={styles.coverLabel}>{serie.name}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className={styles.emptyMessage}>Nenhuma série com download encontrada.</p>
-        )}
       </section>
 
       <section className={`${styles.section} ${styles.dangerZone}`}>
