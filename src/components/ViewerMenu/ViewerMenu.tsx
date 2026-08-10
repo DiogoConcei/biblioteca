@@ -24,7 +24,7 @@ import { visualizerProps } from '../../types/components.interfaces';
 import CustomSelect from '../CustomSelect/CustomSelect';
 import styles from './ViewerMenu.module.scss';
 
-type MenuTab = 'navigation' | 'reading' | 'filters' | 'appearance';
+type MenuTab = 'navigation' | 'reading' | 'appearance';
 
 export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -95,13 +95,6 @@ export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps
                 <Type size={20} />
               </button>
             )}
-            <button 
-              className={activeTab === 'filters' ? styles.active : ''} 
-              onClick={() => setActiveTab('filters')}
-              title="Filtros de Imagem"
-            >
-              <ImageIcon size={20} />
-            </button>
           </nav>
 
           <div className={styles.tabContent}>
@@ -148,41 +141,7 @@ export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps
 
             {activeTab === 'reading' && (
               <div className={styles.readingTab}>
-                <div className={styles.settingGroup}>
-                  <label>Modo de Leitura</label>
-                  <CustomSelect 
-                    value={viewerSettings.readingMode}
-                    onChange={(val) => handleUpdateViewer('readingMode', val as unknown as 'single' | 'double' | 'vertical')}
-                    options={[
-                      { value: 'single', label: 'Página Única' },
-                      { value: 'double', label: 'Página Dupla' },
-                      { value: 'vertical', label: 'Leitura Vertical' },
-                    ]}
-                  />
-                </div>
-
-                <div className={styles.settingGroup}>
-                  <label>Efeito de Transição</label>
-                  <CustomSelect 
-                    value={viewerSettings.transitionEffect}
-                    onChange={(val) => handleUpdateViewer('transitionEffect', val as TransitionEffect)}
-                    options={[
-                      { value: 'none', label: 'Nenhum' },
-                      { value: 'fade', label: 'Fade' },
-                      { value: 'slide', label: 'Slide' },
-                    ]}
-                  />
-                </div>
-
                 <div className={styles.checkboxGroup}>
-                  <label className={styles.checkboxLabel}>
-                    <input 
-                      type="checkbox" 
-                      checked={viewerSettings.wideScreen} 
-                      onChange={(e) => handleUpdateViewer('wideScreen', e.target.checked)}
-                    />
-                    <span>Ajustar à Largura</span>
-                  </label>
                   <label className={styles.checkboxLabel}>
                     <input 
                       type="checkbox" 
@@ -269,64 +228,6 @@ export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps
               </div>
             )}
 
-            {activeTab === 'filters' && (
-              <div className={styles.filtersTab}>
-                <div className={styles.sliderGroup}>
-                  <div className={styles.sliderLabel}>
-                    <span>Brilho</span>
-                    <span>{viewerSettings.brightness.toFixed(1)}x</span>
-                  </div>
-                  <input 
-                    type="range" min="0.5" max="2" step="0.1"
-                    value={viewerSettings.brightness}
-                    onChange={(e) => handleUpdateViewer('brightness', parseFloat(e.target.value))}
-                  />
-                </div>
-                <div className={styles.sliderGroup}>
-                  <div className={styles.sliderLabel}>
-                    <span>Contraste</span>
-                    <span>{viewerSettings.contrast.toFixed(1)}x</span>
-                  </div>
-                  <input 
-                    type="range" min="0.5" max="2" step="0.1"
-                    value={viewerSettings.contrast}
-                    onChange={(e) => handleUpdateViewer('contrast', parseFloat(e.target.value))}
-                  />
-                </div>
-                <div className={styles.sliderGroup}>
-                  <div className={styles.sliderLabel}>
-                    <span>Nitidez</span>
-                    <span>{viewerSettings.sharpness}</span>
-                  </div>
-                  <input 
-                    type="range" min="0" max="10" step="1"
-                    value={viewerSettings.sharpness}
-                    onChange={(e) => handleUpdateViewer('sharpness', parseFloat(e.target.value))}
-                  />
-                </div>
-                <div className={styles.checkboxGroup}>
-                  <label className={styles.checkboxLabel}>
-                    <input 
-                      type="checkbox" 
-                      checked={viewerSettings.grayscale} 
-                      onChange={(e) => handleUpdateViewer('grayscale', e.target.checked)}
-                    />
-                    <span>Preto e Branco</span>
-                  </label>
-                </div>
-                <button 
-                  className={styles.resetFilters}
-                  onClick={() => {
-                    handleUpdateViewer('brightness', 1);
-                    handleUpdateViewer('contrast', 1);
-                    handleUpdateViewer('sharpness', 0);
-                    handleUpdateViewer('grayscale', false);
-                  }}
-                >
-                  Resetar Filtros
-                </button>
-              </div>
-            )}
           </div>
         </section>
       )}

@@ -3,16 +3,7 @@ import './styles/base.scss';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 
 import Layout from './pages/layout/AppLayout/Layout';
-import SettingsLayout from './pages/layout/SettingsLayout/SettingsLayout';
-import SystemConfig from './pages/SettingsPage/SystemSettings/SystemConfig';
-import BackupSettings from './pages/SettingsPage/BackupSettings/BackupSettings';
-import AppearanceSettings from './pages/SettingsPage/AppearancesSettings/AppearanceSettings';
-import PrivacySettings from './pages/SettingsPage/PrivacySettings/PrivacySettings';
-import SyncSettings from './pages/SettingsPage/SyncSettings/SyncSettings';
-import LanSettings from './pages/SettingsPage/LanSettings/LanSettings';
-import ResetSettings from './pages/SettingsPage/ResetSettings/ResetSettings';
 import Home from './pages/layout/home/Home';
-import Collections from './pages/collections/Collections';
 import Upload from './pages/upload/Upload';
 import MangaPage from './pages/mangaPage/MangaPage';
 import ComicPage from './pages/comicPage/comicPage';
@@ -20,7 +11,6 @@ import TieInPage from './components/TieInPage/TieInPage';
 import Viewer from './pages/viewer/Viewer';
 import EditSerie from './pages/editSerie/EditSerie';
 import ErrorBoundary from './providers/ErrorBoundary';
-import Downloads from './pages/downloads/Downloads';
 import BookViewer from './pages/bookViewer/BookViewer';
 import BookPage from './pages/bookPage/BookPage';
 
@@ -31,17 +21,6 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
-            <Route path="collections" element={<Collections />} />
-            <Route path="downloads" element={<Downloads />} />
-            <Route path="settings" element={<SettingsLayout />}>
-              <Route index element={<SystemConfig />} />
-              <Route path="backup" element={<BackupSettings />} />
-              <Route path="appearance" element={<AppearanceSettings />} />
-              <Route path="privacy" element={<PrivacySettings />} />
-              <Route path="sync" element={<SyncSettings />} />
-              <Route path="lan" element={<LanSettings />} />
-              <Route path="reset" element={<ResetSettings />} />
-            </Route>
             <Route
               path="edit/serie/:serie_name/:literature_form"
               element={<EditSerie />}

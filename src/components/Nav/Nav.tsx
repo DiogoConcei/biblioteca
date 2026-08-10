@@ -31,21 +31,6 @@ export default function Nav() {
             <House className={styles['icon-home']} color="#8963ba" />
           </Link>
         </li>
-        <li key="collections">
-          <Link to="collections" className={styles.link} onClick={resetStates}>
-            Coleções
-          </Link>
-        </li>
-        <li key="downloads">
-          <Link to="downloads" className={styles.link} onClick={resetStates}>
-            Downloads
-          </Link>
-        </li>
-        <li key="settings">
-          <Link to="settings" className={styles.link} onClick={resetStates}>
-            Configurações
-          </Link>
-        </li>
       </ul>
 
       <div className={styles['bar-buttons']}>
