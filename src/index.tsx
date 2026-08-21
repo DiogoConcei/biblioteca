@@ -1,11 +1,13 @@
-import { createRoot } from "react-dom/client";
+import { createRoot } from 'react-dom/client';
 
-import App from "./app";
+import App from './app/app';
 
 // Polyfill para URL.parse (ES2024), necessário para algumas versões do Electron/Chromium
 // e bibliotecas como pdfjs-dist v5+.
 if (typeof URL.parse !== 'function') {
-  (URL as unknown as { parse: (url: string, base?: string) => URL | null }).parse = (url: string, base?: string) => {
+  (
+    URL as unknown as { parse: (url: string, base?: string) => URL | null }
+  ).parse = (url: string, base?: string) => {
     try {
       return new URL(url, base);
     } catch {
@@ -14,7 +16,7 @@ if (typeof URL.parse !== 'function') {
   };
 }
 
-const rootElement = document.getElementById("root");
+const rootElement = document.getElementById('root');
 
 if (rootElement) {
   const root = createRoot(rootElement);

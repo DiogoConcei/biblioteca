@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useController, Control, FieldValues, Path } from 'react-hook-form';
 import { ImagePlus } from 'lucide-react';
 
-import useImage from '@/hooks/useImage';
+import useImage from '@/shared/hooks/useImage';
 
 import styles from './ImageController.module.scss';
 

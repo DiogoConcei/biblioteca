@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Download } from 'lucide-react';
 
-import useDownload from '../../hooks/useDownload';
+import useDownload from '../../shared/hooks/useDownload';
 import ErrorScreen from '../ErrorScreen/ErrorScreen';
 import { downloadButtonProps } from '../../types/components.interfaces';
-import useSerieStore from '../../store/useSerieStore';
-import { useUIStore } from '../../store/useUIStore';
-import useClickOutside from '../../hooks/useClickOutside';
+import useSerieStore from '../../shared/store/useSerieStore';
+import { useUIStore } from '../../shared/store/useUIStore';
+import useClickOutside from '../../shared/hooks/useClickOutside';
 import styles from './DownloadButton.module.scss';
 
 export default function DownloadButton({ serie }: downloadButtonProps) {

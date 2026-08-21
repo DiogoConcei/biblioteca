@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 
 import styles from './PageControl.module.scss';
 import { PageControlProps } from '../../types/components.interfaces';
-import useSettingsStore from '../../store/useSettingsStore';
+import useSettingsStore from '../../shared/store/useSettingsStore';
 
 export default function PageControl({
   currentPage,
@@ -15,7 +15,9 @@ export default function PageControl({
   chapterLabel,
 }: PageControlProps) {
   const [progress, setProgress] = useState(currentPage / TamPages);
-  const readingMode = useSettingsStore((state) => state.settings.viewer.readingMode);
+  const readingMode = useSettingsStore(
+    (state) => state.settings.viewer.readingMode,
+  );
   const step = readingMode === 'double' ? 2 : 1;
 
   useEffect(() => {
@@ -39,7 +41,9 @@ export default function PageControl({
       <div className={styles.pageProgress}>
         {percent !== undefined && percent >= 0 ? (
           <div className={styles.epubProgress}>
-            {chapterLabel && <span className={styles.chapterLabel}>{chapterLabel}</span>}
+            {chapterLabel && (
+              <span className={styles.chapterLabel}>{chapterLabel}</span>
+            )}
             <span className={styles.percent}>{percent}%</span>
           </div>
         ) : percent === -1 ? (

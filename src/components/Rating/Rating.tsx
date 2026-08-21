@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 
 import { RatingProps } from '@/types/components.interfaces';
 
-import useAction from '../../hooks/useAction';
-import useClickOutside from '../../hooks/useClickOutside';
+import useAction from '../../shared/hooks/useAction';
+import useClickOutside from '../../shared/hooks/useClickOutside';
 import styles from './Rating.module.scss';
 
 const STARS_RATING = [

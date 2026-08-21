@@ -3,12 +3,12 @@ import { ArrowDownToLine, ArrowDownFromLine, LoaderCircle } from 'lucide-react';
 
 import { ComicEdition, TieIn } from 'electron/types/comic.interfaces';
 
-import useSerieStore from '../../store/useSerieStore';
-import { useUIStore } from '../../store/useUIStore';
-import useAction from '../../hooks/useAction';
-import useDownload from '../../hooks/useDownload';
-import useSerie from '../../hooks/useSerie';
-import Loading from '../Loading/Loading';
+import useSerieStore from '../../shared/store/useSerieStore';
+import { useUIStore } from '../../shared/store/useUIStore';
+import useAction from '../../shared/hooks/useAction';
+import useDownload from '../../shared/hooks/useDownload';
+import useSerie from '../../shared/hooks/useSerie';
+import Loading from '../../shared/components/Loading/Loading';
 import ErrorScreen from '../ErrorScreen/ErrorScreen';
 import styles from '../../pages/comicPage/comicPage.module.scss';
 
@@ -40,9 +40,7 @@ export default function TieInPage() {
           className={`${styles.comicCard} ${edition.isRead ? styles.read : ''}`}
           onClick={(e) => openChapter(e, edition)}
         >
-          <div className={styles.ribbon}>
-            {edition.isRead ? 'Lido' : 'Não Lido'}
-          </div>
+          <div className={styles.ribbon}>{edition.isRead ? 'Lido' : 'Não Lido'}</div>
           <img
             className={styles.cover}
             src={`${edition.coverImage}`}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { List } from 'lucide-react';
 
 import { CollectionButtonProps } from '../../types/components.interfaces';
-import useCollection from '../../hooks/useCollection';
+import useCollection from '../../shared/hooks/useCollection';
 import styles from './CollectionButton.module.scss';
 
 export default function CollectionButton({

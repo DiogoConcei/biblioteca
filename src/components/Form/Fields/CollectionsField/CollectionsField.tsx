@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { GenericControllerProps } from '@/types/components.interfaces';
 import { Collection } from '../../../../types/collections.interfaces';
 import styles from './CollectionsField.module.scss';
-import { useUIStore } from '../../../../store/useUIStore';
+import { useUIStore } from '../../../../shared/store/useUIStore';
 
 export default function CollectionsField<T extends FieldValues>({
   control,

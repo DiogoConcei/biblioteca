@@ -1,0 +1,139 @@
+import { create } from 'zustand';
+
+import { TieIn } from 'electron/types/comic.interfaces';
+
+import {
+  Literatures,
+  LiteratureChapter,
+  LiteratureChapterAttributes,
+  LiteraturesAttributes,
+} from '../../../electron/types/electron-auxiliar.interfaces';
+import { useUIStore } from './useUIStore';
+
+type StoreSerie = Omit<Literatures, 'chapters'> | Omit<TieIn, 'chapters'>;
+
+interface UseSerieStore {
+  serie: StoreSerie | null;
+  chapters: LiteratureChapter[];
+
+  fetchSerie: (serieName: string, literatureForm: string) => Promise<void>;
+  setSerie: (serie: Literatures | TieIn | null) => void;
+  setChapters: (chapters: LiteratureChapter[]) => void;
+
+  updateSerie: (path: string, newValue: LiteraturesAttributes) => void;
+  updateChapter: (
+    id: number,
+    path: string,
+    newValue: LiteratureChapterAttributes,
+  ) => void;
+  clearSerie: () => void;
+}
+
+const useSerieStore = create<UseSerieStore>((set) => ({
+  serie: null,
+  chapters: [],
+
+  setChapters: (new_chapters: LiteratureChapter[]) => {
+    set({ chapters: new_chapters });
+  },
+
+  setSerie: (serie) => {
+    if (!serie) {
+      set({ serie: null, chapters: [] });
+      return;
+    }
+    const { chapters, ...rest } = serie;
+    set({ serie: rest as StoreSerie, chapters: chapters ?? [] });
+  },
+
+  fetchSerie: async (serieName, literatureForm) => {
+    const { controlFetching } = useUIStore.getState();
+
+    try {
+      controlFetching(true, null);
+
+      const response = await window.electronAPI.series.getSerie(
+        serieName,
+        literatureForm,
+      );
+
+      if (!response.success || !response.data)
+        throw new Error(response.error || 'Erro ao buscar série');
+
+      const { chapters, ...rest } = response.data;
+      set({ serie: rest as StoreSerie, chapters: chapters ?? [] });
+    } catch (e) {
+      controlFetching(false, (e as Error).message);
+    } finally {
+      controlFetching(false, null);
+    }
+  },
+
+  clearSerie: () => set({ serie: null, chapters: [] }),
+
+  updateSerie: (path, newValue) => {
+    set((state) => {
+      if (!state.serie) return {};
+      const updated = { ...state.serie };
+      const keys = path.split('.');
+      let cursor: Record<string, unknown> = updated;
+      for (let i = 0; i < keys.length - 1; i++)
+        cursor = cursor[keys[i]] as Record<string, unknown>;
+      cursor[keys.at(-1)!] = newValue;
+      return { serie: updated as StoreSerie };
+    });
+  },
+
+  updateChapter: (
+    idOrIndex: number | string,
+    path: string,
+    newValue: unknown,
+  ) => {
+    set((state) => {
+      const idNum = Number(idOrIndex);
+
+      let index = state.chapters.findIndex((ch) => ch.id === idNum);
+
+      if (
+        index === -1 &&
+        Number.isInteger(idNum) &&
+        idNum >= 0 &&
+        idNum < state.chapters.length
+      ) {
+        index = idNum;
+      }
+
+      if (index === -1) {
+        return state;
+      }
+
+      const updatedChapters = [...state.chapters];
+      const originalChapter = updatedChapters[index];
+
+      const keys = path.split('.');
+
+      const chapter = { ...originalChapter };
+      let cursor: Record<string, unknown> = chapter;
+
+      if (keys.length === 1) {
+        cursor[keys[0]] = newValue;
+      } else {
+        for (let i = 0; i < keys.length - 1; i++) {
+          const k = keys[i];
+          const next = cursor[k];
+          cursor[k] = next && typeof next === 'object' ? { ...next } : {};
+          cursor = cursor[k] as Record<string, unknown>;
+        }
+
+        const lastKey = keys[keys.length - 1];
+        cursor[lastKey] = newValue;
+      }
+
+      updatedChapters[index] = chapter;
+
+      return { chapters: updatedChapters };
+    });
+  },
+}));
+
+export default useSerieStore;

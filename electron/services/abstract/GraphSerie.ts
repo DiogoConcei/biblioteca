@@ -182,6 +182,29 @@ export default abstract class GraphSerie<
     return await this.imageManager.encodeComic(chapters);
   }
 
+  async deleteChapterById(dataPath: string, chapter_id: number) {
+    const serie = await this.storageManager.readSerieData<T>(dataPath);
+
+    if (!serie) {
+      throw new Error('Série não encontrada.');
+    }
+
+    const chapterToProcess = serie.chapters.find(
+      (chapter) => chapter.id === chapter_id,
+    );
+
+    if (!chapterToProcess) {
+      throw new Error(`Capitulo com id ${chapter_id} nao foi encontrado.`);
+    }
+
+    if (await fse.pathExists(chapterToProcess.chapterPath)) {
+      await fse.remove(chapterToProcess.chapterPath);
+    }
+
+    chapterToProcess.isDownloaded = 'not_downloaded';
+    await this.storageManager.writeData(serie);
+  }
+
   async createChapterById(dataPath: string, chapter_id: number) {
     const serie = await this.storageManager.readSerieData<T>(dataPath);
 

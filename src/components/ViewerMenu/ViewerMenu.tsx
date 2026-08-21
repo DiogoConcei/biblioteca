@@ -18,22 +18,29 @@ import {
 
 import { TransitionEffect, EpubFontFamily } from '@/types/settings.interfaces';
 
-import useNavigation from '../../hooks/useNavigation';
-import useSettingsStore from '../../store/useSettingsStore';
+import useNavigation from '../../shared/hooks/useNavigation';
+import useSettingsStore from '../../shared/store/useSettingsStore';
 import { visualizerProps } from '../../types/components.interfaces';
 import CustomSelect from '../CustomSelect/CustomSelect';
 import styles from './ViewerMenu.module.scss';
 
 type MenuTab = 'navigation' | 'reading' | 'appearance';
 
-export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps) {
+export default function ViewerMenu({
+  chapter,
+  scale,
+  setScale,
+}: visualizerProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<MenuTab>('navigation');
-  
-  const { chapter_name: rawChapterName } = useParams<{ chapter_name: string }>();
+
+  const { chapter_name: rawChapterName } = useParams<{
+    chapter_name: string;
+  }>();
   const chapterName = decodeURIComponent(rawChapterName ?? '');
 
-  const { goHome, goToSeriePage, nextChapter, prevChapter } = useNavigation(chapter);
+  const { goHome, goToSeriePage, nextChapter, prevChapter } =
+    useNavigation(chapter);
   const { settings, updateSetting } = useSettingsStore();
   const viewerSettings = settings.viewer;
 
@@ -41,26 +48,44 @@ export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps
     setIsMenuOpen((prev) => !prev);
   }, []);
 
-  const handleUpdateViewer = useCallback(<K extends keyof typeof viewerSettings>(key: K, value: typeof viewerSettings[K]) => {
-    updateSetting('viewer', {
-      ...viewerSettings,
-      [key]: value
-    });
-  }, [updateSetting, viewerSettings]);
+  const handleUpdateViewer = useCallback(
+    <K extends keyof typeof viewerSettings>(
+      key: K,
+      value: (typeof viewerSettings)[K],
+    ) => {
+      updateSetting('viewer', {
+        ...viewerSettings,
+        [key]: value,
+      });
+    },
+    [updateSetting, viewerSettings],
+  );
 
-  const handleUpdateEpub = useCallback(<K extends keyof typeof viewerSettings['epub']>(key: K, value: typeof viewerSettings['epub'][K]) => {
-    updateSetting('viewer', {
-      ...viewerSettings,
-      epub: {
-        ...viewerSettings.epub,
-        [key]: value
-      }
-    });
-  }, [updateSetting, viewerSettings]);
+  const handleUpdateEpub = useCallback(
+    <K extends keyof (typeof viewerSettings)['epub']>(
+      key: K,
+      value: (typeof viewerSettings)['epub'][K],
+    ) => {
+      updateSetting('viewer', {
+        ...viewerSettings,
+        epub: {
+          ...viewerSettings.epub,
+          [key]: value,
+        },
+      });
+    },
+    [updateSetting, viewerSettings],
+  );
 
   return (
-    <article className={`${styles.viewerMenuContainer} ${isMenuOpen ? styles.open : styles.closed}`}>
-      <button className={styles.toggleBtn} onClick={toggleMenu} aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}>
+    <article
+      className={`${styles.viewerMenuContainer} ${isMenuOpen ? styles.open : styles.closed}`}
+    >
+      <button
+        className={styles.toggleBtn}
+        onClick={toggleMenu}
+        aria-label={isMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+      >
         {isMenuOpen ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
       </button>
 
@@ -72,23 +97,23 @@ export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps
           </header>
 
           <nav className={styles.tabs}>
-            <button 
-              className={activeTab === 'navigation' ? styles.active : ''} 
+            <button
+              className={activeTab === 'navigation' ? styles.active : ''}
               onClick={() => setActiveTab('navigation')}
               title="Navegação"
             >
               <Monitor size={20} />
             </button>
-            <button 
-              className={activeTab === 'reading' ? styles.active : ''} 
+            <button
+              className={activeTab === 'reading' ? styles.active : ''}
               onClick={() => setActiveTab('reading')}
               title="Modos de Leitura"
             >
               <Settings size={20} />
             </button>
             {chapter.type === 'book' && (
-              <button 
-                className={activeTab === 'appearance' ? styles.active : ''} 
+              <button
+                className={activeTab === 'appearance' ? styles.active : ''}
                 onClick={() => setActiveTab('appearance')}
                 title="Aparência"
               >
@@ -101,13 +126,13 @@ export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps
             {activeTab === 'navigation' && (
               <div className={styles.navigationTab}>
                 <div className={styles.chapterNav}>
-                  <span 
-                    className={styles.currentChapterName} 
+                  <span
+                    className={styles.currentChapterName}
                     title={chapterName}
                   >
                     {chapterName}
                   </span>
-                  
+
                   <div className={styles.navButtons}>
                     <button onClick={prevChapter} title="Capítulo Anterior">
                       <ChevronsLeft size={20} />
@@ -119,13 +144,26 @@ export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps
                     </button>
                   </div>
                 </div>
-                
+
                 <div className={styles.zoomActions}>
-                   <button onClick={() => setScale(s => Math.max(0.5, s - 0.1))} title="Diminuir Zoom"><ZoomOut /></button>
-                   <button onClick={() => setScale(1)} className={styles.resetBtn}>
+                  <button
+                    onClick={() => setScale((s) => Math.max(0.5, s - 0.1))}
+                    title="Diminuir Zoom"
+                  >
+                    <ZoomOut />
+                  </button>
+                  <button
+                    onClick={() => setScale(1)}
+                    className={styles.resetBtn}
+                  >
                     {Math.round(scale * 100)}%
-                   </button>
-                   <button onClick={() => setScale(s => Math.min(3, s + 0.1))} title="Aumentar Zoom"><ZoomIn /></button>
+                  </button>
+                  <button
+                    onClick={() => setScale((s) => Math.min(3, s + 0.1))}
+                    title="Aumentar Zoom"
+                  >
+                    <ZoomIn />
+                  </button>
                 </div>
 
                 <div className={styles.navLinks}>
@@ -143,10 +181,12 @@ export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps
               <div className={styles.readingTab}>
                 <div className={styles.checkboxGroup}>
                   <label className={styles.checkboxLabel}>
-                    <input 
-                      type="checkbox" 
-                      checked={viewerSettings.showPageNumbers} 
-                      onChange={(e) => handleUpdateViewer('showPageNumbers', e.target.checked)}
+                    <input
+                      type="checkbox"
+                      checked={viewerSettings.showPageNumbers}
+                      onChange={(e) =>
+                        handleUpdateViewer('showPageNumbers', e.target.checked)
+                      }
                     />
                     <span>Mostrar Números</span>
                   </label>
@@ -157,19 +197,21 @@ export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps
             {activeTab === 'appearance' && (
               <div className={styles.appearanceTab}>
                 <div className={styles.themeGroup}>
-                  <label><Palette size={16} /> Tema</label>
+                  <label>
+                    <Palette size={16} /> Tema
+                  </label>
                   <div className={styles.themeOptions}>
-                    <button 
+                    <button
                       className={`${styles.themeBtn} ${styles.light} ${viewerSettings.epub.theme === 'light' ? styles.selected : ''}`}
                       onClick={() => handleUpdateEpub('theme', 'light')}
                       title="Dia"
                     />
-                    <button 
+                    <button
                       className={`${styles.themeBtn} ${styles.sepia} ${viewerSettings.epub.theme === 'sepia' ? styles.selected : ''}`}
                       onClick={() => handleUpdateEpub('theme', 'sepia')}
                       title="Sépia"
                     />
-                    <button 
+                    <button
                       className={`${styles.themeBtn} ${styles.dark} ${viewerSettings.epub.theme === 'dark' ? styles.selected : ''}`}
                       onClick={() => handleUpdateEpub('theme', 'dark')}
                       title="Noite"
@@ -179,9 +221,11 @@ export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps
 
                 <div className={styles.settingGroup}>
                   <label>Fonte</label>
-                  <CustomSelect 
+                  <CustomSelect
                     value={viewerSettings.epub.fontFamily}
-                    onChange={(val) => handleUpdateEpub('fontFamily', val as EpubFontFamily)}
+                    onChange={(val) =>
+                      handleUpdateEpub('fontFamily', val as EpubFontFamily)
+                    }
                     options={[
                       { value: 'serif', label: 'Serifada' },
                       { value: 'sans-serif', label: 'Sem Serifa' },
@@ -195,10 +239,15 @@ export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps
                     <span>Tamanho do Texto</span>
                     <span>{viewerSettings.epub.fontSize}px</span>
                   </div>
-                  <input 
-                    type="range" min="12" max="32" step="1"
+                  <input
+                    type="range"
+                    min="12"
+                    max="32"
+                    step="1"
                     value={viewerSettings.epub.fontSize}
-                    onChange={(e) => handleUpdateEpub('fontSize', parseInt(e.target.value))}
+                    onChange={(e) =>
+                      handleUpdateEpub('fontSize', parseInt(e.target.value))
+                    }
                   />
                 </div>
 
@@ -207,10 +256,15 @@ export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps
                     <span>Entrelinhamento</span>
                     <span>{viewerSettings.epub.lineHeight}x</span>
                   </div>
-                  <input 
-                    type="range" min="1" max="2.5" step="0.1"
+                  <input
+                    type="range"
+                    min="1"
+                    max="2.5"
+                    step="0.1"
                     value={viewerSettings.epub.lineHeight}
-                    onChange={(e) => handleUpdateEpub('lineHeight', parseFloat(e.target.value))}
+                    onChange={(e) =>
+                      handleUpdateEpub('lineHeight', parseFloat(e.target.value))
+                    }
                   />
                 </div>
 
@@ -219,15 +273,19 @@ export default function ViewerMenu({ chapter, scale, setScale }: visualizerProps
                     <span>Margem Lateral</span>
                     <span>{viewerSettings.epub.margin}%</span>
                   </div>
-                  <input 
-                    type="range" min="0" max="25" step="1"
+                  <input
+                    type="range"
+                    min="0"
+                    max="25"
+                    step="1"
                     value={viewerSettings.epub.margin}
-                    onChange={(e) => handleUpdateEpub('margin', parseInt(e.target.value))}
+                    onChange={(e) =>
+                      handleUpdateEpub('margin', parseInt(e.target.value))
+                    }
                   />
                 </div>
               </div>
             )}
-
           </div>
         </section>
       )}

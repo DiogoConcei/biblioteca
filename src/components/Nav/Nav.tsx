@@ -2,7 +2,7 @@ import { X, House, Square, Maximize2, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 
-import useSerieStore from '../../store/useSerieStore';
+import useSerieStore from '../../shared/store/useSerieStore';
 import styles from './Nav.module.scss';
 
 export default function Nav() {

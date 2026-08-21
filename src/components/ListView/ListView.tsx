@@ -11,10 +11,10 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import useDownload from '../../hooks/useDownload';
-import useAction from '../../hooks/useAction';
-import useSerieStore from '../../store/useSerieStore';
-import usePagination from '../../hooks/usePagination';
+import useDownload from '../../shared/hooks/useDownload';
+import useAction from '../../shared/hooks/useAction';
+import useSerieStore from '../../shared/store/useSerieStore';
+import usePagination from '../../shared/hooks/usePagination';
 import UploadPopUp from '../UploadPopUp/UploadPopUp';
 import styles from './ListView.module.scss';
 
@@ -48,10 +48,7 @@ export default function ListView() {
           <button className={styles.sortButton} onClick={orderList}>
             <ArrowDownUp size={26} strokeWidth={1} />
           </button>
-          <button
-            className={styles.uploadButton}
-            onClick={() => setIsOpen(true)}
-          >
+          <button className={styles.uploadButton} onClick={() => setIsOpen(true)}>
             <Upload size={26} strokeWidth={1} />
           </button>
         </div>
@@ -115,9 +112,7 @@ export default function ListView() {
             type="button"
             key={pageNumber}
             onClick={() => handlePage(pageNumber)}
-            className={
-              pageNumber === currentPage ? styles.active : styles.disable
-            }
+            className={pageNumber === currentPage ? styles.active : styles.disable}
             aria-current={pageNumber === currentPage ? 'page' : undefined}
           >
             {pageNumber}
@@ -136,11 +131,7 @@ export default function ListView() {
       </section>
 
       {isOpen && (
-        <UploadPopUp
-          isOpen={isOpen}
-          setIsOpen={setIsOpen}
-          literatureForm="Manga"
-        />
+        <UploadPopUp isOpen={isOpen} setIsOpen={setIsOpen} literatureForm="Manga" />
       )}
     </section>
   );

@@ -1,7 +1,7 @@
 import { Dispatch } from 'react';
 
-import { useUIStore } from '../../store/useUIStore';
-import useSerieStore from '../../store/useSerieStore';
+import { useUIStore } from '../../shared/store/useUIStore';
+import useSerieStore from '../../shared/store/useSerieStore';
 import styles from './UploadPopUp.module.scss';
 
 export default function UploadPopUp({
@@ -27,7 +27,9 @@ export default function UploadPopUp({
       return;
     }
 
-    const filesPath = Array.from(items).map((file) => (file as File & { path?: string }).path || '');
+    const filesPath = Array.from(items).map(
+      (file) => (file as File & { path?: string }).path || '',
+    );
 
     const response = await window.electronAPI.upload.uploadChapter(
       filesPath,

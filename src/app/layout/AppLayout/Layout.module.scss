@@ -1,0 +1,19 @@
+@use '../../../shared/styles/variables' as *;
+
+.Content {
+  position: relative;
+  display: flex;
+  flex-flow: column nowrap;
+  background: $gunmetal;
+  height: 100vh;
+}
+
+.OutletContainer {
+  background: $gunmetal;
+  flex: 1;
+  overflow: auto;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

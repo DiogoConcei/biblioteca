@@ -1,15 +1,9 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  forwardRef,
-  useImperativeHandle,
-} from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { EpubView } from 'react-reader';
 
 import { EpubSettings } from '../../types/settings.interfaces';
 import { EpubViewerRef } from '../../types/components.interfaces';
-import Loading from '../Loading/Loading';
+import Loading from '../../shared/components/Loading/Loading';
 import styles from './EpubViewer.module.scss';
 
 // Interfaces para tipagem forte do motor epub.js
@@ -78,10 +72,7 @@ interface EpubViewerProps {
 }
 
 const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
-  (
-    { url, lastCfi, settings, readingMode, onLocationChange, onTocLoaded },
-    ref,
-  ) => {
+  ({ url, lastCfi, settings, readingMode, onLocationChange, onTocLoaded }, ref) => {
     const renditionRef = useRef<EpubRendition | null>(null);
     const tocRef = useRef<{ href?: string; label?: string; title?: string }[]>([]);
     const [isReady, setIsReady] = useState(false);
@@ -97,10 +88,7 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
         if (renditionRef.current) renditionRef.current.prev();
       },
       goToPage: (page: number) => {
-        if (
-          renditionRef.current &&
-          renditionRef.current.book.locations.length > 0
-        ) {
+        if (renditionRef.current && renditionRef.current.book.locations.length > 0) {
           const cfi = renditionRef.current.book.locations.cfiFromLocation(page);
           renditionRef.current.display(cfi);
         }
@@ -159,8 +147,7 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
           dark: { bg: '#1a1a1a', text: '#d1d1d1', link: '#8963ba' },
         };
         const colors =
-          themeColors[epubSettings.theme as keyof typeof themeColors] ||
-          themeColors.dark;
+          themeColors[epubSettings.theme as keyof typeof themeColors] || themeColors.dark;
 
         rendition.themes.register('custom', {
           body: {
@@ -190,7 +177,10 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
     return (
       <div className={styles.container}>
         {!initialLocationLoaded && (
-          <div className={styles.loadingOverlay} style={{ position: 'absolute', zIndex: 10, background: 'inherit' }}>
+          <div
+            className={styles.loadingOverlay}
+            style={{ position: 'absolute', zIndex: 10, background: 'inherit' }}
+          >
             <Loading />
           </div>
         )}
@@ -198,10 +188,7 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
           url={buffer}
           location={null}
           locationChanged={(epubcfi: string) => {
-            if (
-              renditionRef.current &&
-              renditionRef.current.book.locations.total > 0
-            ) {
+            if (renditionRef.current && renditionRef.current.book.locations.total > 0) {
               const location = renditionRef.current.currentLocation();
               if (location && location.start) {
                 const page = location.start.location;
@@ -209,9 +196,8 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
 
                 if (page !== undefined && total !== undefined) {
                   const percent =
-                    renditionRef.current?.book?.locations?.percentageFromCfi(
-                      epubcfi,
-                    ) ?? 0;
+                    renditionRef.current?.book?.locations?.percentageFromCfi(epubcfi) ??
+                    0;
 
                   const currentHref =
                     location.start.href ||
@@ -249,13 +235,9 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
             }
 
             if (epubRendition.manager && epubRendition.manager.container) {
-              const iframe =
-                epubRendition.manager.container.querySelector('iframe');
+              const iframe = epubRendition.manager.container.querySelector('iframe');
               if (iframe) {
-                iframe.setAttribute(
-                  'sandbox',
-                  'allow-scripts allow-forms allow-popups',
-                );
+                iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups');
               }
             }
 
@@ -263,7 +245,8 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
               .then(async () => {
                 setIsReady(true);
                 // Sanitização: não tenta display se lastCfi for vazio ou nulo
-                const initialTarget = lastCfi && lastCfi.trim() !== '' ? lastCfi : undefined;
+                const initialTarget =
+                  lastCfi && lastCfi.trim() !== '' ? lastCfi : undefined;
 
                 if (initialTarget && !initialLocationLoaded) {
                   try {
@@ -271,7 +254,10 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
                     // Forçamos o display do target
                     await epubRendition.display(initialTarget);
                   } catch (err) {
-                    console.error('[EPUB] Falha ao restaurar lastCfi, tentando início:', err);
+                    console.error(
+                      '[EPUB] Falha ao restaurar lastCfi, tentando início:',
+                      err,
+                    );
                     try {
                       await epubRendition.display();
                     } catch (innerErr) {
@@ -308,15 +294,11 @@ const EpubViewer = forwardRef<EpubViewerRef, EpubViewerProps>(
 
                   if (currentCfi && page !== undefined && total !== undefined) {
                     const percent = Math.round(
-                      epubRendition.book.locations.percentageFromCfi(
-                        currentCfi,
-                      ) * 100,
+                      epubRendition.book.locations.percentageFromCfi(currentCfi) * 100,
                     );
 
                     const currentHref =
-                      location.start.href ||
-                      epubRendition.location?.start?.href ||
-                      '';
+                      location.start.href || epubRendition.location?.start?.href || '';
                     const tocItem = tocRef.current.find(
                       (item) =>
                         (item.href && item.href.includes(currentHref)) ||

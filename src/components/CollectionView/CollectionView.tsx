@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 
-import useImage from '@/hooks/useImage';
+import useImage from '@/shared/hooks/useImage';
 
 import { FocusedCollectionViewProps } from '../../types/components.interfaces';
 import CollectionSeriesCard from '../CollectionsSerieCard/CollectionsSerieCard';
@@ -32,9 +32,7 @@ export default function CollectionView({
 }: FocusedCollectionViewProps) {
   const [showAll, setShowAll] = useState(false);
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [fallbackDescriptions] = useState<
-    Record<number, string>
-  >({});
+  const [fallbackDescriptions] = useState<Record<number, string>>({});
   const titleRef = useRef<HTMLHeadingElement | null>(null);
 
   const { previewSrc, getPreview, setPreviewSrc } = useImage();

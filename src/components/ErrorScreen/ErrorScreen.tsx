@@ -1,8 +1,12 @@
 import styles from './ErrorScreen.module.scss';
 import { ErrorScreenProps } from '../../types/components.interfaces';
-import { useUIStore } from '../../store/useUIStore';
+import { useUIStore } from '../../shared/store/useUIStore';
 
-export default function ErrorScreen({ error, serieName, onReset }: ErrorScreenProps & { onReset?: () => void }) {
+export default function ErrorScreen({
+  error,
+  serieName,
+  onReset,
+}: ErrorScreenProps & { onReset?: () => void }) {
   const clearError = useUIStore((state) => state.clearError);
 
   const handleReset = () => {
@@ -11,13 +15,16 @@ export default function ErrorScreen({ error, serieName, onReset }: ErrorScreenPr
     }
     clearError();
     window.location.hash = '/'; // Fallback seguro para navegação em caso de falha grave
-    window.location.reload();   // Recarrega para limpar o estado de crash do React
+    window.location.reload(); // Recarrega para limpar o estado de crash do React
   };
 
   const handleRetrySerie = async () => {
     if (!serieName) return;
     try {
-      const response = await window.electronAPI.userAction.returnPage('', serieName);
+      const response = await window.electronAPI.userAction.returnPage(
+        '',
+        serieName,
+      );
       if (response.data) {
         window.location.hash = response.data;
         window.location.reload();

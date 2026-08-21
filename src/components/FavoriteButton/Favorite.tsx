@@ -2,9 +2,9 @@ import { Bookmark, BookmarkCheck } from 'lucide-react';
 
 import { FavoriteProps } from '@/types/components.interfaces';
 
-import useCollection from '../../hooks/useCollection';
+import useCollection from '../../shared/hooks/useCollection';
 import styles from './Favorite.module.scss';
-import useSerieStore from '../../store/useSerieStore';
+import useSerieStore from '../../shared/store/useSerieStore';
 
 export default function Favorite({ serie }: FavoriteProps) {
   const { updateFav } = useCollection();
