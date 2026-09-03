@@ -1,10 +1,10 @@
 import { Outlet, useLocation } from 'react-router-dom';
 
-import Nav from '@/components/Nav/Nav';
+import Nav from '@/shared/components/Nav/Nav';
 
-import styles from './Layout.module.scss';
+import styles from '@/app/layout/AppLayout/Layout.module.scss';
 import { useUIStore } from '../../../shared/store/useUIStore';
-import ErrorScreen from '../../../components/ErrorScreen/ErrorScreen';
+import ErrorScreen from '@/shared/components/ErrorScreen/ErrorScreen';
 
 const Layout = () => {
   const error = useUIStore((state) => state.error);

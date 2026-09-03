@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import ErrorScreen from '../../components/ErrorScreen/ErrorScreen';
+import ErrorScreen from '../components/ErrorScreen/ErrorScreen';
 
 type Props = {
   children: React.ReactNode;
@@ -30,9 +30,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
     if (this.state.hasError) {
       return (
         <ErrorScreen
-          error={
-            this.state.error?.message || 'Erro desconhecido na renderização'
-          }
+          error={this.state.error?.message || 'Erro desconhecido na renderização'}
           onReset={this.handleReset}
         />
       );

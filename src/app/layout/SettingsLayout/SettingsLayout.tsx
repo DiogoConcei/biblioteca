@@ -1,6 +1,6 @@
 import { Outlet, NavLink } from 'react-router-dom';
 
-import styles from './SettingsLayout.module.scss';
+import styles from '@/app/layout/SettingsLayout/SettingsLayout.module.scss';
 
 export default function SettingsLayout() {
   const sections = [
