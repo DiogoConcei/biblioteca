@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ListFilter, Settings, Play, Pencil, Dices } from 'lucide-react';
 
 import Loading from '@/shared/components/Loading/Loading';
-import CustomSelect from '@/shared/components/CustomSelect/CustomSelect';
 import { LiteratureForm } from '@/shared/types/series.interfaces';
 import useAction from '@/shared/hooks/useAction';
 import { useUIStore } from '@/shared/store/useUIStore';
@@ -122,12 +121,12 @@ export default function Home() {
               <ListFilter size={32} />
             </button>
 
-            {showFilters && (
+            {/* {showFilters && (
               <div className={styles.filterPanel}>
                 <CustomSelect
                   label=""
                   value={selectedLiteratureForm}
-                  onChange={(value: LiteratureForm) => {
+                  onChange={(value: SelectOptionValue) => {
                     setSelectedLiteratureForm(value);
                     setShowFilters(false);
                   }}
@@ -139,7 +138,7 @@ export default function Home() {
                   ]}
                 />
               </div>
-            )}
+            )} */}
           </div>
         </div>
 

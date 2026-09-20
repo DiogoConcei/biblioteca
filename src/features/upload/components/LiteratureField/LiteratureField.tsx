@@ -1,0 +1,21 @@
+import { FormInputProps } from '@/shared/types/components.interfaces';
+import '@/components/Form/Fields/LiteratureField/LiteratureField.scss';
+
+export default function LiteratureField({ register, error }: FormInputProps) {
+  return (
+    <div className="literature-info">
+      <h2 className="form-subtitle">Forma de literatura:</h2>
+      <div className="form-radio">
+        <input type="radio" value="Manga" id="Manga" {...register} />
+        <label htmlFor="Manga">Manga</label>
+
+        <input type="radio" value="Quadrinho" id="Quadrinho" {...register} />
+        <label htmlFor="Quadrinho">Quadrinho</label>
+
+        <input type="radio" value="Books" id="Books" {...register} />
+        <label htmlFor="Books">Livro</label>
+      </div>
+      {error && <p className="error">{error.message}</p>}
+    </div>
+  );
+}

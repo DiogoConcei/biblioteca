@@ -1,10 +1,7 @@
 import { Manga, MangaChapter } from './manga.interfaces';
 import { Book, BookChapter } from './book.interfaces';
 import { Comic, ComicEdition, TieIn } from './comic.interfaces';
-import {
-  ReadingStatus,
-  LiteratureForm,
-} from '../../src/types/series.interfaces';
+import { ReadingStatus, LiteratureForm } from '../../src/types/series.interfaces';
 
 export type LiteratureChapter = ComicEdition | MangaChapter | BookChapter;
 

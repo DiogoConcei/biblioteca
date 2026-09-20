@@ -1,20 +1,32 @@
-import { Comic } from 'electron/types/comic.interfaces';
-import { Manga } from 'electron/types/manga.interfaces';
-
-import { LiteratureChapter } from '../../electron/types/electron-auxiliar.interfaces';
+// Preciso ajustar isso
+import { Comic } from '../../../electron/types/comic.interfaces';
+import { Manga } from '../../../electron/types/manga.interfaces';
+import { LiteratureChapter } from '../../../electron/types/electron-auxiliar.interfaces';
 
 export enum ReadingStatus {
   IN_PROGRESS = 'Em andamento',
   COMPLETED = 'Completo',
   PENDING = 'Pendente',
-  NONE = '',
+  EMPTY = '',
+}
+
+export enum AutoBackupStatus {
+  YES = 'Sim',
+  NO = 'Não',
+  EMPTY = '',
+}
+
+export enum PrivacyStatus {
+  IN_PROGRESS = 'Pública',
+  COMPLETED = 'Privada',
+  EMPTY = '',
 }
 
 export enum LiteratureForm {
   MANGA = 'Manga',
   COMIC = 'Quadrinho',
   BOOK = 'Books',
-  NONE = '',
+  EMPTY = '',
 }
 
 export interface SerieData {
@@ -34,8 +46,8 @@ export interface SerieForm {
   literatureForm: LiteratureForm;
   collections: string[];
   tags: string[];
-  privacy: 'Publica' | 'Privada' | '';
-  autoBackup: 'Sim' | 'Não' | '';
+  privacy: PrivacyStatus;
+  autoBackup: AutoBackupStatus;
   readingStatus: ReadingStatus;
   sanitizedName: string;
   chaptersPath: string;

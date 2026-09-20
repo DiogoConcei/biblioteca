@@ -1,12 +1,6 @@
-import {
-  FieldError,
-  Control,
-  FieldValues,
-  Path,
-  UseFormRegisterReturn,
-} from 'react-hook-form';
+import { Control } from 'react-hook-form';
 
-import { Manga } from '../../electron/types/manga.interfaces';
+import { Manga } from '../../../electron/types/manga.interfaces';
 import {
   Literatures,
   LiteraturesAttributes,
@@ -14,7 +8,7 @@ import {
   Status,
   viewData,
   ChapterView,
-} from '../../electron/types/electron-auxiliar.interfaces';
+} from '../../../electron/types/electron-auxiliar.interfaces';
 import { Collection, CreateCollectionDTO } from './collections.interfaces';
 import { SerieEditForm, SerieForm, SerieData } from './series.interfaces';
 
@@ -33,7 +27,6 @@ export interface ChaptersInfoProp {
     newValue: LiteratureChapterAttributes,
   ) => void;
 }
-
 
 export interface PageControlProps {
   currentPage: number;
@@ -80,13 +73,6 @@ export interface GlobalContext {
   setIsHidden: (value: boolean) => void;
   theme: boolean;
   setTheme: (value: boolean) => void;
-}
-
-export interface FormInputsProps {
-  index: number;
-  newSeries: SerieData[];
-  setNewSeries: React.Dispatch<React.SetStateAction<SerieData[]>>;
-  handleDataChange: (key: string, value: string) => void;
 }
 
 export interface OnlyDataChangeProp {
@@ -137,25 +123,9 @@ export interface ErrorScreenProps {
   error: string;
 }
 
-export interface FormTextInputProps {
-  msg: string;
-  register: UseFormRegisterReturn;
-  error?: FieldError;
-}
-
-export interface FormInputProps {
-  register: UseFormRegisterReturn;
-  error?: FieldError;
-}
-
 export interface FormControllerProps {
   control: Control<SerieEditForm>;
   label?: string;
-}
-
-export interface GenericControllerProps<T extends FieldValues = FieldValues> {
-  control: Control<T>;
-  name: Path<T>;
 }
 
 export interface FavoriteProps {
@@ -174,10 +144,7 @@ export type FocusedCollectionViewProps = {
     e: React.MouseEvent<HTMLButtonElement | SVGElement>,
     serieId: number,
   ) => void;
-  onRemoveFromCollection: (
-    collectionName: string,
-    serieId: number,
-  ) => Promise<boolean>;
+  onRemoveFromCollection: (collectionName: string, serieId: number) => Promise<boolean>;
   onReorderSeries?: (
     collectionName: string,
     orderedSeriesIds: number[],
