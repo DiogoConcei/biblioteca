@@ -50,15 +50,18 @@ export function useSerieUploadForm(initial: SerieData[]) {
   const submit = handleSubmit(
     async ({ series }) => {
       try {
+        console.log('onValid', series);
         await window.electronAPI.upload.uploadSeries(series);
         navigate('/');
       } catch {
+        console.log('onInvalid');
         setError('root.server', {
           message: 'Falha ao enviar as séries. Tente novamente.',
         });
       }
     },
     (errors) => {
+      console.log('onInvalid', errors);
       const firstInvalid = errors.series?.findIndex?.((e) => e);
       if (typeof firstInvalid === 'number' && firstInvalid >= 0) {
         setCurrentIndex(firstInvalid);

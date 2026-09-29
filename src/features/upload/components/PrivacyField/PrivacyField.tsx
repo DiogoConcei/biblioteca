@@ -6,7 +6,7 @@ export default function PrivacyField({ register, error }: FormInputProps) {
     <div className="privacy-info">
       <h2 className="form-subtitle">Privacidade:</h2>
       <div className="privacy-container">
-        <input type="radio" value="Publica" id="Privacypublic" {...register} />
+        <input type="radio" value="Pública" id="Privacypublic" {...register} />
         <label htmlFor="Privacypublic">Pública</label>
 
         <input type="radio" value="Privada" id="Privacyprivate" {...register} />

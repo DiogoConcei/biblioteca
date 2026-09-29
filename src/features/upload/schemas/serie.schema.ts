@@ -19,11 +19,11 @@ const serieSchema = z.object({
   literatureForm: z.enum(LiteratureForm),
   tags: z.array(z.string()),
   collections: z.array(z.string()),
-  archivesPath: z.string().min(1),
-  chaptersPath: z.string().min(1),
+  archivesPath: z.string(),
+  chaptersPath: z.string(),
   oldPath: z.string().min(1),
   createdAt: z.string().min(1),
-  deletedAt: z.string().min(1),
+  deletedAt: z.string(),
 });
 
 export const uploadSchema = z.object({ series: z.array(serieSchema).min(1) });

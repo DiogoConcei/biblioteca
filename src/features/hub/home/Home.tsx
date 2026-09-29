@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ListFilter, Settings, Play, Pencil, Dices } from 'lucide-react';
-
+import { SerieData } from '@/shared/types/series.interfaces';
 import Loading from '@/shared/components/Loading/Loading';
 import { LiteratureForm } from '@/shared/types/series.interfaces';
 import useAction from '@/shared/hooks/useAction';
@@ -47,7 +47,8 @@ export default function Home() {
 
     try {
       const response = await window.electronAPI.upload.processSerie(filePaths);
-      const serieData = response.data;
+      const serieData: SerieData[] = response.data;
+      console.log(serieData);
       navigate('/local-upload/serie', { state: { serieData } });
     } catch (error) {
       console.error('Erro ao carregar arquivos', error);
