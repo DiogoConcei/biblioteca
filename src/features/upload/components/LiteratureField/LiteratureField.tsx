@@ -1,5 +1,5 @@
-import { FormInputProps } from '@/shared/types/components.interfaces';
-import '@/components/Form/Fields/LiteratureField/LiteratureField.scss';
+import { FormInputProps } from '@/features/upload/types/uploadSerieForm.interfaces';
+import './LiteratureField.scss';
 
 export default function LiteratureField({ register, error }: FormInputProps) {
   return (

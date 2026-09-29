@@ -4,7 +4,7 @@ import { ImagePlus } from 'lucide-react';
 
 import useImage from '@/shared/hooks/useImage';
 
-import styles from '@/components/Form/Fields/ImageController/ImageController.module.scss';
+import styles from './ImageController.module.scss';
 
 export default function ImageController<T extends FieldValues>({
   control,
@@ -18,7 +18,6 @@ export default function ImageController<T extends FieldValues>({
   const { field, fieldState } = useController({
     name,
     control,
-    rules: { required: 'A capa é obrigatória' },
   });
 
   useEffect(() => {
@@ -41,11 +40,7 @@ export default function ImageController<T extends FieldValues>({
         role="button"
       >
         {previewSrc ? (
-          <img
-            src={previewSrc}
-            alt="Preview da capa"
-            className={styles.coverPreview}
-          />
+          <img src={previewSrc} alt="Preview da capa" className={styles.coverPreview} />
         ) : (
           <div className={styles.placeholder}>
             <ImagePlus size={48} />
@@ -54,9 +49,7 @@ export default function ImageController<T extends FieldValues>({
         )}
       </div>
 
-      {fieldState.error && (
-        <p className={styles.error}>{fieldState.error.message}</p>
-      )}
+      {fieldState.error && <p className={styles.error}>{fieldState.error.message}</p>}
     </div>
   );
 }

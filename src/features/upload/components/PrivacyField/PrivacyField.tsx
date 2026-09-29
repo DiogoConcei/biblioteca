@@ -1,5 +1,5 @@
-import { FormInputProps } from '@/shared/types/components.interfaces';
-import '@/components/Form/Fields/PrivacyField/PrivacyField.scss';
+import { FormInputProps } from '@/features/upload/types/uploadSerieForm.interfaces';
+import './PrivacyField.scss';
 
 export default function PrivacyField({ register, error }: FormInputProps) {
   return (

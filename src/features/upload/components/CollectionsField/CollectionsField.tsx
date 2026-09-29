@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 import { GenericControllerProps } from '@/features/upload/types/uploadSerieForm.interfaces';
 import { Collection } from '@/shared/types/collections.interfaces';
-import styles from '@/components/Form/Fields/CollectionsField/CollectionsField.module.scss';
+import styles from './CollectionsField.module.scss';
 import { useUIStore } from '../../../../shared/store/useUIStore';
 
 export default function CollectionsField<T extends FieldValues>({

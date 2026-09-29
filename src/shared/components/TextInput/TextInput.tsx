@@ -1,6 +1,6 @@
-import { FormTextInputProps } from '@/shared/types/components.interfaces';
+import { FormTextInputProps } from '@/features/upload/types/uploadSerieForm.interfaces';
 
-import styles from '@/components/Form/GenericInputs/TextInput/TextInput.module.scss';
+import styles from './TextInput.module.scss';
 
 export default function TextInput({ register, error, msg }: FormTextInputProps) {
   return (

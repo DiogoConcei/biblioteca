@@ -1,5 +1,5 @@
-import { FormInputProps } from '@/shared/types/components.interfaces';
-import '@/components/Form/Fields/StatusField/StatusField.scss';
+import { FormInputProps } from '@/features/upload/types/uploadSerieForm.interfaces';
+import './StatusField.scss';
 
 export default function StatusField({ register, error }: FormInputProps) {
   return (

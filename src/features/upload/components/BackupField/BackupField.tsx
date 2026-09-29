@@ -1,5 +1,5 @@
 import { FormInputProps } from '@/features/upload/types/uploadSerieForm.interfaces';
-import '@/components/Form/Fields/BackupField/BackupField.scss';
+import './BackupField.scss';
 
 export default function BackupField({ register, error }: FormInputProps) {
   return (

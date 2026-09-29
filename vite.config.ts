@@ -13,7 +13,15 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        api: 'modern',
+        api: 'modern-compiler',
+        importers: [
+          {
+            findFileUrl(url: string) {
+              if (!url.startsWith('@/')) return null;
+              return new URL('file://' + path.resolve(__dirname, 'src', url.slice(2)));
+            },
+          },
+        ],
       },
     },
   },
