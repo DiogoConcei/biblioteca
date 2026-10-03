@@ -7,7 +7,7 @@ import {
 } from '../../types/media.interfaces';
 import LibrarySystem from '../abstract/LibrarySystem';
 import ArchiveManager from '../ArchiveManager';
-import ImageManager from '../ImageManager';
+import ImageManager from '../processing/ImageManager';
 
 export default class EpubAdapter extends LibrarySystem implements MediaAdapter {
   private readonly archiveManager = new ArchiveManager();
@@ -32,11 +32,8 @@ export default class EpubAdapter extends LibrarySystem implements MediaAdapter {
       console.log(`📖 EpubAdapter: OPF localizado em ${opfPath}`);
 
       // 2. Ler o conteúdo do .opf
-      const opfContent = await this.archiveManager.readInternalFile(
-        chapterPath,
-        opfPath,
-      );
-      
+      const opfContent = await this.archiveManager.readInternalFile(chapterPath, opfPath);
+
       // O diretório do OPF é a base para os caminhos relativos internos
       const opfDir = path.dirname(opfPath);
 
@@ -79,7 +76,7 @@ export default class EpubAdapter extends LibrarySystem implements MediaAdapter {
     epubPath: string,
   ): ChapterResource[] {
     const manifestItems: Record<string, string> = {};
-    
+
     // 1. Mapear Manifest (id -> href)
     // Buscamos <item ... id="ID" ... href="HREF" ... />
     // Usamos uma abordagem linha a linha ou um regex global que ignore a ordem dos atributos
@@ -88,7 +85,7 @@ export default class EpubAdapter extends LibrarySystem implements MediaAdapter {
       const attrs = match[1];
       const idMatch = attrs.match(/id\s*=\s*["']([^"']+)["']/i);
       const hrefMatch = attrs.match(/href\s*=\s*["']([^"']+)["']/i);
-      
+
       if (idMatch && hrefMatch) {
         manifestItems[idMatch[1]] = hrefMatch[1];
       }
@@ -102,7 +99,7 @@ export default class EpubAdapter extends LibrarySystem implements MediaAdapter {
     for (const match of itemrefMatches) {
       const attrs = match[1];
       const idrefMatch = attrs.match(/idref\s*=\s*["']([^"']+)["']/i);
-      
+
       if (idrefMatch) {
         const idref = idrefMatch[1];
         let href = manifestItems[idref];
@@ -116,9 +113,13 @@ export default class EpubAdapter extends LibrarySystem implements MediaAdapter {
             // Se o opfDir for '.', evitamos colocar './' no início
             let fullInternalPath = opfDir === '.' ? href : `${opfDir}/${href}`;
             fullInternalPath = path.normalize(fullInternalPath).replace(/\\/g, '/');
-            
+
             // Evita duplicatas (alguns EPUBs repetem itemrefs)
-            if (!chapters.find(c => c.path.includes(Buffer.from(fullInternalPath).toString('base64')))) {
+            if (
+              !chapters.find((c) =>
+                c.path.includes(Buffer.from(fullInternalPath).toString('base64')),
+              )
+            ) {
               chapters.push({
                 id: String(count++),
                 label: `Página ${chapters.length + 1}`,

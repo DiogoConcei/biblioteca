@@ -7,7 +7,7 @@ import path from 'path';
 import { MediaAdapter, MediaContent } from '../../types/media.interfaces';
 import LibrarySystem from '../abstract/LibrarySystem';
 import FileManager from '../FileManager';
-import ImageManager from '../ImageManager';
+import ImageManager from '../processing/ImageManager';
 
 export default class PdfAdapter extends LibrarySystem implements MediaAdapter {
   private readonly fileManager: FileManager = new FileManager();
@@ -23,7 +23,7 @@ export default class PdfAdapter extends LibrarySystem implements MediaAdapter {
     }).promise;
 
     const totalPages = pdf.numPages;
-    
+
     // Retornamos o PDF original como recurso principal
     // O visualizador (BookViewer) usará o pdf.js para renderizar via Canvas
     const pdfUrl = this.imageManager.getMediaUrl(chapterPath);
@@ -49,7 +49,7 @@ export default class PdfAdapter extends LibrarySystem implements MediaAdapter {
 
     const pdf = await loadingTask.promise;
     const buffer = await this.renderPdfPageToBuffer(pdf, 1, 1.5);
-    
+
     const suffix = randomBytes(3).toString('hex');
     const finalPath = this.fileManager.buildImagePath(
       outputDir,

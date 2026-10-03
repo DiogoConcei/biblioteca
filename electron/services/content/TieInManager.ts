@@ -2,16 +2,13 @@ import path from 'path';
 import fse from 'fs-extra';
 
 import ComicManager from './ComicManager';
-import FileManager from './FileManager';
-import ImageManager from './ImageManager';
-import PdfManager from './PdfManager';
-import ArchiveManager from './ArchiveManager';
-import storageManager from './StorageManager';
-import {
-  LiteratureForm,
-  ReadingStatus,
-} from '../../src/types/series.interfaces';
-import { ComicTieIn, TieIn, ComicEdition } from '../types/comic.interfaces';
+import FileManager from '../FileManager';
+import ImageManager from '../processing/ImageManager';
+import PdfManager from '../PdfManager';
+import ArchiveManager from '../ArchiveManager';
+import storageManager from '../StorageManager';
+import { LiteratureForm, ReadingStatus } from '../../src/types/series.interfaces';
+import { ComicTieIn, TieIn, ComicEdition } from '../../types/comic.interfaces';
 
 export default class TieInManager extends ComicManager {
   protected readonly fileManager: FileManager = new FileManager();
@@ -20,10 +17,7 @@ export default class TieInManager extends ComicManager {
   protected readonly pdfManager: PdfManager = new PdfManager();
   protected readonly archiveManager: ArchiveManager = new ArchiveManager();
 
-  public async createChildCover(
-    serieName: string,
-    basePath: string,
-  ): Promise<string> {
+  public async createChildCover(serieName: string, basePath: string): Promise<string> {
     try {
       const firstChapter = await this.fileManager.findFirstChapter(basePath);
       const outputPath = path.join(this.dinamicImages, serieName);
@@ -35,10 +29,7 @@ export default class TieInManager extends ComicManager {
 
   public async createTieInSerie(tieIn: TieIn): Promise<void> {
     try {
-      tieIn.chapters = await this.createEditions(
-        tieIn.name,
-        tieIn.archivesPath,
-      );
+      tieIn.chapters = await this.createEditions(tieIn.name, tieIn.archivesPath);
 
       await this.createEditionCovers(tieIn.archivesPath, tieIn.chapters);
 
@@ -51,10 +42,7 @@ export default class TieInManager extends ComicManager {
     }
   }
 
-  public async getTieIn(
-    dataPath: string,
-    chapter_id: number,
-  ): Promise<string[]> {
+  public async getTieIn(dataPath: string, chapter_id: number): Promise<string[]> {
     try {
       const comic = await this.storageManager.readSerieData(dataPath);
 
@@ -72,9 +60,7 @@ export default class TieInManager extends ComicManager {
         throw new Error('Capítulo não encontrado ou caminho inválido.');
       }
 
-      const imageFiles = await this.fileManager.searchImages(
-        chapter.chapterPath,
-      );
+      const imageFiles = await this.fileManager.searchImages(chapter.chapterPath);
       const validImages = [];
 
       for (const file of imageFiles) {
@@ -95,15 +81,9 @@ export default class TieInManager extends ComicManager {
   public async generateChildCovers(childs: ComicTieIn[], basePath: string) {
     await Promise.all(
       childs.map(async (child) => {
-        const oldPath = await this.fileManager.findPath(
-          basePath,
-          child.serieName,
-        );
+        const oldPath = await this.fileManager.findPath(basePath, child.serieName);
 
-        child.coverImage = await this.createChildCover(
-          child.serieName,
-          oldPath,
-        );
+        child.coverImage = await this.createChildCover(child.serieName, oldPath);
       }),
     );
   }
@@ -111,9 +91,7 @@ export default class TieInManager extends ComicManager {
   public async createTieCovers(dataPath: string): Promise<void> {
     if (!(await this.isCreated(dataPath))) return;
 
-    const tieInData = (await this.storageManager.readTieInData(
-      dataPath,
-    )) as TieIn;
+    const tieInData = (await this.storageManager.readTieInData(dataPath)) as TieIn;
 
     const tieChapters = tieInData.chapters;
 
@@ -127,11 +105,7 @@ export default class TieInManager extends ComicManager {
     await Promise.all(
       tieChapters.map(async (chap) => {
         const chapSafe = this.fileManager.sanitizeFilename(chap.name);
-        chap.chapterPath = path.join(
-          this.comicsImages,
-          tieInData.name,
-          chapSafe,
-        );
+        chap.chapterPath = path.join(this.comicsImages, tieInData.name, chapSafe);
         chap.coverImage = await this.imageManager.generateCover(
           chap.archivesPath,
           outputPath,
@@ -165,10 +139,7 @@ export default class TieInManager extends ComicManager {
 
     for (let idx = 0; idx < childSeries.length; idx++) {
       const child = childSeries[idx];
-      const oldPath = await this.fileManager.findPath(
-        basePath,
-        child.serieName,
-      );
+      const oldPath = await this.fileManager.findPath(basePath, child.serieName);
 
       if (!oldPath) {
         console.warn(
@@ -262,17 +233,9 @@ export default class TieInManager extends ComicManager {
         .replaceAll('_', '')
         .replaceAll('-', '');
 
-      const outputPath = path.join(
-        this.showcaseImages,
-        chap.serieName,
-        safeDirName,
-      );
+      const outputPath = path.join(this.showcaseImages, chap.serieName, safeDirName);
 
-      chap.chapterPath = path.join(
-        this.comicsImages,
-        chap.serieName,
-        chap.name,
-      );
+      chap.chapterPath = path.join(this.comicsImages, chap.serieName, chap.name);
 
       if (!chap.archivesPath) {
         console.warn(
@@ -291,9 +254,7 @@ export default class TieInManager extends ComicManager {
     }
   }
 
-  public async resolveCoverSourceArchive(
-    candidatePath: string,
-  ): Promise<string> {
+  public async resolveCoverSourceArchive(candidatePath: string): Promise<string> {
     if (!candidatePath) return '';
 
     const normalizedPath = path.resolve(candidatePath);

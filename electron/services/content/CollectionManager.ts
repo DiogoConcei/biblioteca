@@ -1,20 +1,27 @@
 import fse from 'fs-extra';
 import path from 'path';
+import AtomicJsonStore from '../AtomicJsonStore';
+import {
+  HistoryFile,
+  ReadEvent,
+  SerieHistoryEntry,
+} from '../../types/history.interfaces';
 
 import {
   Collection,
   SerieInCollection,
   CreateCollectionDTO,
-} from '../../src/types/collections.interfaces';
-import LibrarySystem from './abstract/LibrarySystem';
-import storageManager from './StorageManager';
-import FileManager from './FileManager';
-import { Literatures } from '../types/electron-auxiliar.interfaces';
-import { TieIn } from '../types/comic.interfaces';
+} from '../../../src/shared/types/collections.interfaces';
+import LibrarySystem from '../abstract/LibrarySystem';
+import storageManager from '../StorageManager';
+import FileManager from '../FileManager';
+import { graphSerie, Literatures } from '../../types/electron-auxiliar.interfaces';
+import { TieIn } from '../../types/comic.interfaces';
 
 export default class CollectionManager extends LibrarySystem {
   private readonly storageManager = storageManager;
   private readonly fileManager = new FileManager();
+  private readonly writer = new AtomicJsonStore();
   private static readonly MAX_COLLECTION_ITEMS = 10000;
 
   constructor() {
@@ -41,9 +48,7 @@ export default class CollectionManager extends LibrarySystem {
 
       if (orderedSeriesIds.length !== collection.series.length) return false;
 
-      const currentMap = new Map(
-        collection.series.map((serie) => [serie.id, serie]),
-      );
+      const currentMap = new Map(collection.series.map((serie) => [serie.id, serie]));
       const reordered = orderedSeriesIds
         .map((id, index) => {
           const found = currentMap.get(id);
@@ -103,55 +108,65 @@ export default class CollectionManager extends LibrarySystem {
     }
   }
 
-  public async addLastRead(serie: Literatures | TieIn): Promise<boolean> {
+  // AQUI
+  public async updateRecentCollection(
+    historySummaries: SerieHistoryEntry[],
+  ): Promise<boolean> {
     try {
-      const collection = await this.getLastRead();
-      if (!collection) return false;
+      const recentesCollection = await this.getRecentCollection();
 
-      const newSerieInfo = await this.mountSerieInfo(serie.dataPath);
-      if (!newSerieInfo) return false;
+      if (!recentesCollection) return false;
 
-      // Remove se já existir para reinserir no topo (LIFO)
-      const otherSeries = collection.series.filter(s => s.id !== newSerieInfo.id);
-      
-      // Adiciona no topo e limita a 8 itens para manter a Home limpa
-      const updatedSeries = [
-        { ...newSerieInfo, position: 1 },
-        ...otherSeries.map((s, i) => ({ ...s, position: i + 2 }))
-      ].slice(0, 8);
+      const last10 = historySummaries.slice(0, 9);
+      const currentRecents = recentesCollection.series;
+
+      const seriesForCollection: SerieInCollection[] = await Promise.all(
+        last10.map(async (historyEntry, index) => {
+          const existing = currentRecents.find((s) => s.id === historyEntry.serieId);
+
+          if (existing && existing.addAt === historyEntry.lastReadAt) {
+            return {
+              ...existing,
+              position: index + 1,
+            };
+          }
+
+          const dataPath = await this.fileManager.getDataPath(historyEntry.serieName);
+          const serieData = await this.storageManager.readSerieData(dataPath);
+
+          if (!serieData)
+            throw new Error(
+              'Falha ao ler dados da série ao tentar montar coleção de recentes.',
+            );
+
+          return {
+            ...this.mountSerieInCollection(serieData),
+          };
+        }),
+      );
 
       const update = {
-        ...collection,
-        series: updatedSeries,
+        ...recentesCollection,
+        series: seriesForCollection,
       };
 
       await this.updateCollection(update);
       return true;
-    } catch (e) {
-      console.error('Erro ao adicionar aos recentes:', e);
+    } catch {
+      console.error(
+        'Erro  ao reconstruir coleção de recentes com base no histórico de leitura.',
+      );
       return false;
     }
   }
 
-  public async getLastRead(): Promise<Collection | null> {
+  public async getRecentCollection(): Promise<Collection | null> {
     try {
       return await this.findCollectionByName('recentes');
     } catch (e) {
       console.error('Erro ao obter a coleção de recentes: ', e);
       return null;
     }
-  }
-
-  private async findCollectionByName(name: string): Promise<Collection | null> {
-    const collections = await this.getCollections();
-    if (!collections) return null;
-
-    const normalizedSearch = name.toLocaleLowerCase().trim();
-    return (
-      collections.find(
-        (col) => col.name.toLocaleLowerCase().trim() === normalizedSearch,
-      ) || null
-    );
   }
 
   public async quicklyCreate(name: string): Promise<boolean> {
@@ -161,9 +176,7 @@ export default class CollectionManager extends LibrarySystem {
       if (!data) return false;
 
       const rawName = name.toLocaleLowerCase().trim();
-      const exist = data.some(
-        (col) => col.name.toLocaleLowerCase().trim() == rawName,
-      );
+      const exist = data.some((col) => col.name.toLocaleLowerCase().trim() == rawName);
 
       if (exist) {
         return false;
@@ -172,7 +185,7 @@ export default class CollectionManager extends LibrarySystem {
       const newCollection = this.mountEmptyCollection(name);
       data.push(newCollection);
 
-      await fse.writeJson(this.appCollections, data, { spaces: 2 });
+      await this.writer.write(this.appCollections, data);
       return true;
     } catch (e) {
       console.error('Erro ao criar nova coleção: ', e);
@@ -189,9 +202,7 @@ export default class CollectionManager extends LibrarySystem {
       const collection = await this.getCollection(collectionName);
       if (!collection) return false;
 
-      const serieExists = collection.series.some(
-        (serie) => serie.id === serieId,
-      );
+      const serieExists = collection.series.some((serie) => serie.id === serieId);
 
       if (!serieExists) return false;
 
@@ -209,18 +220,14 @@ export default class CollectionManager extends LibrarySystem {
     }
   }
 
-  public async createCollection(
-    collection: CreateCollectionDTO,
-  ): Promise<boolean> {
+  public async createCollection(collection: CreateCollectionDTO): Promise<boolean> {
     try {
       const data = await this.getCollections();
       if (!data) return false;
 
       const rawName = collection.name.toLocaleLowerCase().trim();
 
-      const exist = data.some(
-        (col) => col.name.toLocaleLowerCase().trim() === rawName,
-      );
+      const exist = data.some((col) => col.name.toLocaleLowerCase().trim() === rawName);
 
       if (exist || !rawName) {
         return false;
@@ -228,7 +235,7 @@ export default class CollectionManager extends LibrarySystem {
 
       // 🔹 Monta as séries primeiro
       collection.series = await Promise.all(
-        collection.series.map((s) => this.mountSerieInCollection(s)),
+        collection.series.map((s) => this.auxiliarMountSerieInCollection(s)),
       );
 
       // 🔹 Resolve coverImage se for baseada em série
@@ -251,7 +258,7 @@ export default class CollectionManager extends LibrarySystem {
       const newCollection = this.mountCollection(collection);
       data.push(newCollection);
 
-      await fse.writeJson(this.appCollections, data, { spaces: 2 });
+      await this.writer.write(this.appCollections, data);
 
       return true;
     } catch (e) {
@@ -261,6 +268,7 @@ export default class CollectionManager extends LibrarySystem {
   }
 
   // Cria a partir das diferenças
+
   public async diffCreate(serieCollections: string[]): Promise<boolean> {
     try {
       const notExist = await this.notExist(serieCollections);
@@ -281,13 +289,20 @@ export default class CollectionManager extends LibrarySystem {
   // Apagar coleção
   public async removeCollection(name: string): Promise<boolean> {
     try {
+      const normalizedName = name.toLocaleLowerCase().trim();
+
+      if (normalizedName === 'favoritos' || normalizedName === 'recentes') {
+        console.warn(`Tentativa de remover a coleção protegida: ${name}`);
+        return false;
+      }
+
       const data = await this.getCollections();
 
       if (!data) return false;
 
       const updatedData = data.filter((col) => col.name !== name);
 
-      await fse.writeJson(this.appCollections, updatedData, { spaces: 2 });
+      await this.writer.write(this.appCollections, updatedData);
       return true;
     } catch (e) {
       console.error('Falha ao remover a coleção: ', e);
@@ -357,7 +372,7 @@ export default class CollectionManager extends LibrarySystem {
           : col,
       );
 
-      await fse.writeJson(this.appCollections, updatedData, { spaces: 2 });
+      await this.writer.write(this.appCollections, updatedData);
       return true;
     } catch (error) {
       console.error('Falha em atualizar coleção:', error);
@@ -383,9 +398,7 @@ export default class CollectionManager extends LibrarySystem {
       );
 
       if (collectionsToUpdate.length === 0) {
-        console.warn(
-          'A série não existe em nenhuma das coleções selecionadas.',
-        );
+        console.warn('A série não existe em nenhuma das coleções selecionadas.');
         return false;
       }
 
@@ -437,8 +450,7 @@ export default class CollectionManager extends LibrarySystem {
         return false;
       }
 
-      const description =
-        serie.description || `Série ${serie.name} sem descrição local.`;
+      const description = serie.description || `Série ${serie.name} sem descrição local.`;
 
       const positionedSerie = {
         ...serie,
@@ -476,8 +488,7 @@ export default class CollectionManager extends LibrarySystem {
 
       const targetCollections = data.filter(
         (col) =>
-          collectionSet.has(col.name) &&
-          !col.series.some((s) => s.id === serie.id),
+          collectionSet.has(col.name) && !col.series.some((s) => s.id === serie.id),
       );
 
       if (targetCollections.length === 0) {
@@ -487,10 +498,7 @@ export default class CollectionManager extends LibrarySystem {
       const updates = targetCollections.map((col) => {
         const updatedCol = {
           ...col,
-          series: [
-            ...col.series,
-            { ...serie, position: col.series.length + 1 },
-          ],
+          series: [...col.series, { ...serie, position: col.series.length + 1 }],
           updatedAt: new Date().toISOString(),
         };
 
@@ -506,10 +514,7 @@ export default class CollectionManager extends LibrarySystem {
     }
   }
 
-  public async initializeCollections(
-    serie: Literatures,
-    serieCollections: string[],
-  ) {
+  public async initializeCollections(serie: Literatures, serieCollections: string[]) {
     try {
       const allExist = await this.diffCreate(serieCollections);
 
@@ -522,8 +527,7 @@ export default class CollectionManager extends LibrarySystem {
 
       const targetCollections = data.filter(
         (col) =>
-          collectionSet.has(col.name) &&
-          !col.series.some((s) => s.id === serie.id),
+          collectionSet.has(col.name) && !col.series.some((s) => s.id === serie.id),
       );
 
       if (targetCollections.length === 0) {
@@ -549,7 +553,6 @@ export default class CollectionManager extends LibrarySystem {
     }
   }
 
-  // Retorna as que não existem
   public async notExist(collections: string[]): Promise<string[] | []> {
     try {
       const data = await this.getCollections();
@@ -566,6 +569,18 @@ export default class CollectionManager extends LibrarySystem {
       console.error('Falha em verificar quais colecoes ainda nao existem: ', e);
       return [];
     }
+  }
+
+  private async findCollectionByName(name: string): Promise<Collection | null> {
+    const collections = await this.getCollections();
+    if (!collections) return null;
+
+    const normalizedSearch = name.toLocaleLowerCase().trim();
+    return (
+      collections.find(
+        (col) => col.name.toLocaleLowerCase().trim() === normalizedSearch,
+      ) || null
+    );
   }
 
   public async collectionControl(
@@ -598,33 +613,15 @@ export default class CollectionManager extends LibrarySystem {
 
   public async mountSerieInfo(dataPath: string): Promise<SerieInCollection> {
     try {
-      const serie = (await this.storageManager.readSerieData(
-        dataPath,
-      )) as Literatures;
+      const serie = await this.storageManager.readSerieData(dataPath);
 
-      return this.toSerieInCollection(serie);
+      if (!serie) throw new Error(`Dados da série não encontrados `);
+
+      return this.mountSerieInCollection(serie);
     } catch (e) {
       console.error('Erro ao montar informações da série:', e);
       throw e;
     }
-  }
-
-  private toSerieInCollection(serie: Literatures | TieIn): SerieInCollection {
-    return {
-      id: serie.id,
-      name: serie.name,
-      coverImage: serie.coverImage,
-      archivesPath: serie.archivesPath,
-      description: serie.description || '',
-      backgroundImage: null,
-      status: serie.metadata.status,
-      rating: serie.metadata.rating || 0,
-      totalChapters: serie.totalChapters,
-      recommendedBy: serie.metadata.recommendedBy || '',
-      originalOwner: serie.metadata.originalOwner || '',
-      addAt: new Date().toISOString(),
-      position: 0,
-    };
   }
 
   public async clearCollection(collectionName: string): Promise<boolean> {
@@ -637,10 +634,7 @@ export default class CollectionManager extends LibrarySystem {
     }
   }
 
-  public async hasSerie(
-    serieId: number,
-    collectionName: string,
-  ): Promise<boolean> {
+  public async hasSerie(serieId: number, collectionName: string): Promise<boolean> {
     try {
       const collection = await this.getCollection(collectionName);
       return collection?.series.some((serie) => serie.id === serieId) ?? false;
@@ -671,7 +665,7 @@ export default class CollectionManager extends LibrarySystem {
         return { ...col, series: updatedSeries, updatedAt: now };
       });
 
-      await fse.writeJson(this.appCollections, updatedData, { spaces: 2 });
+      await this.writer.write(this.appCollections, updatedData);
       return true;
     } catch (e) {
       console.error('Falha em atualizar dados da série nas coleções: ', e);
@@ -705,17 +699,41 @@ export default class CollectionManager extends LibrarySystem {
     };
   }
 
-  private async mountSerieInCollection(
-    serie: SerieInCollection,
+  private async mountSerieInCollection(serie: graphSerie): Promise<SerieInCollection> {
+    return {
+      id: serie.id,
+      name: serie.name,
+      originalOwner: serie.metadata.originalOwner || '',
+      rating: serie.metadata.rating || 0,
+      recommendedBy: serie.metadata.recommendedBy || '',
+      status: serie.metadata.status,
+      totalChapters: serie.totalChapters,
+      backgroundImage: null,
+      description: serie.description || '',
+      coverImage: serie.coverImage,
+      archivesPath: serie.archivesPath,
+      addAt: new Date().toISOString(),
+      position: 0,
+    };
+  }
+
+  private async auxiliarMountSerieInCollection(
+    frontendSerie: SerieInCollection,
   ): Promise<SerieInCollection> {
-    const dataPath = await this.fileManager.getDataPath(serie.name);
+    const dataPath = await this.fileManager.getDataPath(frontendSerie.name);
+
     const serieData = await this.storageManager.readSerieData(dataPath);
 
-    if (!serieData) throw new Error(`Dados não encontrados para a série: ${serie.name}`);
+    if (!serieData) {
+      throw new Error(
+        `Dados não encontrados para a série no disco: ${frontendSerie.name}`,
+      );
+    }
 
     return {
-      ...serie,
-      coverImage: serieData.coverImage,
+      ...this.mountSerieInCollection(serieData),
+      backgroundImage: frontendSerie.backgroundImage || null,
+      position: frontendSerie.position,
     };
   }
 

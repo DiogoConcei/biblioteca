@@ -1,19 +1,18 @@
 import path from 'path';
 
-import FileManager from './FileManager';
+import FileManager from '../FileManager';
 import CollectionManager from './CollectionManager';
-import ImageManager from './ImageManager';
-import storageManager from './StorageManager';
-import { Manga, MangaChapter } from '../types/manga.interfaces';
-import { SerieForm } from '../../src/types/series.interfaces';
-import GraphSerie from './abstract/GraphSerie';
-import PdfManager from './PdfManager';
-import ArchiveManager from './ArchiveManager';
+import ImageManager from '../processing/ImageManager';
+import storageManager from '../StorageManager';
+import { Manga, MangaChapter } from '../../types/manga.interfaces';
+import { SerieForm } from '../../../src/shared/types/series.interfaces';
+import GraphSerie from '../abstract/GraphSerie';
+import PdfManager from '../processing/PdfManager';
+import ArchiveManager from '../processing/ArchiveManager';
 
 export default class MangaManager extends GraphSerie<Manga, MangaChapter> {
   protected readonly fileManager: FileManager = new FileManager();
-  protected readonly collectionManager: CollectionManager =
-    new CollectionManager();
+  protected readonly collectionManager: CollectionManager = new CollectionManager();
 
   protected readonly imageManager: ImageManager = new ImageManager();
   protected readonly storageManager = storageManager;
@@ -49,6 +48,7 @@ export default class MangaManager extends GraphSerie<Manga, MangaChapter> {
 
     return {
       id: 0,
+      order: 0,
       serieName: serieName,
       name: fileName,
       sanitizedName: '',
@@ -61,6 +61,11 @@ export default class MangaManager extends GraphSerie<Manga, MangaChapter> {
         lastPageRead: 0,
         favoritePage: 0,
       },
+      chapterNumber: {
+        label: '',
+        value: 0,
+      },
+      coverImage: '',
     };
   }
 
@@ -113,20 +118,14 @@ export default class MangaManager extends GraphSerie<Manga, MangaChapter> {
 
   private async mountEmptyManga(serie: SerieForm): Promise<Manga> {
     const nextId = await this.consumeNextSerieId();
-    const [, totalChapters] = await this.fileManager.searchChapters(
-      serie.oldPath,
-    );
+    const [, totalChapters] = await this.fileManager.searchChapters(serie.oldPath);
 
     return {
       id: nextId,
       name: serie.name,
       sanitizedName: serie.sanitizedName,
       archivesPath: path.join(this.userLibrary, serie.name),
-      chaptersPath: path.join(
-        this.imagesFolder,
-        serie.literatureForm,
-        serie.name,
-      ),
+      chaptersPath: path.join(this.imagesFolder, serie.literatureForm, serie.name),
       dataPath: path.join(this.mangasData, `${serie.name}.json`),
       coverImage: serie.cover_path,
       totalChapters,

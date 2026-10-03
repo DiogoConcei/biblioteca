@@ -83,7 +83,13 @@ async function ensureAppFolders() {
     path.join(storageFolder, 'data store', 'images files', 'book'),
     path.join(storageFolder, 'data store', 'images files', 'comic'),
     path.join(storageFolder, 'data store', 'images files', 'manga'),
-    path.join(storageFolder, 'data store', 'images files', 'showcase images', 'thumbnails'),
+    path.join(
+      storageFolder,
+      'data store',
+      'images files',
+      'showcase images',
+      'thumbnails',
+    ),
     path.join(storageFolder, 'data store', 'images files', 'dinamic images'),
   ];
 
@@ -94,6 +100,12 @@ async function ensureAppFolders() {
   const configFolder = path.join(storageFolder, 'config', 'app');
   const configJsonPath = path.join(configFolder, 'config.json');
   const collectionsJsonPath = path.join(configFolder, 'appCollections.json');
+  const historyJsonPath = path.join(
+    storageFolder,
+    'data store',
+    'json files',
+    'history.json',
+  );
 
   const fileWrites = [];
 
@@ -136,6 +148,19 @@ async function ensureAppFolders() {
             updatedAt: new Date().toISOString(),
           },
         ],
+        { spaces: 2 },
+      ),
+    );
+  }
+
+  if (!fse.existsSync(historyJsonPath)) {
+    fileWrites.push(
+      fse.writeJson(
+        historyJsonPath,
+        {
+          summaries: [],
+          events: [],
+        }, // Estrutura inicial obedecendo à interface HistoryFile
         { spaces: 2 },
       ),
     );

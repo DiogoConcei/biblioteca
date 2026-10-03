@@ -4,8 +4,8 @@ import { promisify } from 'util';
 import { exec } from 'child_process';
 import { randomBytes } from 'crypto';
 
-import LibrarySystem from './abstract/LibrarySystem';
-import FileManager from './FileManager';
+import LibrarySystem from '../abstract/LibrarySystem';
+import FileManager from '../FileManager';
 
 interface ExecError extends Error {
   code: number;
@@ -18,10 +18,7 @@ export default class ArchiveManager extends LibrarySystem {
   private readonly SEVEN_ZIP_PATH = 'C:\\Program Files\\7-Zip\\7z';
   private readonly execAsync = promisify(exec);
 
-  public async extractWith7zip(
-    inputFile: string,
-    outputDir: string,
-  ): Promise<void> {
+  public async extractWith7zip(inputFile: string, outputDir: string): Promise<void> {
     try {
       await fse.mkdir(outputDir, { recursive: true });
       const extractCmd = `"${this.SEVEN_ZIP_PATH}" x "${inputFile}" -o"${outputDir}" -y`;
@@ -60,9 +57,7 @@ export default class ArchiveManager extends LibrarySystem {
       await fse.mkdirp(outputDir);
       console.log('📂 extractCoverWith7zip: garantido outputDir:', outputDir);
 
-      console.log(
-        '📄 extractCoverWith7zip: listando conteúdo do arquivo (7z l)...',
-      );
+      console.log('📄 extractCoverWith7zip: listando conteúdo do arquivo (7z l)...');
       const { stdout } = await this.execAsync(
         `"${this.SEVEN_ZIP_PATH}" l "${inputFile}"`,
       );
@@ -90,10 +85,7 @@ export default class ArchiveManager extends LibrarySystem {
         return '';
       }
 
-      console.log(
-        '🎯 extractCoverWith7zip: candidateName selecionado:',
-        candidateName,
-      );
+      console.log('🎯 extractCoverWith7zip: candidateName selecionado:', candidateName);
 
       const candidatePath = filesInArchive.find(
         (f) => path.basename(f) === candidateName,
@@ -104,16 +96,11 @@ export default class ArchiveManager extends LibrarySystem {
           '❌ extractCoverWith7zip: candidato encontrado, mas path interno não foi localizado no listing:',
           candidateName,
         );
-        throw new Error(
-          'Candidato encontrado, mas path interno não localizado.',
-        );
+        throw new Error('Candidato encontrado, mas path interno não localizado.');
       }
 
       const normalizedCandidate = path.normalize(candidatePath);
-      console.log(
-        '🔁 extractCoverWith7zip: normalized candidate:',
-        normalizedCandidate,
-      );
+      console.log('🔁 extractCoverWith7zip: normalized candidate:', normalizedCandidate);
 
       if (normalizedCandidate.startsWith('..')) {
         console.error(
@@ -184,10 +171,7 @@ export default class ArchiveManager extends LibrarySystem {
       }
 
       await fse.move(extractedPath, finalPath, { overwrite: true });
-      console.log(
-        '✅ extractCoverWith7zip: arquivo movido para finalPath:',
-        finalPath,
-      );
+      console.log('✅ extractCoverWith7zip: arquivo movido para finalPath:', finalPath);
 
       const extractedDir = path.dirname(extractedPath);
       if (extractedDir !== outputDir) {
@@ -198,10 +182,7 @@ export default class ArchiveManager extends LibrarySystem {
             extractedDir,
           );
           await fse.remove(extractedDir);
-          console.log(
-            '✅ extractCoverWith7zip: subdiretório removido:',
-            extractedDir,
-          );
+          console.log('✅ extractCoverWith7zip: subdiretório removido:', extractedDir);
         } else {
           console.log(
             'ℹ️ extractCoverWith7zip: subdiretório contém outros arquivos, não remover:',
@@ -229,24 +210,17 @@ export default class ArchiveManager extends LibrarySystem {
     }
   }
 
-  public async safeExtract(
-    inputFile: string,
-    outputPath: string,
-  ): Promise<string> {
+  public async safeExtract(inputFile: string, outputPath: string): Promise<string> {
     const tempSuffix = `${Date.now()}-${randomBytes(2).toString('hex')}`;
     const tempDir = path.join(outputPath, `__7z_extract_tmp_${tempSuffix}`);
 
     try {
-      console.log(
-        `🔍 safeExtract: iniciando extração segura para arquivo: ${inputFile}`,
-      );
+      console.log(`🔍 safeExtract: iniciando extração segura para arquivo: ${inputFile}`);
       console.log(`📂 safeExtract: diretório temporário: ${tempDir}`);
 
       await fse.mkdirp(tempDir);
 
-      console.log(
-        '🧰 safeExtract: executando extractWith7zip para pasta temporária...',
-      );
+      console.log('🧰 safeExtract: executando extractWith7zip para pasta temporária...');
       await this.extractWith7zip(inputFile, tempDir);
       console.log('✅ safeExtract: extração inicial concluída em:', tempDir);
 
@@ -263,22 +237,18 @@ export default class ArchiveManager extends LibrarySystem {
           brokenPath,
         );
         await this.fixComicDir(brokenPath, tempDir);
-        console.log(
-          '✅ safeExtract: correção de estrutura aninhada concluída.',
-        );
+        console.log('✅ safeExtract: correção de estrutura aninhada concluída.');
       } else {
         console.log(
           `🔎 safeExtract: estrutura verificada. dirs=${dirs.length} imageFilesAtRoot=${imageFiles.length}`,
         );
       }
 
-      const finalEntries = (
-        await fse.readdir(tempDir, { withFileTypes: true })
-      ).map((file) => path.join(tempDir, file.name));
-
-      console.log(
-        `🔎 safeExtract: total de entradas no temp: ${finalEntries.length}`,
+      const finalEntries = (await fse.readdir(tempDir, { withFileTypes: true })).map(
+        (file) => path.join(tempDir, file.name),
       );
+
+      console.log(`🔎 safeExtract: total de entradas no temp: ${finalEntries.length}`);
 
       const cover = this.fileManager.findFirstCoverFile(finalEntries);
 
@@ -294,9 +264,7 @@ export default class ArchiveManager extends LibrarySystem {
       console.log('🎯 safeExtract: candidato a capa encontrado:', cover);
 
       const parsed = path.parse(cover);
-      const newName = this.fileManager
-        .sanitizeImageName(parsed.name)
-        .concat(parsed.ext);
+      const newName = this.fileManager.sanitizeImageName(parsed.name).concat(parsed.ext);
       const destDir = path.resolve(outputPath);
       const destPath = path.join(destDir, newName);
 
@@ -310,9 +278,7 @@ export default class ArchiveManager extends LibrarySystem {
         await fse.remove(destPath);
       }
 
-      console.log(
-        `➡️ safeExtract: movendo capa de "${cover}" -> "${destPath}"`,
-      );
+      console.log(`➡️ safeExtract: movendo capa de "${cover}" -> "${destPath}"`);
       await fse.move(cover, destPath, { overwrite: true });
       console.log('✅ safeExtract: capa movida com sucesso:', destPath);
 
@@ -386,10 +352,7 @@ export default class ArchiveManager extends LibrarySystem {
     return files;
   }
 
-  public async fixComicDir(
-    brokenPath: string,
-    correctPath: string,
-  ): Promise<string[]> {
+  public async fixComicDir(brokenPath: string, correctPath: string): Promise<string[]> {
     const moved: string[] = [];
 
     async function walk(dir: string) {
@@ -438,10 +401,7 @@ export default class ArchiveManager extends LibrarySystem {
 
       const exists = await fse.pathExists(resolved);
       if (!exists) {
-        console.log(
-          '🧹 cleanupExtractedCover: nada a remover (não existe):',
-          resolved,
-        );
+        console.log('🧹 cleanupExtractedCover: nada a remover (não existe):', resolved);
         return;
       }
 
@@ -453,10 +413,7 @@ export default class ArchiveManager extends LibrarySystem {
 
       await fse.remove(resolved);
 
-      console.log(
-        '✅ cleanupExtractedCover: diretório removido com sucesso:',
-        resolved,
-      );
+      console.log('✅ cleanupExtractedCover: diretório removido com sucesso:', resolved);
     } catch (err) {
       console.error(
         '❌ cleanupExtractedCover: erro ao limpar diretório:',

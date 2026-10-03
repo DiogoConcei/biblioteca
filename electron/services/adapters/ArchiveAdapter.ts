@@ -4,7 +4,7 @@ import fse from 'fs-extra';
 import { MediaAdapter, MediaContent } from '../../types/media.interfaces';
 import LibrarySystem from '../abstract/LibrarySystem';
 import ArchiveManager from '../ArchiveManager';
-import ImageManager from '../ImageManager';
+import ImageManager from '../processing/ImageManager';
 
 export default class ArchiveAdapter extends LibrarySystem implements MediaAdapter {
   private readonly archiveManager = new ArchiveManager();
@@ -16,33 +16,37 @@ export default class ArchiveAdapter extends LibrarySystem implements MediaAdapte
     if (isDirectory) {
       const files = await fse.readdir(chapterPath);
       const images = files
-        .filter(f => /\.(jpe?g|png|webp|gif)$/i.test(f))
+        .filter((f) => /\.(jpe?g|png|webp|gif)$/i.test(f))
         .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
-        .map(f => this.imageManager.getMediaUrl(path.join(chapterPath, f)));
+        .map((f) => this.imageManager.getMediaUrl(path.join(chapterPath, f)));
 
       return {
         type: 'comic',
         resources: images,
-        totalResources: images.length
+        totalResources: images.length,
       };
     }
 
     // Para CBZ/CBR (Simulação de extração para o disco por enquanto, mantendo o padrão do ArchiveManager)
-    const outputDir = path.join(this.baseStorageFolder, 'temp_extracted', path.basename(chapterPath));
+    const outputDir = path.join(
+      this.baseStorageFolder,
+      'temp_extracted',
+      path.basename(chapterPath),
+    );
     if (!(await fse.pathExists(outputDir))) {
       await this.archiveManager.extractWith7zip(chapterPath, outputDir);
     }
 
     const files = await fse.readdir(outputDir);
     const images = files
-      .filter(f => /\.(jpe?g|png|webp|gif)$/i.test(f))
+      .filter((f) => /\.(jpe?g|png|webp|gif)$/i.test(f))
       .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
-      .map(f => this.imageManager.getMediaUrl(path.join(outputDir, f)));
+      .map((f) => this.imageManager.getMediaUrl(path.join(outputDir, f)));
 
     return {
       type: 'comic',
       resources: images,
-      totalResources: images.length
+      totalResources: images.length,
     };
   }
 

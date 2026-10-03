@@ -41,6 +41,10 @@ export default abstract class LibrarySystem {
     return path.join(this.dataStorage, 'json files');
   }
 
+  protected get historyFile(): string {
+    return path.join(this.dataStorage, 'json files', 'history.json');
+  }
+
   protected get appConfigFolder(): string {
     return path.join(this.configFolder, 'app');
   }
@@ -114,8 +118,7 @@ export default abstract class LibrarySystem {
       if (!(await fse.pathExists(dirPath))) return [];
 
       const contents = await fse.readdir(dirPath, { withFileTypes: true });
-      const filter =
-        /\.(jpe?g|png|gif|bmp|webp|tiff|pdf|cbz|cbr|md|markdown|json)$/i;
+      const filter = /\.(jpe?g|png|gif|bmp|webp|tiff|pdf|cbz|cbr|md|markdown|json)$/i;
       const filePaths = contents
         .filter((content) => content.isFile() && filter.test(content.name))
         .map((file) => path.join(dirPath, file.name));
@@ -157,11 +160,7 @@ export default abstract class LibrarySystem {
         data.metadata.global_id = newId;
       }
 
-      await fse.writeFile(
-        this.configFilePath,
-        JSON.stringify(data, null, 2),
-        'utf-8',
-      );
+      await fse.writeFile(this.configFilePath, JSON.stringify(data, null, 2), 'utf-8');
     } catch (err) {
       console.error(`❌ Erro ao atualizar global_id:`, err);
       throw err;

@@ -1,11 +1,11 @@
 import fse from 'fs-extra';
 import path from 'path';
 
-import LibrarySystem from './abstract/LibrarySystem.ts';
-import storageManager from './StorageManager.ts';
-import FileManager from './FileManager.ts';
-import { Literatures } from '../types/electron-auxiliar.interfaces.ts';
-import { Comic } from '../types/comic.interfaces.ts';
+import LibrarySystem from '../abstract/LibrarySystem.ts';
+import storageManager from '../StorageManager.ts';
+import FileManager from '../FileManager.ts';
+import { Literatures } from '../../types/electron-auxiliar.interfaces.ts';
+import { Comic } from '../../types/comic.interfaces.ts';
 
 export default class MigrationManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -15,9 +15,6 @@ export default class MigrationManager extends LibrarySystem {
     super();
   }
 
-  /**
-   * Padroniza o campo literatureForm para 'Books' em todos os arquivos JSON de livros existentes.
-   */
   public async clearBookForm(): Promise<void> {
     try {
       const booksPath = this.booksData;
@@ -93,10 +90,34 @@ export default class MigrationManager extends LibrarySystem {
     }
   }
 
+  public async fixChapterIds(dataPath: string): Promise<boolean> {
+    const serie = await this.storageManager.readSerieData(dataPath);
+    let order = 1.0;
+
+    if (!serie?.chapters) return false;
+
+    const chapters = await Promise.all(
+      serie.chapters.map((ch) => {
+        let parsed = this.fileManager.extractSerieInfo(ch.name);
+
+        return {
+          ...ch,
+          order: order++,
+          chapterNumber: {
+            label: ch.name,
+            value: parsed.chapter,
+          },
+        };
+      }),
+    );
+
+    serie.chapters = chapters;
+    await this.storageManager.writeData(serie);
+    return true;
+  }
+
   public async fixChildSeriePaths(dataPath: string): Promise<void> {
-    const serieData = (await this.storageManager.readSerieData(
-      dataPath,
-    )) as Comic;
+    const serieData = (await this.storageManager.readSerieData(dataPath)) as Comic;
     const childSeries = serieData.childSeries;
 
     if (!serieData.metadata.compiledComic || !childSeries) {
@@ -106,10 +127,7 @@ export default class MigrationManager extends LibrarySystem {
     const archivesPath = serieData.archivesPath;
 
     for (const child of childSeries) {
-      const result = await this.fileManager.findPath(
-        archivesPath,
-        child.serieName,
-      );
+      const result = await this.fileManager.findPath(archivesPath, child.serieName);
 
       if (result) {
         child.archivesPath = result;
@@ -119,3 +137,12 @@ export default class MigrationManager extends LibrarySystem {
     await this.storageManager.writeData(serieData);
   }
 }
+
+(async () => {
+  const migrationManager = new MigrationManager();
+  console.log(
+    await migrationManager.fixChapterIds(
+      'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Mangas\\Yu Yu Hakusho.json',
+    ),
+  );
+})();

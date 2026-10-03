@@ -2,7 +2,9 @@ import { graphChapter, graphSerie } from './electron-auxiliar.interfaces';
 import {
   LiteratureForm,
   ReadingStatus,
-} from '../../src/types/series.interfaces';
+  AutoBackupStatus,
+  PrivacyStatus,
+} from '../../src/shared/types/series.interfaces';
 
 export interface Manga extends graphSerie<MangaChapter> {
   name: string;
@@ -28,10 +30,10 @@ export interface Manga extends graphSerie<MangaChapter> {
     recommendedBy?: string;
     originalOwner?: string;
     lastDownload: number;
-    privacy: 'Publica' | 'Privada' | '';
+    privacy: PrivacyStatus;
     rating?: number;
     isFavorite: boolean;
-    autoBackup: 'Sim' | 'Não' | '';
+    autoBackup: AutoBackupStatus;
   };
   comments: string[];
   tags: string[];

@@ -1,10 +1,10 @@
 import path from 'path';
 import fse from 'fs-extra';
 
-import FileSystem from './abstract/LibrarySystem.ts';
+import FileSystem from '../abstract/LibrarySystem.ts';
 import { Collection } from '../../src/types/collections.interfaces.ts';
-import { Literatures } from '../types/electron-auxiliar.interfaces';
-import { TieIn } from '../types/comic.interfaces.ts';
+import { Literatures } from '../../types/electron-auxiliar.interfaces.ts';
+import { TieIn } from '../../types/comic.interfaces.ts';
 
 export default class ValidationManager extends FileSystem {
   constructor() {
@@ -16,9 +16,7 @@ export default class ValidationManager extends FileSystem {
     const seriesDir = await fse.readdir(this.userLibrary, {
       withFileTypes: true,
     });
-    const seriesName = seriesDir.map((seriesDir) =>
-      seriesDir.name.toLowerCase(),
-    );
+    const seriesName = seriesDir.map((seriesDir) => seriesDir.name.toLowerCase());
 
     for (const serieName of seriesName) {
       if (serieName === newSerieName) {
@@ -41,9 +39,7 @@ export default class ValidationManager extends FileSystem {
         collections = [];
       }
 
-      if (
-        collections.some((collection) => collection.name === collectionName)
-      ) {
+      if (collections.some((collection) => collection.name === collectionName)) {
         return false;
       }
 
@@ -75,10 +71,7 @@ export default class ValidationManager extends FileSystem {
         return false;
       }
     } catch (error) {
-      console.error(
-        `Erro ao verificar estado do capítulo ${chapterId}:`,
-        error,
-      );
+      console.error(`Erro ao verificar estado do capítulo ${chapterId}:`, error);
       return false;
     }
   }
@@ -88,12 +81,11 @@ export default class ValidationManager extends FileSystem {
       if (await this.isWebp(imagePath)) return false;
 
       const dinamicDir = path.join(this.imagesFolder, 'dinamic images');
-      const content = (
-        await fse.readdir(dinamicDir, { withFileTypes: true })
-      ).map((contentPath) => path.join(dinamicDir, contentPath.name));
+      const content = (await fse.readdir(dinamicDir, { withFileTypes: true })).map(
+        (contentPath) => path.join(dinamicDir, contentPath.name),
+      );
       const findImage = content.find(
-        (contentPath) =>
-          path.basename(contentPath) === path.basename(imagePath),
+        (contentPath) => path.basename(contentPath) === path.basename(imagePath),
       );
 
       if (findImage && fse.existsSync(findImage)) {

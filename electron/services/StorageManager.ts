@@ -1,8 +1,7 @@
 import fse from 'fs-extra';
 import path from 'path';
-import { isDeepStrictEqual } from 'node:util';
 
-import { SerieData, SerieEditForm } from '../../src/types/series.interfaces';
+import { SerieData, SerieEditForm } from '../../src/shared/types/series.interfaces';
 import { TieIn } from '../types/comic.interfaces';
 import {
   graphSerie,
@@ -25,8 +24,15 @@ export class StorageManager extends LibrarySystem {
   // Fila global de escrita para evitar corrupção
   private _writeQueue: Promise<void> = Promise.resolve();
 
+  private static instance: StorageManager;
+
   constructor() {
     super();
+  }
+
+  static getInstance(): StorageManager {
+    if (!StorageManager.instance) StorageManager.instance = new StorageManager();
+    return StorageManager.instance;
   }
 
   /**
@@ -114,9 +120,7 @@ export class StorageManager extends LibrarySystem {
   /**
    * Lê dados da série do disco ou cache.
    */
-  async readSerieData<T extends graphSerie>(
-    dataPath: string,
-  ): Promise<T | null> {
+  async readSerieData<T extends graphSerie>(dataPath: string): Promise<T | null> {
     // Consulta Cache
     if (this._seriesCache.has(dataPath)) {
       return this._seriesCache.get(dataPath) as T;
@@ -143,9 +147,9 @@ export class StorageManager extends LibrarySystem {
   /**
    * Alias para ler TieIn com cache.
    */
-  async readTieInData(dataPath: string): Promise<TieIn | null> {
-    return this.readSerieData<TieIn>(dataPath);
-  }
+  // async readTieInData(dataPath: string): Promise<TieIn | null> {
+  //   return this.readSerieData<TieIn>(dataPath);
+  // }
 
   /**
    * Deleta um capítulo e invalida o cache.
@@ -177,69 +181,67 @@ export class StorageManager extends LibrarySystem {
   /**
    * Seleciona dados de uma série, priorizando o cache.
    */
-  async selectSerieData<T extends Literatures | TieIn>(
-    serieName: string,
-    type?: 'Manga' | 'Quadrinho' | 'childSeries' | 'Books',
-  ): Promise<T> {
-    // Tenta encontrar no cache primeiro
-    for (const serie of this._seriesCache.values()) {
-      if (serie.name === serieName) return serie as T;
-    }
+  // async selectSerieData<T extends Literatures | TieIn>(
+  //   serieName: string,
+  //   type?: 'Manga' | 'Quadrinho' | 'childSeries' | 'Books',
+  // ): Promise<T> {
+  //   // Tenta encontrar no cache primeiro
+  //   for (const serie of this._seriesCache.values()) {
+  //     if (serie.name === serieName) return serie as T;
+  //   }
 
-    try {
-      let targetFolder: string;
+  //   try {
+  //     let targetFolder: string;
 
-      if (type) {
-        switch (type) {
-          case 'Manga':
-            targetFolder = this.mangasData;
-            break;
-          case 'Quadrinho':
-            targetFolder = this.comicsData;
-            break;
-          case 'Books':
-            targetFolder = this.booksData;
-            break;
-          case 'childSeries':
-            targetFolder = this.childSeriesData;
-            break;
-          default:
-            targetFolder = this.mangasData;
-        }
-      } else {
-        const allFolders = [
-          this.mangasData,
-          this.comicsData,
-          this.booksData,
-          this.childSeriesData,
-        ];
-        for (const folder of allFolders) {
-          const files = await this.fileManager.foundFiles(folder);
-          const found = files.find((f) => path.parse(f).name === serieName);
-          if (found) {
-            return await this.readSerieData<T>(found);
-          }
-        }
-        throw new Error(`Série não encontrada: ${serieName}`);
-      }
+  //     if (type) {
+  //       switch (type) {
+  //         case 'Manga':
+  //           targetFolder = this.mangasData;
+  //           break;
+  //         case 'Quadrinho':
+  //           targetFolder = this.comicsData;
+  //           break;
+  //         case 'Books':
+  //           targetFolder = this.booksData;
+  //           break;
+  //         case 'childSeries':
+  //           targetFolder = this.childSeriesData;
+  //           break;
+  //         default:
+  //           targetFolder = this.mangasData;
+  //       }
+  //     } else {
+  //       const allFolders = [
+  //         this.mangasData,
+  //         this.comicsData,
+  //         this.booksData,
+  //         this.childSeriesData,
+  //       ];
+  //       for (const folder of allFolders) {
+  //         const files = await this.fileManager.foundFiles(folder);
+  //         const found = files.find((f) => path.parse(f).name === serieName);
+  //         if (found) {
+  //           return await this.readSerieData<T>(found);
+  //         }
+  //       }
+  //       throw new Error(`Série não encontrada: ${serieName}`);
+  //     }
 
-      const seriesData = await this.fileManager.foundFiles(targetFolder);
-      const serieDataPath = seriesData.find(
-        (filePath) => path.parse(filePath).name === serieName,
-      );
+  //     const seriesData = await this.fileManager.foundFiles(targetFolder);
+  //     const serieDataPath = seriesData.find(
+  //       (filePath) => path.parse(filePath).name === serieName,
+  //     );
 
-      if (!serieDataPath) {
-        throw new Error(
-          `Nenhuma série encontrada com o nome: ${serieName} em ${type}`,
-        );
-      }
+  //     if (!serieDataPath) {
+  //       throw new Error(`Nenhuma série encontrada com o nome: ${serieName} em ${type}`);
+  //     }
 
-      return await this.readSerieData<T>(serieDataPath);
-    } catch (e) {
-      console.error(`Erro ao selecionar dados da série (${serieName}):`, e);
-      throw e;
-    }
-  }
+  //     return await this.readSerieData<T>(serieDataPath);
+  //   } catch (e) {
+  //     console.error(`Erro ao selecionar dados da série (${serieName}):`, e);
+  //     throw e;
+  //   }
+  // }
 
   /**
    * Retorna os dados simplificados para visualização (Home).
@@ -291,51 +293,46 @@ export class StorageManager extends LibrarySystem {
   /**
    * Atualiza campos de uma série (Write-Through).
    */
-  async patchSerie(data: SerieEditForm): Promise<Literatures | null> {
-    return this.enqueue(async () => {
-      const oldData = await this.readSerieData(data.dataPath);
-      if (!oldData) return null;
+  // async patchSerie(data: SerieEditForm): Promise<Literatures | null> {
+  //   return this.enqueue(async () => {
+  //     const oldData = await this.readSerieData(data.dataPath);
+  //     if (!oldData) return null;
 
-      const changedFields = Object.fromEntries(
-        (Object.keys(data) as (keyof SerieEditForm)[])
-          .filter((k) => data[k] !== (oldData as Record<string, unknown>)[k])
-          .map((k) => [k, data[k]]),
-      ) as Partial<SerieEditForm>;
+  //     const changedFields = Object.fromEntries(
+  //       (Object.keys(data) as (keyof SerieEditForm)[])
+  //         .filter((k) => data[k] !== (oldData as Record<string, unknown>)[k])
+  //         .map((k) => [k, data[k]]),
+  //     ) as Partial<SerieEditForm>;
 
-      const updated: Literatures = {
-        ...oldData,
-        ...changedFields,
-      } as Literatures;
+  //     const updated: Literatures = {
+  //       ...oldData,
+  //       ...changedFields,
+  //     } as Literatures;
 
-      if (updated.name !== oldData.name) {
-        await this.fileManager.moveFiles(oldData, updated);
-      }
+  //     if (updated.name !== oldData.name) {
+  //       await this.fileManager.moveFiles(oldData, updated);
+  //     }
 
-      await this.atomicWrite(updated.dataPath, updated);
+  //     await this.atomicWrite(updated.dataPath, updated);
 
-      // Sincroniza Cache
-      this._seriesCache.set(updated.dataPath, updated);
-      this.invalidateCache();
+  //     // Sincroniza Cache
+  //     this._seriesCache.set(updated.dataPath, updated);
+  //     this.invalidateCache();
 
-      return updated;
-    });
-  }
+  //     return updated;
+  //   });
+  // }
 
   /**
    * Persiste uma série no disco com suporte a troca de nome (Write-Through).
    */
-  async persistSerie(
-    oldData: Literatures,
-    updated: Literatures,
-  ): Promise<string> {
+  async persistSerie(oldData: Literatures, updated: Literatures): Promise<string> {
     return this.enqueue(async () => {
       const oldPath = oldData.dataPath;
       const dir = path.dirname(oldPath);
 
       const nameChanged = oldData.name !== updated.name;
-      const newPath = nameChanged
-        ? path.join(dir, `${updated.name}.json`)
-        : oldPath;
+      const newPath = nameChanged ? path.join(dir, `${updated.name}.json`) : oldPath;
 
       if (nameChanged && oldPath !== newPath) {
         await this.fileManager.moveFiles(oldData, updated);
@@ -369,27 +366,25 @@ export class StorageManager extends LibrarySystem {
     };
   }
 
-  buildUpdatedSerie(
-    oldData: Literatures,
-    newData: SerieEditForm,
-  ): { hasChanges: boolean; data: Literatures } {
-    const updated = { ...oldData } as Record<string, unknown>;
-    let hasChanges = false;
+  // buildUpdatedSerie(
+  //   oldData: Literatures,
+  //   newData: SerieEditForm,
+  // ): { hasChanges: boolean; data: Literatures } {
+  //   const updated = { ...oldData } as Record<string, unknown>;
+  //   let hasChanges = false;
 
-    for (const key of Object.keys(newData)) {
-      const newValue = (newData as Record<string, unknown>)[key];
-      const oldValue = (oldData as Record<string, unknown>)[key];
+  //   for (const key of Object.keys(newData)) {
+  //     const newValue = (newData as Record<string, unknown>)[key];
+  //     const oldValue = (oldData as Record<string, unknown>)[key];
 
-      if (!isDeepStrictEqual(oldValue, newValue)) {
-        updated[key] = newValue;
-        hasChanges = true;
-      }
-    }
+  //     if (!isDeepStrictEqual(oldValue, newValue)) {
+  //       updated[key] = newValue;
+  //       hasChanges = true;
+  //     }
+  //   }
 
-    return { hasChanges, data: updated as unknown as Literatures };
-  }
+  //   return { hasChanges, data: updated as unknown as Literatures };
+  // }
 }
 
-// Singleton: Instância única exportada
-const storageManager = new StorageManager();
-export default storageManager;
+export default StorageManager.getInstance();

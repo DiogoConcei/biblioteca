@@ -1,9 +1,9 @@
 import fse from 'fs-extra';
 import path from 'path';
 
-import LibrarySystem from './abstract/LibrarySystem.ts';
+import LibrarySystem from '../abstract/LibrarySystem.ts';
 import ConfigManager from './ConfigManager.ts';
-import { BackupMeta } from '../types/electron-auxiliar.interfaces.ts';
+import { BackupMeta } from '../../types/electron-auxiliar.interfaces.ts';
 
 export default class BackupManager extends LibrarySystem {
   private readonly configManager: ConfigManager;
@@ -27,10 +27,7 @@ export default class BackupManager extends LibrarySystem {
 
       await fse.copy(this.dataStorage, path.join(targetStorage, 'data store'));
       await fse.copy(this.configFolder, path.join(targetStorage, 'config'));
-      await fse.copy(
-        this.userLibrary,
-        path.join(targetStorage, 'user library'),
-      );
+      await fse.copy(this.userLibrary, path.join(targetStorage, 'user library'));
 
       const metadata: BackupMeta = {
         id: `backup-${timestamp}`,
@@ -90,8 +87,6 @@ export default class BackupManager extends LibrarySystem {
       (a, b) => +new Date(a.createdAt) - +new Date(b.createdAt),
     );
 
-    await Promise.all(
-      sorted.slice(0, removeCount).map((item) => fse.remove(item.path)),
-    );
+    await Promise.all(sorted.slice(0, removeCount).map((item) => fse.remove(item.path)));
   }
 }

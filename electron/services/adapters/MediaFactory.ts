@@ -1,9 +1,9 @@
 import path from 'path';
 
-import { MediaAdapter } from '../types/media.interfaces';
-import PdfAdapter from './adapters/PdfAdapter';
-import ArchiveAdapter from './adapters/ArchiveAdapter';
-import EpubAdapter from './adapters/EpubAdapter';
+import { MediaAdapter } from '../../types/media.interfaces';
+import PdfAdapter from './PdfAdapter';
+import ArchiveAdapter from './ArchiveAdapter';
+import EpubAdapter from './EpubAdapter';
 
 export default class MediaFactory {
   /**
@@ -24,7 +24,7 @@ export default class MediaFactory {
         return new ArchiveAdapter();
       default:
         // Se for uma pasta, assume que é um conjunto de imagens (comum em mangás)
-        return new ArchiveAdapter(); 
+        return new ArchiveAdapter();
     }
   }
 }

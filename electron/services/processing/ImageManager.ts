@@ -3,12 +3,12 @@ import sharp from 'sharp';
 import { fileTypeFromBuffer } from 'file-type';
 import fse from 'fs-extra';
 
-import LibrarySystem from './abstract/LibrarySystem';
-import FileManager from './FileManager';
+import LibrarySystem from '../abstract/LibrarySystem.ts';
+import FileManager from '../FileManager.ts';
 import ArchiveManager from './ArchiveManager.ts';
 import PdfManager from './PdfManager.ts';
-import { ComicEdition } from '../types/comic.interfaces.ts';
-import { StorageManager } from './StorageManager';
+import { ComicEdition } from '../../types/comic.interfaces.ts';
+import { StorageManager } from '../StorageManager.ts';
 
 export default class ImageManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -19,15 +19,12 @@ export default class ImageManager extends LibrarySystem {
 
   private async getStorageManager() {
     if (!this._storageManager) {
-      this._storageManager = (await import('./StorageManager')).default;
+      this._storageManager = (await import('../StorageManager.ts')).default;
     }
     return this._storageManager;
   }
 
-  public async normalizeImage(
-    imagePath: string,
-    finalPath: string,
-  ): Promise<string> {
+  public async normalizeImage(imagePath: string, finalPath: string): Promise<string> {
     const sanitizedPath = await this.fileManager.normalizeEncoding(imagePath);
     const normalizedPath = path.resolve(sanitizedPath);
     const parse = path.parse(imagePath);
@@ -48,11 +45,7 @@ export default class ImageManager extends LibrarySystem {
 
     try {
       sharp.cache(false);
-      const destPath = this.fileManager.buildImagePath(
-        finalPath,
-        parse.name,
-        '.webp',
-      );
+      const destPath = this.fileManager.buildImagePath(finalPath, parse.name, '.webp');
 
       const dir = path.dirname(destPath);
       await fse.ensureDir(dir);
@@ -85,9 +78,7 @@ export default class ImageManager extends LibrarySystem {
     }
   }
 
-  public async uploadBackground(
-    imagePath: string | null,
-  ): Promise<string | null> {
+  public async uploadBackground(imagePath: string | null): Promise<string | null> {
     if (!imagePath) return null;
 
     return await this.normalizeImage(imagePath, this.backgroundImages);
@@ -108,11 +99,7 @@ export default class ImageManager extends LibrarySystem {
     let imageInstance: sharp.Sharp | null = null;
 
     try {
-      const finalPath = this.fileManager.buildImagePath(
-        parse.dir,
-        parse.name,
-        '.webp',
-      );
+      const finalPath = this.fileManager.buildImagePath(parse.dir, parse.name, '.webp');
 
       sharp.cache(false);
       imageInstance = sharp(coverPath);
@@ -134,10 +121,7 @@ export default class ImageManager extends LibrarySystem {
 
   public getMediaUrl(absolutePath: string): string {
     if (!absolutePath) return '';
-    if (
-      absolutePath.startsWith('lib-media://') ||
-      absolutePath.startsWith('http')
-    ) {
+    if (absolutePath.startsWith('lib-media://') || absolutePath.startsWith('http')) {
       return absolutePath;
     }
     const encoded = Buffer.from(absolutePath, 'utf-8').toString('base64');
@@ -235,20 +219,14 @@ export default class ImageManager extends LibrarySystem {
     }
   }
 
-  public async generateCover(
-    inputFile: string,
-    outputPath: string,
-  ): Promise<string> {
+  public async generateCover(inputFile: string, outputPath: string): Promise<string> {
     if (!inputFile) return '';
     let resultCover: string = '';
     const ext = path.extname(inputFile);
 
     try {
       if (ext === '.pdf') {
-        resultCover = await this.pdfManager.extractCoverFromPdf(
-          inputFile,
-          outputPath,
-        );
+        resultCover = await this.pdfManager.extractCoverFromPdf(inputFile, outputPath);
       } else {
         try {
           resultCover = await this.archiveManager.extractCoverWith7zip(
@@ -264,10 +242,7 @@ export default class ImageManager extends LibrarySystem {
 
           await this.archiveManager.cleanupExtractedCover(outputPath);
 
-          resultCover = await this.archiveManager.safeExtract(
-            inputFile,
-            outputPath,
-          );
+          resultCover = await this.archiveManager.safeExtract(inputFile, outputPath);
         }
       }
 
@@ -282,10 +257,7 @@ export default class ImageManager extends LibrarySystem {
     }
   }
 
-  public async encodeImages(
-    filePaths: string[],
-    useProtocol = true,
-  ): Promise<string[]> {
+  public async encodeImages(filePaths: string[], useProtocol = true): Promise<string[]> {
     if (useProtocol) {
       return filePaths.map((filePath) => this.getMediaUrl(filePath));
     }
@@ -293,10 +265,7 @@ export default class ImageManager extends LibrarySystem {
     return Promise.all(filePaths.map((p) => this.readFileAsDataUrl(p)));
   }
 
-  public async encodeImage(
-    filePath: string,
-    useProtocol = true,
-  ): Promise<string> {
+  public async encodeImage(filePath: string, useProtocol = true): Promise<string> {
     if (useProtocol) return this.getMediaUrl(filePath);
     return this.readFileAsDataUrl(filePath);
   }
@@ -350,10 +319,7 @@ export default class ImageManager extends LibrarySystem {
     return await this.normalizeImage(coverPath, destPath);
   }
 
-  public async processCoverIfNeeded(
-    cover: string,
-    actualCover: string,
-  ): Promise<string> {
+  public async processCoverIfNeeded(cover: string, actualCover: string): Promise<string> {
     const isBase64 =
       typeof cover === 'string' &&
       cover.startsWith('data:image/') &&

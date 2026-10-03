@@ -1,7 +1,6 @@
-import { Status } from 'electron/types/electron-auxiliar.interfaces';
+import { ReadingStatus } from '../../shared/types/series.interfaces';
 
-export interface CreateCollectionDTO
-  extends Omit<Collection, 'createdAt' | 'updatedAt'> {
+export interface CreateCollectionDTO extends Omit<Collection, 'createdAt' | 'updatedAt'> {
   seriesCoverId?: number | null;
 }
 
@@ -13,7 +12,7 @@ export interface ScrapedMetadata {
   artists?: string[];
   genres?: string[];
   publishedAt?: string;
-  status?: 'ongoing' | 'completed' | 'unknown';
+  status?: ReadingStatus;
   coverUrl?: string;
   source: string;
   scrapedAt: string;
@@ -37,7 +36,7 @@ export interface SerieInCollection {
   coverImage: string;
   archivesPath: string;
   totalChapters: number;
-  status: Status;
+  status: ReadingStatus;
   backgroundImage?: string | null;
   recommendedBy: string;
   originalOwner: string;

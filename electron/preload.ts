@@ -1,12 +1,6 @@
 import { ipcRenderer, contextBridge, webUtils } from 'electron';
 
 import {
-  CreateCollectionDTO,
-  Collection,
-  SerieInCollection,
-  ScrapedMetadata,
-} from '../src/types/collections.interfaces.ts';
-import {
   APIResponse,
   viewData,
   LiteratureChapter,
@@ -16,16 +10,20 @@ import {
   SerieData,
   SerieEditForm,
   SerieForm,
-} from '../src/types/series.interfaces.ts';
+} from '../src/shared/types/series.interfaces.ts';
+import {
+  CreateCollectionDTO,
+  Collection,
+  SerieInCollection,
+  ScrapedMetadata,
+} from '../src/shared/types/collections.interfaces.ts';
 import { ComicTieIn, TieIn } from './types/comic.interfaces.ts';
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('electronAPI', {
   on(...args: Parameters<typeof ipcRenderer.on>) {
     const [channel, listener] = args;
-    return ipcRenderer.on(channel, (event, ...args) =>
-      listener(event, ...args),
-    );
+    return ipcRenderer.on(channel, (event, ...args) => listener(event, ...args));
   },
   off(...args: Parameters<typeof ipcRenderer.off>) {
     const [channel, ...omit] = args;
@@ -40,8 +38,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke(channel, ...omit);
   },
 
-  emit: (channel: string, ...args: unknown[]) =>
-    ipcRenderer.send(channel, ...args),
+  emit: (channel: string, ...args: unknown[]) => ipcRenderer.send(channel, ...args),
 
   windowAction: {
     minimize: () => ipcRenderer.invoke('window:minimize'),
@@ -74,11 +71,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     exportLogs: () => ipcRenderer.invoke('system:export-logs'),
     clearLogs: () => ipcRenderer.invoke('system:clear-logs'),
     createDebugBundle: () => ipcRenderer.invoke('system:create-debug-bundle'),
-    regenerateComicCovers: () =>
-      ipcRenderer.invoke('system:regenerate-comic-covers'),
+    regenerateComicCovers: () => ipcRenderer.invoke('system:regenerate-comic-covers'),
     pickImage: () => ipcRenderer.invoke('system:pick-image'),
-    getSeriesWithDownloads: () =>
-      ipcRenderer.invoke('system:get-series-with-downloads'),
+    getSeriesWithDownloads: () => ipcRenderer.invoke('system:get-series-with-downloads'),
   },
 
   lan: {
@@ -105,12 +100,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       literatureForm: string,
       dataPath: string,
     ): Promise<APIResponse<LiteratureChapter[]>> =>
-      ipcRenderer.invoke(
-        'chapter:upload-chapter',
-        files,
-        literatureForm,
-        dataPath,
-      ),
+      ipcRenderer.invoke('chapter:upload-chapter', files, literatureForm, dataPath),
   },
 
   series: {
@@ -121,28 +111,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
       literatureForm: string,
     ): Promise<APIResponse<Literatures | TieIn>> =>
       ipcRenderer.invoke('serie:get', serieName, literatureForm),
-    createTieIn: async (
-      childSerie: ComicTieIn,
-    ): Promise<APIResponse<string | null>> =>
+    createTieIn: async (childSerie: ComicTieIn): Promise<APIResponse<string | null>> =>
       ipcRenderer.invoke('serie:create-TieIn', childSerie),
     serieToCollection: async (
       dataPath: string,
       collectionName: string,
     ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('serie:add-to-collection', dataPath, collectionName),
-    ratingSerie: (
-      dataPath: string,
-      userRating: number,
-    ): Promise<APIResponse<void>> =>
+    ratingSerie: (dataPath: string, userRating: number): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('serie:rating', dataPath, userRating),
-    favoriteSerie: (
-      dataPath: string,
-    ): Promise<APIResponse<SerieInCollection>> =>
+    favoriteSerie: (dataPath: string): Promise<APIResponse<SerieInCollection>> =>
       ipcRenderer.invoke('serie:favorite', dataPath),
-    recentSerie: (
-      dataPath: string,
-      serie_name: string,
-    ): Promise<APIResponse<void>> =>
+    recentSerie: (dataPath: string, serie_name: string): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('serie:recent-read', dataPath, serie_name),
     updateSerie: (data: SerieEditForm): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('serie:update-serie', data),
@@ -193,37 +173,25 @@ contextBridge.exposeInMainWorld('electronAPI', {
   collections: {
     getCollections: async (): Promise<APIResponse<Collection[]>> =>
       ipcRenderer.invoke('collection:get-all'),
-    quicklyCreate: async (
-      collectionName: string,
-    ): Promise<APIResponse<boolean>> =>
+    quicklyCreate: async (collectionName: string): Promise<APIResponse<boolean>> =>
       ipcRenderer.invoke('collection:quickly-create', collectionName),
     createCollection: async (
       collection: CreateCollectionDTO,
-    ): Promise<APIResponse<void>> =>
-      ipcRenderer.invoke('collection:create', collection),
-    deleteCollection: async (
-      collectionName: string,
-    ): Promise<APIResponse<void>> =>
+    ): Promise<APIResponse<void>> => ipcRenderer.invoke('collection:create', collection),
+    deleteCollection: async (collectionName: string): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('collection:delete', collectionName),
     updateCollection: async (
       collectionName: string,
       payload: Partial<Pick<Collection, 'description' | 'coverImage' | 'name'>>,
     ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('collection:update', collectionName, payload),
-    removeSerie: async (
-      collectionName: string,
-      serieId: number,
-    ): Promise<boolean> =>
+    removeSerie: async (collectionName: string, serieId: number): Promise<boolean> =>
       ipcRenderer.invoke('collection:remove-serie', collectionName, serieId),
     reorderSeries: async (
       collectionName: string,
       orderedSeriesIds: number[],
     ): Promise<APIResponse<void>> =>
-      ipcRenderer.invoke(
-        'collection:reorder-series',
-        collectionName,
-        orderedSeriesIds,
-      ),
+      ipcRenderer.invoke('collection:reorder-series', collectionName, orderedSeriesIds),
     updateSerieBackground: async (
       collectionName: string,
       serieId: number,
@@ -261,43 +229,24 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   download: {
-    multipleDownload: async (
-      dataPath: string,
-      quantity: number,
-    ): Promise<boolean> =>
+    multipleDownload: async (dataPath: string, quantity: number): Promise<boolean> =>
       ipcRenderer.invoke('donwload:multiple', dataPath, quantity),
-    singleDownload: async (
-      dataPath: string,
-      chapter_id: number,
-    ): Promise<boolean> =>
+    singleDownload: async (dataPath: string, chapter_id: number): Promise<boolean> =>
       ipcRenderer.invoke('download:single', dataPath, chapter_id),
-    singleRemove: async (
-      dataPath: string,
-      chapter_id: number,
-    ): Promise<boolean> =>
+    singleRemove: async (dataPath: string, chapter_id: number): Promise<boolean> =>
       ipcRenderer.invoke('download:delete', dataPath, chapter_id),
 
-    readingDownload: async (
-      serieName: string,
-      chapter_id: number,
-    ): Promise<boolean> =>
+    readingDownload: async (serieName: string, chapter_id: number): Promise<boolean> =>
       ipcRenderer.invoke('download:reading', serieName, chapter_id),
-    checkDownload: async (
-      serieName: string,
-      chapter_id: number,
-    ): Promise<boolean> =>
+    checkDownload: async (serieName: string, chapter_id: number): Promise<boolean> =>
       ipcRenderer.invoke('download:check', serieName, chapter_id),
 
     // Novos métodos do DownloadManager
     getTasks: () => ipcRenderer.invoke('download:get-tasks'),
-    addTask: (taskData: string) =>
-      ipcRenderer.invoke('download:add-task', taskData),
-    pauseTask: (taskId: string) =>
-      ipcRenderer.invoke('download:pause-task', taskId),
-    resumeTask: (taskId: string) =>
-      ipcRenderer.invoke('download:resume-task', taskId),
-    cancelTask: (taskId: string) =>
-      ipcRenderer.invoke('download:cancel-task', taskId),
+    addTask: (taskData: string) => ipcRenderer.invoke('download:add-task', taskData),
+    pauseTask: (taskId: string) => ipcRenderer.invoke('download:pause-task', taskId),
+    resumeTask: (taskId: string) => ipcRenderer.invoke('download:resume-task', taskId),
+    cancelTask: (taskId: string) => ipcRenderer.invoke('download:cancel-task', taskId),
     clearCompleted: () => ipcRenderer.invoke('download:clear-completed'),
   },
 });

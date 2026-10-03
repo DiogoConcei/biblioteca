@@ -1,15 +1,15 @@
 import path from 'path';
 import fse from 'fs-extra';
 
-import FileManager from './FileManager';
-import StorageManagerInstance from './StorageManager';
+import FileManager from '../FileManager';
+import StorageManagerInstance from '../StorageManager';
 import CollectionManager from './CollectionManager';
-import { Book, BookChapter } from '../types/book.interfaces';
+import { Book, BookChapter } from '../../types/book.interfaces';
 import { LiteratureForm, SerieForm } from '../../src/types/series.interfaces';
-import GraphSerie from './abstract/GraphSerie';
-import ImageManager from './ImageManager';
-import PdfManager from './PdfManager';
-import ArchiveManager from './ArchiveManager';
+import GraphSerie from '../abstract/GraphSerie';
+import ImageManager from '../processing/ImageManager';
+import PdfManager from '../PdfManager';
+import ArchiveManager from '../ArchiveManager';
 
 /**
  * BookManager - Gerencia literaturas (Livros) de forma desacoplada.
@@ -17,8 +17,7 @@ import ArchiveManager from './ArchiveManager';
 export default class BookManager extends GraphSerie<Book, BookChapter> {
   protected readonly fileManager: FileManager = new FileManager();
   protected readonly storageManager = StorageManagerInstance;
-  protected readonly collectionManager: CollectionManager =
-    new CollectionManager();
+  protected readonly collectionManager: CollectionManager = new CollectionManager();
   protected readonly imageManager: ImageManager = new ImageManager();
   protected readonly pdfManager: PdfManager = new PdfManager();
   protected readonly archiveManager: ArchiveManager = new ArchiveManager();
@@ -33,9 +32,7 @@ export default class BookManager extends GraphSerie<Book, BookChapter> {
 
   async orderChapters(filesPath: string[]): Promise<string[]> {
     // Ordena os arquivos alfabeticamente/numéricamente
-    return filesPath.sort((a, b) =>
-      a.localeCompare(b, undefined, { numeric: true }),
-    );
+    return filesPath.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   }
 
   mountEmptyChapter(serieName: string, fileName: string): BookChapter {
@@ -85,9 +82,7 @@ export default class BookManager extends GraphSerie<Book, BookChapter> {
     }
 
     if (bookFiles.length === 0) {
-      throw new Error(
-        'Nenhum arquivo PDF ou EPUB encontrado no caminho selecionado.',
-      );
+      throw new Error('Nenhum arquivo PDF ou EPUB encontrado no caminho selecionado.');
     }
 
     const orderedFiles = await this.orderChapters(bookFiles);

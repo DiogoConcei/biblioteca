@@ -1,7 +1,7 @@
 import fse from 'fs-extra';
 import path from 'path';
 
-import LibrarySystem from './abstract/LibrarySystem';
+import LibrarySystem from '../abstract/LibrarySystem';
 import {
   CandidateMetadata,
   JikanItem,
@@ -11,7 +11,7 @@ import {
   CacheEntry,
   MetadataFetchInput,
   ScrapedMetadata,
-} from '../types/metadata.interfaces';
+} from '../../types/metadata.interfaces';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -23,15 +23,10 @@ export default class MetadataScraperService extends LibrarySystem {
 
   constructor() {
     super();
-    this.cachePath = path.join(
-      this.appConfigFolder,
-      'metadataScraperCache.json',
-    );
+    this.cachePath = path.join(this.appConfigFolder, 'metadataScraperCache.json');
   }
 
-  public async fetchMetadata(
-    input: MetadataFetchInput,
-  ): Promise<ScrapedMetadata | null> {
+  public async fetchMetadata(input: MetadataFetchInput): Promise<ScrapedMetadata | null> {
     const query = this.normalizeInput(input);
 
     if (!query.title) return null;
@@ -95,9 +90,7 @@ export default class MetadataScraperService extends LibrarySystem {
     return candidates;
   }
 
-  private async fetchFromJikan(
-    input: MetadataFetchInput,
-  ): Promise<CandidateMetadata[]> {
+  private async fetchFromJikan(input: MetadataFetchInput): Promise<CandidateMetadata[]> {
     const data = await this.safeRequest<{ data?: JikanItem[] }>(
       `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(input.title)}&limit=8`,
     );
@@ -125,17 +118,14 @@ export default class MetadataScraperService extends LibrarySystem {
         genres,
         publishedAt: item.published?.from || undefined,
         status: this.normalizeStatus(item.status),
-        coverUrl:
-          item.images?.jpg?.large_image_url || item.images?.jpg?.image_url,
+        coverUrl: item.images?.jpg?.large_image_url || item.images?.jpg?.image_url,
         source: 'jikan',
         score: this.computeScore(input, title, authors),
       };
     });
   }
 
-  private async fetchFromKitsu(
-    input: MetadataFetchInput,
-  ): Promise<CandidateMetadata[]> {
+  private async fetchFromKitsu(input: MetadataFetchInput): Promise<CandidateMetadata[]> {
     const data = await this.safeRequest<{ data?: KitsuItem[] }>(
       `https://kitsu.io/api/edge/manga?filter[text]=${encodeURIComponent(input.title)}&page[limit]=8`,
     );
@@ -194,9 +184,7 @@ export default class MetadataScraperService extends LibrarySystem {
         authors,
         artists: [],
         genres: subjects,
-        publishedAt: doc.first_publish_year
-          ? String(doc.first_publish_year)
-          : undefined,
+        publishedAt: doc.first_publish_year ? String(doc.first_publish_year) : undefined,
         status: 'unknown',
         coverUrl: doc.cover_i
           ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`
@@ -236,8 +224,7 @@ export default class MetadataScraperService extends LibrarySystem {
         genres: Array.isArray(volume.categories) ? volume.categories : [],
         publishedAt: volume.publishedDate,
         status: 'unknown',
-        coverUrl:
-          volume.imageLinks?.thumbnail || volume.imageLinks?.smallThumbnail,
+        coverUrl: volume.imageLinks?.thumbnail || volume.imageLinks?.smallThumbnail,
         source: 'google-books',
         score: this.computeScore(input, title, authors),
       };
@@ -263,10 +250,7 @@ export default class MetadataScraperService extends LibrarySystem {
     return null;
   }
 
-  private async requestWithTimeout<T>(
-    url: string,
-    timeoutMs: number,
-  ): Promise<T> {
+  private async requestWithTimeout<T>(url: string, timeoutMs: number): Promise<T> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -410,10 +394,7 @@ export default class MetadataScraperService extends LibrarySystem {
     return item.value;
   }
 
-  private async saveToCache(
-    key: string,
-    value: ScrapedMetadata,
-  ): Promise<void> {
+  private async saveToCache(key: string, value: ScrapedMetadata): Promise<void> {
     const cache = await this.readCache();
     const now = new Date();
     const expiresAt = new Date(now.getTime() + THIRTY_DAYS_MS);
@@ -448,9 +429,7 @@ export default class MetadataScraperService extends LibrarySystem {
   private cleanStringArray(items?: string[]): string[] | undefined {
     if (!items || !items.length) return undefined;
 
-    const normalized = [
-      ...new Set(items.map((item) => item.trim()).filter(Boolean)),
-    ];
+    const normalized = [...new Set(items.map((item) => item.trim()).filter(Boolean))];
     return normalized.length ? normalized : undefined;
   }
 

@@ -1,7 +1,12 @@
 import { Manga, MangaChapter } from './manga.interfaces';
 import { Book, BookChapter } from './book.interfaces';
 import { Comic, ComicEdition, TieIn } from './comic.interfaces';
-import { ReadingStatus, LiteratureForm } from '../../src/types/series.interfaces';
+import {
+  ReadingStatus,
+  LiteratureForm,
+  AutoBackupStatus,
+  PrivacyStatus,
+} from '../../src/shared/types/series.interfaces';
 
 export type LiteratureChapter = ComicEdition | MangaChapter | BookChapter;
 
@@ -173,10 +178,10 @@ export interface graphSerie<C extends graphChapter = graphChapter> {
     recommendedBy?: string;
     originalOwner?: string;
     lastDownload: number;
-    privacy: 'Publica' | 'Privada' | '';
+    privacy: PrivacyStatus;
     rating?: number;
     isFavorite: boolean;
-    autoBackup: 'Sim' | 'Não' | '';
+    autoBackup: AutoBackupStatus;
     compiledComic?: boolean;
   };
   comments: string[];
@@ -186,7 +191,13 @@ export interface graphSerie<C extends graphChapter = graphChapter> {
 }
 
 export interface graphChapter {
-  id: number;
+  id: number; // unico
+  order: number; // posição
+  chapterNumber: {
+    // exibição
+    label: string;
+    value: number;
+  };
   serieName: string;
   name: string;
   sanitizedName: string;

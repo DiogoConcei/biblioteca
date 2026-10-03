@@ -1,17 +1,14 @@
 import path from 'path';
-
-import { SerieForm } from '../../../src/types/series.interfaces';
-import {
-  graphChapter,
-  graphSerie,
-} from '../../types/electron-auxiliar.interfaces';
+import fse from 'fs-extra';
+import { SerieForm } from '../../../src/shared/types/series.interfaces.ts';
+import { graphChapter, graphSerie } from '../../types/electron-auxiliar.interfaces';
 import type { StorageManager } from '../StorageManager';
-import ImageManager from '../ImageManager';
+import ImageManager from '../processing/ImageManager.ts';
 import LibrarySystem from './LibrarySystem';
 import FileManager from '../FileManager';
-import CollectionManager from '../CollectionManager';
-import ArchiveManager from '../ArchiveManager';
-import PdfManager from '../PdfManager';
+import CollectionManager from '../content/CollectionManager.ts';
+import ArchiveManager from '../processing/ArchiveManager.ts';
+import PdfManager from '../processing/PdfManager.ts';
 
 export default abstract class GraphSerie<
   T extends graphSerie<C>,
@@ -70,8 +67,10 @@ export default abstract class GraphSerie<
     const allPaths = [...existingPaths, ...filesPath];
     const orderedPaths = await this.orderChapters(allPaths);
 
+    let nextId = chapters.reduce((max, ch) => Math.max(max, ch.id), 0) + 1;
+
     const result: graphChapter[] = await Promise.all(
-      orderedPaths.map(async (chapterPath, idx) => {
+      orderedPaths.map(async (chapterPath) => {
         const exits = chapterMap.get(chapterPath);
 
         if (exits) {
@@ -80,25 +79,17 @@ export default abstract class GraphSerie<
 
         this.fileManager.moveChapter(
           chapterPath,
-          path.join(
-            this.userLibrary,
-            chapters[0].serieName,
-            path.basename(chapterPath),
-          ),
+          path.join(this.userLibrary, chapters[0].serieName, path.basename(chapterPath)),
         );
 
         const newChapter = await this.createChapter(
           chapters[0].serieName,
           chapterPath,
-          idx,
+          nextId++,
         );
         return newChapter;
       }),
     );
-
-    result.forEach((ch, idx) => {
-      ch.id = idx + 1;
-    });
 
     return result;
   }
@@ -156,10 +147,7 @@ export default abstract class GraphSerie<
     return this.imageManager.encodeImages(imageFiles);
   }
 
-  async updateChapters(
-    filesPath: string[],
-    dataPath: string,
-  ): Promise<graphChapter[]> {
+  async updateChapters(filesPath: string[], dataPath: string): Promise<graphChapter[]> {
     const serie = await this.storageManager.readSerieData<T>(dataPath);
 
     if (!serie) {
@@ -189,9 +177,7 @@ export default abstract class GraphSerie<
       throw new Error('Série não encontrada.');
     }
 
-    const chapterToProcess = serie.chapters.find(
-      (chapter) => chapter.id === chapter_id,
-    );
+    const chapterToProcess = serie.chapters.find((chapter) => chapter.id === chapter_id);
 
     if (!chapterToProcess) {
       throw new Error(`Capitulo com id ${chapter_id} nao foi encontrado.`);
@@ -212,9 +198,7 @@ export default abstract class GraphSerie<
       throw new Error('Série não encontrada.');
     }
 
-    const chapterToProcess = serie.chapters.find(
-      (chapter) => chapter.id === chapter_id,
-    );
+    const chapterToProcess = serie.chapters.find((chapter) => chapter.id === chapter_id);
 
     if (!chapterToProcess) {
       throw new Error(`Capitulo com id ${chapter_id} nao foi encontrado.`);

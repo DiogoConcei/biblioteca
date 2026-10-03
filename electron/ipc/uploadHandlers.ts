@@ -1,10 +1,7 @@
 import { IpcMain } from 'electron';
 
-import { SerieData, SerieForm } from '../../src/types/series.interfaces.ts';
-import {
-  APIResponse,
-  LiteratureChapter,
-} from '../types/electron-auxiliar.interfaces.ts';
+import { SerieData, SerieForm } from '../../src/shared/types/series.interfaces.ts';
+import { APIResponse, LiteratureChapter } from '../types/electron-auxiliar.interfaces.ts';
 import MangaManager from '../services/MangaManager.ts';
 import storageManager from '../services/StorageManager.ts';
 import ComicManager from '../services/ComicManager.ts';
@@ -112,17 +109,12 @@ export default function uploadHandlers(ipcMain: IpcMain) {
               await bookManager.createSerie(s);
               break;
             default:
-              throw new Error(
-                `Tipo de literatura inválido: ${s.literatureForm}`,
-              );
+              throw new Error(`Tipo de literatura inválido: ${s.literatureForm}`);
           }
         } catch (err) {
           // Logamos e seguimos com os demais itens
           const msg = err instanceof Error ? err.message : String(err);
-          console.error(
-            `Erro ao criar série (index=${i}, name=${s.name}):`,
-            err,
-          );
+          console.error(`Erro ao criar série (index=${i}, name=${s.name}):`, err);
           errors.push({ index: i, name: s.name, message: msg });
         }
       }
@@ -144,26 +136,15 @@ export default function uploadHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle(
     'chapter:upload-chapter',
-    async (
-      _event,
-      filesPath: string[],
-      literatureForm: string,
-      dataPath: string,
-    ) => {
+    async (_event, filesPath: string[], literatureForm: string, dataPath: string) => {
       let processedFiles: LiteratureChapter[] = [];
 
       switch (literatureForm) {
         case 'Manga':
-          processedFiles = await mangaManager.updateChapters(
-            filesPath,
-            dataPath,
-          );
+          processedFiles = await mangaManager.updateChapters(filesPath, dataPath);
           break;
         case 'Quadrinho':
-          processedFiles = await comicManager.updateChapters(
-            filesPath,
-            dataPath,
-          );
+          processedFiles = await comicManager.updateChapters(filesPath, dataPath);
           break;
         default:
           throw new Error('Tipo de literature inválido');

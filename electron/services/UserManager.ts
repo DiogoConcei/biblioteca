@@ -1,188 +1,68 @@
 import FileSystem from './abstract/LibrarySystem';
-import CollectionManager from './CollectionManager';
 import storageManager from './StorageManager';
+import HistoryManager from './persistence/HistoryManager';
 import {
   ReadableSerie,
   LastReadCandidate,
   Literatures,
 } from '../types/electron-auxiliar.interfaces';
 import { Comic, TieIn } from '../types/comic.interfaces';
-import { ReadingStatus } from '../../src/types/series.interfaces';
+import { ReadingStatus } from '../../src/shared/types/series.interfaces';
 import FileManager from './FileManager';
 
 export default class UserManager extends FileSystem {
-  private readonly collManager: CollectionManager = new CollectionManager();
   private readonly storageManager = storageManager;
   private readonly fileManager: FileManager = new FileManager();
+  private readonly historyManager: HistoryManager = new HistoryManager();
 
   constructor() {
     super();
   }
 
-  public async addToRecents(serieData: Literatures | TieIn): Promise<boolean> {
-    try {
-      // Pequeno detalhe: atualizar o timestamp de última leitura ao adicionar aos recentes
-      if ('readingData' in serieData) {
-        serieData.readingData.lastReadAt = new Date().toISOString();
-
-        // Se a série estava Pendente e foi aberta, muda para Em andamento
-        if (serieData.metadata.status === 'Pendente') {
-          serieData.metadata.status = ReadingStatus.IN_PROGRESS;
-        }
-
-        await this.storageManager.writeData(serieData);
-      }
-
-      await this.collManager.addLastRead(serieData);
-      return true;
-    } catch (err) {
-      console.error('Erro ao atualizar historico de series:', err);
-      return false;
-    }
-  }
-
-  public async favoriteSerie(serieData: Literatures): Promise<boolean> {
-    try {
-      const isFavorite = !serieData.metadata.isFavorite;
-      let success: boolean;
-
-      if (isFavorite) {
-        success = await this.collManager.addInCollection(
-          serieData.dataPath,
-          'favoritos',
-        );
-      } else {
-        success = await this.collManager.removeInCollection(
-          'favoritos',
-          serieData.id,
-        );
-      }
-
-      if (!success) return false;
-
-      serieData.metadata.isFavorite = isFavorite;
-      await this.storageManager.writeData(serieData);
-      return true;
-    } catch (err) {
-      console.error('Erro ao atualizar favoritação de série:', err);
-      return false;
-    }
-  }
-
-  public async markChapterRead(
+  public async markRead(
     dataPath: string,
     chapter_id: number,
     isRead: boolean,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
-      const serieData = await this.storageManager.readSerieData(dataPath);
+      const serie = await this.storageManager.readSerieData(dataPath);
+      if (!serie) return false;
 
-      if (!serieData) {
-        return;
-      }
+      const chapter = serie.chapters.find((c) => c.id === chapter_id);
+      if (!chapter) return false;
 
-      if (!serieData.chapters || serieData.chapters.length === 0) {
-        console.warn('Série sem capítulos ao tentar marcar leitura.');
-        return;
-      }
-
-      const chapter = serieData.chapters.find((c) => c.id === chapter_id);
-
-      if (!chapter) {
-        console.warn(`Capítulo ${chapter_id} não encontrado em ${dataPath}.`);
-        return;
-      }
-
-      chapter.isRead = isRead;
-
-      // Atualiza o último capítulo interagido e o timestamp
-      serieData.readingData.lastChapterId = chapter_id;
-      serieData.readingData.lastReadAt = new Date().toISOString();
-
-      if (chapter_id !== 1) {
-        if (isRead) {
-          if (serieData.chaptersRead < serieData.totalChapters) {
-            serieData.chaptersRead += 1;
-          } else {
-            console.warn('chaptersRead já está no máximo permitido.');
-          }
-        } else {
-          if (serieData.chaptersRead > 0) {
-            serieData.chaptersRead -= 1;
-          } else {
-            console.warn('chaptersRead já está no mínimo permitido.');
-          }
-        }
-      }
-
-      // Atualização automática de status
-      if (serieData.chaptersRead === serieData.totalChapters) {
-        serieData.metadata.status = ReadingStatus.COMPLETED;
-      } else if (serieData.chaptersRead > 0 || isRead) {
-        // Se leu algo ou marcou como lido, e não está completo, está "Em andamento"
-        if (
-          serieData.metadata.status === 'Pendente' ||
-          serieData.metadata.status === 'Completo'
-        ) {
-          serieData.metadata.status = ReadingStatus.IN_PROGRESS;
-        }
-      }
-
-      await this.storageManager.writeData(serieData);
+      return await this.historyManager.historyControl(serie, chapter, isRead);
     } catch (error) {
-      console.error(`Erro ao marcar capítulo como lido: ${error}`);
-      throw error;
+      console.error(`Erro ao marcar capítulo como lido no path ${dataPath}:`, error);
+      return false;
     }
   }
-
-  public mountChapterUrl(
-    serie: ReadableSerie,
-    chapterId: number,
-    chapterName: string,
-    lastPageRead: number,
-    isRead: boolean,
-  ): string {
-    const prefix = serie.literatureForm === 'Books' ? '/book' : '';
-    return `${prefix}/${encodeURIComponent(
-      serie.name,
-    )}/${serie.id}/${encodeURIComponent(
-      chapterName,
-    )}/${chapterId}/${lastPageRead}/${isRead}`;
-  }
-
-  private resolveChapterFromSerie(
-    serie: ReadableSerie,
-  ): LastReadCandidate | null {
-    if (!serie.chapters?.length) return null;
-
-    const explicitLastRead = serie.chapters.find(
-      (chapter) => chapter.id === serie.readingData.lastChapterId,
-    );
-
-    const fallbackLastRead = [...serie.chapters]
-      .filter((chapter) => chapter.isRead)
-      .sort((a, b) => b.id - a.id)[0];
-
-    const chapter = explicitLastRead ?? fallbackLastRead ?? serie.chapters[0];
-
-    return {
-      serie,
-      chapterId: chapter.id,
-      lastPageRead: chapter.page?.lastPageRead ?? 0,
-      isRead: chapter.isRead,
-      timestamp: this.getSerieTimestamp(serie),
-    };
-  }
-
-  private isComic(serie: ReadableSerie): serie is Comic {
-    return 'childSeries' in serie;
-  }
-
-  private getSerieTimestamp(serie: ReadableSerie): number {
-    const rawDate = serie.readingData.lastReadAt;
-    if (!rawDate) return 0;
-
-    const parsed = new Date(rawDate).getTime();
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
 }
+
+// public async favoriteSerie(serieData: Literatures): Promise<boolean> {
+//   try {
+//     const isFavorite = !serieData.metadata.isFavorite;
+//     let success: boolean;
+
+//     if (isFavorite) {
+//       success = await this.collManager.addInCollection(
+//         serieData.dataPath,
+//         'favoritos',
+//       );
+//     } else {
+//       success = await this.collManager.removeInCollection(
+//         'favoritos',
+//         serieData.id,
+//       );
+//     }
+
+//     if (!success) return false;
+
+//     serieData.metadata.isFavorite = isFavorite;
+//     await this.storageManager.writeData(serieData);
+//     return true;
+//   } catch (err) {
+//     console.error('Erro ao atualizar favoritação de série:', err);
+//     return false;
+//   }
+// }

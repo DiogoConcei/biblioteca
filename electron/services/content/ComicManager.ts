@@ -1,33 +1,34 @@
 import path from 'path';
 import fse from 'fs-extra';
 
-import FileManager from './FileManager';
-import storageManager from './StorageManager';
-import ImageManager from './ImageManager';
-import CollectionManager from './CollectionManager';
-import PdfManager from './PdfManager';
-import ArchiveManager from './ArchiveManager';
-import { Comic, ComicEdition, ComicTieIn, ITieInManager } from '../types/comic.interfaces';
+import FileManager from '../FileManager.ts';
+import storageManager from '../StorageManager.ts';
+import ImageManager from '../processing/ImageManager.ts';
+import CollectionManager from './CollectionManager.ts';
+import PdfManager from '../PdfManager.ts';
+import ArchiveManager from '../ArchiveManager.ts';
+import {
+  Comic,
+  ComicEdition,
+  ComicTieIn,
+  ITieInManager,
+} from '../../types/comic.interfaces.ts';
 import { SerieForm } from '../../src/types/series.interfaces';
-import GraphSerie from './abstract/GraphSerie';
+import GraphSerie from '../abstract/GraphSerie.ts';
 import {
   ComicCoverRegenerationProgress,
   ComicCoverRegenerationResult,
-} from '../types/electron-auxiliar.interfaces.ts';
+} from '../../types/electron-auxiliar.interfaces.ts';
 
 export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
   protected readonly fileManager: FileManager = new FileManager();
   protected readonly imageManager: ImageManager = new ImageManager();
-  protected readonly collectionManager: CollectionManager =
-    new CollectionManager();
+  protected readonly collectionManager: CollectionManager = new CollectionManager();
   protected readonly storageManager = storageManager;
   protected readonly pdfManager: PdfManager = new PdfManager();
   protected readonly archiveManager: ArchiveManager = new ArchiveManager();
 
-  async createEditions(
-    serieName: string,
-    archivesPath: string,
-  ): Promise<ComicEdition[]> {
+  async createEditions(serieName: string, archivesPath: string): Promise<ComicEdition[]> {
     const [comicEntries] = await this.fileManager.searchChapters(archivesPath);
     const orderComics = await this.orderChapters(comicEntries);
 
@@ -80,10 +81,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
     };
   }
 
-  async createEditionCovers(
-    archivesPath: string,
-    comicEdition: ComicEdition[],
-  ) {
+  async createEditionCovers(archivesPath: string, comicEdition: ComicEdition[]) {
     const dirName = path.basename(archivesPath);
 
     try {
@@ -95,11 +93,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
             .replaceAll('_', '')
             .replaceAll('-', '');
 
-          const outputPath = path.join(
-            this.showcaseImages,
-            chap.name,
-            safeDirName,
-          );
+          const outputPath = path.join(this.showcaseImages, chap.name, safeDirName);
 
           chap.chapterPath = path.join(this.comicsImages, dirName, chap.name);
 
@@ -127,11 +121,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
       return chapter;
     }
 
-    const outputPath = path.join(
-      this.showcaseImages,
-      chapter.serieName,
-      chapter.name,
-    );
+    const outputPath = path.join(this.showcaseImages, chapter.serieName, chapter.name);
 
     if (!chapter.archivesPath) {
       console.warn(
@@ -155,8 +145,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
     });
 
     items.sort((a, b) => {
-      if (a.readingIndex !== b.readingIndex)
-        return a.readingIndex - b.readingIndex;
+      if (a.readingIndex !== b.readingIndex) return a.readingIndex - b.readingIndex;
 
       if (a.partIndex !== b.partIndex) return a.partIndex - b.partIndex;
 
@@ -207,10 +196,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
       serieName: rawName,
       compiledComic: false,
       archivesPath: '',
-      dataPath: path.join(
-        this.childSeriesData,
-        `${path.basename(subPath)}.json`,
-      ),
+      dataPath: path.join(this.childSeriesData, `${path.basename(subPath)}.json`),
       coverImage: '',
     };
   }
@@ -218,11 +204,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
   async processSerieData(serie: SerieForm): Promise<Comic> {
     const comic = await this.mountEmptyComic(serie);
     const chapters = await this.createEditions(serie.name, serie.oldPath);
-    const childSeries = await this.createChilds(
-      comic.name,
-      comic.id,
-      serie.oldPath,
-    );
+    const childSeries = await this.createChilds(comic.name, comic.id, serie.oldPath);
 
     return {
       ...comic,
@@ -233,7 +215,9 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
 
   async createSerie(
     serie: SerieForm,
-    tieInManager?: ITieInManager & { generateChildCovers: (childs: ComicTieIn[], basePath: string) => Promise<void> },
+    tieInManager?: ITieInManager & {
+      generateChildCovers: (childs: ComicTieIn[], basePath: string) => Promise<void>;
+    },
   ): Promise<void> {
     const serieData = await this.processSerieData(serie);
 
@@ -242,11 +226,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
       await this.createEditionCovers(serie.oldPath, serieData.chapters);
     }
 
-    if (
-      tieInManager &&
-      serieData.childSeries &&
-      serieData.childSeries.length > 0
-    ) {
+    if (tieInManager && serieData.childSeries && serieData.childSeries.length > 0) {
       await tieInManager.processTieInData(serie.oldPath, serieData.childSeries);
       // Extrai as capas para as child series (Tie-ins)
       await tieInManager.generateChildCovers(serieData.childSeries, serie.oldPath);
@@ -273,11 +253,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
       name: serie.name,
       sanitizedName: serie.sanitizedName,
       archivesPath: path.join(this.userLibrary, serie.name),
-      chaptersPath: path.join(
-        this.imagesFolder,
-        serie.literatureForm,
-        serie.name,
-      ),
+      chaptersPath: path.join(this.imagesFolder, serie.literatureForm, serie.name),
       dataPath: path.join(this.comicsData, `${serie.name}.json`),
       coverImage: serie.cover_path,
       totalChapters,
@@ -400,10 +376,9 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
 
         if (serieData.chapters?.length) {
           for (const chapter of serieData.chapters) {
-            const chapterSourceArchive =
-              await tieInManager.resolveCoverSourceArchive(
-                chapter.archivesPath,
-              );
+            const chapterSourceArchive = await tieInManager.resolveCoverSourceArchive(
+              chapter.archivesPath,
+            );
 
             const updatedChapterCover = await this.regenerateSingleCover(
               {
@@ -430,10 +405,9 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
 
         if (serieData.childSeries?.length) {
           for (const child of serieData.childSeries) {
-            const tieInSourceArchive =
-              await tieInManager.resolveCoverSourceArchive(
-                child.archivesPath,
-              );
+            const tieInSourceArchive = await tieInManager.resolveCoverSourceArchive(
+              child.archivesPath,
+            );
 
             const updatedTieInCover = await this.regenerateSingleCover(
               {
@@ -453,17 +427,14 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
             }
 
             if (child.dataPath) {
-              const tieInData = await this.storageManager.readTieInData(
-                child.dataPath,
-              );
+              const tieInData = await this.storageManager.readTieInData(child.dataPath);
 
               if (tieInData) {
                 let hasTieInChanges = false;
 
-                const tieInDataSource =
-                  await tieInManager.resolveCoverSourceArchive(
-                    tieInData.archivesPath,
-                  );
+                const tieInDataSource = await tieInManager.resolveCoverSourceArchive(
+                  tieInData.archivesPath,
+                );
 
                 const updatedTieInMainCover = await this.regenerateSingleCover(
                   {
@@ -484,31 +455,27 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
 
                 if (tieInData.chapters?.length) {
                   for (const tieChapter of tieInData.chapters) {
-                    const tieChapterSource =
-                      await tieInManager.resolveCoverSourceArchive(
-                        tieChapter.archivesPath,
-                      );
+                    const tieChapterSource = await tieInManager.resolveCoverSourceArchive(
+                      tieChapter.archivesPath,
+                    );
 
-                    const updatedTieChapterCover =
-                      await this.regenerateSingleCover(
-                        {
-                          owner: comicName,
-                          label: `tie-in ${tieInData.name} / edição ${tieChapter.name}`,
-                          currentCover: tieChapter.coverImage ?? '',
-                          sourceArchive: tieChapterSource,
-                          outputDir: path.join(
-                            this.showcaseImages,
-                            tieChapter.serieName,
-                            tieChapter.name,
-                          ),
-                        },
-                        progress,
-                        failures,
-                      );
+                    const updatedTieChapterCover = await this.regenerateSingleCover(
+                      {
+                        owner: comicName,
+                        label: `tie-in ${tieInData.name} / edição ${tieChapter.name}`,
+                        currentCover: tieChapter.coverImage ?? '',
+                        sourceArchive: tieChapterSource,
+                        outputDir: path.join(
+                          this.showcaseImages,
+                          tieChapter.serieName,
+                          tieChapter.name,
+                        ),
+                      },
+                      progress,
+                      failures,
+                    );
 
-                    if (
-                      updatedTieChapterCover !== (tieChapter.coverImage ?? '')
-                    ) {
+                    if (updatedTieChapterCover !== (tieChapter.coverImage ?? '')) {
                       tieChapter.coverImage = updatedTieChapterCover;
                       hasTieInChanges = true;
                     }
@@ -516,8 +483,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
                 }
 
                 if (hasTieInChanges) {
-                  const tiePersisted =
-                    await this.storageManager.writeData(tieInData);
+                  const tiePersisted = await this.storageManager.writeData(tieInData);
 
                   if (!tiePersisted) {
                     throw new Error(
@@ -587,8 +553,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
 
     try {
       const generatedCover = await this.withRetry(
-        () =>
-          this.imageManager.generateCover(input.sourceArchive, input.outputDir),
+        () => this.imageManager.generateCover(input.sourceArchive, input.outputDir),
         3,
         300,
       );

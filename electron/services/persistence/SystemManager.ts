@@ -1,9 +1,9 @@
 import fse from 'fs-extra';
 import path from 'path';
 
-import LibrarySystem from './abstract/LibrarySystem.ts';
-import storageManager from './StorageManager.ts';
-import FileManager from './FileManager.ts';
+import LibrarySystem from '../abstract/LibrarySystem.ts';
+import storageManager from '../StorageManager.ts';
+import FileManager from '../FileManager.ts';
 import ImageManager from './ImageManager.ts';
 import ConfigManager from './ConfigManager.ts';
 

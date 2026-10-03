@@ -1,11 +1,11 @@
 import { BrowserWindow, ipcMain } from 'electron';
 import { v4 as uuidv4 } from 'uuid';
 
-import LibrarySystem from './abstract/LibrarySystem';
-import storageManager from './StorageManager';
-import ImageManager from './ImageManager';
-import { DownloadTask, DownloadTaskStatus } from '../types/download.interfaces';
-import { viewData } from '../types/electron-auxiliar.interfaces.ts';
+import LibrarySystem from '../abstract/LibrarySystem.ts';
+import storageManager from '../StorageManager.ts';
+import ImageManager from '../processing/ImageManager.ts';
+import { DownloadTask, DownloadTaskStatus } from '../../types/download.interfaces.ts';
+import { viewData } from '../../types/electron-auxiliar.interfaces.ts';
 
 export default class DownloadManager extends LibrarySystem {
   private tasks: Map<string, DownloadTask> = new Map();
@@ -86,9 +86,7 @@ export default class DownloadManager extends LibrarySystem {
   private async processQueue() {
     if (this.activeDownloads >= this.MAX_CONCURRENT_DOWNLOADS) return;
 
-    const nextTask = Array.from(this.tasks.values()).find(
-      (t) => t.status === 'queued',
-    );
+    const nextTask = Array.from(this.tasks.values()).find((t) => t.status === 'queued');
     if (!nextTask) return;
 
     this.startDownload(nextTask);
@@ -175,9 +173,7 @@ export default class DownloadManager extends LibrarySystem {
       );
 
       if (hasDownloads) {
-        const coverUrl = await this.imageManager.getThumbnailUrl(
-          fullSerie.coverImage,
-        );
+        const coverUrl = await this.imageManager.getThumbnailUrl(fullSerie.coverImage);
         seriesWithDownloads.push({
           ...serie,
           coverImage: coverUrl,
