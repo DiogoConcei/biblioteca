@@ -7,7 +7,7 @@ export class ArchiveMediaHandler extends BaseMediaHandler {
   async handle(url: URL): Promise<Response> {
     const normalizedPath = url.pathname.replace(/^\//, '');
     const pathParts = normalizedPath.split('/').filter(Boolean);
-    
+
     if (pathParts.length < 1) {
       return new Response('Invalid Archive URL', { status: 400 });
     }
@@ -36,7 +36,7 @@ export class ArchiveMediaHandler extends BaseMediaHandler {
 
     if (!(await fse.pathExists(filePath))) {
       try {
-        const ArchiveManager = (await import('../ArchiveManager')).default;
+        const ArchiveManager = (await import('../processing/ArchiveManager')).default;
         const archiveManager = new ArchiveManager();
         await archiveManager.extractWith7zip(zipPath, tempDest);
       } catch (extractErr) {

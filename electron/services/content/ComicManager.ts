@@ -5,15 +5,16 @@ import FileManager from '../FileManager.ts';
 import storageManager from '../StorageManager.ts';
 import ImageManager from '../processing/ImageManager.ts';
 import CollectionManager from './CollectionManager.ts';
-import PdfManager from '../PdfManager.ts';
-import ArchiveManager from '../ArchiveManager.ts';
+import PdfManager from '../processing/PdfManager.ts';
+import ArchiveManager from '../processing/ArchiveManager.ts';
+import { SerieForm } from '../../../src/shared/types/series.interfaces.ts';
+
 import {
   Comic,
   ComicEdition,
   ComicTieIn,
   ITieInManager,
 } from '../../types/comic.interfaces.ts';
-import { SerieForm } from '../../src/types/series.interfaces';
 import GraphSerie from '../abstract/GraphSerie.ts';
 import {
   ComicCoverRegenerationProgress,
@@ -290,6 +291,11 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
 
     return {
       id: 0,
+      order: 0,
+      chapterNumber: {
+        label: '',
+        value: 0,
+      },
       serieName: serieName,
       name: safeName,
       coverImage: '',

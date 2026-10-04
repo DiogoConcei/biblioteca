@@ -1,12 +1,12 @@
 import { BrowserWindow, dialog, IpcMain } from 'electron';
 
-import SystemManager from '../services/SystemManager';
-import BackupManager from '../services/BackupManager';
-import ConfigManager from '../services/ConfigManager';
-import ComicManager from '../services/ComicManager';
-import DownloadManager from '../services/DownloadManager';
-import TieInManager from '../services/TieInManager';
-import MigrationManager from '../services/MigrationManager';
+import TieInManager from '../services/content/TieInManager';
+import SystemManager from '../services/persistence/SystemManager';
+import BackupManager from '../services/persistence/BackupManager';
+import ConfigManager from '../services/persistence/ConfigManager';
+import DownloadManager from '../services/network/DownloadManager';
+import MigrationManager from '../services/persistence/MigrationManager';
+import ComicManager from '../services/content/ComicManager';
 
 export default function systemHandlers(ipcMain: IpcMain) {
   const systemManager = new SystemManager();
@@ -29,10 +29,7 @@ export default function systemHandlers(ipcMain: IpcMain) {
     try {
       const data = await comicManager.regenerateComicCovers(tieInManager, (progress) => {
         for (const window of BrowserWindow.getAllWindows()) {
-          window.webContents.send(
-            'system:comic-cover-regeneration-progress',
-            progress,
-          );
+          window.webContents.send('system:comic-cover-regeneration-progress', progress);
         }
       });
 
@@ -55,9 +52,7 @@ export default function systemHandlers(ipcMain: IpcMain) {
     try {
       const result = await dialog.showOpenDialog({
         properties: ['openFile'],
-        filters: [
-          { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] },
-        ],
+        filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] }],
       });
 
       if (result.canceled || !result.filePaths.length) {
@@ -70,17 +65,14 @@ export default function systemHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle(
-    'system:restore-backup',
-    async (_event, backupPath: string) => {
-      try {
-        await backupManager.restoreBackup(backupPath);
-        return { success: true };
-      } catch (error) {
-        return { success: false, error: String(error) };
-      }
-    },
-  );
+  ipcMain.handle('system:restore-backup', async (_event, backupPath: string) => {
+    try {
+      await backupManager.restoreBackup(backupPath);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  });
 
   ipcMain.handle('system:remove-backup', async (_event, backupPath: string) => {
     try {
@@ -139,15 +131,12 @@ export default function systemHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle(
-    'system:regenerate-chapters',
-    async (_event, dataPath: string) => {
-      try {
-        await migrationManager.fixChildSeriePaths(dataPath);
-        return { success: true };
-      } catch (error) {
-        return { success: false, error: 'Failed to regenerate chapters.' };
-      }
-    },
-  );
+  ipcMain.handle('system:regenerate-chapters', async (_event, dataPath: string) => {
+    try {
+      await migrationManager.fixChildSeriePaths(dataPath);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Failed to regenerate chapters.' };
+    }
+  });
 }

@@ -4,15 +4,12 @@ import fse from 'fs-extra';
 import { randomBytes } from 'crypto';
 import path from 'path';
 
-import FileManager from './FileManager';
-import LibrarySystem from './abstract/LibrarySystem';
+import FileManager from '../FileManager';
+import LibrarySystem from '../abstract/LibrarySystem';
 export default class PdfManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
 
-  public async convertPdf_overdrive(
-    inputFile: string,
-    outputDir: string,
-  ): Promise<void> {
+  public async convertPdf_overdrive(inputFile: string, outputDir: string): Promise<void> {
     await fse.ensureDir(outputDir);
 
     const data = await fse.readFile(inputFile);

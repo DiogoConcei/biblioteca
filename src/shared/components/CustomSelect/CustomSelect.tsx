@@ -1,10 +1,14 @@
 import { KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 
-import { SelectProps, SelectOption } from '@/shared/types/components.interfaces';
+import {
+  SelectProps,
+  SelectOption,
+  SelectOptionValue,
+} from '@/shared/types/components.interfaces';
 
 import styles from './CustomSelect.module.scss';
 
-export default function CustomSelect({
+export default function CustomSelect<T extends SelectOptionValue = SelectOptionValue>({
   options,
   value,
   onChange,
@@ -17,7 +21,7 @@ export default function CustomSelect({
   searchPlaceholder = 'Buscar opção...',
   label,
   renderOption,
-}: SelectProps) {
+}: SelectProps<T>) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const listboxId = useRef(`select-listbox-${Math.random().toString(36).slice(2)}`);
 
@@ -58,7 +62,7 @@ export default function CustomSelect({
     setHighlightedIndex(selectedInFiltered >= 0 ? selectedInFiltered : 0);
   }, [filteredOptions, value]);
 
-  const selectOption = (option: SelectOption) => {
+  const selectOption = (option: SelectOption<T>) => {
     onChange(option.value);
     setIsOpen(false);
   };

@@ -1,11 +1,11 @@
 import { IpcMain } from 'electron';
 
-import CollectionsManager from '../services/CollectionManager';
-import ImageManager from '../services/ImageManager';
+import CollectionsManager from '../services/content/CollectionManager';
+import ImageManager from '../services/processing/ImageManager';
 import {
   Collection,
   CreateCollectionDTO,
-} from '../../src/types/collections.interfaces';
+} from '../../src/shared/types/collections.interfaces';
 import { MetadataType } from '../types/metadata.interfaces';
 
 export default function collectionHandlers(ipcMain: IpcMain) {
@@ -30,9 +30,7 @@ export default function collectionHandlers(ipcMain: IpcMain) {
               await collectionsOperations['fileManager'].getDataPath(serie.name),
             );
 
-            const encodedCover = await imageManager.encodeImage(
-              serie.coverImage,
-            );
+            const encodedCover = await imageManager.encodeImage(serie.coverImage);
 
             if (serie.backgroundImage) {
               serie.backgroundImage = await imageManager.encodeImage(
@@ -67,32 +65,25 @@ export default function collectionHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle(
-    'collection:quickly-create',
-    async (_event, collectionName: string) => {
-      try {
-        const result =
-          await collectionsOperations.quicklyCreate(collectionName);
-        return { success: result };
-      } catch (e) {
-        console.error(`Falha ao criar coleção: ${e}`);
-        return { success: false, error: String(e) };
-      }
-    },
-  );
+  ipcMain.handle('collection:quickly-create', async (_event, collectionName: string) => {
+    try {
+      const result = await collectionsOperations.quicklyCreate(collectionName);
+      return { success: result };
+    } catch (e) {
+      console.error(`Falha ao criar coleção: ${e}`);
+      return { success: false, error: String(e) };
+    }
+  });
 
-  ipcMain.handle(
-    'collection:create',
-    async (_event, collection: CreateCollectionDTO) => {
-      try {
-        const result = await collectionsOperations.createCollection(collection);
-        return { success: result };
-      } catch (e) {
-        console.error(`Falha ao criar coleção: ${e}`);
-        return { success: false, error: String(e) };
-      }
-    },
-  );
+  ipcMain.handle('collection:create', async (_event, collection: CreateCollectionDTO) => {
+    try {
+      const result = await collectionsOperations.createCollection(collection);
+      return { success: result };
+    } catch (e) {
+      console.error(`Falha ao criar coleção: ${e}`);
+      return { success: false, error: String(e) };
+    }
+  });
 
   ipcMain.handle(
     'collection:update-serie-background',
@@ -119,18 +110,14 @@ export default function collectionHandlers(ipcMain: IpcMain) {
     },
   );
 
-  ipcMain.handle(
-    'collection:delete',
-    async (_event, collectionName: string) => {
-      try {
-        const result =
-          await collectionsOperations.removeCollection(collectionName);
-        return { success: result };
-      } catch (e) {
-        return { success: false, error: String(e) };
-      }
-    },
-  );
+  ipcMain.handle('collection:delete', async (_event, collectionName: string) => {
+    try {
+      const result = await collectionsOperations.removeCollection(collectionName);
+      return { success: result };
+    } catch (e) {
+      return { success: false, error: String(e) };
+    }
+  });
 
   ipcMain.handle(
     'collection:update',

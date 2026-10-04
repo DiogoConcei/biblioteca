@@ -6,7 +6,7 @@ import {
   ChapterResource,
 } from '../../types/media.interfaces';
 import LibrarySystem from '../abstract/LibrarySystem';
-import ArchiveManager from '../ArchiveManager';
+import ArchiveManager from '../processing/ArchiveManager';
 import ImageManager from '../processing/ImageManager';
 
 export default class EpubAdapter extends LibrarySystem implements MediaAdapter {

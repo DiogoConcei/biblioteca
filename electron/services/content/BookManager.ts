@@ -5,11 +5,13 @@ import FileManager from '../FileManager';
 import StorageManagerInstance from '../StorageManager';
 import CollectionManager from './CollectionManager';
 import { Book, BookChapter } from '../../types/book.interfaces';
-import { LiteratureForm, SerieForm } from '../../src/types/series.interfaces';
 import GraphSerie from '../abstract/GraphSerie';
 import ImageManager from '../processing/ImageManager';
-import PdfManager from '../PdfManager';
-import ArchiveManager from '../ArchiveManager';
+
+import { LiteratureForm } from '../../../src/shared/types/series.interfaces';
+import { SerieForm } from '../../../src/shared/types/series.interfaces';
+import PdfManager from '../processing/PdfManager';
+import ArchiveManager from '../processing/ArchiveManager';
 
 /**
  * BookManager - Gerencia literaturas (Livros) de forma desacoplada.
@@ -41,6 +43,11 @@ export default class BookManager extends GraphSerie<Book, BookChapter> {
 
     return {
       id: 0,
+      order: 1.0,
+      chapterNumber: {
+        label: '',
+        value: 0,
+      },
       serieName: serieName,
       name: nameWithoutExt,
       sanitizedName: this.fileManager.sanitizeFilename(nameWithoutExt),

@@ -5,19 +5,26 @@ import pLimit from 'p-limit';
 import { randomUUID } from 'crypto';
 
 import LibrarySystem from './abstract/LibrarySystem';
-import { Literatures } from '../types/electron-auxiliar.interfaces';
+import { Literatures, PathKind } from '../types/electron-auxiliar.interfaces';
 import { ComicCategory } from '../types/comic.interfaces';
 
 export default class FileManager extends LibrarySystem {
-  public async searchChapters(
-    archivesPath: string,
-  ): Promise<[string[], number]> {
+  public async classifyPath(targetPath: string): Promise<PathKind> {
+    if (!(await fse.pathExists(targetPath))) return 'invalid';
+
+    const stat = await fse.stat(targetPath);
+    if (stat.isFile()) return 'chapter';
+
+    const entries = await fse.readdir(targetPath, { withFileTypes: true });
+    const hasSubfolders = entries.some((e) => e.isDirectory());
+
+    return hasSubfolders ? 'tie-in' : 'serie';
+  }
+
+  public async searchChapters(archivesPath: string): Promise<[string[], number]> {
     const entries = await fse.readdir(archivesPath, { withFileTypes: true });
     const dirEntries = entries
-      .filter(
-        (entry) =>
-          entry.isFile() && /\.(cbz|cbr|zip|rar|pdf)$/i.test(entry.name),
-      )
+      .filter((entry) => entry.isFile() && /\.(cbz|cbr|zip|rar|pdf)$/i.test(entry.name))
       .map((entry) => path.join(archivesPath, entry.name));
 
     if (dirEntries.length === 0) {
@@ -30,9 +37,7 @@ export default class FileManager extends LibrarySystem {
   public async singleCountChapter(dir: string): Promise<number> {
     const rawExts = ['.cbz', '.cbr', '.zip', '.rar', '.pdf'];
     const extSet = new Set(
-      rawExts.map((e) =>
-        e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`,
-      ),
+      rawExts.map((e) => (e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`)),
     );
 
     try {
@@ -57,9 +62,7 @@ export default class FileManager extends LibrarySystem {
     const concurrency = 8;
     const rawExts = ['.cbz', '.cbr', '.zip', '.rar', '.pdf'];
     const extSet = new Set(
-      rawExts.map((e) =>
-        e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`,
-      ),
+      rawExts.map((e) => (e.startsWith('.') ? e.toLowerCase() : `.${e.toLowerCase()}`)),
     );
 
     const limit = pLimit(concurrency);
@@ -88,10 +91,7 @@ export default class FileManager extends LibrarySystem {
     return results.reduce((s, v) => s + v, 0);
   }
 
-  public async localUpload(
-    serieData: Literatures,
-    oldPath: string,
-  ): Promise<void> {
+  public async localUpload(serieData: Literatures, oldPath: string): Promise<void> {
     try {
       if (!serieData.chapters) return;
 
@@ -106,20 +106,14 @@ export default class FileManager extends LibrarySystem {
 
       serieData.chapters = serieData.chapters.map((c) => {
         const fileName = path.basename(c.archivesPath);
-        const newArchivesPath = path.join(
-          this.userLibrary,
-          c.serieName,
-          fileName,
-        );
+        const newArchivesPath = path.join(this.userLibrary, c.serieName, fileName);
 
         return {
           ...c,
           archivesPath: newArchivesPath,
           // Para livros, o chapterPath é o próprio arquivo original (PDF/EPUB)
           chapterPath:
-            serieData.literatureForm === 'Books'
-              ? newArchivesPath
-              : c.chapterPath,
+            serieData.literatureForm === 'Books' ? newArchivesPath : c.chapterPath,
         };
       });
     } catch (error) {
@@ -129,9 +123,9 @@ export default class FileManager extends LibrarySystem {
   }
 
   public async searchDirectories(dirPath: string): Promise<string[]> {
-    const entries = (
-      await fse.readdir(dirPath, { withFileTypes: true })
-    ).filter((e) => e.isDirectory());
+    const entries = (await fse.readdir(dirPath, { withFileTypes: true })).filter((e) =>
+      e.isDirectory(),
+    );
     const dirPaths = entries.map((e) => path.join(dirPath, e.name));
 
     try {
@@ -170,10 +164,7 @@ export default class FileManager extends LibrarySystem {
         if (dirent.name === name) {
           return path.join(basePath, dirent.name);
         } else {
-          const foundPath = await this.findPath(
-            path.join(basePath, dirent.name),
-            name,
-          );
+          const foundPath = await this.findPath(path.join(basePath, dirent.name), name);
           if (foundPath) {
             return foundPath;
           }
@@ -229,8 +220,8 @@ export default class FileManager extends LibrarySystem {
 
   public async safeRename(filePath: string) {
     const dirName = path.dirname(filePath);
-    const entry = (await fse.readdir(dirName, { withFileTypes: true })).map(
-      (file) => path.join(dirName, file.name),
+    const entry = (await fse.readdir(dirName, { withFileTypes: true })).map((file) =>
+      path.join(dirName, file.name),
     );
 
     await Promise.all(
@@ -286,11 +277,7 @@ export default class FileManager extends LibrarySystem {
     return newPath;
   }
 
-  public buildImagePath(
-    dirPath: string,
-    originalName: string,
-    ext = '.webp',
-  ): string {
+  public buildImagePath(dirPath: string, originalName: string, ext = '.webp'): string {
     const resolvedDir = path.resolve(dirPath);
 
     // Padrão 1: "Nome.pdf-001" ou "Nome-001" → número no sufixo após hífen
@@ -399,11 +386,7 @@ export default class FileManager extends LibrarySystem {
   }
 
   public async moveFiles(oldData: Literatures, updated: Literatures) {
-    const rootPath = path.join(
-      this.imagesFolder,
-      updated.literatureForm,
-      updated.name,
-    );
+    const rootPath = path.join(this.imagesFolder, updated.literatureForm, updated.name);
 
     if (!oldData.chapters) return;
 
@@ -563,8 +546,7 @@ export default class FileManager extends LibrarySystem {
 
     const imageFiles = chapterDirents
       .filter(
-        (dirent) =>
-          dirent.isFile() && /\.(jpeg|png|webp|tiff|jpg)$/i.test(dirent.name),
+        (dirent) => dirent.isFile() && /\.(jpeg|png|webp|tiff|jpg)$/i.test(dirent.name),
       )
       .map((dirent) => path.join(imagesPath, dirent.name));
 
@@ -594,10 +576,7 @@ export default class FileManager extends LibrarySystem {
         )
       ).flat();
 
-      return (
-        allPaths.find((p) => path.basename(p, path.extname(p)) === serieName) ||
-        ''
-      );
+      return allPaths.find((p) => path.basename(p, path.extname(p)) === serieName) || '';
     } catch (e) {
       console.error(`Erro ao obter série: ${e}`);
       throw e;
@@ -609,9 +588,7 @@ export default class FileManager extends LibrarySystem {
       const LiteratureForm = path.basename(path.dirname(dataPath));
       return LiteratureForm;
     } catch (e) {
-      console.error(
-        `Falha em descobrir o tipo da serie: ${path.basename(dataPath)}`,
-      );
+      console.error(`Falha em descobrir o tipo da serie: ${path.basename(dataPath)}`);
       throw e;
     }
   }

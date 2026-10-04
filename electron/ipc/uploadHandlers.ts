@@ -2,11 +2,13 @@ import { IpcMain } from 'electron';
 
 import { SerieData, SerieForm } from '../../src/shared/types/series.interfaces.ts';
 import { APIResponse, LiteratureChapter } from '../types/electron-auxiliar.interfaces.ts';
-import MangaManager from '../services/MangaManager.ts';
+import { ProcessedUploadResult } from '../types/upload.interfaces';
+
 import storageManager from '../services/StorageManager.ts';
-import ComicManager from '../services/ComicManager.ts';
-import TieInManager from '../services/TieInManager.ts';
-import BookManager from '../services/BookManager.ts';
+import ComicManager from '../services/content/ComicManager.ts';
+import TieInManager from '../services/content/TieInManager.ts';
+import BookManager from '../services/content/BookManager.ts';
+import MangaManager from '../services/content/MangaManager.ts';
 
 export default function uploadHandlers(ipcMain: IpcMain) {
   const comicManager = new ComicManager();
@@ -15,8 +17,8 @@ export default function uploadHandlers(ipcMain: IpcMain) {
   const bookManager = new BookManager();
 
   ipcMain.handle(
-    'upload:process-data',
-    async (_event, filePaths: unknown): Promise<APIResponse<SerieData[]>> => {
+    'upload:process-files',
+    async (_event, filePaths: unknown): Promise<APIResponse<ProcessedUploadResult>> => {
       if (!Array.isArray(filePaths) || filePaths.length === 0) {
         return {
           success: false,
@@ -34,9 +36,8 @@ export default function uploadHandlers(ipcMain: IpcMain) {
       }
 
       try {
-        const processed = await Promise.all(
-          paths.map((seriePath) => storageManager.processData(seriePath)),
-        );
+        const processed = await storageManager.processUpload(paths);
+        console.log(processed);
         return { success: true, data: processed };
       } catch (err) {
         return { success: false, error: (err as Error).message };

@@ -21,10 +21,12 @@ import { ArchiveMediaHandler } from '../protocols/ArchiveMediaHandler';
 import MediaFactory from '../adapters/MediaFactory';
 import { MediaContent } from '../../types/media.interfaces';
 import FileManager from '../FileManager';
-import MangaManager from './MangaManager';
-import ComicManager from './ComicManager';
-import TieInManager from './TieInManager';
-import BookManager from './BookManager';
+
+import MangaManager from '../content/MangaManager';
+import ComicManager from '../content/ComicManager';
+import TieInManager from '../content/TieInManager';
+import BookManager from '../content/BookManager';
+
 import PdfAdapter from '../adapters/PdfAdapter';
 
 export class LanServer {

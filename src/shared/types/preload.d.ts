@@ -16,6 +16,7 @@ import {
   LiteratureChapter,
   LanStatus,
 } from '../../electron/types/electron-auxiliar.interfaces.js';
+import { ProcessedUploadResult } from '../../features/upload/types/upload.interfaces';
 import { SerieData, SerieEditForm, SerieForm } from './series.interfaces.ts';
 import {
   ComicCoverRegenerationResult,
@@ -27,8 +28,14 @@ import { MediaContent } from '../../electron/types/media.interfaces';
 declare global {
   interface Window {
     electronAPI: {
-      on: (channel: string, listener: (event: unknown, ...args: unknown[]) => void) => void;
-      off: (channel: string, listener: (event: unknown, ...args: unknown[]) => void) => void;
+      on: (
+        channel: string,
+        listener: (event: unknown, ...args: unknown[]) => void,
+      ) => void;
+      off: (
+        channel: string,
+        listener: (event: unknown, ...args: unknown[]) => void,
+      ) => void;
       send: (channel: string, ...args: unknown[]) => void;
       invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
       emit: (channel: string, ...args: unknown[]) => void;
@@ -65,20 +72,14 @@ declare global {
         restoreBackup: (backupPath: string) => Promise<APIResponse<void>>;
         removeBackup: (backupPath: string) => Promise<APIResponse<void>>;
         getSettings: () => Promise<APIResponse<AppSettings>>;
-        setSettings: (
-          settings: Partial<AppSettings>,
-        ) => Promise<APIResponse<void>>;
+        setSettings: (settings: Partial<AppSettings>) => Promise<APIResponse<void>>;
         connectDrive: () => Promise<APIResponse<void>>;
         disconnectDrive: () => Promise<APIResponse<void>>;
         exportLogs: () => Promise<APIResponse<undefined> & { path?: string }>;
         clearLogs: () => Promise<APIResponse<void>>;
-        createDebugBundle: () => Promise<
-          APIResponse<undefined> & { path?: string }
-        >;
+        createDebugBundle: () => Promise<APIResponse<undefined> & { path?: string }>;
         pickImage: () => Promise<APIResponse<string | null>>;
-        regenerateComicCovers: () => Promise<
-          SystemResult<ComicCoverRegenerationResult>
-        >;
+        regenerateComicCovers: () => Promise<SystemResult<ComicCoverRegenerationResult>>;
         getSeriesWithDownloads: () => Promise<APIResponse<viewData[]>>;
       };
 
@@ -94,16 +95,10 @@ declare global {
       };
 
       upload: {
-        processSerie: (filePath: string[]) => APIResponse<SerieData>;
-        processSeries: (
-          filePaths: string[],
-        ) => Promise<APIResponse<SerieData[]>>;
-        uploadSerie: (
-          serieData: SerieForm,
-        ) => Promise<APIResponse<SerieForm>>;
-        uploadSeries: (
-          serieData: SerieForm[],
-        ) => Promise<APIResponse<SerieForm[]>>;
+        processFiles: (filePath: string[]) => APIResponse<ProcessedUploadResult>;
+        processSeries: (filePaths: string[]) => Promise<APIResponse<SerieData[]>>;
+        uploadSerie: (serieData: SerieForm) => Promise<APIResponse<SerieForm>>;
+        uploadSeries: (serieData: SerieForm[]) => Promise<APIResponse<SerieForm[]>>;
         uploadChapter: (
           files: string[],
           literatureForm: string,
@@ -117,24 +112,14 @@ declare global {
           serieName: string,
           literatureForm: string,
         ) => Promise<APIResponse<Literatures | TieIn>>;
-        createTieIn: (
-          childSerie: ComicTieIn,
-        ) => Promise<APIResponse<string | null>>;
+        createTieIn: (childSerie: ComicTieIn) => Promise<APIResponse<string | null>>;
         serieToCollection: (
           dataPath: string,
           collectionName: string,
         ) => Promise<APIResponse<void>>;
-        favoriteSerie: (
-          dataPath: string,
-        ) => Promise<APIResponse<SerieInCollection>>;
-        recentSerie: (
-          dataPath: string,
-          serie_name: string,
-        ) => Promise<APIResponse<void>>;
-        ratingSerie: (
-          dataPath: string,
-          userRating: number,
-        ) => Promise<APIResponse<void>>;
+        favoriteSerie: (dataPath: string) => Promise<APIResponse<SerieInCollection>>;
+        recentSerie: (dataPath: string, serie_name: string) => Promise<APIResponse<void>>;
+        ratingSerie: (dataPath: string, userRating: number) => Promise<APIResponse<void>>;
         updateSerie: (data: SerieEditForm) => Promise<APIResponse<void>>;
       };
 
@@ -169,25 +154,16 @@ declare global {
 
       collections: {
         getCollections: () => Promise<APIResponse<Collection[]>>;
-        quicklyCreate: (
-          collectionName: string,
-        ) => Promise<APIResponse<boolean>>;
+        quicklyCreate: (collectionName: string) => Promise<APIResponse<boolean>>;
         createCollection: (
           collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
         ) => Promise<APIResponse<boolean>>;
-        deleteCollection: (
-          collectionName: string,
-        ) => Promise<APIResponse<void>>;
+        deleteCollection: (collectionName: string) => Promise<APIResponse<void>>;
         updateCollection: (
           collectionName: string,
-          payload: Partial<
-            Pick<Collection, 'description' | 'coverImage' | 'name'>
-          >,
+          payload: Partial<Pick<Collection, 'description' | 'coverImage' | 'name'>>,
         ) => Promise<APIResponse<void>>;
-        removeSerie: (
-          collectionName: string,
-          serieId: number,
-        ) => Promise<boolean>;
+        removeSerie: (collectionName: string, serieId: number) => Promise<boolean>;
         reorderSeries: (
           collectionName: string,
           orderedSeriesIds: number[],
@@ -219,27 +195,12 @@ declare global {
       };
 
       download: {
-        multipleDownload: (
-          dataPath: string,
-          quantity: number,
-        ) => Promise<boolean>;
-        singleDownload: (
-          dataPath: string,
-          chapter_id: number,
-        ) => Promise<boolean>;
-        singleRemove: (
-          dataPath: string,
-          chapter_id: number,
-        ) => Promise<boolean>;
+        multipleDownload: (dataPath: string, quantity: number) => Promise<boolean>;
+        singleDownload: (dataPath: string, chapter_id: number) => Promise<boolean>;
+        singleRemove: (dataPath: string, chapter_id: number) => Promise<boolean>;
 
-        readingDownload: (
-          serieName: string,
-          chapter_id: number,
-        ) => Promise<boolean>;
-        checkDownload: (
-          serieName: string,
-          chapter_id: number,
-        ) => Promise<boolean>;
+        readingDownload: (serieName: string, chapter_id: number) => Promise<boolean>;
+        checkDownload: (serieName: string, chapter_id: number) => Promise<boolean>;
 
         getTasks: () => Promise<DownloadTask[]>;
         addTask: (taskData: Partial<DownloadTask>) => Promise<DownloadTask>;

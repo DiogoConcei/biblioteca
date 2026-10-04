@@ -5,8 +5,8 @@ import fse from 'fs-extra';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 import { registerHandlers } from './ipc';
-import DownloadManager from './services/DownloadManager';
-import MediaServer from './services/MediaServer';
+import DownloadManager from './services/network/DownloadManager';
+import MediaServer from './services/network/MediaServer';
 
 // Polyfill para URL.parse (ES2024), necessário para algumas versões do Node.js
 if (typeof URL.parse !== 'function') {

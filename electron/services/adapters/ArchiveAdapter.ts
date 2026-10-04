@@ -3,7 +3,7 @@ import fse from 'fs-extra';
 
 import { MediaAdapter, MediaContent } from '../../types/media.interfaces';
 import LibrarySystem from '../abstract/LibrarySystem';
-import ArchiveManager from '../ArchiveManager';
+import ArchiveManager from '../processing/ArchiveManager';
 import ImageManager from '../processing/ImageManager';
 
 export default class ArchiveAdapter extends LibrarySystem implements MediaAdapter {

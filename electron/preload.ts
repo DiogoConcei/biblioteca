@@ -11,6 +11,8 @@ import {
   SerieEditForm,
   SerieForm,
 } from '../src/shared/types/series.interfaces.ts';
+import { ProcessedUploadResult } from './types/upload.interfaces.ts';
+
 import {
   CreateCollectionDTO,
   Collection,
@@ -89,8 +91,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   upload: {
-    processSerie: (filePaths: string[]): Promise<APIResponse<SerieData[]>> =>
-      ipcRenderer.invoke('upload:process-data', filePaths),
+    processFiles: (filePaths: string[]): Promise<APIResponse<ProcessedUploadResult>> =>
+      ipcRenderer.invoke('upload:process-files', filePaths),
     uploadSerie: (serieData: SerieForm): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('upload:process-serie', serieData),
     uploadSeries: (serieData: SerieForm[]): Promise<APIResponse<void>> =>

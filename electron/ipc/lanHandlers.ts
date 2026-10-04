@@ -1,6 +1,6 @@
 import { IpcMain } from 'electron';
 
-import { lanServer } from '../services/LanServer';
+import { lanServer } from '../services/network/LanServer';
 
 export default function lanHandlers(ipcMain: IpcMain) {
   ipcMain.handle('lan:start', async () => {

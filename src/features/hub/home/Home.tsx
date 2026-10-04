@@ -3,13 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ListFilter, Settings, Play, Pencil, Dices } from 'lucide-react';
 import { SerieData } from '@/shared/types/series.interfaces';
 import Loading from '@/shared/components/Loading/Loading';
+import CustomSelect from '@/shared/components/CustomSelect/CustomSelect';
+import { SelectOptionValue } from '@/shared/types/components.interfaces';
 import { LiteratureForm } from '@/shared/types/series.interfaces';
 import useAction from '@/shared/hooks/useAction';
 import { useUIStore } from '@/shared/store/useUIStore';
 import useSerieStore from '@/shared/store/useSerieStore';
 import useAllSeries from '@/shared/hooks/useAllSeries';
 import SearchBar from '@/features/hub/components/SearchBar/SearchBar';
-
+import { useUploadStore } from '@/features/upload/store/uploadStore';
 import styles from './Home.module.scss';
 
 export default function Home() {
@@ -19,6 +21,9 @@ export default function Home() {
   const [selectedLiteratureForm, setSelectedLiteratureForm] = useState<
     LiteratureForm | ''
   >('');
+  const populateQueue = useUploadStore((state) => state.populateQueue);
+  const pendingSeries = useUploadStore((state) => state.pendingSeries);
+  const pendingChapters = useUploadStore((state) => state.pendingChapters);
 
   const { lastChapter } = useAction();
 
@@ -41,14 +46,32 @@ export default function Home() {
     event.preventDefault();
 
     const files = event.dataTransfer.files;
+
     const filePaths = Array.from(files).map((file) => {
       return window.electronAPI.webUtilities.getPathForFile(file);
     });
 
     try {
-      const response = await window.electronAPI.upload.processSerie(filePaths);
-      const serieData: SerieData[] = response.data;
-      navigate('/local-upload/serie', { state: { serieData } });
+      const response = await window.electronAPI.upload.processFiles(filePaths);
+      populateQueue(response.data);
+
+      const currentStore = useUploadStore.getState();
+      console.log(response);
+      if (currentStore.isModalOpen) {
+        return;
+      }
+
+      // 4. Se não tem conflito (só tem série OU só tem capítulo)
+      if (currentStore.pendingSeries.length > 0) {
+        navigate('/local-upload/serie');
+      } else if (currentStore.pendingChapters.length > 0) {
+        navigate('/local-upload/chapter');
+      }
+
+      if (response.data.failed.length > 0) {
+        // Exemplo de toast futuro
+        // toast.error(`${response.data.failed.length} itens falharam ao ser lidos.`);
+      }
     } catch (error) {
       console.error('Erro ao carregar arquivos', error);
       throw error;
@@ -121,24 +144,22 @@ export default function Home() {
               <ListFilter size={32} />
             </button>
 
-            {/* {showFilters && (
-              <div className={styles.filterPanel}>
-                <CustomSelect
-                  label=""
-                  value={selectedLiteratureForm}
-                  onChange={(value: SelectOptionValue) => {
-                    setSelectedLiteratureForm(value);
-                    setShowFilters(false);
-                  }}
-                  options={[
-                    { value: '', label: 'Todos os formatos' },
-                    { value: LiteratureForm.MANGA, label: 'Manga' },
-                    { value: LiteratureForm.COMIC, label: 'Quadrinho' },
-                    { value: LiteratureForm.BOOK, label: 'Livro' },
-                  ]}
-                />
-              </div>
-            )} */}
+            {showFilters && (
+              <CustomSelect
+                label=""
+                value={selectedLiteratureForm}
+                onChange={(value) => {
+                  setSelectedLiteratureForm(value);
+                  setShowFilters(false);
+                }}
+                options={[
+                  { value: '', label: 'Todos os formatos' },
+                  { value: LiteratureForm.MANGA, label: 'Manga' },
+                  { value: LiteratureForm.COMIC, label: 'Quadrinho' },
+                  { value: LiteratureForm.BOOK, label: 'Livro' },
+                ]}
+              />
+            )}
           </div>
         </div>
 

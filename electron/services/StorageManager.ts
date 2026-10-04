@@ -3,26 +3,25 @@ import path from 'path';
 
 import { SerieData, SerieEditForm } from '../../src/shared/types/series.interfaces';
 import { TieIn } from '../types/comic.interfaces';
+import { ProcessedUploadResult, ChapterData } from '../types/upload.interfaces';
 import {
   graphSerie,
   LiteratureChapter,
   viewData,
   Literatures,
 } from '../types/electron-auxiliar.interfaces';
+import AtomicJsonStore from '../services/AtomicJsonStore';
 import FileManager from './FileManager';
 import LibrarySystem from './abstract/LibrarySystem';
 
 export class StorageManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
-
+  private readonly writer: AtomicJsonStore = new AtomicJsonStore();
   // Cache de visualização (Home)
   private _viewDataCache: viewData[] | null = null;
-
   // Cache completo de séries (indexado por dataPath)
   private _seriesCache: Map<string, Literatures | TieIn> = new Map();
-
   // Fila global de escrita para evitar corrupção
-  private _writeQueue: Promise<void> = Promise.resolve();
 
   private static instance: StorageManager;
 
@@ -35,29 +34,113 @@ export class StorageManager extends LibrarySystem {
     return StorageManager.instance;
   }
 
-  /**
-   * Enfileira uma operação de escrita para garantir que seja serializada globalmente.
-   */
-  private async enqueue<T>(task: () => Promise<T>): Promise<T> {
-    const result = this._writeQueue.then(task);
-    this._writeQueue = result.then(() => {}).catch(() => {});
+  async processUpload(paths: string[]): Promise<ProcessedUploadResult> {
+    const result: ProcessedUploadResult = {
+      series: [],
+      chapters: [],
+      failed: [],
+    };
+
+    const classified = await Promise.all(
+      paths.map(async (p) => ({ path: p, kind: await this.fileManager.classifyPath(p) })),
+    );
+
+    console.log(classified);
+    await Promise.allSettled(
+      classified.map(async ({ path: itemPath, kind }) => {
+        try {
+          switch (kind) {
+            case 'serie':
+              result.series.push(await this.procesSerieData(itemPath));
+              break;
+            case 'chapter':
+              result.chapters.push(await this.processChapterData(itemPath)); // nova, mais simples que processData
+              break;
+            case 'invalid':
+              result.failed.push({ path: itemPath, reason: 'Caminho não existe.' });
+          }
+        } catch (err) {
+          result.failed.push({ path: itemPath, reason: (err as Error).message });
+        }
+      }),
+    );
+
     return result;
   }
 
-  /**
-   * Realiza uma escrita atômica usando um arquivo temporário.
-   */
-  private async atomicWrite(filePath: string, data: unknown): Promise<void> {
-    const tmpPath = `${filePath}.tmp`;
+  async procesSerieData(seriePath: string): Promise<SerieData> {
+    const serieName = path.basename(seriePath);
+    const newPath = path.join(this.userLibrary, serieName);
+
+    if (!(await fse.pathExists(seriePath))) {
+      throw new Error(`Caminho invalido: ${seriePath} não existe.`);
+    }
+
+    return {
+      name: serieName,
+      sanitizedName: this.fileManager.sanitizeFilename(serieName),
+      newPath: newPath,
+      oldPath: seriePath,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  async processChapterData(chapterPath: string): Promise<ChapterData> {
+    const serieName = path.basename(chapterPath);
+    const newPath = path.join(this.userLibrary, serieName);
+
+    if (!(await fse.pathExists(chapterPath))) {
+      throw new Error(`Caminho invalido: ${chapterPath} não existe.`);
+    }
+
+    return {
+      name: serieName,
+      sanitizedName: this.fileManager.sanitizeFilename(serieName),
+      oldPath: chapterPath,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  async writeData(serie: Literatures | TieIn): Promise<boolean> {
     try {
-      await fse.ensureDir(path.dirname(filePath));
-      await fse.writeJSON(tmpPath, data, { spaces: 2 });
-      await fse.move(tmpPath, filePath, { overwrite: true });
+      this.writer.write(serie.dataPath, serie);
+
+      this._seriesCache.set(serie.dataPath, serie);
+      this.invalidateCache();
+
+      return true;
     } catch (error) {
-      // Limpa o arquivo temporário em caso de erro
-      if (await fse.pathExists(tmpPath)) {
-        await fse.remove(tmpPath);
+      console.error(`Erro em escrever dados da serie (${serie.name}): ${error}`);
+      return false;
+    }
+  }
+
+  async persistSerie(oldData: Literatures, updated: Literatures): Promise<string> {
+    try {
+      const oldPath = oldData.dataPath;
+      const dir = path.dirname(oldPath);
+
+      const nameChanged = oldData.name !== updated.name;
+      const newPath = nameChanged ? path.join(dir, `${updated.name}.json`) : oldPath;
+
+      if (nameChanged && oldPath !== newPath) {
+        await this.fileManager.moveFiles(oldData, updated);
+        if (await fse.pathExists(oldPath)) {
+          await fse.remove(oldPath);
+          this._seriesCache.delete(oldPath); // Remove caminho antigo do cache
+        }
       }
+
+      updated.dataPath = newPath;
+
+      await this.writer.write(newPath, updated);
+
+      this._seriesCache.set(newPath, updated);
+      this.invalidateCache();
+
+      return newPath;
+    } catch (error) {
+      console.error(`Erro ao persistir a série (${updated.name}):`, error);
       throw error;
     }
   }
@@ -67,26 +150,6 @@ export class StorageManager extends LibrarySystem {
    */
   invalidateCache(): void {
     this._viewDataCache = null;
-  }
-
-  /**
-   * Escreve dados de uma série ou TieIn (Write-Through).
-   */
-  async writeData(serie: Literatures | TieIn): Promise<boolean> {
-    return this.enqueue(async () => {
-      try {
-        await this.atomicWrite(serie.dataPath, serie);
-
-        // Atualiza Cache (Write-Through)
-        this._seriesCache.set(serie.dataPath, serie);
-        this.invalidateCache();
-
-        return true;
-      } catch (e) {
-        console.error(`Erro em escrever dados da serie (${serie.name}): ${e}`);
-        return false;
-      }
-    });
   }
 
   /**
@@ -147,9 +210,9 @@ export class StorageManager extends LibrarySystem {
   /**
    * Alias para ler TieIn com cache.
    */
-  // async readTieInData(dataPath: string): Promise<TieIn | null> {
-  //   return this.readSerieData<TieIn>(dataPath);
-  // }
+  async readTieInData(dataPath: string): Promise<TieIn | null> {
+    return this.readSerieData<TieIn>(dataPath);
+  }
 
   /**
    * Deleta um capítulo e invalida o cache.
@@ -181,67 +244,68 @@ export class StorageManager extends LibrarySystem {
   /**
    * Seleciona dados de uma série, priorizando o cache.
    */
-  // async selectSerieData<T extends Literatures | TieIn>(
-  //   serieName: string,
-  //   type?: 'Manga' | 'Quadrinho' | 'childSeries' | 'Books',
-  // ): Promise<T> {
-  //   // Tenta encontrar no cache primeiro
-  //   for (const serie of this._seriesCache.values()) {
-  //     if (serie.name === serieName) return serie as T;
-  //   }
+  async selectSerieData<T extends Literatures | TieIn>(
+    serieName: string,
+    type?: 'Manga' | 'Quadrinho' | 'childSeries' | 'Books',
+  ): Promise<T> {
+    throw new Error(`Não implementado`);
+    // // Tenta encontrar no cache primeiro
+    // for (const serie of this._seriesCache.values()) {
+    //   if (serie.name === serieName) return serie as T;
+    // }
 
-  //   try {
-  //     let targetFolder: string;
+    // try {
+    //   let targetFolder: string;
 
-  //     if (type) {
-  //       switch (type) {
-  //         case 'Manga':
-  //           targetFolder = this.mangasData;
-  //           break;
-  //         case 'Quadrinho':
-  //           targetFolder = this.comicsData;
-  //           break;
-  //         case 'Books':
-  //           targetFolder = this.booksData;
-  //           break;
-  //         case 'childSeries':
-  //           targetFolder = this.childSeriesData;
-  //           break;
-  //         default:
-  //           targetFolder = this.mangasData;
-  //       }
-  //     } else {
-  //       const allFolders = [
-  //         this.mangasData,
-  //         this.comicsData,
-  //         this.booksData,
-  //         this.childSeriesData,
-  //       ];
-  //       for (const folder of allFolders) {
-  //         const files = await this.fileManager.foundFiles(folder);
-  //         const found = files.find((f) => path.parse(f).name === serieName);
-  //         if (found) {
-  //           return await this.readSerieData<T>(found);
-  //         }
-  //       }
-  //       throw new Error(`Série não encontrada: ${serieName}`);
-  //     }
+    //   if (type) {
+    //     switch (type) {
+    //       case 'Manga':
+    //         targetFolder = this.mangasData;
+    //         break;
+    //       case 'Quadrinho':
+    //         targetFolder = this.comicsData;
+    //         break;
+    //       case 'Books':
+    //         targetFolder = this.booksData;
+    //         break;
+    //       case 'childSeries':
+    //         targetFolder = this.childSeriesData;
+    //         break;
+    //       default:
+    //         targetFolder = this.mangasData;
+    //     }
+    //   } else {
+    //     const allFolders = [
+    //       this.mangasData,
+    //       this.comicsData,
+    //       this.booksData,
+    //       this.childSeriesData,
+    //     ];
+    //     for (const folder of allFolders) {
+    //       const files = await this.fileManager.foundFiles(folder);
+    //       const found = files.find((f) => path.parse(f).name === serieName);
+    //       if (found) {
+    //         return await this.readSerieData<T>(found);
+    //       }
+    //     }
+    //     throw new Error(`Série não encontrada: ${serieName}`);
+    //   }
 
-  //     const seriesData = await this.fileManager.foundFiles(targetFolder);
-  //     const serieDataPath = seriesData.find(
-  //       (filePath) => path.parse(filePath).name === serieName,
-  //     );
+    //   const seriesData = await this.fileManager.foundFiles(targetFolder);
+    //   const serieDataPath = seriesData.find(
+    //     (filePath) => path.parse(filePath).name === serieName,
+    //   );
 
-  //     if (!serieDataPath) {
-  //       throw new Error(`Nenhuma série encontrada com o nome: ${serieName} em ${type}`);
-  //     }
+    //   if (!serieDataPath) {
+    //     throw new Error(`Nenhuma série encontrada com o nome: ${serieName} em ${type}`);
+    //   }
 
-  //     return await this.readSerieData<T>(serieDataPath);
-  //   } catch (e) {
-  //     console.error(`Erro ao selecionar dados da série (${serieName}):`, e);
-  //     throw e;
-  //   }
-  // }
+    //   return await this.readSerieData<T>(serieDataPath);
+    // } catch (e) {
+    //   console.error(`Erro ao selecionar dados da série (${serieName}):`, e);
+    //   throw e;
+    // }
+  }
 
   /**
    * Retorna os dados simplificados para visualização (Home).
@@ -271,23 +335,6 @@ export class StorageManager extends LibrarySystem {
       console.error(`Erro ao trazer dados de visualização: ${e}`);
       return null;
     }
-  }
-
-  async processData(seriePath: string): Promise<SerieData> {
-    const serieName = path.basename(seriePath);
-    const newPath = path.join(this.userLibrary, serieName);
-
-    if (!(await fse.pathExists(seriePath))) {
-      throw new Error(`Caminho invalido: ${seriePath} não existe.`);
-    }
-
-    return {
-      name: serieName,
-      sanitizedName: this.fileManager.sanitizeFilename(serieName),
-      newPath: newPath,
-      oldPath: seriePath,
-      createdAt: new Date().toISOString(),
-    };
   }
 
   /**
@@ -323,36 +370,6 @@ export class StorageManager extends LibrarySystem {
   //   });
   // }
 
-  /**
-   * Persiste uma série no disco com suporte a troca de nome (Write-Through).
-   */
-  async persistSerie(oldData: Literatures, updated: Literatures): Promise<string> {
-    return this.enqueue(async () => {
-      const oldPath = oldData.dataPath;
-      const dir = path.dirname(oldPath);
-
-      const nameChanged = oldData.name !== updated.name;
-      const newPath = nameChanged ? path.join(dir, `${updated.name}.json`) : oldPath;
-
-      if (nameChanged && oldPath !== newPath) {
-        await this.fileManager.moveFiles(oldData, updated);
-        if (await fse.pathExists(oldPath)) {
-          await fse.remove(oldPath);
-          this._seriesCache.delete(oldPath); // Remove caminho antigo do cache
-        }
-      }
-
-      updated.dataPath = newPath;
-      await this.atomicWrite(newPath, updated);
-
-      // Sincroniza Cache
-      this._seriesCache.set(newPath, updated);
-      this.invalidateCache();
-
-      return newPath;
-    });
-  }
-
   private mountViewData(serie: Literatures): viewData {
     return {
       id: serie.id,
@@ -366,25 +383,26 @@ export class StorageManager extends LibrarySystem {
     };
   }
 
-  // buildUpdatedSerie(
-  //   oldData: Literatures,
-  //   newData: SerieEditForm,
-  // ): { hasChanges: boolean; data: Literatures } {
-  //   const updated = { ...oldData } as Record<string, unknown>;
-  //   let hasChanges = false;
+  buildUpdatedSerie(
+    oldData: Literatures,
+    newData: SerieEditForm,
+  ): { hasChanges: boolean; data: Literatures | null } {
+    return { hasChanges: false, data: null };
+    // const updated = { ...oldData } as Record<string, unknown>;
+    // let hasChanges = false;
 
-  //   for (const key of Object.keys(newData)) {
-  //     const newValue = (newData as Record<string, unknown>)[key];
-  //     const oldValue = (oldData as Record<string, unknown>)[key];
+    // for (const key of Object.keys(newData)) {
+    //   const newValue = (newData as Record<string, unknown>)[key];
+    //   const oldValue = (oldData as Record<string, unknown>)[key];
 
-  //     if (!isDeepStrictEqual(oldValue, newValue)) {
-  //       updated[key] = newValue;
-  //       hasChanges = true;
-  //     }
-  //   }
+    //   if (!isDeepStrictEqual(oldValue, newValue)) {
+    //     updated[key] = newValue;
+    //     hasChanges = true;
+    //   }
+    // }
 
-  //   return { hasChanges, data: updated as unknown as Literatures };
-  // }
+    // return { hasChanges, data: updated as unknown as Literatures };
+  }
 }
 
 export default StorageManager.getInstance();

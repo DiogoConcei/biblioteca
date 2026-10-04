@@ -1,8 +1,4 @@
 import { graphChapter, graphSerie } from './electron-auxiliar.interfaces';
-import {
-  LiteratureForm,
-  ReadingStatus,
-} from '../../src/types/series.interfaces';
 
 export interface Comic extends graphSerie<ComicEdition> {
   id: number;
@@ -30,10 +26,10 @@ export interface Comic extends graphSerie<ComicEdition> {
     recommendedBy?: string;
     originalOwner?: string;
     lastDownload: number;
-    privacy: 'Publica' | 'Privada' | '';
+    privacy: PrivacyStatus;
     rating?: number;
     isFavorite: boolean;
-    autoBackup: 'Sim' | 'Não' | '';
+    autoBackup: AutoBackupStatus;
     compiledComic: boolean;
   };
   createdAt: string;
@@ -53,22 +49,27 @@ export interface TieIn {
   totalChapters: number;
   chaptersRead: number;
   literatureForm: LiteratureForm;
-  chapters?: ComicEdition[];
+  chapters: ComicEdition[];
   readingData: {
     lastChapterId: number;
     lastReadAt: string;
   };
   metadata: {
-    lastDownload: number;
-    isFavorite: boolean;
-    isCreated: boolean;
     status: ReadingStatus;
-    rating?: number;
+    collections: string[];
     recommendedBy?: string;
     originalOwner?: string;
+    lastDownload: number;
+    privacy: PrivacyStatus;
+    rating?: number;
+    isFavorite: boolean;
+    autoBackup: AutoBackupStatus;
+    compiledComic: boolean;
+    isCreated: boolean;
   };
   createdAt: string;
-  deletedAt?: string;
+  deletedAt: string;
+  tags: string[];
   comments: string[];
 }
 
@@ -120,4 +121,30 @@ export enum ComicCategory {
 export interface ITieInManager {
   processTieInData(basePath: string, childSeries: ComicTieIn[]): Promise<void>;
   resolveCoverSourceArchive(candidatePath: string): Promise<string>;
+}
+
+export enum ReadingStatus {
+  IN_PROGRESS = 'Em andamento',
+  COMPLETED = 'Completo',
+  PENDING = 'Pendente',
+  EMPTY = '',
+}
+
+export enum AutoBackupStatus {
+  YES = 'Sim',
+  NO = 'Não',
+  EMPTY = '',
+}
+
+export enum PrivacyStatus {
+  IN_PROGRESS = 'Pública',
+  COMPLETED = 'Privada',
+  EMPTY = '',
+}
+
+export enum LiteratureForm {
+  MANGA = 'Manga',
+  COMIC = 'Quadrinho',
+  BOOK = 'Books',
+  EMPTY = '',
 }

@@ -9,6 +9,7 @@ import {
 } from '../../src/shared/types/series.interfaces';
 
 export type LiteratureChapter = ComicEdition | MangaChapter | BookChapter;
+export type PathKind = 'serie' | 'chapter' | 'tie-in' | 'invalid';
 
 export type LiteraturesAttributes =
   | string

@@ -181,15 +181,15 @@ export interface CreateCollectionFormValues {
 
 export type SelectOptionValue = string | number;
 
-export type SelectOption = {
-  value: SelectOptionValue;
+export type SelectOption<T extends SelectOptionValue = SelectOptionValue> = {
+  value: T;
   label: string;
 };
 
-export type SelectProps = {
-  options: SelectOption[];
-  value?: SelectOptionValue;
-  onChange: (value: SelectOptionValue) => void;
+export type SelectProps<T extends SelectOptionValue = SelectOptionValue> = {
+  options: SelectOption<T>[];
+  value?: T;
+  onChange: (value: T) => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
@@ -198,7 +198,7 @@ export type SelectProps = {
   searchable?: boolean;
   searchPlaceholder?: string;
   label?: string;
-  renderOption?: (option: SelectOption, selected: boolean) => JSX.Element;
+  renderOption?: (option: SelectOption<T>, selected: boolean) => JSX.Element;
 };
 
 export default interface CustomTimePickerProps {

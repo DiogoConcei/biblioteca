@@ -4,11 +4,18 @@ import fse from 'fs-extra';
 import ComicManager from './ComicManager';
 import FileManager from '../FileManager';
 import ImageManager from '../processing/ImageManager';
-import PdfManager from '../PdfManager';
-import ArchiveManager from '../ArchiveManager';
 import storageManager from '../StorageManager';
-import { LiteratureForm, ReadingStatus } from '../../src/types/series.interfaces';
-import { ComicTieIn, TieIn, ComicEdition } from '../../types/comic.interfaces';
+import {
+  ComicTieIn,
+  TieIn,
+  ComicEdition,
+  AutoBackupStatus,
+  PrivacyStatus,
+} from '../../types/comic.interfaces';
+
+import PdfManager from '../processing/PdfManager';
+import ArchiveManager from '../processing/ArchiveManager';
+import { LiteratureForm, ReadingStatus } from '../../types/book.interfaces';
 
 export default class TieInManager extends ComicManager {
   protected readonly fileManager: FileManager = new FileManager();
@@ -180,9 +187,14 @@ export default class TieInManager extends ComicManager {
         originalOwner: '',
         recommendedBy: '',
         rating: 0,
+        autoBackup: AutoBackupStatus.EMPTY,
+        collections: [],
+        compiledComic: false,
+        privacy: PrivacyStatus.IN_PROGRESS,
       },
       createdAt,
       deletedAt: '',
+      tags: [],
       comments: [],
     };
   }
@@ -209,6 +221,11 @@ export default class TieInManager extends ComicManager {
 
     return {
       id: 0,
+      order: 0,
+      chapterNumber: {
+        label: '',
+        value: 0,
+      },
       serieName: serieName,
       name: fileName,
       coverImage: '',

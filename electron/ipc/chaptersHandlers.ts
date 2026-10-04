@@ -3,9 +3,9 @@ import { IpcMain } from 'electron';
 import FileManager from '../services/FileManager';
 import storageManager from '../services/StorageManager';
 import UserManager from '../services/UserManager.ts';
-import MediaFactory from '../services/MediaFactory';
+import MediaFactory from '../services/adapters/MediaFactory';
 import { Literatures } from '../types/electron-auxiliar.interfaces.ts';
-import { ReadingStatus } from '../../src/types/series.interfaces.ts';
+import { ReadingStatus } from '../types/book.interfaces.ts';
 
 export default function chaptersHandlers(ipcMain: IpcMain) {
   const fileManager = new FileManager();
@@ -14,13 +14,13 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
   ipcMain.handle(
     'chapter:mark-read',
     async (_event, dataPath: string, chapter_id: number, isRead: boolean) => {
-      try {
-        await userManager.markChapterRead(dataPath, chapter_id, isRead);
-        return { success: true };
-      } catch (e) {
-        console.error(`Falha em marcar como lido: ${e}`);
-        return { success: false, error: String(e) };
-      }
+      // try {
+      //   await userManager.markChapterRead(dataPath, chapter_id, isRead);
+      //   return { success: true };
+      // } catch (e) {
+      //   console.error(`Falha em marcar como lido: ${e}`);
+      //   return { success: false, error: String(e) };
+      // }
     },
   );
 
@@ -35,7 +35,9 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         const serieData = await storageManager.readSerieData(dataPath);
         if (!serieData) throw new Error(`Série não encontrada: ${serieName}`);
 
-        const chapter = serieData.chapters?.find((c) => Number(c.id) === Number(chapter_id));
+        const chapter = serieData.chapters?.find(
+          (c) => Number(c.id) === Number(chapter_id),
+        );
         if (!chapter) throw new Error(`Capítulo ${chapter_id} não encontrado`);
 
         const adapter = MediaFactory.getAdapter(chapter.chapterPath);
@@ -67,12 +69,9 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
         const dataPath = await fileManager.getDataPath(serieName);
         if (!dataPath) throw new Error('Caminho da série não encontrado');
 
-        const serieData = (await storageManager.readSerieData(
-          dataPath,
-        )) as Literatures;
+        const serieData = (await storageManager.readSerieData(dataPath)) as Literatures;
 
-        if (!serieData?.chapters?.length)
-          throw new Error('Capítulos não encontrados');
+        if (!serieData?.chapters?.length) throw new Error('Capítulos não encontrados');
 
         let chapterFound = false;
 
@@ -87,30 +86,21 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
             ...chapter,
             page: {
               ...chapter.page,
-              lastPageRead: Math.max(
-                chapter.page?.lastPageRead ?? 0,
-                page_number,
-              ),
+              lastPageRead: Math.max(chapter.page?.lastPageRead ?? 0, page_number),
               lastCfi: cfi || chapter.page.lastCfi,
             },
             isRead: chapter.isRead || isLastPage,
           };
         });
 
-        if (!chapterFound)
-          return { success: false, error: 'Capítulo não encontrado' };
+        if (!chapterFound) return { success: false, error: 'Capítulo não encontrado' };
 
         const updatedReadingData = {
           ...serieData.readingData,
-          lastChapterId: Math.max(
-            serieData.readingData.lastChapterId ?? 0,
-            chapter_id,
-          ),
+          lastChapterId: Math.max(serieData.readingData.lastChapterId ?? 0, chapter_id),
         };
 
-        const updatedChaptersRead = updatedChapters.filter(
-          (c) => c.isRead,
-        ).length;
+        const updatedChaptersRead = updatedChapters.filter((c) => c.isRead).length;
 
         // Atualização automática de status
         let updatedStatus = serieData.metadata.status;
@@ -145,114 +135,100 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
   );
 
   ipcMain.handle('chapter:acess-last-read', async (_event, serieId: number) => {
-    try {
-      const serie = await storageManager.searchSerieById(serieId);
-
-      if (!serie) {
-        return {
-          success: false,
-          error: 'Nenhum capítulo disponível para abrir nesta série.',
-        };
-      }
-
-      const chapter = serie.chapters?.find(
-        (item) => item.id === serie.readingData.lastChapterId,
-      );
-
-      if (!chapter) {
-        return {
-          success: false,
-          error: 'Capítulo final não encontrado para a série selecionada.',
-        };
-      }
-
-      const url = userManager.mountChapterUrl(
-        serie,
-        chapter.id,
-        chapter.name,
-        chapter.page.lastPageRead,
-        chapter.isRead,
-      );
-
-      return { success: true, data: [url, serie, chapter.page.lastCfi] };
-    } catch (e) {
-      console.error(`Erro ao acessar último capítulo lido: ${e}`);
-      return { success: false, error: String(e) };
-    }
+    // try {
+    //   const serie = await storageManager.searchSerieById(serieId);
+    //   if (!serie) {
+    //     return {
+    //       success: false,
+    //       error: 'Nenhum capítulo disponível para abrir nesta série.',
+    //     };
+    //   }
+    //   const chapter = serie.chapters?.find(
+    //     (item) => item.id === serie.readingData.lastChapterId,
+    //   );
+    //   if (!chapter) {
+    //     return {
+    //       success: false,
+    //       error: 'Capítulo final não encontrado para a série selecionada.',
+    //     };
+    //   }
+    //   const url = userManager.mountChapterUrl(
+    //     serie,
+    //     chapter.id,
+    //     chapter.name,
+    //     chapter.page.lastPageRead,
+    //     chapter.isRead,
+    //   );
+    //   return { success: true, data: [url, serie, chapter.page.lastCfi] };
+    // } catch (e) {
+    //   console.error(`Erro ao acessar último capítulo lido: ${e}`);
+    //   return { success: false, error: String(e) };
+    // }
   });
 
   ipcMain.handle(
     'chapter:get-next-chapter',
     async (_event, serieName: string, chapter_id: number) => {
-      try {
-        const dataPath = await fileManager.getDataPath(serieName);
-        const serieData = await storageManager.readSerieData(dataPath!);
-
-        if (!serieData) {
-          return { success: false, error: `Falha em recuperar dados` };
-        }
-
-        const nextChapter = serieData.chapters?.find(
-          (chapter) => Number(chapter.id) === Number(chapter_id),
-        );
-
-        if (!nextChapter) {
-          return null;
-        }
-
-        const url = userManager.mountChapterUrl(
-          serieData,
-          nextChapter.id,
-          nextChapter.name,
-          nextChapter.page.lastPageRead,
-          nextChapter.isRead,
-        );
-
-        return {
-          success: true,
-          data: url,
-          lastPageRead: nextChapter.page.lastPageRead,
-        };
-      } catch (e) {
-        return { success: false, error: String(e) };
-      }
+      // try {
+      //   const dataPath = await fileManager.getDataPath(serieName);
+      //   const serieData = await storageManager.readSerieData(dataPath!);
+      //   if (!serieData) {
+      //     return { success: false, error: `Falha em recuperar dados` };
+      //   }
+      //   const nextChapter = serieData.chapters?.find(
+      //     (chapter) => Number(chapter.id) === Number(chapter_id),
+      //   );
+      //   if (!nextChapter) {
+      //     return null;
+      //   }
+      //   const url = userManager.mountChapterUrl(
+      //     serieData,
+      //     nextChapter.id,
+      //     nextChapter.name,
+      //     nextChapter.page.lastPageRead,
+      //     nextChapter.isRead,
+      //   );
+      //   return {
+      //     success: true,
+      //     data: url,
+      //     lastPageRead: nextChapter.page.lastPageRead,
+      //   };
+      // } catch (e) {
+      //   return { success: false, error: String(e) };
+      // }
     },
   );
 
   ipcMain.handle(
     'chapter:get-prev-chapter',
     async (_event, serieName: string, chapter_id: number) => {
-      try {
-        const dataPath = await fileManager.getDataPath(serieName);
-        if (!dataPath) {
-          throw new Error(`dataPath is undefined for serieName: ${serieName}`);
-        }
-        const serieData = await storageManager.readSerieData(dataPath);
-
-        if (!serieData) {
-          return { success: false, error: `Falha em recuperar dados` };
-        }
-        const prevChapter = serieData.chapters!.find(
-          (chapter) => Number(chapter.id) === Number(chapter_id),
-        );
-
-        if (!prevChapter) {
-          return null;
-        }
-
-        const url = userManager.mountChapterUrl(
-          serieData,
-          prevChapter.id,
-          prevChapter.name,
-          prevChapter.page.lastPageRead,
-          prevChapter.isRead,
-        );
-
-        return { success: true, data: url, lastCfi: prevChapter.page.lastCfi };
-      } catch (e) {
-        console.error(`Erro ao buscar capítulo anterior: ${e}`);
-        return { success: false, error: String(e) };
-      }
+      // try {
+      //   const dataPath = await fileManager.getDataPath(serieName);
+      //   if (!dataPath) {
+      //     throw new Error(`dataPath is undefined for serieName: ${serieName}`);
+      //   }
+      //   const serieData = await storageManager.readSerieData(dataPath);
+      //   if (!serieData) {
+      //     return { success: false, error: `Falha em recuperar dados` };
+      //   }
+      //   const prevChapter = serieData.chapters!.find(
+      //     (chapter) => Number(chapter.id) === Number(chapter_id),
+      //   );
+      //   if (!prevChapter) {
+      //     return null;
+      //   }
+      //   const url = userManager.mountChapterUrl(
+      //     serieData,
+      //     prevChapter.id,
+      //     prevChapter.name,
+      //     prevChapter.page.lastPageRead,
+      //     prevChapter.isRead,
+      //   );
+      //   return { success: true, data: url, lastCfi: prevChapter.page.lastCfi };
+      // } catch (e) {
+      //   console.error(`Erro ao buscar capítulo anterior: ${e}`);
+      //   return { success: false, error: String(e) };
+      // }
     },
   );
 
@@ -272,9 +248,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
           .filter((c): c is Literatures['chapters'][0] => !!c);
 
         if (reorderedChapters.length !== serie.chapters.length) {
-          throw new Error(
-            'Inconsistência na quantidade de capítulos reordenados.',
-          );
+          throw new Error('Inconsistência na quantidade de capítulos reordenados.');
         }
 
         reorderedChapters.forEach((chapter, index) => {

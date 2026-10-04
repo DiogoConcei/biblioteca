@@ -5,6 +5,7 @@ import {
   ReadableSerie,
   LastReadCandidate,
   Literatures,
+  graphSerie,
 } from '../types/electron-auxiliar.interfaces';
 import { Comic, TieIn } from '../types/comic.interfaces';
 import { ReadingStatus } from '../../src/shared/types/series.interfaces';
@@ -37,32 +38,31 @@ export default class UserManager extends FileSystem {
       return false;
     }
   }
+
+  async addToRecentes(serie: graphSerie): Promise<boolean> {
+    return true;
+  }
+
+  public async favoriteSerie(serieData: Literatures): Promise<boolean> {
+    return true;
+    // try {
+    //   const isFavorite = !serieData.metadata.isFavorite;
+    //   let success: boolean;
+
+    //   if (isFavorite) {
+    //     success = await this.collManager.addInCollection(serieData.dataPath, 'favoritos');
+    //   } else {
+    //     success = await this.collManager.removeInCollection('favoritos', serieData.id);
+    //   }
+
+    //   if (!success) return false;
+
+    //   serieData.metadata.isFavorite = isFavorite;
+    //   await this.storageManager.writeData(serieData);
+    //   return true;
+    // } catch (err) {
+    //   console.error('Erro ao atualizar favoritação de série:', err);
+    //   return false;
+    // }
+  }
 }
-
-// public async favoriteSerie(serieData: Literatures): Promise<boolean> {
-//   try {
-//     const isFavorite = !serieData.metadata.isFavorite;
-//     let success: boolean;
-
-//     if (isFavorite) {
-//       success = await this.collManager.addInCollection(
-//         serieData.dataPath,
-//         'favoritos',
-//       );
-//     } else {
-//       success = await this.collManager.removeInCollection(
-//         'favoritos',
-//         serieData.id,
-//       );
-//     }
-
-//     if (!success) return false;
-
-//     serieData.metadata.isFavorite = isFavorite;
-//     await this.storageManager.writeData(serieData);
-//     return true;
-//   } catch (err) {
-//     console.error('Erro ao atualizar favoritação de série:', err);
-//     return false;
-//   }
-// }

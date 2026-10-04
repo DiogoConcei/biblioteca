@@ -1,8 +1,4 @@
 import { graphChapter, graphSerie } from './electron-auxiliar.interfaces';
-import {
-  LiteratureForm,
-  ReadingStatus,
-} from '../../src/types/series.interfaces';
 
 export interface Book extends graphSerie<BookChapter> {
   name: string;
@@ -28,10 +24,10 @@ export interface Book extends graphSerie<BookChapter> {
     recommendedBy?: string;
     originalOwner?: string;
     lastDownload: number;
-    privacy: 'Publica' | 'Privada' | '';
+    privacy: PrivacyStatus;
     rating?: number;
     isFavorite: boolean;
-    autoBackup: 'Sim' | 'Não' | '';
+    autoBackup: AutoBackupStatus;
   };
   comments: string[];
   tags: string[];
@@ -54,4 +50,30 @@ export interface BookChapter extends graphChapter {
     favoritePage: number;
     lastCfi?: string;
   };
+}
+
+export enum ReadingStatus {
+  IN_PROGRESS = 'Em andamento',
+  COMPLETED = 'Completo',
+  PENDING = 'Pendente',
+  EMPTY = '',
+}
+
+export enum AutoBackupStatus {
+  YES = 'Sim',
+  NO = 'Não',
+  EMPTY = '',
+}
+
+export enum PrivacyStatus {
+  IN_PROGRESS = 'Pública',
+  COMPLETED = 'Privada',
+  EMPTY = '',
+}
+
+export enum LiteratureForm {
+  MANGA = 'Manga',
+  COMIC = 'Quadrinho',
+  BOOK = 'Books',
+  EMPTY = '',
 }

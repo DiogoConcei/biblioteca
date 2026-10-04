@@ -2,11 +2,12 @@ import { IpcMain } from 'electron';
 
 import FileManager from '../services/FileManager';
 import storageManager from '../services/StorageManager';
-import ValidationManager from '../services/ValidationManager';
-import MangaManager from '../services/MangaManager';
-import ComicManager from '../services/ComicManager';
-import TieInManager from '../services/TieInManager';
-import BookManager from '../services/BookManager';
+
+import ValidationManager from '../services/persistence/ValidationManager';
+import BookManager from '../services/content/BookManager';
+import TieInManager from '../services/content/TieInManager';
+import ComicManager from '../services/content/ComicManager';
+import MangaManager from '../services/content/MangaManager';
 
 export default function downloadHandlers(ipcMain: IpcMain) {
   const validationManager = new ValidationManager();
@@ -108,16 +109,13 @@ export default function downloadHandlers(ipcMain: IpcMain) {
         throw new Error(`Dados da série não encontrados em: ${dataPath}`);
       }
 
-      const chapter = serieData.chapters?.find(
-        (chap) => chap.id === chapter_id,
-      );
+      const chapter = serieData.chapters?.find((chap) => chap.id === chapter_id);
 
       if (!chapter) {
         throw new Error(`Capítulo com id ${chapter_id} não encontrado.`);
       }
 
-      if (await validationManager.checkDownload(serieData, chapter.id))
-        return true;
+      if (await validationManager.checkDownload(serieData, chapter.id)) return true;
 
       try {
         switch (literatureForm) {
