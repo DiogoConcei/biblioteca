@@ -4,7 +4,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 
-import { uploadSchema, type UploadFormValues } from '../schemas/serie.schema';
+import { uploadSchema, type UploadFormValues } from '../schemas/upload.schema';
 import { EMPTY_SERIE, toSerieForm } from '../utils/serie';
 import { SerieData } from '@/shared/types/series.interfaces';
 
@@ -50,18 +50,15 @@ export function useSerieUploadForm(initial: SerieData[]) {
   const submit = handleSubmit(
     async ({ series }) => {
       try {
-        console.log('onValid', series);
         await window.electronAPI.upload.uploadSeries(series);
         navigate('/');
       } catch {
-        console.log('onInvalid');
         setError('root.server', {
           message: 'Falha ao enviar as séries. Tente novamente.',
         });
       }
     },
     (errors) => {
-      console.log('onInvalid', errors);
       const firstInvalid = errors.series?.findIndex?.((e) => e);
       if (typeof firstInvalid === 'number' && firstInvalid >= 0) {
         setCurrentIndex(firstInvalid);

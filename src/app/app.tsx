@@ -6,7 +6,7 @@ import Layout from './layout/AppLayout/Layout';
 import ErrorBoundary from '@/shared/providers/ErrorBoundary';
 import Home from '@/features/hub/home/Home';
 import SerieUpload from '@/features/upload/serieUpload/SerieUpload';
-// import Home from '../features/hub/components/home/Home';
+import ChapterUpload from '@/features/upload/chapterUpload/ChapterUpload';
 // import MangaPage from './pages/mangaPage/MangaPage';
 // import ComicPage from '../features/comicview/comicPage/comicPage';
 // import TieInPage from '../components/TieInPage/TieInPage';
@@ -28,6 +28,7 @@ const App = () => {
               element={<EditSerie />}
             /> */}
             <Route path="local-upload/serie" element={<SerieUpload />} />
+            <Route path="local-upload/chapter" element={<ChapterUpload />} />
             {/* <Route path="Manga/:manga_name/:manga_id" element={<MangaPage />} /> */}
             {/* <Route path="Books/:book_name/:book_id" element={<BookPage />} /> */}
             {/* <Route path="Quadrinho/:comic_name/:comic_id" element={<ComicPage />} /> */}

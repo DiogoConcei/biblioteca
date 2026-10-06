@@ -4,8 +4,9 @@ import FileManager from '../services/FileManager';
 import storageManager from '../services/StorageManager';
 import UserManager from '../services/UserManager.ts';
 import MediaFactory from '../services/adapters/MediaFactory';
-import { Literatures } from '../types/electron-auxiliar.interfaces.ts';
+import { graphChapter, Literatures } from '../types/electron-auxiliar.interfaces.ts';
 import { ReadingStatus } from '../types/book.interfaces.ts';
+import { APIResponse } from '../types/electron-auxiliar.interfaces.ts';
 
 export default function chaptersHandlers(ipcMain: IpcMain) {
   const fileManager = new FileManager();
@@ -263,6 +264,42 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
       } catch (e) {
         console.error(`Erro ao reordenar capítulos: ${e}`);
         return { success: false, error: String(e) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    'chapter:get-by-serie',
+    async (_event, serieId: number): Promise<APIResponse<graphChapter[]>> => {
+      try {
+        // 1. Busca a série completa usando o Manager (ele cuida do cache e do disco)
+        const serie = await storageManager.searchSerieById(serieId);
+
+        // 2. Se a série não existir, retorna um erro controlado
+        if (!serie) {
+          return {
+            success: false,
+            error: `Série com ID ${serieId} não foi encontrada.`,
+          };
+        }
+
+        // 3. Pega os capítulos da série (garantindo que seja um array vazio se vier undefined)
+        const chapters = serie.chapters || [];
+
+        // 4. Retorna os dados com sucesso
+        return {
+          success: true,
+          data: chapters,
+        };
+      } catch (error) {
+        console.error(`Erro no IPC chapter:get-by-serie (ID: ${serieId}):`, error);
+        return {
+          success: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Erro desconhecido ao buscar capítulos.',
+        };
       }
     },
   );

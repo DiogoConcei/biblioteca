@@ -37,7 +37,6 @@ export default function uploadHandlers(ipcMain: IpcMain) {
 
       try {
         const processed = await storageManager.processUpload(paths);
-        console.log(processed);
         return { success: true, data: processed };
       } catch (err) {
         return { success: false, error: (err as Error).message };

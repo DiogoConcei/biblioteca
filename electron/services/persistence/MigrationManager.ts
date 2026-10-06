@@ -137,12 +137,3 @@ export default class MigrationManager extends LibrarySystem {
     await this.storageManager.writeData(serieData);
   }
 }
-
-(async () => {
-  const migrationManager = new MigrationManager();
-  console.log(
-    await migrationManager.fixChapterIds(
-      'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Mangas\\Yu Yu Hakusho.json',
-    ),
-  );
-})();

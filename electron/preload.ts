@@ -5,6 +5,7 @@ import {
   viewData,
   LiteratureChapter,
   Literatures,
+  graphSerie,
 } from './types/electron-auxiliar.interfaces.ts';
 import {
   SerieData,
@@ -170,6 +171,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       newOrderIds: number[],
     ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('chapter:reorder', dataPath, newOrderIds),
+    getBySerie: async (serieId: number): Promise<APIResponse<graphSerie[]>> =>
+      ipcRenderer.invoke('chapter:get-by-serie', serieId),
   },
 
   collections: {

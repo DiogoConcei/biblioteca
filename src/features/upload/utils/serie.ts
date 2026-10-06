@@ -6,7 +6,7 @@ import {
   PrivacyStatus,
   AutoBackupStatus,
 } from '@/shared/types/series.interfaces';
-import type { UploadFormValues } from '../schemas/serie.schema';
+import type { UploadFormValues } from '../schemas/upload.schema';
 
 export type SerieFormValues = UploadFormValues['series'][number];
 

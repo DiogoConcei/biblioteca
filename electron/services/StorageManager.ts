@@ -45,7 +45,6 @@ export class StorageManager extends LibrarySystem {
       paths.map(async (p) => ({ path: p, kind: await this.fileManager.classifyPath(p) })),
     );
 
-    console.log(classified);
     await Promise.allSettled(
       classified.map(async ({ path: itemPath, kind }) => {
         try {

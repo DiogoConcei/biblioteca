@@ -24,6 +24,7 @@ import {
   AppSettings,
 } from './settings.interfaces';
 import { MediaContent } from '../../electron/types/media.interfaces';
+import { graphChapter } from '../../../electron/types/electron-auxiliar.interfaces.js';
 
 declare global {
   interface Window {
@@ -150,6 +151,7 @@ declare global {
           dataPath: string,
           newOrderIds: number[],
         ) => Promise<APIResponse<void>>;
+        getBySerie: (serieId: number) => Promise<APIResponse<graphChapter[]>>;
       };
 
       collections: {

@@ -46,38 +46,37 @@ export default function Home() {
     event.preventDefault();
 
     const files = event.dataTransfer.files;
-
-    const filePaths = Array.from(files).map((file) => {
-      return window.electronAPI.webUtilities.getPathForFile(file);
-    });
+    const filePaths = Array.from(files).map((file) =>
+      window.electronAPI.webUtilities.getPathForFile(file),
+    );
 
     try {
       const response = await window.electronAPI.upload.processFiles(filePaths);
       populateQueue(response.data);
 
-      const currentStore = useUploadStore.getState();
-      console.log(response);
-      if (currentStore.isModalOpen) {
-        return;
+      if (response.data.tieIns?.length > 0) {
+        console.warn(
+          `${response.data.tieIns.length} item(ns) de Tie-In foram ignorados — fluxo ainda não implementado.`,
+        );
       }
 
-      // 4. Se não tem conflito (só tem série OU só tem capítulo)
+      const currentStore = useUploadStore.getState();
+      if (currentStore.isModalOpen) return;
+
       if (currentStore.pendingSeries.length > 0) {
         navigate('/local-upload/serie');
       } else if (currentStore.pendingChapters.length > 0) {
         navigate('/local-upload/chapter');
-      }
-
-      if (response.data.failed.length > 0) {
-        // Exemplo de toast futuro
-        // toast.error(`${response.data.failed.length} itens falharam ao ser lidos.`);
+      } else if (response.data.failed.length > 0) {
+        console.error(`${response.data.failed.length} item(ns) falharam ao processar.`);
       }
     } catch (error) {
       console.error('Erro ao carregar arquivos', error);
-      throw error;
+      // sem re-throw: nada está aguardando essa promise, relançar só vira
+      // unhandled rejection silenciosa. Quando os toasts existirem, troca
+      // este console.error por um toast de erro.
     }
   };
-
   const searchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
     setSearchInput(event.target.value);

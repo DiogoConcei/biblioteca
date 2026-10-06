@@ -1,0 +1,271 @@
+// ChapterUpload.module.scss
+// ajuste o caminho abaixo pro arquivo real onde ficam suas variáveis/mixins
+@use '@/shared/styles/_variables.scss' as *;
+
+.chapter-upload {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-8;
+  color: $text-color;
+  padding: $spacing-6;
+}
+
+// ---------- Picker de série ----------
+
+.serie-picker-section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.section-title {
+  font-size: $font-lg;
+  font-weight: 600;
+  color: $text-color;
+}
+
+.serie-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-4;
+  overflow-x: auto;
+  padding-bottom: $spacing-2;
+}
+
+.serie-card {
+  @include interactive-button;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-2;
+  width: 7.5rem;
+  padding: $spacing-2;
+  border-radius: $radius-lg;
+  border: 1px solid transparent;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+
+  &:hover {
+    background-color: $hover-shining;
+  }
+}
+
+.serie-card-active {
+  border-color: $accent-color;
+  background-color: rgba($amethyst, 0.12);
+}
+
+.serie-cover-wrapper {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: $radius-md;
+  overflow: hidden;
+  background-color: $weak-gunmental;
+}
+
+.serie-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.serie-name {
+  font-size: $font-sm;
+  color: $text-muted;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.empty-state {
+  color: $text-muted;
+  font-size: $font-sm;
+}
+
+// ---------- Formulário ----------
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+  background-color: $gunmetal;
+  border: 1px solid $border-color;
+  border-radius: $radius-xl;
+  padding: $spacing-6;
+}
+
+.form-title {
+  font-size: $font-xl;
+  font-weight: 600;
+  color: $text-color;
+}
+
+.form-view {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.readonly-field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-md;
+  background-color: $weak-gunmental;
+}
+
+.readonly-label {
+  font-size: $font-xs;
+  color: $text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.readonly-value {
+  font-size: $font-base;
+  color: $text-color;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.warning-text {
+  font-size: $font-sm;
+  color: $weak-indian-red;
+}
+
+.navigation-buttons {
+  display: flex;
+  gap: $spacing-3;
+  justify-content: flex-end;
+}
+
+.nav-button {
+  @include pattern-button;
+  padding: $spacing-2 $spacing-4;
+  border-radius: $radius-md;
+  color: $text-color;
+  border: 1px solid $border-color;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background-color: $hover-shining;
+  }
+
+  &:disabled {
+    color: $text-muted;
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.submit-button {
+  @include pattern-button;
+  padding: $spacing-2 $spacing-6;
+  border-radius: $radius-md;
+  background-color: $accent-color;
+  color: $snow;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background-color: $weak-amethyst;
+  }
+
+  &:disabled {
+    background-color: $weak-gunmental;
+    color: $text-muted;
+    cursor: not-allowed;
+  }
+}
+
+// ChapterUpload.module.scss — adicionar ao final do arquivo existente
+
+.chapter-list-section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.chapter-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.chapter-row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-md;
+  background-color: $weak-gunmental;
+  border: 1px solid $border-color;
+}
+
+.chapter-row-new {
+  cursor: grab;
+  border-color: rgba($amethyst, 0.4);
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.chapter-row-existing {
+  opacity: 0.6;
+}
+
+.drag-handle {
+  color: $text-muted;
+  font-size: $font-lg;
+  user-select: none;
+}
+
+.chapter-name-input {
+  @include pattern-input;
+  flex: 1;
+  color: $text-color;
+  font-size: $font-base;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-sm;
+  background-color: rgba($snow, 0.05);
+}
+
+.chapter-name-readonly {
+  flex: 1;
+  color: $text-muted;
+  font-size: $font-base;
+}
+
+.order-controls {
+  display: flex;
+  gap: $spacing-1;
+}
+
+.order-button {
+  @include interactive-button;
+  color: $text-color;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-sm;
+
+  &:hover {
+    background-color: $hover-shining;
+  }
+}

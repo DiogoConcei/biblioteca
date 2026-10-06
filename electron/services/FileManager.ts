@@ -16,9 +16,8 @@ export default class FileManager extends LibrarySystem {
     if (stat.isFile()) return 'chapter';
 
     const entries = await fse.readdir(targetPath, { withFileTypes: true });
-    const hasSubfolders = entries.some((e) => e.isDirectory());
 
-    return hasSubfolders ? 'tie-in' : 'serie';
+    return entries ? 'serie' : 'invalid';
   }
 
   public async searchChapters(archivesPath: string): Promise<[string[], number]> {
