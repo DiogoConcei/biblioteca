@@ -115,7 +115,9 @@ export default function Home() {
     <section className={styles.home} onDragOver={handleDrag} onDrop={handleDrop}>
       <div className={styles.content}>
         <div className={styles.options}>
-          <SearchBar searchInput={searchInput} onSearchChange={searchChange} />
+          <div className={styles['search-container']}>
+            <SearchBar searchInput={searchInput} onSearchChange={searchChange} />
+          </div>
 
           <button
             onClick={handleSurpriseMe}

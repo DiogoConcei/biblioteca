@@ -44,7 +44,7 @@ export default function SerieUpload() {
   }, [initialData, navigate]);
 
   // 4. Retorno antecipado DEPOIS de todos os hooks! O React permite isso tranquilamente.
-  if (initialData.length === 0) return <Loading />;
+  if (initialData.length === 0 || isSubmitting === true) return <Loading />;
 
   // 5. Variáveis que dependem do índice
   const prefix = `series.${currentIndex}` as const;

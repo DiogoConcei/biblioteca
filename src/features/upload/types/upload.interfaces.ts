@@ -29,3 +29,32 @@ export interface ProcessedUploadResult {
   chapters: ChapterData[];
   failed: FailedItem[];
 }
+
+export interface ExistingChapterItem {
+  key: string;
+  kind: 'existing';
+  label: string;
+  order: number;
+  chapterId: number;
+}
+
+export interface NewChapterItem {
+  key: string;
+  kind: 'new';
+  label: string;
+  order: number;
+  sourcePath: string;
+}
+
+export type ChapterListItem = ExistingChapterItem | NewChapterItem;
+
+export type DisplayChapterItem =
+  | (ExistingChapterItem & { formIndex?: never })
+  | {
+      key: string;
+      kind: 'new';
+      label: string;
+      order: number;
+      sourcePath: string;
+      formIndex: number;
+    };

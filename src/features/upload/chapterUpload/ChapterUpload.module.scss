@@ -1,178 +1,359 @@
-// ChapterUpload.module.scss
-// ajuste o caminho abaixo pro arquivo real onde ficam suas variáveis/mixins
 @use '@/shared/styles/_variables.scss' as *;
 
-.chapter-upload {
+.container {
   display: flex;
-  flex-direction: column;
-  gap: $spacing-8;
-  color: $text-color;
-  padding: $spacing-6;
+  flex-flow: column nowrap;
+  padding: $spacing-6 $spacing-10;
+  width: 100%;
+  height: 90vh;
+  max-height: 90vh;
+  overflow: hidden;
+  box-sizing: border-box;
+  margin: auto;
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: $spacing-4;
+    margin-bottom: $spacing-6;
+    flex-shrink: 0;
+
+    svg {
+      color: $indian-red;
+      flex-shrink: 0;
+    }
+
+    .header-content {
+      display: flex;
+      flex-flow: column nowrap;
+      gap: $spacing-1;
+
+      h1 {
+        font-size: $font-2xl;
+        color: $snow;
+        margin: 0;
+        line-height: 1.2;
+      }
+
+      p {
+        font-size: $font-base;
+        color: rgba($snow, 0.7);
+        margin: 0;
+
+        strong {
+          color: $indian-red;
+        }
+      }
+    }
+  }
+
+  .mainContent {
+    display: flex;
+    flex-flow: column nowrap;
+    gap: $spacing-8;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+
+    &.hasSelection {
+      flex-flow: row nowrap;
+
+      .gridPanel {
+        flex: 1;
+        border-left: 2px solid rgba($amethyst, 0.3);
+        padding-left: $spacing-6;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+
+        .grid {
+          grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+          overflow-y: auto;
+        }
+      }
+    }
+  }
+
+  // Bloco Unificado de Foco (Capa + Formulário no mesmo background)
+  .focusPanel {
+    display: flex;
+    flex-flow: row nowrap;
+    gap: $spacing-8;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    align-items: stretch;
+
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: $radius-lg;
+    border: 1px solid rgba($amethyst, 0.3);
+    padding: $spacing-6;
+    box-sizing: border-box;
+
+    .heroSection {
+      display: flex;
+      flex-flow: column nowrap;
+      align-items: center;
+      justify-content: center;
+      width: 380px;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      max-height: 100%;
+
+      .heroCover {
+        width: 100%;
+        max-width: 220px;
+        max-height: 55vh;
+        aspect-ratio: 2 / 3;
+        border-radius: $radius-lg;
+        overflow: hidden;
+        box-shadow:
+          0 20px 50px rgba(0, 0, 0, 0.8),
+          0 0 20px rgba($amethyst, 0.2);
+        cursor: pointer;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+        flex-shrink: 1;
+
+        &:hover {
+          transform: scale(1.02) translateY(-2px);
+          box-shadow:
+            0 25px 60px rgba(0, 0, 0, 0.9),
+            0 0 30px rgba($amethyst, 0.4);
+        }
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+
+      h2 {
+        margin-top: $spacing-4;
+        font-size: $font-lg;
+        color: $snow;
+        text-align: center;
+        width: 100%;
+        padding: 0 $spacing-2;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex-shrink: 0;
+      }
+    }
+
+    .formSection {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 0;
+
+      // Oculta a barra de rolagem mantendo a capacidade de scroll
+      scrollbar-width: none;
+      &::-webkit-scrollbar {
+        display: none;
+      }
+
+      .formPlaceholder {
+        display: flex;
+        flex-flow: column nowrap;
+        align-items: center;
+        justify-content: center;
+        min-height: 300px;
+        color: rgba($snow, 0.6);
+        text-align: center;
+        border: 2px dashed rgba($amethyst, 0.5);
+        border-radius: $radius-md;
+      }
+    }
+
+    .listContainer {
+      flex: 1; // Faz a lista crescer e ocupar todo o espaço central
+      min-height: 0; // Importante para o flexbox permitir a rolagem interna
+      overflow-y: auto; // Adiciona o scroll apenas aqui
+      display: flex;
+      flex-direction: column;
+
+      // Movemos a ocultação da barra de rolagem pra cá
+      scrollbar-width: none;
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+  }
+
+  .gridPanel {
+    display: flex;
+    flex-flow: column nowrap;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+    transition: width 0.3s ease;
+
+    .searchWrapper {
+      margin-bottom: $spacing-4;
+      flex-shrink: 0;
+      width: 100%;
+
+      > div {
+        width: 100%;
+        max-width: none;
+      }
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: $spacing-4;
+      align-content: start;
+      overflow-y: auto;
+      padding-right: $spacing-2;
+      padding-bottom: $spacing-10;
+      min-height: 0;
+      flex: 1;
+
+      &::-webkit-scrollbar {
+        width: 8px;
+      }
+      &::-webkit-scrollbar-thumb {
+        background-color: rgba($amethyst, 0.5);
+        border-radius: 4px;
+      }
+
+      .serieCard {
+        background: transparent;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        display: flex;
+        flex-flow: column nowrap;
+        align-items: flex-start;
+
+        &:hover .coverWrapper {
+          border-color: $indian-red;
+          transform: translateY(-4px);
+        }
+
+        .coverWrapper {
+          width: 100%;
+          aspect-ratio: 2 / 3;
+          border-radius: $radius-md;
+          border: 2px solid transparent;
+          overflow: hidden;
+          margin-bottom: $spacing-2;
+          transition:
+            transform 0.2s ease,
+            border-color 0.2s ease;
+
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+        }
+
+        .serieName {
+          font-size: $font-sm;
+          color: $snow;
+          width: 100%;
+          text-align: left;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+  }
 }
 
-// ---------- Picker de série ----------
-
-.serie-picker-section {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-4;
-}
-
-.section-title {
-  font-size: $font-lg;
-  font-weight: 600;
-  color: $text-color;
-}
-
-.serie-picker-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-4;
-  overflow-x: auto;
-  padding-bottom: $spacing-2;
-}
-
-.serie-card {
-  @include interactive-button;
+.chapterList {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: $spacing-2;
-  width: 7.5rem;
-  padding: $spacing-2;
-  border-radius: $radius-lg;
-  border: 1px solid transparent;
-  transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+.chapterRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-md;
+  background-color: $weak-gunmental;
+  border: 1px solid $border-color;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.chapterRowNew {
+  cursor: grab;
+  border-color: rgba($amethyst, 0.4);
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.chapterRowExisting {
+  opacity: 0.6;
+}
+
+.dragHandle {
+  color: $text-muted;
+  font-size: $font-lg;
+  user-select: none;
+}
+
+.chapterNameInput {
+  @include pattern-input;
+  flex: 1;
+  color: $text-color;
+  font-size: $font-base;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-sm;
+  background-color: rgba($snow, 0.05);
+  word-break: break-word;
+}
+
+.chapterNameReadonly {
+  flex: 1;
+  color: $text-muted;
+  font-size: $font-base;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.orderControls {
+  display: flex;
+  gap: $spacing-1;
+}
+
+.orderButton {
+  @include interactive-button;
+  color: $text-color;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-sm;
 
   &:hover {
     background-color: $hover-shining;
   }
 }
 
-.serie-card-active {
-  border-color: $accent-color;
-  background-color: rgba($amethyst, 0.12);
-}
-
-.serie-cover-wrapper {
-  width: 100%;
-  aspect-ratio: 2 / 3;
-  border-radius: $radius-md;
-  overflow: hidden;
-  background-color: $weak-gunmental;
-}
-
-.serie-cover {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.serie-name {
-  font-size: $font-sm;
-  color: $text-muted;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-.empty-state {
-  color: $text-muted;
-  font-size: $font-sm;
-}
-
-// ---------- Formulário ----------
-
-.form-section {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-6;
-  background-color: $gunmetal;
-  border: 1px solid $border-color;
-  border-radius: $radius-xl;
-  padding: $spacing-6;
-}
-
-.form-title {
-  font-size: $font-xl;
-  font-weight: 600;
-  color: $text-color;
-}
-
-.form-view {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-6;
-}
-
-.fields {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-4;
-}
-
-.readonly-field {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-1;
-  padding: $spacing-3 $spacing-4;
-  border-radius: $radius-md;
-  background-color: $weak-gunmental;
-}
-
-.readonly-label {
-  font-size: $font-xs;
-  color: $text-muted;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.readonly-value {
-  font-size: $font-base;
-  color: $text-color;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.warning-text {
-  font-size: $font-sm;
-  color: $weak-indian-red;
-}
-
-.navigation-buttons {
-  display: flex;
-  gap: $spacing-3;
-  justify-content: flex-end;
-}
-
-.nav-button {
+.submitButton {
   @include pattern-button;
-  padding: $spacing-2 $spacing-4;
-  border-radius: $radius-md;
-  color: $text-color;
-  border: 1px solid $border-color;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-
-  &:hover:not(:disabled) {
-    background-color: $hover-shining;
-  }
-
-  &:disabled {
-    color: $text-muted;
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-}
-
-.submit-button {
-  @include pattern-button;
+  align-self: center;
+  margin-top: $spacing-4;
   padding: $spacing-2 $spacing-6;
   border-radius: $radius-md;
   background-color: $accent-color;
@@ -192,80 +373,89 @@
   }
 }
 
-// ChapterUpload.module.scss — adicionar ao final do arquivo existente
-
-.chapter-list-section {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-4;
+.warningText {
+  color: $weak-indian-red;
+  font-size: $font-sm;
+  text-align: center;
 }
 
-.chapter-list {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.emptyState {
+  color: $text-muted;
+  font-size: $font-sm;
+  text-align: center;
 }
 
-.chapter-row {
+.chapterNameField {
+  flex: 1;
+  min-width: 0; // evita que o input empurre a linha pra fora em nomes longos
+}
+
+.focusedChapterFields {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding-bottom: $spacing-4;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: $spacing-2;
+}
+
+.navRow {
   display: flex;
   align-items: center;
-  gap: $spacing-3;
-  padding: $spacing-3 $spacing-4;
-  border-radius: $radius-md;
-  background-color: $weak-gunmental;
-  border: 1px solid $border-color;
+  justify-content: space-between;
 }
 
-.chapter-row-new {
-  cursor: grab;
-  border-color: rgba($amethyst, 0.4);
+.navButton {
+  @include pattern-button;
+  color: $text-color;
+  padding: $spacing-1 $spacing-3;
+  border-radius: $radius-sm;
+  cursor: pointer;
 
-  &:active {
-    cursor: grabbing;
+  &:hover:not(:disabled) {
+    background-color: $hover-shining;
+  }
+
+  &:disabled {
+    color: $text-muted;
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 }
 
-.chapter-row-existing {
-  opacity: 0.6;
-}
-
-.drag-handle {
+.navCounter {
+  font-size: $font-sm;
   color: $text-muted;
-  font-size: $font-lg;
-  user-select: none;
 }
 
-.chapter-name-input {
-  @include pattern-input;
-  flex: 1;
-  color: $text-color;
-  font-size: $font-base;
-  padding: $spacing-1 $spacing-2;
-  border-radius: $radius-sm;
-  background-color: rgba($snow, 0.05);
-}
-
-.chapter-name-readonly {
-  flex: 1;
-  color: $text-muted;
-  font-size: $font-base;
-}
-
-.order-controls {
+.positionField {
   display: flex;
+  flex-direction: column;
   gap: $spacing-1;
 }
 
-.order-button {
-  @include interactive-button;
-  color: $text-color;
-  padding: $spacing-1 $spacing-2;
-  border-radius: $radius-sm;
+.positionLabel {
+  font-size: $font-xs;
+  color: $text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
 
-  &:hover {
-    background-color: $hover-shining;
-  }
+.positionInput {
+  @include pattern-input;
+  color: $text-color;
+  font-size: $font-base;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $radius-sm;
+  background-color: rgba($snow, 0.05);
+  width: 6rem;
+}
+
+.chapterRowFocused {
+  border-color: $accent-color;
+  background-color: rgba($amethyst, 0.15);
+}
+
+.chapterRowNew {
+  cursor: pointer; // agora clicável pra focar, não só arrastável
 }

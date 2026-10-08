@@ -1,24 +1,25 @@
-@use '../../../../shared/styles/variables' as *;
+@use '../../../../shared/styles/variables' as *; // Ajuste o caminho do import se necessário
 
 .search-config {
   display: flex;
   align-items: center;
-  justify-content: center;
-  align-self: flex-end;
+  width: 100%;
   gap: $spacing-2;
-  margin: $spacing-2;
+  margin: $spacing-2 0;
 
   .search-label {
     display: flex;
     align-items: center;
     background-color: $baby-powder;
-    padding: $spacing-2;
+    padding: $spacing-2 $spacing-3;
     border-radius: $radius-md;
     gap: $spacing-2;
+    width: 100%;
 
     svg {
       color: $amethyst;
       cursor: pointer;
+      flex-shrink: 0;
     }
 
     .search-bar {
@@ -26,17 +27,16 @@
       padding: $spacing-1;
       font-size: $font-lg;
       color: $gunmetal;
-      width: 100px;
+      width: 100%;
       height: 32px;
-      transition: width 1s;
-
-      &:focus {
-        width: 350px;
-      }
+      border: none;
+      outline: none;
+      background: transparent;
 
       &::placeholder {
         color: $gunmetal;
         font-size: $font-lg;
+        opacity: 0.7;
       }
     }
   }

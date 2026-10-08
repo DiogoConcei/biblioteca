@@ -50,6 +50,7 @@
     "epubjs": "^0.3.93",
     "express": "^5.2.1",
     "file-type": "^21.1.1",
+    "framer-motion": "^14.0.0",
     "immer": "^10.1.1",
     "lodash": "^4.17.23",
     "lucide-react": "^0.511.0",

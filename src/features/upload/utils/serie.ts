@@ -1,4 +1,3 @@
-// utils/serie.ts
 import type { SerieData } from '@/shared/types/series.interfaces';
 import {
   LiteratureForm,

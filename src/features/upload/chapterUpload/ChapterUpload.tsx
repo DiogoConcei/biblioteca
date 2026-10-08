@@ -1,99 +1,110 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-import Loading from '@/shared/components/Loading/Loading';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Layers } from 'lucide-react';
+import { useForm, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { computeOrder } from '../utils/chapter';
+import TextInput from '@/shared/components/TextInput/TextInput';
 import useAllSeries from '@/shared/hooks/useAllSeries';
+import Loading from '@/shared/components/Loading/Loading';
+import SearchBar from '@/features/hub/components/SearchBar/SearchBar';
+import {
+  APIResponse,
+  graphChapter,
+  viewData,
+} from '../../../../electron/types/electron-auxiliar.interfaces';
 import { useUploadStore } from '../store/uploadStore';
+import { ExistingChapterItem, DisplayChapterItem } from '../types/upload.interfaces';
+import {
+  chapterUploadSchema,
+  type ChapterUploadFormValues,
+} from '../schemas/chapterUpload.schema';
 
 import styles from './ChapterUpload.module.scss';
 
-interface ExistingChapterItem {
-  key: string;
-  kind: 'existing';
-  label: string;
-  order: number;
-  chapterId: number;
-}
-
-interface NewChapterItem {
-  key: string;
-  kind: 'new';
-  label: string;
-  order: number;
-  sourcePath: string;
-}
-
-type ChapterListItem = ExistingChapterItem | NewChapterItem;
-
-// Mesma fórmula de bissecção usada no backend pro campo `order` dos capítulos
-// (ver Fase 1) — duplicada aqui de propósito pro prazo de hoje; idealmente
-// deveria virar um util compartilhado entre frontend e electron amanhã.
-function computeOrder(prev?: number, next?: number): number {
-  if (prev === undefined) return next !== undefined ? next - 1 : 1;
-  if (next === undefined) return prev + 1;
-  return (prev + next) / 2;
-}
-
 export default function ChapterUpload() {
   const navigate = useNavigate();
-  const consumeChapters = useUploadStore((s) => s.consumeChapters);
-  const allSeries = useAllSeries();
+  const series = useAllSeries();
 
-  const [newItems, setNewItems] = useState<NewChapterItem[]>([]);
+  const pendingChapters = useUploadStore((s) => s.pendingChapters);
+  const consumeChapters = useUploadStore((s) => s.consumeChapters);
+
+  const [selectedSerie, setSelectedSerie] = useState<viewData | null>(null);
+  const [searchInput, setSearchInput] = useState('');
+
   const [existingItems, setExistingItems] = useState<ExistingChapterItem[]>([]);
-  const [selectedSerieId, setSelectedSerieId] = useState<number | null>(null);
   const [isLoadingExisting, setIsLoadingExisting] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [draggedKey, setDraggedKey] = useState<string | null>(null);
 
-  // Roda só na montagem — não reage a mudanças futuras da store, porque o
-  // próprio submit desta tela vai consumir a store (consumeChapters), e se
-  // esse effect estivesse inscrito nela, ia tentar redirecionar de novo no
-  // meio do fluxo de sucesso.
-  useEffect(() => {
-    const pendingChapters = useUploadStore.getState().pendingChapters;
+  const [currentNewIndex, setCurrentNewIndex] = useState(0);
+  const [positionDraft, setPositionDraft] = useState('1');
 
+  const hasInitialized = useRef(false);
+  const listRef = useRef<HTMLUListElement | null>(null);
+  const itemRefs = useRef<Record<string, HTMLLIElement | null>>({});
+
+  const {
+    control,
+    register,
+    setValue,
+    getValues,
+    reset,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ChapterUploadFormValues>({
+    resolver: zodResolver(chapterUploadSchema),
+    defaultValues: { serieId: 0, chapters: [] },
+    mode: 'onChange',
+  });
+
+  const watchedChapters = useWatch({ control, name: 'chapters' });
+
+  useEffect(() => {
     if (pendingChapters.length === 0) {
       navigate('/', { replace: true });
-      return;
     }
+  }, [pendingChapters, navigate]);
 
-    setNewItems(
-      pendingChapters.map((chapter, idx) => ({
+  useEffect(() => {
+    if (hasInitialized.current || pendingChapters.length === 0) return;
+    hasInitialized.current = true;
+
+    reset({
+      serieId: getValues('serieId'),
+      chapters: pendingChapters.map((chapter, idx) => ({
         key: `new-${chapter.oldPath}`,
-        kind: 'new',
         label: chapter.name,
-        order: idx + 1, // provisório — recalculado de verdade quando a série for escolhida
+        order: idx + 1,
         sourcePath: chapter.oldPath,
       })),
-    );
-  }, [navigate]);
+    });
+  }, [pendingChapters, reset, getValues]);
 
-  // Busca os capítulos já existentes da série assim que ela é selecionada.
   useEffect(() => {
-    if (selectedSerieId === null) {
+    if (!selectedSerie) {
       setExistingItems([]);
+      setLoadError(false);
       return;
     }
 
     let cancelled = false;
     setIsLoadingExisting(true);
+    setLoadError(false);
 
-    // 1. Declaramos a função assíncrona dentro do useEffect
-    const fetchChapters = async () => {
+    async function fetchChapters() {
       try {
-        const response = await window.electronAPI.chapters.getBySerie(selectedSerieId);
-        console.log(response);
-        // Se o componente desmontou ou o ID mudou enquanto a promise resolvia, aborta.
-        if (cancelled) return;
+        if (!selectedSerie) return;
 
-        if (!response.success || !response.data) {
-          console.error('Erro:', response.error);
-          return;
-        }
+        const response: APIResponse<graphChapter[]> =
+          await window.electronAPI.chapters.getBySerie(selectedSerie.id);
+
+        const existing = response.data;
+        if (cancelled || !existing) return;
 
         setExistingItems(
-          response.data.map((c) => ({
+          existing.map((c) => ({
             key: `existing-${c.id}`,
             kind: 'existing' as const,
             label: c.name,
@@ -101,38 +112,76 @@ export default function ChapterUpload() {
             chapterId: c.id,
           })),
         );
-      } catch (err) {
-        if (cancelled) return; // Evita logar erros de requisições que foram "canceladas"
-        console.error('Erro fatal:', err);
+      } catch (err: unknown) {
+        if (cancelled) return;
+        console.error('Erro ao buscar capítulos da série:', err);
+        setLoadError(true);
       } finally {
-        if (!cancelled) {
-          setIsLoadingExisting(false);
-        }
+        if (!cancelled) setIsLoadingExisting(false);
       }
-    };
+    }
 
-    // 2. Invocamos a função imediatamente
     fetchChapters();
 
-    // 3. Função de limpeza (cleanup)
     return () => {
       cancelled = true;
     };
-  }, [selectedSerieId]);
-  const mergedSorted: ChapterListItem[] = useMemo(() => {
-    return [...existingItems, ...newItems].sort((a, b) => a.order - b.order);
-  }, [existingItems, newItems]);
+  }, [selectedSerie]);
 
-  const updateNewOrder = (key: string, newOrder: number) => {
-    setNewItems((prev) =>
-      prev.map((item) => (item.key === key ? { ...item, order: newOrder } : item)),
-    );
+  const filteredSeries = useMemo(() => {
+    if (!series) return [];
+    const termoMinusculo = searchInput.toLowerCase().replace(/\s+/g, '');
+    return series.filter((serie) => {
+      const nomeMinusculo = serie.name.toLowerCase().replace(/\s+/g, '');
+      return nomeMinusculo.includes(termoMinusculo);
+    });
+  }, [series, searchInput]);
+
+  const newItemKeys = useMemo(
+    () => (watchedChapters ?? []).map((c) => c.key),
+    [watchedChapters],
+  );
+  const newItemCount = newItemKeys.length;
+
+  const mergedSorted: DisplayChapterItem[] = useMemo(() => {
+    const newDisplay: DisplayChapterItem[] = (watchedChapters ?? []).map((c, index) => ({
+      key: c.key,
+      kind: 'new' as const,
+      label: c.label,
+      order: c.order,
+      sourcePath: c.sourcePath,
+      formIndex: index,
+    }));
+
+    return [...existingItems, ...newDisplay].sort((a, b) => a.order - b.order);
+  }, [existingItems, watchedChapters]);
+
+  const focusedKey = newItemKeys[currentNewIndex];
+
+  // Reseta o rascunho da posição só quando o CAPÍTULO em foco muda — não a
+  // cada reordenação, pra não apagar o que o usuário está digitando.
+  useEffect(() => {
+    if (!focusedKey) return;
+    const pos = mergedSorted.findIndex((item) => item.key === focusedKey) + 1;
+    setPositionDraft(String(pos));
+  }, [focusedKey]);
+
+  // Mantém o item em foco visível conforme ele muda de posição na lista.
+  useEffect(() => {
+    if (!focusedKey) return;
+    itemRefs.current[focusedKey]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [focusedKey, mergedSorted]);
+
+  const handleSelectSerie = (serie: viewData) => {
+    setSelectedSerie(serie);
+    setValue('serieId', serie.id, { shouldValidate: true });
+    setCurrentNewIndex(0);
   };
 
-  const updateNewLabel = (key: string, label: string) => {
-    setNewItems((prev) =>
-      prev.map((item) => (item.key === key ? { ...item, label } : item)),
-    );
+  const applyNewOrder = (key: string, newOrder: number) => {
+    const formIndex = getValues('chapters').findIndex((c) => c.key === key);
+    if (formIndex === -1) return;
+    setValue(`chapters.${formIndex}.order`, newOrder, { shouldDirty: true });
   };
 
   const moveItem = (key: string, direction: 'up' | 'down') => {
@@ -142,14 +191,13 @@ export default function ChapterUpload() {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= mergedSorted.length) return;
 
-    // Vizinhos considerados na nova posição, excluindo o próprio item
     const withoutSelf = mergedSorted.filter((item) => item.key !== key);
     const insertAt = direction === 'up' ? targetIndex : targetIndex - 1;
 
-    const prevOrder = withoutSelf[insertAt - 1]?.order;
-    const nextOrder = withoutSelf[insertAt]?.order;
-
-    updateNewOrder(key, computeOrder(prevOrder, nextOrder));
+    applyNewOrder(
+      key,
+      computeOrder(withoutSelf[insertAt - 1]?.order, withoutSelf[insertAt]?.order),
+    );
   };
 
   const handleDropOnItem = (targetKey: string) => {
@@ -165,20 +213,48 @@ export default function ChapterUpload() {
       return;
     }
 
-    const prevOrder = withoutDragged[targetIndex - 1]?.order;
-    const nextOrder = withoutDragged[targetIndex]?.order;
-
-    updateNewOrder(draggedKey, computeOrder(prevOrder, nextOrder));
+    applyNewOrder(
+      draggedKey,
+      computeOrder(
+        withoutDragged[targetIndex - 1]?.order,
+        withoutDragged[targetIndex]?.order,
+      ),
+    );
     setDraggedKey(null);
   };
 
-  const handleSubmit = async () => {
-    if (!selectedSerieId || newItems.length === 0) return;
+  // Traduz "número do capítulo" (posição 1-based na lista inteira) pro
+  // `order` float correspondente, reaproveitando computeOrder.
+  const commitPosition = () => {
+    if (!focusedKey) return;
 
-    setIsSubmitting(true);
+    const total = mergedSorted.length;
+    let targetPos = parseInt(positionDraft, 10);
+
+    if (Number.isNaN(targetPos)) {
+      const current = mergedSorted.findIndex((item) => item.key === focusedKey) + 1;
+      setPositionDraft(String(current));
+      return;
+    }
+
+    targetPos = Math.min(Math.max(targetPos, 1), total);
+
+    const withoutSelf = mergedSorted.filter((item) => item.key !== focusedKey);
+    const prevOrder = withoutSelf[targetPos - 2]?.order;
+    const nextOrder = withoutSelf[targetPos - 1]?.order;
+
+    applyNewOrder(focusedKey, computeOrder(prevOrder, nextOrder));
+    setPositionDraft(String(targetPos));
+  };
+
+  const handlePrevFocus = () => setCurrentNewIndex((i) => Math.max(i - 1, 0));
+  const handleNextFocus = () =>
+    setCurrentNewIndex((i) => Math.min(i + 1, newItemCount - 1));
+
+  const onSubmit = handleSubmit(async (values) => {
     try {
-      const payload = newItems.map((item) => ({
-        serieId: selectedSerieId,
+      const payload = values.chapters.map((item) => ({
+        serieId: values.serieId,
         sourcePath: item.sourcePath,
         label: item.label,
         order: item.order,
@@ -191,117 +267,247 @@ export default function ChapterUpload() {
       navigate('/');
     } catch (error) {
       console.error('Erro ao enviar capítulos:', error);
-      setIsSubmitting(false);
     }
-  };
+  });
 
-  if (isSubmitting) {
-    return <Loading />;
-  }
+  if (isSubmitting) return <Loading />;
+  if (!series) return <Loading />;
 
   return (
-    <article className={styles['chapter-upload']}>
-      <section className={styles['serie-picker-section']}>
-        <h2 className={styles['section-title']}>Selecione a série</h2>
-
-        <div className={styles['serie-picker-grid']}>
-          {allSeries?.map((serie) => (
-            <button
-              key={serie.id}
-              type="button"
-              className={`${styles['serie-card']} ${
-                selectedSerieId === serie.id ? styles['serie-card-active'] : ''
-              }`}
-              onClick={() => setSelectedSerieId(serie.id)}
-            >
-              <div className={styles['serie-cover-wrapper']}>
-                <img
-                  src={serie.coverImage}
-                  alt={`Capa de ${serie.name}`}
-                  className={styles['serie-cover']}
-                />
-              </div>
-              <span className={styles['serie-name']}>{serie.name}</span>
-            </button>
-          ))}
-
-          {(!allSeries || allSeries.length === 0) && (
-            <p className={styles['empty-state']}>Nenhuma série encontrada.</p>
-          )}
+    <article className={styles.container}>
+      <header className={styles.header}>
+        <Layers size={36} />
+        <div className={styles['header-content']}>
+          <h1>Upload de Capítulos</h1>
+          <p>
+            Você tem <strong>{pendingChapters.length}</strong> arquivos pendentes. Escolha
+            a série de destino.
+          </p>
         </div>
-      </section>
+      </header>
 
-      {selectedSerieId && (
-        <section className={styles['chapter-list-section']}>
-          <h2 className={styles['section-title']}>Ordem dos capítulos</h2>
-
-          {isLoadingExisting ? (
-            <p className={styles['empty-state']}>Carregando capítulos existentes...</p>
-          ) : (
-            <ul className={styles['chapter-list']}>
-              {mergedSorted.map((item) => (
-                <li
-                  key={item.key}
-                  className={`${styles['chapter-row']} ${
-                    item.kind === 'new'
-                      ? styles['chapter-row-new']
-                      : styles['chapter-row-existing']
-                  }`}
-                  draggable={item.kind === 'new'}
-                  onDragStart={() => setDraggedKey(item.key)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => handleDropOnItem(item.key)}
+      <motion.div
+        layout
+        className={`${styles.mainContent} ${selectedSerie ? styles.hasSelection : ''}`}
+      >
+        <AnimatePresence mode="popLayout">
+          {selectedSerie && (
+            <motion.div
+              className={styles.focusPanel}
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30, transition: { duration: 0.2 } }}
+            >
+              <div className={styles.heroSection}>
+                <motion.figure
+                  layoutId={`cover-${selectedSerie.id}`}
+                  className={styles.heroCover}
+                  onClick={() => setSelectedSerie(null)}
                 >
-                  <span className={styles['drag-handle']}>
-                    {item.kind === 'new' ? '⠿' : ''}
-                  </span>
+                  <img src={selectedSerie.coverImage} alt={selectedSerie.name} />
+                </motion.figure>
 
-                  {item.kind === 'new' ? (
-                    <input
-                      type="text"
-                      value={item.label}
-                      onChange={(e) => updateNewLabel(item.key, e.target.value)}
-                      className={styles['chapter-name-input']}
+                <motion.h2 layoutId={`title-${selectedSerie.id}`}>
+                  {selectedSerie.name}
+                </motion.h2>
+              </div>
+              <motion.form
+                onSubmit={onSubmit}
+                className={styles.formSection}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.15 }}
+              >
+                {newItemCount > 0 && (
+                  <div className={styles.focusedChapterFields}>
+                    {newItemCount > 1 && (
+                      <div className={styles.navRow}>
+                        <button
+                          type="button"
+                          onClick={handlePrevFocus}
+                          disabled={currentNewIndex === 0}
+                          className={styles.navButton}
+                        >
+                          ‹ Anterior
+                        </button>
+                        <span className={styles.navCounter}>
+                          {currentNewIndex + 1} / {newItemCount}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleNextFocus}
+                          disabled={currentNewIndex === newItemCount - 1}
+                          className={styles.navButton}
+                        >
+                          Próximo ›
+                        </button>
+                      </div>
+                    )}
+
+                    <TextInput
+                      register={register(`chapters.${currentNewIndex}.label` as const)}
+                      error={errors.chapters?.[currentNewIndex]?.label}
+                      msg="Nome do capítulo"
                     />
-                  ) : (
-                    <span className={styles['chapter-name-readonly']}>{item.label}</span>
-                  )}
 
-                  {item.kind === 'new' && (
-                    <div className={styles['order-controls']}>
-                      <button
-                        type="button"
-                        onClick={() => moveItem(item.key, 'up')}
-                        className={styles['order-button']}
-                        aria-label="Mover para cima"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveItem(item.key, 'down')}
-                        className={styles['order-button']}
-                        aria-label="Mover para baixo"
-                      >
-                        ↓
-                      </button>
+                    <div className={styles.positionField}>
+                      <label className={styles.positionLabel}>Número do capítulo</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={mergedSorted.length}
+                        value={positionDraft}
+                        onChange={(e) => setPositionDraft(e.target.value)}
+                        onBlur={commitPosition}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            commitPosition();
+                          }
+                        }}
+                        className={styles.positionInput}
+                      />
                     </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+                  </div>
+                )}
 
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={newItems.length === 0}
-            className={styles['submit-button']}
-          >
-            Salvar capítulos
-          </button>
-        </section>
-      )}
+                {errors.serieId && (
+                  <p className={styles.warningText}>{errors.serieId.message}</p>
+                )}
+                {errors.chapters?.message && (
+                  <p className={styles.warningText}>{errors.chapters.message}</p>
+                )}
+
+                {/* --- AQUI COMEÇA O CONTAINER COM ROLAGEM INDEPENDENTE --- */}
+                <div className={styles.listContainer}>
+                  {isLoadingExisting ? (
+                    <p className={styles.emptyState}>
+                      Carregando capítulos existentes...
+                    </p>
+                  ) : loadError ? (
+                    <p className={styles.warningText}>
+                      Não foi possível carregar os capítulos existentes dessa série.
+                    </p>
+                  ) : (
+                    <ul ref={listRef} className={styles.chapterList}>
+                      {mergedSorted.map((item) => {
+                        const isFocused =
+                          item.kind === 'new' && item.formIndex === currentNewIndex;
+
+                        return (
+                          <li
+                            key={item.key}
+                            ref={(el) => {
+                              itemRefs.current[item.key] = el;
+                            }}
+                            className={`${styles.chapterRow} ${
+                              item.kind === 'new'
+                                ? styles.chapterRowNew
+                                : styles.chapterRowExisting
+                            } ${isFocused ? styles.chapterRowFocused : ''}`}
+                            draggable={item.kind === 'new'}
+                            onDragStart={() => setDraggedKey(item.key)}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={() => handleDropOnItem(item.key)}
+                            onClick={() => {
+                              if (item.kind === 'new') setCurrentNewIndex(item.formIndex);
+                            }}
+                          >
+                            <span className={styles.dragHandle}>
+                              {item.kind === 'new' ? '⠿' : ''}
+                            </span>
+
+                            <span className={styles.chapterNameReadonly}>
+                              {item.label}
+                            </span>
+
+                            {item.kind === 'new' && (
+                              <div className={styles.orderControls}>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    moveItem(item.key, 'up');
+                                  }}
+                                  className={styles.orderButton}
+                                  aria-label="Mover para cima"
+                                >
+                                  ↑
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    moveItem(item.key, 'down');
+                                  }}
+                                  className={styles.orderButton}
+                                  aria-label="Mover para baixo"
+                                >
+                                  ↓
+                                </button>
+                              </div>
+                            )}
+                          </li>
+                        );
+                      })}
+
+                      {mergedSorted.length === 0 && (
+                        <li className={styles.emptyState}>
+                          Nenhum capítulo nesta série ainda.
+                        </li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+                {/* --- FIM DO CONTAINER --- */}
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting || newItemCount === 0}
+                  className={styles.submitButton}
+                >
+                  {isSubmitting ? 'Enviando...' : 'Salvar capítulos'}
+                </button>
+              </motion.form>{' '}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <motion.section layout className={styles.gridPanel}>
+          <motion.div layout className={styles.searchWrapper}>
+            <SearchBar
+              searchInput={searchInput}
+              onSearchChange={(e) => setSearchInput(e.target.value)}
+            />
+          </motion.div>
+
+          <motion.div layout className={styles.grid}>
+            {filteredSeries.map((serie) => {
+              if (selectedSerie?.id === serie.id) return null;
+
+              return (
+                <motion.button
+                  layout
+                  key={serie.id}
+                  className={styles.serieCard}
+                  onClick={() => handleSelectSerie(serie)}
+                >
+                  <motion.figure
+                    layoutId={`cover-${serie.id}`}
+                    className={styles.coverWrapper}
+                  >
+                    <img src={serie.coverImage} alt={serie.name} loading="lazy" />
+                  </motion.figure>
+
+                  <motion.p layoutId={`title-${serie.id}`} className={styles.serieName}>
+                    {serie.name}
+                  </motion.p>
+                </motion.button>
+              );
+            })}
+          </motion.div>
+        </motion.section>
+      </motion.div>
     </article>
   );
 }
