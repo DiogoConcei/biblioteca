@@ -7,6 +7,7 @@ import ErrorBoundary from '@/shared/providers/ErrorBoundary';
 import Home from '@/features/hub/home/Home';
 import SerieUpload from '@/features/upload/serieUpload/SerieUpload';
 import ChapterUpload from '@/features/upload/chapterUpload/ChapterUpload';
+import UploadChoice from '@/features/upload/components/UploadChoice/UploadChoice';
 // import MangaPage from './pages/mangaPage/MangaPage';
 // import ComicPage from '../features/comicview/comicPage/comicPage';
 // import TieInPage from '../components/TieInPage/TieInPage';
@@ -43,6 +44,7 @@ const App = () => {
             element={<Viewer />}
           /> */}
         </Routes>
+        <UploadChoice />
       </HashRouter>
     </ErrorBoundary>
   );

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Layers } from 'lucide-react';
 import TextInput from '@/shared/components/TextInput/TextInput';
 import useAllSeries from '@/shared/hooks/useAllSeries';
+import { useAllSeriesStore } from '@/shared/store/useAllSeriesStore';
 import Loading from '@/shared/components/Loading/Loading';
 import SearchBar from '@/features/hub/components/SearchBar/SearchBar';
 import { viewData } from '../../../../electron/types/electron-auxiliar.interfaces';
@@ -63,7 +64,10 @@ export default function ChapterUpload() {
     serverError,
   } = useChapterUploadForm(initial, {
     onSuccess: () => {
-      navigate('/');
+      const store = useUploadStore.getState();
+      store.consumeChapters();
+      useAllSeriesStore.getState().fetchAllSeries();
+      navigate(store.pendingSeries.length > 0 ? '/local-upload/serie' : '/');
     },
   });
 

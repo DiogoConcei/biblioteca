@@ -10,56 +10,48 @@ import CollectionsField from '@/features/upload/components/CollectionsField/Coll
 import TagsField from '@/features/upload/components/TagsField/TagsField';
 import Loading from '@/shared/components/Loading/Loading';
 import styles from './SerieUpload.module.scss';
+import { useAllSeriesStore } from '@/shared/store/useAllSeriesStore';
 import { useSerieUploadForm } from '@/features/upload/hooks/useSerieUploadForm';
-import { useUploadStore } from '../store/uploadStore'; // Ajuste o caminho se necessário
+import { useUploadStore } from '../store/uploadStore';
 
 export default function SerieUpload() {
   const navigate = useNavigate();
   const hasPendingItems = useUploadStore((state) => state.hasPendingItems);
 
-  // 1. O PULO DO GATO: Pegamos a fila sincronamente no primeiro render.
-  // Usamos useUploadStore.getState() em vez do hook para ler uma vez só,
-  // sem atrelar nosso componente às futuras limpezas da store.
   const [initialData] = useState(() => useUploadStore.getState().pendingSeries);
 
-  // 2. Chamamos os hooks INCONDICIONALMENTE (Regras dos hooks respeitadas!)
+  // SerieUpload.tsx
   const { form, currentIndex, fields, next, prev, submit, serverError, isSubmitting } =
-    useSerieUploadForm(initialData);
-
+    useSerieUploadForm(initialData, {
+      onSuccess: () => {
+        const store = useUploadStore.getState();
+        store.consumeSeries();
+        useAllSeriesStore.getState().fetchAllSeries();
+        navigate(store.pendingChapters.length > 0 ? '/local-upload/chapter' : '/');
+      },
+    });
   const {
     register,
     control,
     formState: { errors },
   } = form;
 
-  // 3. Limpamos a fila global e lidamos com redirecionamento no useEffect
   useEffect(() => {
-    // Consumimos a fila (limpando-a na store) para não deixar sujeira
-    useUploadStore.getState().consumeSeries();
-
-    // Se o initialData veio vazio (ex: usuário deu F5), manda de volta pra home
     if (initialData.length === 0) {
       navigate('/');
     }
   }, [initialData, navigate]);
 
-  // 4. Retorno antecipado DEPOIS de todos os hooks! O React permite isso tranquilamente.
+  useEffect(() => {
+    return () => {
+      useUploadStore.getState().consumeSeries();
+    };
+  }, []);
+
   if (initialData.length === 0 || isSubmitting === true) return <Loading />;
 
-  // 5. Variáveis que dependem do índice
   const prefix = `series.${currentIndex}` as const;
   const serieErrors = errors.series?.[currentIndex];
-
-  // (Opcional) Função para quando o submit der sucesso
-  const handleSuccess = async (e: React.FormEvent) => {
-    await submit(e); // Chama o submit do seu hook
-    // Se não houver erros após o submit, direciona para o próximo passo
-    if (hasPendingItems()) {
-      navigate('/local-upload/chapter');
-    } else {
-      navigate('/');
-    }
-  };
 
   return (
     <article>
@@ -69,7 +61,7 @@ export default function SerieUpload() {
           {fields[currentIndex]?.name || 'Nova Série'}
         </h1>
 
-        <form className={styles['form-view']} onSubmit={handleSuccess}>
+        <form className={styles['form-view']} onSubmit={submit}>
           <div key={fields[currentIndex]?.id} className={styles['form-view']}>
             <div className={styles['image-upload']}>
               <ImageController control={control} name={`${prefix}.cover_path`} />

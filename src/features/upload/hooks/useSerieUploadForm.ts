@@ -8,7 +8,10 @@ import { uploadSchema, type UploadFormValues } from '../schemas/upload.schema';
 import { EMPTY_SERIE, toSerieForm } from '../utils/serie';
 import { SerieData } from '@/shared/types/series.interfaces';
 
-export function useSerieUploadForm(initial: SerieData[]) {
+export function useSerieUploadForm(
+  initial: SerieData[],
+  { onSuccess }: { onSuccess: () => void },
+) {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -51,7 +54,7 @@ export function useSerieUploadForm(initial: SerieData[]) {
     async ({ series }) => {
       try {
         await window.electronAPI.upload.uploadSeries(series);
-        navigate('/');
+        onSuccess();
       } catch {
         setError('root.server', {
           message: 'Falha ao enviar as séries. Tente novamente.',

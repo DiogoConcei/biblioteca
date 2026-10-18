@@ -44,13 +44,9 @@ export const useUploadStore = create<UploadStore>((set, get) => ({
           ...result.chapters.filter((c) => !knownChapters.has(c.oldPath)),
         ],
         failedItems: [...state.failedItems, ...result.failed],
+        isModalOpen: result.series.length > 0 && result.chapters.length > 0,
       };
     });
-    const hasBothNow = get().pendingSeries.length > 0 && get().pendingChapters.length > 0;
-
-    if (hasBothNow) {
-      set({ isModalOpen: true });
-    }
   },
 
   closeModal: () => set({ isModalOpen: false }),

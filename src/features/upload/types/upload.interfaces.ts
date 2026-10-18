@@ -73,3 +73,11 @@ export interface ChapterUploadPayload {
   serieId: number;
   chapters: ChapterUploadItem[];
 }
+
+export interface Choice {
+  id: string;
+  title: string;
+  description: string;
+  warning?: string;
+  run: () => void;
+}
