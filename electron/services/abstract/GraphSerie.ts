@@ -1,7 +1,11 @@
 import path from 'path';
 import fse from 'fs-extra';
 import { SerieForm } from '../../../src/shared/types/series.interfaces.ts';
-import { graphChapter, graphSerie } from '../../types/electron-auxiliar.interfaces';
+import {
+  graphChapter,
+  graphSerie,
+  Literatures,
+} from '../../types/electron-auxiliar.interfaces';
 import type { StorageManager } from '../StorageManager';
 import ImageManager from '../processing/ImageManager.ts';
 import LibrarySystem from './LibrarySystem';
@@ -9,6 +13,12 @@ import FileManager from '../FileManager';
 import CollectionManager from '../content/CollectionManager.ts';
 import ArchiveManager from '../processing/ArchiveManager.ts';
 import PdfManager from '../processing/PdfManager.ts';
+import { LiteratureForm } from '../../types/comic.interfaces.ts';
+import {
+  ChapterUploadPayload,
+  FailedItem,
+  ProcessedChapterResult,
+} from '../../types/upload.interfaces.ts';
 
 export default abstract class GraphSerie<
   T extends graphSerie<C>,
@@ -147,29 +157,62 @@ export default abstract class GraphSerie<
     return this.imageManager.encodeImages(imageFiles);
   }
 
-  async updateChapters(filesPath: string[], dataPath: string): Promise<graphChapter[]> {
-    const serie = await this.storageManager.readSerieData<T>(dataPath);
+  async updateChapters(
+    serie: Literatures,
+    payload: ChapterUploadPayload,
+  ): Promise<ProcessedChapterResult> {
+    const existing = serie.chapters as C[];
+    let tempId = existing.reduce((max, c) => Math.max(max, c.id), 0) + 1;
 
-    if (!serie) {
-      throw new Error('Série não encontrada.');
+    const created: { chapter: C; sourcePath: string }[] = [];
+    const failed: FailedItem[] = [];
+
+    for (const item of payload.chapters) {
+      const dest = path.join(
+        this.userLibrary,
+        serie.name,
+        path.basename(item.sourcePath),
+      );
+      try {
+        await this.fileManager.moveChapter(item.sourcePath, dest);
+
+        const raw = (await this.createChapter(serie.name, dest, tempId++)) as C;
+        raw.name = item.label;
+        raw.order = item.order;
+
+        const processed = (await this.postProcessChapters(raw)) as C;
+        created.push({ chapter: processed, sourcePath: item.sourcePath });
+      } catch (e) {
+        console.error(`Falha ao processar "${item.sourcePath}":`, e);
+        failed.push({
+          path: item.sourcePath,
+          reason: e instanceof Error ? e.message : String(e),
+        });
+        await this.fileManager.moveChapter(dest, item.sourcePath);
+      }
     }
 
-    if (!serie.chapters) throw new Error('Dados do capítulo não encontrandos.');
+    if (created.length === 0) return { succeeded: [], failed };
 
-    const rawChapters = await this.createNewChapter(filesPath, serie.chapters);
-    const chapters = await Promise.all(
-      rawChapters.map(async (chapter) => {
-        return await this.postProcessChapters(chapter);
-      }),
+    const merged = [...existing, ...created.map((c) => c.chapter)].sort(
+      (a, b) => a.order - b.order,
     );
+    const idMap = new Map(merged.map((c, i) => [c.id, i + 1]));
+    merged.forEach((c, i) => {
+      c.id = i + 1;
+      c.order = i + 1;
+    });
+    serie.readingData.lastChapterId =
+      idMap.get(serie.readingData.lastChapterId) ?? serie.readingData.lastChapterId;
+    serie.metadata.lastDownload =
+      idMap.get(serie.metadata.lastDownload) ?? serie.metadata.lastDownload;
 
-    serie.chapters = chapters as C[];
-    serie.totalChapters = chapters.length;
+    serie.chapters = merged;
+    serie.totalChapters = merged.length;
     await this.storageManager.writeData(serie);
 
-    return await this.imageManager.encodeComic(chapters);
+    return { succeeded: created.map((c) => c.sourcePath), failed };
   }
-
   async deleteChapterById(dataPath: string, chapter_id: number) {
     const serie = await this.storageManager.readSerieData<T>(dataPath);
 

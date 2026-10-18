@@ -31,12 +31,21 @@ export const useUploadStore = create<UploadStore>((set, get) => ({
   isModalOpen: false,
 
   populateQueue: (result) => {
-    set((state) => ({
-      pendingSeries: [...state.pendingSeries, ...result.series],
-      pendingChapters: [...state.pendingChapters, ...result.chapters],
-      failedItems: [...state.failedItems, ...result.failed],
-    }));
-
+    set((state) => {
+      const knownChapters = new Set(state.pendingChapters.map((c) => c.oldPath));
+      const knownSeries = new Set(state.pendingSeries.map((s) => s.oldPath));
+      return {
+        pendingSeries: [
+          ...state.pendingSeries,
+          ...result.series.filter((s) => !knownSeries.has(s.oldPath)),
+        ],
+        pendingChapters: [
+          ...state.pendingChapters,
+          ...result.chapters.filter((c) => !knownChapters.has(c.oldPath)),
+        ],
+        failedItems: [...state.failedItems, ...result.failed],
+      };
+    });
     const hasBothNow = get().pendingSeries.length > 0 && get().pendingChapters.length > 0;
 
     if (hasBothNow) {

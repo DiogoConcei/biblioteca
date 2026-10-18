@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-
-import { TieIn } from 'electron/types/comic.interfaces';
+import { TieIn } from '../../../electron/types/comic.interfaces';
 
 import {
   Literatures,

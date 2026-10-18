@@ -23,3 +23,24 @@ export interface ProcessedUploadResult {
   chapters: ChapterData[];
   failed: FailedItem[];
 }
+
+export interface ProcessedChapterResult {
+  succeeded: string[];
+  failed: FailedItem[];
+}
+
+export interface ProcessedChapterResult {
+  succeeded: string[];
+  failed: FailedItem[];
+}
+
+export interface ChapterUploadItem {
+  sourcePath: string;
+  label: string;
+  order: number;
+}
+
+export interface ChapterUploadPayload {
+  serieId: number;
+  chapters: ChapterUploadItem[];
+}

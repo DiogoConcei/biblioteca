@@ -12,8 +12,11 @@ import {
   SerieEditForm,
   SerieForm,
 } from '../src/shared/types/series.interfaces.ts';
-import { ProcessedUploadResult } from './types/upload.interfaces.ts';
-
+import {
+  ProcessedUploadResult,
+  ChapterUploadPayload,
+  ProcessedChapterResult,
+} from './types/upload.interfaces.ts';
 import {
   CreateCollectionDTO,
   Collection,
@@ -99,11 +102,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     uploadSeries: (serieData: SerieForm[]): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('upload:process-series', serieData),
     uploadChapter: async (
-      files: string[],
-      literatureForm: string,
-      dataPath: string,
-    ): Promise<APIResponse<LiteratureChapter[]>> =>
-      ipcRenderer.invoke('chapter:upload-chapter', files, literatureForm, dataPath),
+      chapterData: ChapterUploadPayload,
+    ): Promise<APIResponse<ProcessedChapterResult>> =>
+      ipcRenderer.invoke('chapter:upload-chapter', chapterData),
   },
 
   series: {

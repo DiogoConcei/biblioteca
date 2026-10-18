@@ -2,24 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Layers } from 'lucide-react';
-import { useForm, useWatch } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { computeOrder } from '../utils/chapter';
 import TextInput from '@/shared/components/TextInput/TextInput';
 import useAllSeries from '@/shared/hooks/useAllSeries';
 import Loading from '@/shared/components/Loading/Loading';
 import SearchBar from '@/features/hub/components/SearchBar/SearchBar';
-import {
-  APIResponse,
-  graphChapter,
-  viewData,
-} from '../../../../electron/types/electron-auxiliar.interfaces';
+import { viewData } from '../../../../electron/types/electron-auxiliar.interfaces';
 import { useUploadStore } from '../store/uploadStore';
-import { ExistingChapterItem, DisplayChapterItem } from '../types/upload.interfaces';
-import {
-  chapterUploadSchema,
-  type ChapterUploadFormValues,
-} from '../schemas/chapterUpload.schema';
+import useChapterUploadForm from '../hooks/useChapterUploadForm';
 
 import styles from './ChapterUpload.module.scss';
 
@@ -27,106 +16,75 @@ export default function ChapterUpload() {
   const navigate = useNavigate();
   const series = useAllSeries();
 
-  const pendingChapters = useUploadStore((s) => s.pendingChapters);
-  const consumeChapters = useUploadStore((s) => s.consumeChapters);
-
+  // Snapshot único da fila: não reage a limpezas futuras da store.
+  const [initial] = useState(() => useUploadStore.getState().pendingChapters);
+  const clearChapters = useUploadStore((s) => s.consumeChapters);
   const [selectedSerie, setSelectedSerie] = useState<viewData | null>(null);
   const [searchInput, setSearchInput] = useState('');
-
-  const [existingItems, setExistingItems] = useState<ExistingChapterItem[]>([]);
-  const [isLoadingExisting, setIsLoadingExisting] = useState(false);
-  const [loadError, setLoadError] = useState(false);
   const [draggedKey, setDraggedKey] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{
+    key: string;
+    position: 'before' | 'after';
+  } | null>(null);
 
-  const [currentNewIndex, setCurrentNewIndex] = useState(0);
-  const [positionDraft, setPositionDraft] = useState('1');
+  const emptyDragImage = useRef<HTMLImageElement | null>(null);
 
-  const hasInitialized = useRef(false);
-  const listRef = useRef<HTMLUListElement | null>(null);
+  if (!emptyDragImage.current) {
+    const img = new Image();
+    img.src =
+      'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    emptyDragImage.current = img;
+  }
+
   const itemRefs = useRef<Record<string, HTMLLIElement | null>>({});
 
   const {
-    control,
-    register,
-    setValue,
-    getValues,
-    reset,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<ChapterUploadFormValues>({
-    resolver: zodResolver(chapterUploadSchema),
-    defaultValues: { serieId: 0, chapters: [] },
-    mode: 'onChange',
+    form: {
+      register,
+      formState: { errors },
+    },
+    isLoadingExisting,
+    loadError,
+    mergedSorted,
+    focusedKey,
+    currentNewIndex,
+    setCurrentNewIndex,
+    newItemCount,
+    prevFocus,
+    nextFocus,
+    positionDraft,
+    setPositionDraft,
+    commitPosition,
+    selectSerie,
+    moveItem,
+    moveRelativeTo,
+    submit,
+    isSubmitting,
+    serverError,
+  } = useChapterUploadForm(initial, {
+    onSuccess: () => {
+      navigate('/');
+    },
   });
 
-  const watchedChapters = useWatch({ control, name: 'chapters' });
-
   useEffect(() => {
-    if (pendingChapters.length === 0) {
+    return () => {
+      clearChapters();
+    };
+  }, []);
+
+  // Fila vazia (ex.: F5 na tela): volta pra home.
+  useEffect(() => {
+    if (initial.length === 0) {
       navigate('/', { replace: true });
     }
-  }, [pendingChapters, navigate]);
+  }, [initial, navigate]);
 
+  // Mantém o item em foco visível conforme ele muda de posição na lista.
   useEffect(() => {
-    if (hasInitialized.current || pendingChapters.length === 0) return;
-    hasInitialized.current = true;
-
-    reset({
-      serieId: getValues('serieId'),
-      chapters: pendingChapters.map((chapter, idx) => ({
-        key: `new-${chapter.oldPath}`,
-        label: chapter.name,
-        order: idx + 1,
-        sourcePath: chapter.oldPath,
-      })),
-    });
-  }, [pendingChapters, reset, getValues]);
-
-  useEffect(() => {
-    if (!selectedSerie) {
-      setExistingItems([]);
-      setLoadError(false);
-      return;
-    }
-
-    let cancelled = false;
-    setIsLoadingExisting(true);
-    setLoadError(false);
-
-    async function fetchChapters() {
-      try {
-        if (!selectedSerie) return;
-
-        const response: APIResponse<graphChapter[]> =
-          await window.electronAPI.chapters.getBySerie(selectedSerie.id);
-
-        const existing = response.data;
-        if (cancelled || !existing) return;
-
-        setExistingItems(
-          existing.map((c) => ({
-            key: `existing-${c.id}`,
-            kind: 'existing' as const,
-            label: c.name,
-            order: c.order,
-            chapterId: c.id,
-          })),
-        );
-      } catch (err: unknown) {
-        if (cancelled) return;
-        console.error('Erro ao buscar capítulos da série:', err);
-        setLoadError(true);
-      } finally {
-        if (!cancelled) setIsLoadingExisting(false);
-      }
-    }
-
-    fetchChapters();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedSerie]);
+    if (!focusedKey) return;
+    itemRefs.current[focusedKey]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [focusedKey, mergedSorted]);
 
   const filteredSeries = useMemo(() => {
     if (!series) return [];
@@ -137,141 +95,49 @@ export default function ChapterUpload() {
     });
   }, [series, searchInput]);
 
-  const newItemKeys = useMemo(
-    () => (watchedChapters ?? []).map((c) => c.key),
-    [watchedChapters],
-  );
-  const newItemCount = newItemKeys.length;
-
-  const mergedSorted: DisplayChapterItem[] = useMemo(() => {
-    const newDisplay: DisplayChapterItem[] = (watchedChapters ?? []).map((c, index) => ({
-      key: c.key,
-      kind: 'new' as const,
-      label: c.label,
-      order: c.order,
-      sourcePath: c.sourcePath,
-      formIndex: index,
-    }));
-
-    return [...existingItems, ...newDisplay].sort((a, b) => a.order - b.order);
-  }, [existingItems, watchedChapters]);
-
-  const focusedKey = newItemKeys[currentNewIndex];
-
-  // Reseta o rascunho da posição só quando o CAPÍTULO em foco muda — não a
-  // cada reordenação, pra não apagar o que o usuário está digitando.
-  useEffect(() => {
-    if (!focusedKey) return;
-    const pos = mergedSorted.findIndex((item) => item.key === focusedKey) + 1;
-    setPositionDraft(String(pos));
-  }, [focusedKey]);
-
-  // Mantém o item em foco visível conforme ele muda de posição na lista.
-  useEffect(() => {
-    if (!focusedKey) return;
-    itemRefs.current[focusedKey]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [focusedKey, mergedSorted]);
-
   const handleSelectSerie = (serie: viewData) => {
     setSelectedSerie(serie);
-    setValue('serieId', serie.id, { shouldValidate: true });
-    setCurrentNewIndex(0);
+    selectSerie(serie.id);
   };
 
-  const applyNewOrder = (key: string, newOrder: number) => {
-    const formIndex = getValues('chapters').findIndex((c) => c.key === key);
-    if (formIndex === -1) return;
-    setValue(`chapters.${formIndex}.order`, newOrder, { shouldDirty: true });
+  const handleDeselect = () => {
+    setSelectedSerie(null);
+    selectSerie(null);
   };
 
-  const moveItem = (key: string, direction: 'up' | 'down') => {
-    const index = mergedSorted.findIndex((item) => item.key === key);
-    if (index === -1) return;
-
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= mergedSorted.length) return;
-
-    const withoutSelf = mergedSorted.filter((item) => item.key !== key);
-    const insertAt = direction === 'up' ? targetIndex : targetIndex - 1;
-
-    applyNewOrder(
-      key,
-      computeOrder(withoutSelf[insertAt - 1]?.order, withoutSelf[insertAt]?.order),
-    );
-  };
-
-  const handleDropOnItem = (targetKey: string) => {
-    if (!draggedKey || draggedKey === targetKey) {
-      setDraggedKey(null);
-      return;
-    }
-
-    const withoutDragged = mergedSorted.filter((item) => item.key !== draggedKey);
-    const targetIndex = withoutDragged.findIndex((item) => item.key === targetKey);
-    if (targetIndex === -1) {
-      setDraggedKey(null);
-      return;
-    }
-
-    applyNewOrder(
-      draggedKey,
-      computeOrder(
-        withoutDragged[targetIndex - 1]?.order,
-        withoutDragged[targetIndex]?.order,
-      ),
-    );
+  const resetDrag = () => {
     setDraggedKey(null);
+    setDropTarget(null);
   };
 
-  // Traduz "número do capítulo" (posição 1-based na lista inteira) pro
-  // `order` float correspondente, reaproveitando computeOrder.
-  const commitPosition = () => {
-    if (!focusedKey) return;
+  const handleDrop = () => {
+    if (draggedKey && dropTarget) {
+      moveRelativeTo(draggedKey, dropTarget.key, dropTarget.position);
+    }
+    resetDrag();
+  };
 
-    const total = mergedSorted.length;
-    let targetPos = parseInt(positionDraft, 10);
+  const handleDragOverItem = (e: React.DragEvent<HTMLLIElement>, itemKey: string) => {
+    e.preventDefault();
+    if (!draggedKey) return;
 
-    if (Number.isNaN(targetPos)) {
-      const current = mergedSorted.findIndex((item) => item.key === focusedKey) + 1;
-      setPositionDraft(String(current));
+    if (itemKey === draggedKey) {
+      setDropTarget((prev) => (prev ? null : prev));
       return;
     }
 
-    targetPos = Math.min(Math.max(targetPos, 1), total);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const position = e.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
 
-    const withoutSelf = mergedSorted.filter((item) => item.key !== focusedKey);
-    const prevOrder = withoutSelf[targetPos - 2]?.order;
-    const nextOrder = withoutSelf[targetPos - 1]?.order;
-
-    applyNewOrder(focusedKey, computeOrder(prevOrder, nextOrder));
-    setPositionDraft(String(targetPos));
+    // Devolve o mesmo objeto se nada mudou: o React ignora o update.
+    setDropTarget((prev) =>
+      prev?.key === itemKey && prev.position === position
+        ? prev
+        : { key: itemKey, position },
+    );
   };
 
-  const handlePrevFocus = () => setCurrentNewIndex((i) => Math.max(i - 1, 0));
-  const handleNextFocus = () =>
-    setCurrentNewIndex((i) => Math.min(i + 1, newItemCount - 1));
-
-  const onSubmit = handleSubmit(async (values) => {
-    try {
-      const payload = values.chapters.map((item) => ({
-        serieId: values.serieId,
-        sourcePath: item.sourcePath,
-        label: item.label,
-        order: item.order,
-      }));
-
-      // ASSUMIDO: nome do método IPC — confirme o nome real no preload.
-      // await window.electronAPI.upload.submitChapters(payload);
-
-      consumeChapters();
-      navigate('/');
-    } catch (error) {
-      console.error('Erro ao enviar capítulos:', error);
-    }
-  });
-
-  if (isSubmitting) return <Loading />;
-  if (!series) return <Loading />;
+  if (initial.length === 0 || isSubmitting || !series) return <Loading />;
 
   return (
     <article className={styles.container}>
@@ -280,8 +146,8 @@ export default function ChapterUpload() {
         <div className={styles['header-content']}>
           <h1>Upload de Capítulos</h1>
           <p>
-            Você tem <strong>{pendingChapters.length}</strong> arquivos pendentes. Escolha
-            a série de destino.
+            Você tem <strong>{initial.length}</strong> arquivos pendentes. Escolha a série
+            de destino.
           </p>
         </div>
       </header>
@@ -302,7 +168,7 @@ export default function ChapterUpload() {
                 <motion.figure
                   layoutId={`cover-${selectedSerie.id}`}
                   className={styles.heroCover}
-                  onClick={() => setSelectedSerie(null)}
+                  onClick={handleDeselect}
                 >
                   <img src={selectedSerie.coverImage} alt={selectedSerie.name} />
                 </motion.figure>
@@ -311,8 +177,9 @@ export default function ChapterUpload() {
                   {selectedSerie.name}
                 </motion.h2>
               </div>
+
               <motion.form
-                onSubmit={onSubmit}
+                onSubmit={submit}
                 className={styles.formSection}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -324,7 +191,7 @@ export default function ChapterUpload() {
                       <div className={styles.navRow}>
                         <button
                           type="button"
-                          onClick={handlePrevFocus}
+                          onClick={prevFocus}
                           disabled={currentNewIndex === 0}
                           className={styles.navButton}
                         >
@@ -335,7 +202,7 @@ export default function ChapterUpload() {
                         </span>
                         <button
                           type="button"
-                          onClick={handleNextFocus}
+                          onClick={nextFocus}
                           disabled={currentNewIndex === newItemCount - 1}
                           className={styles.navButton}
                         >
@@ -378,7 +245,7 @@ export default function ChapterUpload() {
                   <p className={styles.warningText}>{errors.chapters.message}</p>
                 )}
 
-                {/* --- AQUI COMEÇA O CONTAINER COM ROLAGEM INDEPENDENTE --- */}
+                {/* --- CONTAINER COM ROLAGEM INDEPENDENTE --- */}
                 <div className={styles.listContainer}>
                   {isLoadingExisting ? (
                     <p className={styles.emptyState}>
@@ -389,10 +256,26 @@ export default function ChapterUpload() {
                       Não foi possível carregar os capítulos existentes dessa série.
                     </p>
                   ) : (
-                    <ul ref={listRef} className={styles.chapterList}>
+                    <ul className={styles.chapterList}>
                       {mergedSorted.map((item) => {
                         const isFocused =
                           item.kind === 'new' && item.formIndex === currentNewIndex;
+                        const isDragging = draggedKey === item.key;
+                        const dropPosition =
+                          dropTarget?.key === item.key ? dropTarget.position : null;
+
+                        const rowClass = [
+                          styles.chapterRow,
+                          item.kind === 'new'
+                            ? styles.chapterRowNew
+                            : styles.chapterRowExisting,
+                          isFocused && styles.chapterRowFocused,
+                          isDragging && styles.chapterRowDragging,
+                          dropPosition === 'before' && styles.dropBefore,
+                          dropPosition === 'after' && styles.dropAfter,
+                        ]
+                          .filter(Boolean)
+                          .join(' ');
 
                         return (
                           <li
@@ -400,15 +283,22 @@ export default function ChapterUpload() {
                             ref={(el) => {
                               itemRefs.current[item.key] = el;
                             }}
-                            className={`${styles.chapterRow} ${
-                              item.kind === 'new'
-                                ? styles.chapterRowNew
-                                : styles.chapterRowExisting
-                            } ${isFocused ? styles.chapterRowFocused : ''}`}
+                            className={rowClass}
                             draggable={item.kind === 'new'}
-                            onDragStart={() => setDraggedKey(item.key)}
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={() => handleDropOnItem(item.key)}
+                            onDragStart={(e) => {
+                              e.dataTransfer.effectAllowed = 'move';
+                              e.dataTransfer.setData('text/plain', item.key);
+                              if (emptyDragImage.current) {
+                                e.dataTransfer.setDragImage(emptyDragImage.current, 0, 0);
+                              }
+                              setDraggedKey(item.key);
+                            }}
+                            onDragOver={(e) => handleDragOverItem(e, item.key)}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              handleDrop();
+                            }}
+                            onDragEnd={resetDrag}
                             onClick={() => {
                               if (item.kind === 'new') setCurrentNewIndex(item.formIndex);
                             }}
@@ -450,7 +340,6 @@ export default function ChapterUpload() {
                           </li>
                         );
                       })}
-
                       {mergedSorted.length === 0 && (
                         <li className={styles.emptyState}>
                           Nenhum capítulo nesta série ainda.
@@ -461,6 +350,8 @@ export default function ChapterUpload() {
                 </div>
                 {/* --- FIM DO CONTAINER --- */}
 
+                {serverError && <p className={styles.warningText}>{serverError}</p>}
+
                 <button
                   type="submit"
                   disabled={isSubmitting || newItemCount === 0}
@@ -468,7 +359,7 @@ export default function ChapterUpload() {
                 >
                   {isSubmitting ? 'Enviando...' : 'Salvar capítulos'}
                 </button>
-              </motion.form>{' '}
+              </motion.form>
             </motion.div>
           )}
         </AnimatePresence>

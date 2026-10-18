@@ -2,7 +2,11 @@ import { IpcMain } from 'electron';
 
 import { SerieData, SerieForm } from '../../src/shared/types/series.interfaces.ts';
 import { APIResponse, LiteratureChapter } from '../types/electron-auxiliar.interfaces.ts';
-import { ProcessedUploadResult } from '../types/upload.interfaces';
+import {
+  ChapterUploadPayload,
+  ProcessedChapterResult,
+  ProcessedUploadResult,
+} from '../types/upload.interfaces';
 
 import storageManager from '../services/StorageManager.ts';
 import ComicManager from '../services/content/ComicManager.ts';
@@ -136,21 +140,33 @@ export default function uploadHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle(
     'chapter:upload-chapter',
-    async (_event, filesPath: string[], literatureForm: string, dataPath: string) => {
-      let processedFiles: LiteratureChapter[] = [];
+    async (
+      _event,
+      chapterData: ChapterUploadPayload,
+    ): Promise<APIResponse<ProcessedChapterResult>> => {
+      try {
+        const serie = await storageManager.searchSerieById(chapterData.serieId);
 
-      switch (literatureForm) {
-        case 'Manga':
-          processedFiles = await mangaManager.updateChapters(filesPath, dataPath);
-          break;
-        case 'Quadrinho':
-          processedFiles = await comicManager.updateChapters(filesPath, dataPath);
-          break;
-        default:
-          throw new Error('Tipo de literature inválido');
+        if (!serie) return { success: false, error: 'Série não encontrada.' };
+        if (!serie.chapters)
+          return { success: false, error: 'Dados dos capítulos não encontrados.' };
+
+        switch (serie.literatureForm) {
+          case 'Manga': {
+            const data = await mangaManager.updateChapters(serie, chapterData);
+            return { success: true, data };
+          }
+          case 'Quadrinho': {
+            const data = await comicManager.updateChapters(serie, chapterData);
+            return { success: true, data };
+          }
+          default:
+            return { success: false, error: 'Tipo de literatura inválido.' };
+        }
+      } catch (e) {
+        console.error('Falha no upload de novos capítulos: ', e);
+        return { success: false, error: String(e) };
       }
-
-      return { success: true, data: processedFiles };
     },
   );
 }

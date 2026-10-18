@@ -90,6 +90,7 @@ export default class MigrationManager extends LibrarySystem {
     }
   }
 
+  // Fix Chapter ORDER
   public async fixChapterIds(dataPath: string): Promise<boolean> {
     const serie = await this.storageManager.readSerieData(dataPath);
     let order = 1.0;
@@ -137,3 +138,17 @@ export default class MigrationManager extends LibrarySystem {
     await this.storageManager.writeData(serieData);
   }
 }
+
+// (async () => {
+//   const fileManager = new FileManager();
+//   const migrationManager = new MigrationManager();
+//   const allSeries = await fileManager.getDataPaths();
+
+//   await Promise.all(
+//     allSeries.map((p) => {
+//       migrationManager.fixChapterIds(p);
+//     }),
+//   );
+
+//   console.log('terminou');
+// })();

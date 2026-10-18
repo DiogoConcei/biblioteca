@@ -287,6 +287,7 @@
 .chapterRow {
   display: flex;
   align-items: center;
+  position: relative;
   gap: $spacing-3;
   padding: $spacing-3 $spacing-4;
   border-radius: $radius-md;
@@ -456,6 +457,33 @@
   background-color: rgba($amethyst, 0.15);
 }
 
+.chapterRowDragging {
+  opacity: 0.35;
+  border-style: dashed;
+}
+
+.dropBefore::before,
+.dropAfter::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: #9b7bff; // troque pela variável de destaque do seu tema
+  pointer-events: none; // senão o indicador intercepta o dragover
+}
+
+.dropBefore::before {
+  top: -6px;
+}
+.dropAfter::after {
+  bottom: -6px;
+}
+
+.dragHandle {
+  cursor: grab;
+}
 .chapterRowNew {
   cursor: pointer; // agora clicável pra focar, não só arrastável
 }

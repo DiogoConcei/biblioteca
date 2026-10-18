@@ -132,10 +132,10 @@ export default abstract class LibrarySystem {
 
   public async consumeNextSerieId(): Promise<number> {
     try {
-      const currentId = await this.getSerieId();
+      const currentId = await this.getGlobalSerieId();
       const nextId = currentId + 1;
 
-      await this.setSerieId(nextId);
+      await this.setGlobalSerieId(nextId);
 
       return nextId;
     } catch (e) {
@@ -144,7 +144,7 @@ export default abstract class LibrarySystem {
     }
   }
 
-  public async setSerieId(newId: number): Promise<void> {
+  public async setGlobalSerieId(newId: number): Promise<void> {
     try {
       let data: Partial<AppConfig>;
       try {
@@ -167,7 +167,7 @@ export default abstract class LibrarySystem {
     }
   }
 
-  public async getSerieId(): Promise<number> {
+  public async getGlobalSerieId(): Promise<number> {
     try {
       const data: AppConfig = JSON.parse(
         await fse.readFile(this.configFilePath, 'utf-8'),

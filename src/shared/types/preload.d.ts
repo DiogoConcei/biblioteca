@@ -2,7 +2,11 @@ export {};
 
 import { ComicTieIn, TieIn } from 'electron/types/comic.interfaces.js';
 import { DownloadTask } from 'electron/types/download.interfaces.js';
-
+import {
+  ChapterUploadPayload,
+  ProcessedUploadResult,
+  ProcessedChapterResult,
+} from '../../features/upload/types/upload.interfaces';
 import {
   Collection,
   SerieInCollection,
@@ -101,10 +105,8 @@ declare global {
         uploadSerie: (serieData: SerieForm) => Promise<APIResponse<SerieForm>>;
         uploadSeries: (serieData: SerieForm[]) => Promise<APIResponse<SerieForm[]>>;
         uploadChapter: (
-          files: string[],
-          literatureForm: string,
-          dataPath: string,
-        ) => Promise<APIResponse<LiteratureChapter[]>>;
+          chapterData: ChapterUploadPayload,
+        ) => Promise<APIResponse<ProcessedChapterResult>>;
       };
 
       series: {

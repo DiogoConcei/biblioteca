@@ -2,7 +2,6 @@ import path from 'path';
 import fse from 'fs-extra';
 
 import FileSystem from '../abstract/LibrarySystem.ts';
-import { Collection } from '../../src/types/collections.interfaces.ts';
 import { Literatures } from '../../types/electron-auxiliar.interfaces.ts';
 import { TieIn } from '../../types/comic.interfaces.ts';
 
@@ -29,7 +28,7 @@ export default class ValidationManager extends FileSystem {
 
   public async collectionExist(collectionName: string): Promise<boolean> {
     try {
-      let collections: Collection[] = [];
+      let collections = [];
 
       try {
         const data = await fse.readFile(this.appCollections, 'utf-8');

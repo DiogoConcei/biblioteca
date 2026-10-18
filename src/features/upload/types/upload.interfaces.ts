@@ -1,4 +1,6 @@
-interface UploadItem {
+import { viewData } from '../../../../electron/types/electron-auxiliar.interfaces';
+
+export interface UploadItem {
   path: string;
   type: 'failed' | 'serie' | 'chapter' | 'tie-in';
   status: 'pending' | 'processing' | 'done' | 'error';
@@ -58,3 +60,16 @@ export type DisplayChapterItem =
       sourcePath: string;
       formIndex: number;
     };
+
+export interface uploadData extends viewData {}
+
+export interface ChapterUploadItem {
+  sourcePath: string;
+  label: string;
+  order: number;
+}
+
+export interface ChapterUploadPayload {
+  serieId: number;
+  chapters: ChapterUploadItem[];
+}
