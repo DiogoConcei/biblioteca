@@ -9,25 +9,27 @@ import ListView from '../ListView/ListView';
 import { useCollectionStore } from '@/shared/store/useCollectionStore';
 import styles from './ListLayout.module.scss';
 import { Link } from 'react-router-dom';
+import useHistory from '@/shared/hooks/useHistory';
+import { useMemo } from 'react';
+
+const progressPercent = (read: number, total: number) =>
+  total > 0 ? Math.min(100, Math.round((read / total) * 100)) : 0;
+
+const MAX_SHELF = 9;
 
 export default function ListLayout({ serie }: { serie: StoreSerie }) {
+  // const tags = [...serie.tags].sort((a, b) => a.localeCompare(b)).slice(0, 2);
   const favorites = useCollectionStore((s) => s.favorites);
-  const recents = useCollectionStore((s) => s.recents);
+  const { recentSeries } = useHistory();
   const { lastChapter } = useAction();
 
-  // const tags = [...serie.tags].sort((a, b) => a.localeCompare(b)).slice(0, 2);
-
-  const orderFavByName = () => {
-    if (!favorites || !favorites.series) return [];
-
-    return [...favorites.series].sort((a, b) => a.name.localeCompare(b.name));
-  };
-
-  const orderRecentByName = () => {
-    if (!recents || !recents.series) return [];
-
-    return [...recents.series].sort((a, b) => a.name.localeCompare(b.name));
-  };
+  const favs = useMemo(
+    () => [...(favorites?.series ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
+    [favorites],
+  );
+  const visibleFavs = favs.length > MAX_SHELF ? favs.slice(0, MAX_SHELF - 1) : favs;
+  const hiddenFavs = favs.length - visibleFavs.length;
+  const recents = recentSeries ?? [];
 
   return (
     <main className={styles.mangaPage}>
@@ -80,31 +82,91 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
         <ListView />
       </section>
       <aside className={styles.collectionInfos}>
-        <div className={styles.favCollection}>
-          <h3>Séries Favoritas</h3>
-          <ul>
-            {orderFavByName().map((fav, idx) => (
-              <li key={idx}>
-                <Link to={`/Manga/${fav.name}/${fav.id}`}>
-                  <span>{fav.name}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <section className={styles.panelSection}>
+          <header className={styles.panelHeader}>
+            <h3>Favoritas</h3>
+            <span className={styles.count}>{favs.length}</span>
+          </header>
 
-        <div className={styles.recCollection}>
-          <h3>Últimas séries lidas</h3>
-          <ul>
-            {orderRecentByName().map((recent, idx) => (
-              <li key={idx}>
-                <Link to={`/Manga/${recent.name}/${recent.id}`}>
-                  <span>{recent.name}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+          {favs.length === 0 ? (
+            <p className={styles.empty}>Favorite uma série para vê-la aqui.</p>
+          ) : (
+            <ul className={styles.shelf}>
+              {visibleFavs.map((fav) => (
+                <li key={fav.id}>
+                  <Link
+                    to={`/${fav.literatureForm}/${encodeURIComponent(fav.name)}/${fav.id}`}
+                    className={styles.cover}
+                    title={fav.name}
+                    aria-label={fav.name}
+                    aria-current={fav.id === serie.id ? 'page' : undefined}
+                  >
+                    <img src={fav.coverImage} alt="" loading="lazy" decoding="async" />
+                    <span className={styles.coverName}>{fav.name}</span>
+                  </Link>
+                </li>
+              ))}
+              {hiddenFavs > 0 && <li className={styles.more}>+{hiddenFavs}</li>}
+            </ul>
+          )}
+        </section>
+
+        <section className={styles.panelSection}>
+          <header className={styles.panelHeader}>
+            <h3>Últimas lidas</h3>
+          </header>
+
+          {recents.length === 0 ? (
+            <p className={styles.empty}>Leia um capítulo para ver suas séries aqui.</p>
+          ) : (
+            <ul className={styles.recents}>
+              {recents.map((recent) => {
+                const percent = progressPercent(
+                  recent.chaptersRead,
+                  recent.totalChapters,
+                );
+                return (
+                  <li key={recent.serieId}>
+                    <Link
+                      to={`/${recent.literatureForm}/${encodeURIComponent(recent.serieName)}/${recent.serieId}`}
+                      className={styles.recentRow}
+                    >
+                      <img
+                        className={styles.recentCover}
+                        src={recent.coverImage}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <div className={styles.recentInfo}>
+                        <span className={styles.recentName}>{recent.serieName}</span>
+                        <div className={styles.recentMetaRow}>
+                          <span>
+                            {recent.chaptersRead} de {recent.totalChapters} lidos
+                          </span>
+                          <span>{percent}%</span>
+                        </div>
+                        <div
+                          className={styles.progress}
+                          role="progressbar"
+                          aria-valuenow={percent}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label={`${percent}% lido`}
+                        >
+                          <div
+                            className={styles.progressBar}
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
       </aside>{' '}
     </main>
   );

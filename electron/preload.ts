@@ -24,6 +24,7 @@ import {
   ScrapedMetadata,
 } from '../src/shared/types/collections.interfaces.ts';
 import { ComicTieIn, TieIn } from './types/comic.interfaces.ts';
+import { SerieHistoryEntry } from './types/history.interfaces.ts';
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -253,6 +254,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     pauseTask: (taskId: string) => ipcRenderer.invoke('download:pause-task', taskId),
     resumeTask: (taskId: string) => ipcRenderer.invoke('download:resume-task', taskId),
     cancelTask: (taskId: string) => ipcRenderer.invoke('download:cancel-task', taskId),
-    clearCompleted: () => ipcRenderer.invoke('download:clear-completed'),
+  },
+
+  history: {
+    getRecents: (limit?: number): Promise<APIResponse<SerieHistoryEntry[]>> =>
+      ipcRenderer.invoke('history:get-recents', limit),
   },
 });

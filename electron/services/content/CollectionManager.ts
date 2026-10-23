@@ -123,16 +123,14 @@ export default class CollectionManager extends LibrarySystem {
     }
   }
 
-  // AQUI
   public async updateRecentCollection(
     historySummaries: SerieHistoryEntry[],
   ): Promise<boolean> {
     try {
       const recentesCollection = await this.getRecentCollection();
-
       if (!recentesCollection) return false;
 
-      const last10 = historySummaries.slice(0, 9);
+      const last10 = historySummaries.slice(0, 10);
       const currentRecents = recentesCollection.series;
 
       const seriesForCollection: SerieInCollection[] = await Promise.all(
@@ -150,12 +148,14 @@ export default class CollectionManager extends LibrarySystem {
           const serieData = await this.storageManager.readSerieData(dataPath);
 
           if (!serieData)
-            throw new Error(
-              'Falha ao ler dados da série ao tentar montar coleção de recentes.',
-            );
+            throw new Error('Falha ao ler dados da série para os recentes.');
+
+          const mountedSerie = await this.mountSerieInCollection(serieData);
 
           return {
-            ...this.mountSerieInCollection(serieData),
+            ...mountedSerie,
+            position: index + 1,
+            addAt: historyEntry.lastReadAt,
           };
         }),
       );
@@ -168,9 +168,7 @@ export default class CollectionManager extends LibrarySystem {
       await this.updateCollection(update);
       return true;
     } catch {
-      console.error(
-        'Erro  ao reconstruir coleção de recentes com base no histórico de leitura.',
-      );
+      console.error('Erro ao reconstruir coleção de recentes.');
       return false;
     }
   }
@@ -731,6 +729,7 @@ export default class CollectionManager extends LibrarySystem {
       coverImage: serie.coverImage,
       archivesPath: serie.archivesPath,
       addAt: new Date().toISOString(),
+      literatureForm: serie.literatureForm,
       position: 0,
     };
   }
@@ -761,11 +760,15 @@ export default class CollectionManager extends LibrarySystem {
       if (!collections) return false;
 
       const now = new Date().toISOString();
+
+      const collectionToSave = { ...collection, updatedAt: now };
+
       const updatedData = collections.map((col) =>
-        col.name === collection.name ? { ...collection, updatedAt: now } : col,
+        col.name === collection.name ? collectionToSave : col,
       );
 
-      await this.updateCache(collection);
+      this.updateCache(collectionToSave);
+
       await fse.writeJson(this.appCollections, updatedData, { spaces: 2 });
       return true;
     } catch (e) {

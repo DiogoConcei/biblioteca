@@ -14,14 +14,19 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle(
     'chapter:mark-read',
-    async (_event, dataPath: string, chapter_id: number, isRead: boolean) => {
-      // try {
-      //   await userManager.markChapterRead(dataPath, chapter_id, isRead);
-      //   return { success: true };
-      // } catch (e) {
-      //   console.error(`Falha em marcar como lido: ${e}`);
-      //   return { success: false, error: String(e) };
-      // }
+    async (
+      _event,
+      dataPath: string,
+      chapter_id: number,
+      isRead: boolean,
+    ): Promise<APIResponse<void>> => {
+      try {
+        await userManager.markRead(dataPath, chapter_id, isRead);
+        return { success: true };
+      } catch (e) {
+        console.error(`Falha em marcar como lido: ${e}`);
+        return { success: false, error: String(e) };
+      }
     },
   );
 

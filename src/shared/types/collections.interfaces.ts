@@ -1,4 +1,5 @@
-import { ReadingStatus } from '../../shared/types/series.interfaces';
+import { LiteratureForm, ReadingStatus } from '../../shared/types/series.interfaces';
+import { LiteratureForms } from '../../../electron/types/electron-auxiliar.interfaces';
 
 export interface CreateCollectionDTO extends Omit<Collection, 'createdAt' | 'updatedAt'> {
   seriesCoverId?: number | null;
@@ -51,6 +52,7 @@ export interface SerieInCollection {
   rating: number;
   addAt: string;
   position: number;
+  literatureForm: LiteratureForm;
 }
 
 export interface MetadataPayload {

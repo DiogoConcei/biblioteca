@@ -1,3 +1,5 @@
+import { LiteratureForm } from '@/shared/types/series.interfaces';
+
 export interface HistoryFile {
   summaries: SerieHistoryEntry[];
   events: ReadEvent[];
@@ -5,12 +7,14 @@ export interface HistoryFile {
 
 export interface SerieHistoryEntry {
   serieId: number;
-  serieName: string; // snapshot
-  coverImage: string; // snapshot
+  serieName: string;
+  coverImage: string;
+  literatureForm: LiteratureForm;
   lastChapterId: number;
+  lastChapterLabel: string;
   lastReadAt: string;
-  chaptersRead: number; // sempre recalculado por contagem, nunca incrementado/decrementado manualmente
-  totalChapters: number; // snapshot, sincronizado pelo gatilho de capítulo adicionado/removido
+  chaptersRead: number;
+  totalChapters: number;
 }
 
 export interface ReadEvent {

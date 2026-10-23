@@ -14,7 +14,6 @@ import {
 } from '../../types/history.interfaces';
 export default class HistoryManager extends LibrarySystem {
   private readonly storageManager = StorageManager.getInstance();
-  private readonly fileManager: FileManager = new FileManager();
   private readonly collectionManager: CollectionManager = new CollectionManager();
   private readonly writer = new AtomicJsonStore();
 
@@ -62,6 +61,15 @@ export default class HistoryManager extends LibrarySystem {
       await this.storageManager.writeData(serie);
       return false;
     }
+  }
+
+  public async getRecents(limit = 5): Promise<SerieHistoryEntry[]> {
+    if (!(await fse.pathExists(this.historyFile))) return [];
+
+    const history: HistoryFile = await fse.readJSON(this.historyFile);
+    return [...history.summaries]
+      .sort((a, b) => new Date(b.lastReadAt).getTime() - new Date(a.lastReadAt).getTime())
+      .slice(0, limit);
   }
 
   private async addToHistory(serie: graphSerie): Promise<void> {
@@ -122,6 +130,8 @@ export default class HistoryManager extends LibrarySystem {
         } else {
           summary.lastChapterId = 0;
         }
+
+        summary.lastChapterLabel = this.chapterLabel(serie, summary.lastChapterId);
       }
 
       await this.collectionManager.updateRecentCollection(history.summaries);
@@ -141,7 +151,13 @@ export default class HistoryManager extends LibrarySystem {
       serieId: serie.id,
       serieName: serie.name,
       totalChapters: serie.totalChapters,
+      literatureForm: serie.literatureForm,
+      lastChapterLabel: this.chapterLabel(serie, serie.readingData.lastChapterId),
     };
+  }
+
+  private chapterLabel(serie: graphSerie, chapterId: number): string {
+    return serie.chapters.find((c) => c.id === chapterId)?.chapterNumber.label ?? '';
   }
 
   private mountReadEvent(serie: graphSerie): ReadEvent {

@@ -213,6 +213,10 @@ declare global {
         cancelTask: (taskId: string) => Promise<boolean>;
         clearCompleted: () => Promise<boolean>;
       };
+
+      history: {
+        getRecents: (limit?: number) => Promise<APIResponse<SerieHistoryEntry[]>>;
+      };
     };
   }
 }
