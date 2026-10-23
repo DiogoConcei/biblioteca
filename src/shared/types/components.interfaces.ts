@@ -11,6 +11,7 @@ import {
 } from '../../../electron/types/electron-auxiliar.interfaces';
 import { Collection, CreateCollectionDTO } from './collections.interfaces';
 import { SerieEditForm, SerieForm, SerieData } from './series.interfaces';
+import { StoreSerie } from '../store/useSerieStore';
 
 export interface OnlySerieProp {
   manga: Literatures;
@@ -129,7 +130,7 @@ export interface FormControllerProps {
 }
 
 export interface FavoriteProps {
-  serie: Literatures;
+  serie: StoreSerie;
 }
 
 export interface RatingProps {

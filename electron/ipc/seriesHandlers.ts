@@ -10,7 +10,7 @@ import { SerieInCollection } from '../../src/shared/types/collections.interfaces
 import { SerieEditForm } from '../../src/shared/types/series.interfaces.ts';
 
 import { TieIn, ComicTieIn } from '../types/comic.interfaces.ts';
-import { Literatures } from '../types/electron-auxiliar.interfaces.ts';
+import { APIResponse, Literatures } from '../types/electron-auxiliar.interfaces.ts';
 
 export default function seriesHandlers(ipcMain: IpcMain) {
   const tieIn = new TieInManager();
@@ -161,21 +161,24 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     }
   });
 
-  ipcMain.handle('serie:favorite', async (_event, dataPath: string) => {
-    try {
-      const serieData = (await storageManager.readSerieData(dataPath)) as Literatures;
+  ipcMain.handle(
+    'serie:favorite',
+    async (_event, dataPath: string): Promise<APIResponse<SerieInCollection>> => {
+      try {
+        const serieData = (await storageManager.readSerieData(dataPath)) as Literatures;
 
-      const newFav: SerieInCollection = await collectionManager.mountSerieInfo(
-        serieData.dataPath,
-      );
+        const result = await userManager.favoriteSerie(serieData);
 
-      const result = await userManager.favoriteSerie(serieData);
-      return { success: result, data: newFav };
-    } catch (e) {
-      console.error(`Erro em favoritar serie: ${e}`);
-      return { success: false, error: String(e) };
-    }
-  });
+        const newFav: SerieInCollection =
+          await collectionManager.mountSerieToCollection(serieData);
+
+        return { success: result, data: newFav };
+      } catch (e) {
+        console.error(`Erro em favoritar serie: ${e}`);
+        return { success: false, error: String(e) };
+      }
+    },
+  );
 
   ipcMain.handle(
     'serie:recent-read',

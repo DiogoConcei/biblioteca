@@ -1,6 +1,7 @@
 import FileSystem from './abstract/LibrarySystem';
 import storageManager from './StorageManager';
 import HistoryManager from './persistence/HistoryManager';
+import CollectionManager from './content/CollectionManager';
 import {
   ReadableSerie,
   LastReadCandidate,
@@ -15,6 +16,7 @@ export default class UserManager extends FileSystem {
   private readonly storageManager = storageManager;
   private readonly fileManager: FileManager = new FileManager();
   private readonly historyManager: HistoryManager = new HistoryManager();
+  private readonly collectionManager: CollectionManager = new CollectionManager();
 
   constructor() {
     super();
@@ -44,25 +46,30 @@ export default class UserManager extends FileSystem {
   }
 
   public async favoriteSerie(serieData: Literatures): Promise<boolean> {
-    return true;
-    // try {
-    //   const isFavorite = !serieData.metadata.isFavorite;
-    //   let success: boolean;
+    try {
+      const isFavorite = !serieData.metadata.isFavorite;
+      let success: boolean;
 
-    //   if (isFavorite) {
-    //     success = await this.collManager.addInCollection(serieData.dataPath, 'favoritos');
-    //   } else {
-    //     success = await this.collManager.removeInCollection('favoritos', serieData.id);
-    //   }
+      if (isFavorite) {
+        success = await this.collectionManager.addInCollection(
+          serieData.dataPath,
+          'favoritos',
+        );
+      } else {
+        success = await this.collectionManager.removeInCollection(
+          'favoritos',
+          serieData.id,
+        );
+      }
 
-    //   if (!success) return false;
+      if (!success) return false;
 
-    //   serieData.metadata.isFavorite = isFavorite;
-    //   await this.storageManager.writeData(serieData);
-    //   return true;
-    // } catch (err) {
-    //   console.error('Erro ao atualizar favoritação de série:', err);
-    //   return false;
-    // }
+      serieData.metadata.isFavorite = isFavorite;
+      await this.storageManager.writeData(serieData);
+      return true;
+    } catch (err) {
+      console.error('Erro ao atualizar favoritação de série:', err);
+      return false;
+    }
   }
 }

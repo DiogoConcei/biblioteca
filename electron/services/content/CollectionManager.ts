@@ -22,6 +22,7 @@ export default class CollectionManager extends LibrarySystem {
   private readonly storageManager = storageManager;
   private readonly fileManager = new FileManager();
   private readonly writer = new AtomicJsonStore();
+  private _collectionsCache: Map<string, Collection> | null = null;
   private static readonly MAX_COLLECTION_ITEMS = 10000;
 
   constructor() {
@@ -30,12 +31,26 @@ export default class CollectionManager extends LibrarySystem {
 
   public async getCollections(): Promise<Collection[] | null> {
     try {
+      if (this._collectionsCache !== null)
+        return Array.from(this._collectionsCache.values());
+
       const data = (await fse.readJson(this.appCollections)) as Collection[];
+
+      this._collectionsCache = new Map<string, Collection>();
+
+      for (const collection of data) {
+        this._collectionsCache.set(collection.name, collection);
+      }
+
       return data;
     } catch (e) {
       console.error('Erro ao obter coleções: ', e);
       return null;
     }
+  }
+
+  private updateCache(collection: Collection): void {
+    this._collectionsCache?.set(collection.name, collection);
   }
 
   public async reorderCollectionSeries(
@@ -320,14 +335,14 @@ export default class CollectionManager extends LibrarySystem {
 
       if (!collection) return false;
 
-      const updatedCollection = {
+      const updated = {
         ...collection,
         series: collection.series
           .filter((serie) => serie.id !== serieId)
           .map((serie, index) => ({ ...serie, position: index + 1 })),
       };
 
-      await this.updateCollection(updatedCollection);
+      await this.updateCollection(updated);
       return true;
     } catch (e) {
       console.error('Falha em retirar série da coleção: ', e);
@@ -464,7 +479,6 @@ export default class CollectionManager extends LibrarySystem {
       };
 
       await this.updateCollection(update);
-
       return true;
     } catch (e) {
       console.error('Error while adding serie to collection:', e);
@@ -624,6 +638,10 @@ export default class CollectionManager extends LibrarySystem {
     }
   }
 
+  public mountSerieToCollection(serie: graphSerie): Promise<SerieInCollection> {
+    return this.mountSerieInCollection(serie);
+  }
+
   public async clearCollection(collectionName: string): Promise<boolean> {
     try {
       const emptyCollection = this.mountEmptyCollection(collectionName);
@@ -747,6 +765,7 @@ export default class CollectionManager extends LibrarySystem {
         col.name === collection.name ? { ...collection, updatedAt: now } : col,
       );
 
+      await this.updateCache(collection);
       await fse.writeJson(this.appCollections, updatedData, { spaces: 2 });
       return true;
     } catch (e) {

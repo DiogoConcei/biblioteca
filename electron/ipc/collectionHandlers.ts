@@ -7,14 +7,15 @@ import {
   CreateCollectionDTO,
 } from '../../src/shared/types/collections.interfaces';
 import { MetadataType } from '../types/metadata.interfaces';
+import { APIResponse } from '../types/electron-auxiliar.interfaces';
 
 export default function collectionHandlers(ipcMain: IpcMain) {
-  const collectionsOperations = new CollectionsManager();
+  const collectionsManager = new CollectionsManager();
   const imageManager = new ImageManager();
 
-  ipcMain.handle('collection:get-all', async () => {
+  ipcMain.handle('collection:get-all', async (): Promise<APIResponse<Collection[]>> => {
     try {
-      const collections = await collectionsOperations.getCollections();
+      const collections = await collectionsManager.getCollections();
 
       if (!collections) {
         throw new Error('Falha em recuperar as colecoes');
@@ -25,11 +26,6 @@ export default function collectionHandlers(ipcMain: IpcMain) {
           const updatedSeries = [];
 
           for (const serie of collection.series) {
-            // Busca dados atualizados da série para garantir que campos como 'description' estejam presentes
-            const serieData = await collectionsOperations.mountSerieInfo(
-              await collectionsOperations['fileManager'].getDataPath(serie.name),
-            );
-
             const encodedCover = await imageManager.encodeImage(serie.coverImage);
 
             if (serie.backgroundImage) {
@@ -40,7 +36,6 @@ export default function collectionHandlers(ipcMain: IpcMain) {
 
             updatedSeries.push({
               ...serie,
-              ...serieData, // Mescla com dados frescos (incluindo a nova descrição)
               coverImage: encodedCover,
               backgroundImage: serie.backgroundImage,
             });
@@ -67,7 +62,7 @@ export default function collectionHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('collection:quickly-create', async (_event, collectionName: string) => {
     try {
-      const result = await collectionsOperations.quicklyCreate(collectionName);
+      const result = await collectionsManager.quicklyCreate(collectionName);
       return { success: result };
     } catch (e) {
       console.error(`Falha ao criar coleção: ${e}`);
@@ -77,7 +72,7 @@ export default function collectionHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('collection:create', async (_event, collection: CreateCollectionDTO) => {
     try {
-      const result = await collectionsOperations.createCollection(collection);
+      const result = await collectionsManager.createCollection(collection);
       return { success: result };
     } catch (e) {
       console.error(`Falha ao criar coleção: ${e}`);
@@ -97,7 +92,7 @@ export default function collectionHandlers(ipcMain: IpcMain) {
         const normalizedImage: string | null =
           await imageManager.uploadBackground(backgroundImage);
 
-        const result = await collectionsOperations.updateSerieBackground(
+        const result = await collectionsManager.updateSerieBackground(
           collectionName,
           serieId,
           normalizedImage,
@@ -112,7 +107,7 @@ export default function collectionHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('collection:delete', async (_event, collectionName: string) => {
     try {
-      const result = await collectionsOperations.removeCollection(collectionName);
+      const result = await collectionsManager.removeCollection(collectionName);
       return { success: result };
     } catch (e) {
       return { success: false, error: String(e) };
@@ -127,7 +122,7 @@ export default function collectionHandlers(ipcMain: IpcMain) {
       payload: Partial<Pick<Collection, 'description' | 'coverImage' | 'name'>>,
     ) => {
       try {
-        const result = await collectionsOperations.updateCollectionInfo(
+        const result = await collectionsManager.updateCollectionInfo(
           collectionName,
           payload,
         );
@@ -142,7 +137,7 @@ export default function collectionHandlers(ipcMain: IpcMain) {
   ipcMain.handle(
     'collection:remove-serie',
     async (_event, collectionName: string, serieId: number) => {
-      return collectionsOperations.removeInCollection(collectionName, serieId);
+      return collectionsManager.removeInCollection(collectionName, serieId);
     },
   );
 
@@ -150,7 +145,7 @@ export default function collectionHandlers(ipcMain: IpcMain) {
     'collection:reorder-series',
     async (_event, collectionName: string, orderedSeriesIds: number[]) => {
       try {
-        const result = await collectionsOperations.reorderCollectionSeries(
+        const result = await collectionsManager.reorderCollectionSeries(
           collectionName,
           orderedSeriesIds,
         );
@@ -164,7 +159,7 @@ export default function collectionHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('collection:get-all-fav', async () => {
     try {
-      const favCollection = await collectionsOperations.getFavorites();
+      const favCollection = await collectionsManager.getFavorites();
 
       if (!favCollection) {
         throw new Error(`Falha na requisição das séries favoritas!`);

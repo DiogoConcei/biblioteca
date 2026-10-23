@@ -4,6 +4,14 @@ export interface CreateCollectionDTO extends Omit<Collection, 'createdAt' | 'upd
   seriesCoverId?: number | null;
 }
 
+export interface AddToCollectionInput {
+  id: number;
+  name: string;
+  coverImage: string;
+  dataPath: string;
+  totalChapters: number;
+}
+
 export interface ScrapedMetadata {
   title: string;
   altTitles?: string[];

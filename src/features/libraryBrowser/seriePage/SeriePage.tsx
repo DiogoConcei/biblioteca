@@ -4,6 +4,7 @@ import useSerie from '@/shared/hooks/useSerie';
 import useSerieStore from '@/shared/store/useSerieStore';
 import Loading from '@/shared/components/Loading/Loading';
 import ListLayout from '../components/ListLayout/ListLayout';
+import useCollection from '@/shared/hooks/useCollection';
 
 export default function SeriePage({
   literatureForm,
@@ -12,6 +13,8 @@ export default function SeriePage({
 }) {
   const { serie_name = '' } = useParams<{ serie_name: string }>();
   useSerie(serie_name, literatureForm);
+  useCollection();
+
   const serie = useSerieStore((state) => state.serie);
 
   if (!serie || serie.name !== serie_name) return <Loading />;

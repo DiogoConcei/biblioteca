@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-
-import { TieIn, ComicTieIn } from 'electron/types/comic.interfaces';
+import { TieIn, ComicTieIn } from '../../../electron/types/comic.interfaces';
 
 import { useUIStore } from '../store/useUIStore';
 import useSerieStore from '../store/useSerieStore';

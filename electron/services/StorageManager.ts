@@ -17,12 +17,8 @@ import LibrarySystem from './abstract/LibrarySystem';
 export class StorageManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
   private readonly writer: AtomicJsonStore = new AtomicJsonStore();
-  // Cache de visualização (Home)
-  private _viewDataCache: viewData[] | null = null;
-  // Cache completo de séries (indexado por dataPath)
   private _seriesCache: Map<string, Literatures | TieIn> = new Map();
-  // Fila global de escrita para evitar corrupção
-
+  private _viewDataCache: Map<string, viewData> | null = null;
   private static instance: StorageManager;
 
   constructor() {
@@ -100,90 +96,7 @@ export class StorageManager extends LibrarySystem {
     };
   }
 
-  async writeData(serie: Literatures | TieIn): Promise<boolean> {
-    try {
-      this.writer.write(serie.dataPath, serie);
-
-      this._seriesCache.set(serie.dataPath, serie);
-      this.invalidateCache();
-
-      return true;
-    } catch (error) {
-      console.error(`Erro em escrever dados da serie (${serie.name}): ${error}`);
-      return false;
-    }
-  }
-
-  async persistSerie(oldData: Literatures, updated: Literatures): Promise<string> {
-    try {
-      const oldPath = oldData.dataPath;
-      const dir = path.dirname(oldPath);
-
-      const nameChanged = oldData.name !== updated.name;
-      const newPath = nameChanged ? path.join(dir, `${updated.name}.json`) : oldPath;
-
-      if (nameChanged && oldPath !== newPath) {
-        await this.fileManager.moveFiles(oldData, updated);
-        if (await fse.pathExists(oldPath)) {
-          await fse.remove(oldPath);
-          this._seriesCache.delete(oldPath); // Remove caminho antigo do cache
-        }
-      }
-
-      updated.dataPath = newPath;
-
-      await this.writer.write(newPath, updated);
-
-      this._seriesCache.set(newPath, updated);
-      this.invalidateCache();
-
-      return newPath;
-    } catch (error) {
-      console.error(`Erro ao persistir a série (${updated.name}):`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Limpa o cache de visualização.
-   */
-  invalidateCache(): void {
-    this._viewDataCache = null;
-  }
-
-  /**
-   * Busca uma série pelo ID, consultando o cache primeiro.
-   */
-  async searchSerieById(serieId: number): Promise<Literatures | TieIn | null> {
-    // Tenta encontrar no cache de séries completo primeiro
-    for (const serie of this._seriesCache.values()) {
-      if (serie.id === serieId) return serie;
-    }
-
-    const viewDataList = await this.getViewData();
-    if (viewDataList) {
-      const targetSerie = viewDataList.find((serie) => serie.id === serieId);
-      if (targetSerie) {
-        return await this.readSerieData(targetSerie.dataPath);
-      }
-    }
-
-    const dataPaths = await this.fileManager.getDataPaths();
-    for (const dataPath of dataPaths) {
-      const serieData = await this.readSerieData(dataPath);
-      if (serieData && serieData.id === serieId) {
-        return serieData;
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Lê dados da série do disco ou cache.
-   */
   async readSerieData<T extends graphSerie>(dataPath: string): Promise<T | null> {
-    // Consulta Cache
     if (this._seriesCache.has(dataPath)) {
       return this._seriesCache.get(dataPath) as T;
     }
@@ -196,7 +109,7 @@ export class StorageManager extends LibrarySystem {
       })) as T;
 
       if (serieData) {
-        this._seriesCache.set(dataPath, serieData);
+        this.updateCache(serieData);
       }
 
       return serieData;
@@ -206,173 +119,79 @@ export class StorageManager extends LibrarySystem {
     }
   }
 
-  /**
-   * Alias para ler TieIn com cache.
-   */
-  async readTieInData(dataPath: string): Promise<TieIn | null> {
-    return this.readSerieData<TieIn>(dataPath);
-  }
-
-  /**
-   * Deleta um capítulo e invalida o cache.
-   */
-  async deleteChapter(chapter: LiteratureChapter): Promise<boolean> {
-    try {
-      if (await fse.pathExists(chapter.chapterPath)) {
-        // Se o caminho do capítulo for diferente do arquivo original (ex: cache de mangá), removemos do disco.
-        // Se for igual (ex: livros PDF/EPUB), mantemos o arquivo original e apenas resetamos o status.
-        if (chapter.chapterPath !== chapter.archivesPath) {
-          await fse.remove(chapter.chapterPath);
-        }
-
-        chapter.isDownloaded = 'not_downloaded';
-        chapter.chapterPath = '';
-
-        // Invalida cache pois os dados da série (que contém o capítulo) mudaram
-        this.invalidateCache();
-
-        return true;
-      }
-      return false;
-    } catch (e) {
-      console.error('Falha ao deletar capitulo: ', e);
-      return false;
-    }
-  }
-
-  /**
-   * Seleciona dados de uma série, priorizando o cache.
-   */
   async selectSerieData<T extends Literatures | TieIn>(
     serieName: string,
-    type?: 'Manga' | 'Quadrinho' | 'childSeries' | 'Books',
+    type?: string,
   ): Promise<T> {
-    // // Tenta encontrar no cache primeiro
     for (const serie of this._seriesCache.values()) {
       if (serie.name === serieName) return serie as T;
     }
 
-    try {
-      let targetFolder: string;
+    const viewDataList = await this.getViewData();
 
-      if (type) {
-        switch (type) {
-          case 'Manga':
-            targetFolder = this.mangasData;
-            break;
-          case 'Quadrinho':
-            targetFolder = this.comicsData;
-            break;
-          case 'Books':
-            targetFolder = this.booksData;
-            break;
-          case 'childSeries':
-            targetFolder = this.childSeriesData;
-            break;
-          default:
-            targetFolder = this.mangasData;
-        }
-      } else {
-        const allFolders = [
-          this.mangasData,
-          this.comicsData,
-          this.booksData,
-          this.childSeriesData,
-        ];
-        for (const folder of allFolders) {
-          const files = await this.fileManager.foundFiles(folder);
-          const found = files.find((f) => path.parse(f).name === serieName);
-          if (found) {
-            const data = await this.readSerieData<T>(found);
-            if (!data) throw new Error(`Falha ao ler a série: ${serieName}`);
-            return data;
-          }
-        }
-        throw new Error(`Série não encontrada: ${serieName}`);
-      }
+    const targetView = viewDataList?.find(
+      (view) => view.name === serieName && (!type || view.literatureForm === type),
+    );
 
-      const seriesData = await this.fileManager.foundFiles(targetFolder);
-      const serieDataPath = seriesData.find(
-        (filePath) => path.parse(filePath).name === serieName,
-      );
-
-      if (!serieDataPath) {
-        throw new Error(`Nenhuma série encontrada com o nome: ${serieName} em ${type}`);
-      }
-
-      const data = await this.readSerieData<T>(serieDataPath);
-      if (!data) throw new Error(`Falha ao ler a série: ${serieName}`);
-      return data;
-    } catch (e) {
-      console.error(`Erro ao selecionar dados da série (${serieName}):`, e);
-      throw e;
+    if (!targetView) {
+      throw new Error(`Série não encontrada no catálogo: ${serieName}`);
     }
-  }
 
-  /**
-   * Retorna os dados simplificados para visualização (Home).
-   */
+    const data = await this.readSerieData<T>(targetView.dataPath);
+
+    if (!data) {
+      throw new Error(`Falha ao ler os dados do arquivo da série: ${serieName}`);
+    }
+
+    return data;
+  }
   async getViewData(): Promise<viewData[] | null> {
     try {
-      if (this._viewDataCache) {
-        return this._viewDataCache;
+      if (this._viewDataCache !== null) {
+        return Array.from(this._viewDataCache.values());
       }
 
+      this._viewDataCache = new Map<string, viewData>();
       const dataPaths = await this.fileManager.getDataPaths();
-      const viewDataList: viewData[] = await Promise.all(
-        dataPaths.map(async (dataPath) => {
-          const serie = await this.readSerieData(dataPath);
-          if (!serie) {
-            throw new Error(
-              `Erro ao carregar dados de visualização: serie em ${dataPath} é invalida`,
-            );
-          }
-          return this.mountViewData(serie);
-        }),
-      );
 
-      this._viewDataCache = viewDataList;
-      return viewDataList;
+      for (const dataPath of dataPaths) {
+        const serie = await this.readSerieData(dataPath);
+        if (serie) {
+          const resumo = this.mountViewData(serie);
+          this._viewDataCache.set(dataPath, resumo);
+        }
+      }
+
+      return Array.from(this._viewDataCache.values());
     } catch (e) {
       console.error(`Erro ao trazer dados de visualização: ${e}`);
       return null;
     }
   }
 
-  /**
-   * Atualiza campos de uma série (Write-Through).
-   */
-  // async patchSerie(data: SerieEditForm): Promise<Literatures | null> {
-  //   return this.enqueue(async () => {
-  //     const oldData = await this.readSerieData(data.dataPath);
-  //     if (!oldData) return null;
+  async writeData(serie: Literatures | TieIn): Promise<boolean> {
+    try {
+      await this.writer.write(serie.dataPath, serie);
 
-  //     const changedFields = Object.fromEntries(
-  //       (Object.keys(data) as (keyof SerieEditForm)[])
-  //         .filter((k) => data[k] !== (oldData as Record<string, unknown>)[k])
-  //         .map((k) => [k, data[k]]),
-  //     ) as Partial<SerieEditForm>;
+      this.updateCache(serie);
 
-  //     const updated: Literatures = {
-  //       ...oldData,
-  //       ...changedFields,
-  //     } as Literatures;
+      return true;
+    } catch (error) {
+      console.error(`Erro em escrever dados da serie (${serie.name}): ${error}`);
+      return false;
+    }
+  }
 
-  //     if (updated.name !== oldData.name) {
-  //       await this.fileManager.moveFiles(oldData, updated);
-  //     }
+  private updateCache(serie: graphSerie): void {
+    this._seriesCache.set(serie.dataPath, serie as Literatures | TieIn);
 
-  //     await this.atomicWrite(updated.dataPath, updated);
+    if (this._viewDataCache !== null) {
+      const resumo = this.mountViewData(serie);
+      this._viewDataCache.set(serie.dataPath, resumo);
+    }
+  }
 
-  //     // Sincroniza Cache
-  //     this._seriesCache.set(updated.dataPath, updated);
-  //     this.invalidateCache();
-
-  //     return updated;
-  //   });
-  // }
-
-  private mountViewData(serie: Literatures): viewData {
+  private mountViewData(serie: graphSerie): viewData {
     return {
       id: serie.id,
       name: serie.name,
@@ -384,27 +203,43 @@ export class StorageManager extends LibrarySystem {
       literatureForm: serie.literatureForm,
     };
   }
-
-  buildUpdatedSerie(
-    oldData: Literatures,
-    newData: SerieEditForm,
-  ): { hasChanges: boolean; data: Literatures | null } {
-    return { hasChanges: false, data: null };
-    // const updated = { ...oldData } as Record<string, unknown>;
-    // let hasChanges = false;
-
-    // for (const key of Object.keys(newData)) {
-    //   const newValue = (newData as Record<string, unknown>)[key];
-    //   const oldValue = (oldData as Record<string, unknown>)[key];
-
-    //   if (!isDeepStrictEqual(oldValue, newValue)) {
-    //     updated[key] = newValue;
-    //     hasChanges = true;
-    //   }
-    // }
-
-    // return { hasChanges, data: updated as unknown as Literatures };
-  }
 }
 
 export default StorageManager.getInstance();
+
+// async persistSerie(oldData: Literatures, updated: Literatures): Promise<string> {
+//     try {
+//       const oldPath = oldData.dataPath;
+//       const dir = path.dirname(oldPath);
+//       const nameChanged = oldData.name !== updated.name;
+//       const newPath = nameChanged ? path.join(dir, `${updated.name}.json`) : oldPath;
+
+//       if (nameChanged && oldPath !== newPath) {
+//         // Move o arquivo físico no HD (assumo que fileManager.moveFiles faça isso)
+//         await this.fileManager.moveFiles(oldData, updated);
+
+//         if (await fse.pathExists(oldPath)) {
+//           await fse.remove(oldPath);
+//         }
+
+//         // LIMPEZA DO CACHE: Tira o lixo antigo
+//         this._seriesCache.delete(oldPath);
+//         if (this._viewDataCache !== null) {
+//           this._viewDataCache.delete(oldPath);
+//         }
+//       }
+
+//       updated.dataPath = newPath;
+
+//       // Escreve o arquivo novo
+//       await this.writer.write(newPath, updated);
+
+//       // Popula os caches com a chave nova
+//       this.updateCache(updated);
+
+//       return newPath;
+//     } catch (error) {
+//       console.error(`Erro ao persistir a série (${updated.name}):`, error);
+//       throw error;
+//     }
+//   }

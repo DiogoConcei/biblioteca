@@ -6,35 +6,28 @@ import Rating from '@/shared/components/Rating/Rating';
 import CollectionButton from '../CollectionButton/CollectionButton';
 import Favorite from '@/shared/components/FavoriteButton/Favorite';
 import ListView from '../ListView/ListView';
-import useCollection from '@/shared/hooks/useCollection';
-import { useUIStore } from '@/shared/store/useUIStore';
-import styles from './MangaPage.module.scss';
-import { graphSerie } from '../../types/graphSeries.interfaces';
+import { useCollectionStore } from '@/shared/store/useCollectionStore';
+import styles from './ListLayout.module.scss';
+import { Link } from 'react-router-dom';
 
 export default function ListLayout({ serie }: { serie: StoreSerie }) {
-  // Detecta o tipo de literatura baseado na rota
-
-  const loading = useUIStore((state) => state.loading);
-  const { favorites, recents } = useCollection();
+  const favorites = useCollectionStore((s) => s.favorites);
+  const recents = useCollectionStore((s) => s.recents);
   const { lastChapter } = useAction();
-
-  // const orderFav = () => {
-  //   return favorites ? [...favorites.series].sort((a, b) => b.rating - a.rating) : [];
-  // };
-
-  // const orderRecent = () => {
-  //   return recents
-  //     ? [...recents.series]
-  //         .sort((a, b) => new Date(b.addAt).getTime() - new Date(a.addAt).getTime())
-  //         .slice(0, 5)
-  //     : [];
-  // };
 
   // const tags = [...serie.tags].sort((a, b) => a.localeCompare(b)).slice(0, 2);
 
-  // if (loading || !serie || serie.name !== serie_name) {
-  //   return <Loading />;
-  // }
+  const orderFavByName = () => {
+    if (!favorites || !favorites.series) return [];
+
+    return [...favorites.series].sort((a, b) => a.name.localeCompare(b.name));
+  };
+
+  const orderRecentByName = () => {
+    if (!recents || !recents.series) return [];
+
+    return [...recents.series].sort((a, b) => a.name.localeCompare(b.name));
+  };
 
   return (
     <main className={styles.mangaPage}>
@@ -74,10 +67,8 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
           )}
         </div>
         <div className={styles.serieActions}>
-          {/* <DownloadButton serie={serie} />
-
-          <Favorite serie={serie} /> */}
-
+          {/* <DownloadButton serie={serie} />          */}
+          <Favorite serie={serie} />
           <CollectionButton dataPath={serie.dataPath} serieData={serie} />
           <button className={styles.reading} onClick={(e) => lastChapter(e, serie.id)}>
             <Book />
@@ -88,32 +79,33 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
         </div>
         <ListView />
       </section>
-      {/* <aside className={styles.collectionInfos}>
+      <aside className={styles.collectionInfos}>
         <div className={styles.favCollection}>
           <h3>Séries Favoritas</h3>
           <ul>
-            {orderFav().map((serie, idx) => (
+            {orderFavByName().map((fav, idx) => (
               <li key={idx}>
-                <Link to={`/Manga/${serie.name}/:${serie.id}`}>
-                  <span>{serie.name}</span>
+                <Link to={`/Manga/${fav.name}/${fav.id}`}>
+                  <span>{fav.name}</span>
                 </Link>
               </li>
             ))}
           </ul>
         </div>
+
         <div className={styles.recCollection}>
           <h3>Últimas séries lidas</h3>
           <ul>
-            {orderRecent().map((col, idx) => (
+            {orderRecentByName().map((recent, idx) => (
               <li key={idx}>
-                <Link to={`/Manga/${serie.name}/:${serie.id}`}>
-                  <span>{col.name}</span>
+                <Link to={`/Manga/${recent.name}/${recent.id}`}>
+                  <span>{recent.name}</span>
                 </Link>
               </li>
             ))}
           </ul>
         </div>
-      </aside> */}
+      </aside>{' '}
     </main>
   );
 }
