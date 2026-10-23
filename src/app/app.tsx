@@ -8,9 +8,11 @@ import Home from '@/features/hub/home/Home';
 import SerieUpload from '@/features/upload/serieUpload/SerieUpload';
 import ChapterUpload from '@/features/upload/chapterUpload/ChapterUpload';
 import UploadChoice from '@/features/upload/components/UploadChoice/UploadChoice';
-// import MangaPage from './pages/mangaPage/MangaPage';
+import SeriePage from '@/features/libraryBrowser/seriePage/SeriePage';
+import { LiteratureForm } from '@/shared/types/series.interfaces';
+
 // import ComicPage from '../features/comicview/comicPage/comicPage';
-// import TieInPage from '../components/TieInPage/TieInPage';
+// import Tie'InPage from '../components/TieInPage/TieInPage';
 // import Viewer from '../features/viewer/graphviewer/Viewer';
 // import EditSerie from './pages/editSerie/EditSerie';
 // import ErrorBoundary from '../shared/providers/ErrorBoundary';
@@ -30,7 +32,18 @@ const App = () => {
             /> */}
             <Route path="local-upload/serie" element={<SerieUpload />} />
             <Route path="local-upload/chapter" element={<ChapterUpload />} />
-            {/* <Route path="Manga/:manga_name/:manga_id" element={<MangaPage />} /> */}
+            <Route
+              path={`${LiteratureForm.MANGA}/:serie_name/:serie_id`}
+              element={<SeriePage literatureForm={LiteratureForm.MANGA} />}
+            />{' '}
+            <Route
+              path={`${LiteratureForm.BOOK}/:serie_name/:serie_id`}
+              element={<SeriePage literatureForm={LiteratureForm.BOOK} />}
+            />{' '}
+            <Route
+              path={`${LiteratureForm.COMIC}/:serie_name/:serie_id`}
+              element={<SeriePage literatureForm={LiteratureForm.COMIC} />}
+            />{' '}
             {/* <Route path="Books/:book_name/:book_id" element={<BookPage />} /> */}
             {/* <Route path="Quadrinho/:comic_name/:comic_id" element={<ComicPage />} /> */}
             {/* <Route path="TieIn/:tiein_name" element={<TieInPage />} /> */}

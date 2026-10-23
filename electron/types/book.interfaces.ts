@@ -1,4 +1,4 @@
-import { graphChapter, graphSerie } from './electron-auxiliar.interfaces';
+import { graphChapter, graphSerie, viewMode } from './electron-auxiliar.interfaces';
 
 export interface Book extends graphSerie<BookChapter> {
   name: string;
@@ -28,6 +28,7 @@ export interface Book extends graphSerie<BookChapter> {
     rating?: number;
     isFavorite: boolean;
     autoBackup: AutoBackupStatus;
+    viewMode?: viewMode;
   };
   comments: string[];
   tags: string[];

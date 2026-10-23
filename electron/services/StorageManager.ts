@@ -247,63 +247,66 @@ export class StorageManager extends LibrarySystem {
     serieName: string,
     type?: 'Manga' | 'Quadrinho' | 'childSeries' | 'Books',
   ): Promise<T> {
-    throw new Error(`Não implementado`);
     // // Tenta encontrar no cache primeiro
-    // for (const serie of this._seriesCache.values()) {
-    //   if (serie.name === serieName) return serie as T;
-    // }
+    for (const serie of this._seriesCache.values()) {
+      if (serie.name === serieName) return serie as T;
+    }
 
-    // try {
-    //   let targetFolder: string;
+    try {
+      let targetFolder: string;
 
-    //   if (type) {
-    //     switch (type) {
-    //       case 'Manga':
-    //         targetFolder = this.mangasData;
-    //         break;
-    //       case 'Quadrinho':
-    //         targetFolder = this.comicsData;
-    //         break;
-    //       case 'Books':
-    //         targetFolder = this.booksData;
-    //         break;
-    //       case 'childSeries':
-    //         targetFolder = this.childSeriesData;
-    //         break;
-    //       default:
-    //         targetFolder = this.mangasData;
-    //     }
-    //   } else {
-    //     const allFolders = [
-    //       this.mangasData,
-    //       this.comicsData,
-    //       this.booksData,
-    //       this.childSeriesData,
-    //     ];
-    //     for (const folder of allFolders) {
-    //       const files = await this.fileManager.foundFiles(folder);
-    //       const found = files.find((f) => path.parse(f).name === serieName);
-    //       if (found) {
-    //         return await this.readSerieData<T>(found);
-    //       }
-    //     }
-    //     throw new Error(`Série não encontrada: ${serieName}`);
-    //   }
+      if (type) {
+        switch (type) {
+          case 'Manga':
+            targetFolder = this.mangasData;
+            break;
+          case 'Quadrinho':
+            targetFolder = this.comicsData;
+            break;
+          case 'Books':
+            targetFolder = this.booksData;
+            break;
+          case 'childSeries':
+            targetFolder = this.childSeriesData;
+            break;
+          default:
+            targetFolder = this.mangasData;
+        }
+      } else {
+        const allFolders = [
+          this.mangasData,
+          this.comicsData,
+          this.booksData,
+          this.childSeriesData,
+        ];
+        for (const folder of allFolders) {
+          const files = await this.fileManager.foundFiles(folder);
+          const found = files.find((f) => path.parse(f).name === serieName);
+          if (found) {
+            const data = await this.readSerieData<T>(found);
+            if (!data) throw new Error(`Falha ao ler a série: ${serieName}`);
+            return data;
+          }
+        }
+        throw new Error(`Série não encontrada: ${serieName}`);
+      }
 
-    //   const seriesData = await this.fileManager.foundFiles(targetFolder);
-    //   const serieDataPath = seriesData.find(
-    //     (filePath) => path.parse(filePath).name === serieName,
-    //   );
+      const seriesData = await this.fileManager.foundFiles(targetFolder);
+      const serieDataPath = seriesData.find(
+        (filePath) => path.parse(filePath).name === serieName,
+      );
 
-    //   if (!serieDataPath) {
-    //     throw new Error(`Nenhuma série encontrada com o nome: ${serieName} em ${type}`);
-    //   }
+      if (!serieDataPath) {
+        throw new Error(`Nenhuma série encontrada com o nome: ${serieName} em ${type}`);
+      }
 
-    //   return await this.readSerieData<T>(serieDataPath);
-    // } catch (e) {
-    //   console.error(`Erro ao selecionar dados da série (${serieName}):`, e);
-    //   throw e;
-    // }
+      const data = await this.readSerieData<T>(serieDataPath);
+      if (!data) throw new Error(`Falha ao ler a série: ${serieName}`);
+      return data;
+    } catch (e) {
+      console.error(`Erro ao selecionar dados da série (${serieName}):`, e);
+      throw e;
+    }
   }
 
   /**

@@ -1,4 +1,4 @@
-import { graphChapter, graphSerie } from './electron-auxiliar.interfaces';
+import { graphChapter, graphSerie, viewMode } from './electron-auxiliar.interfaces';
 
 export interface Comic extends graphSerie<ComicEdition> {
   id: number;
@@ -31,6 +31,7 @@ export interface Comic extends graphSerie<ComicEdition> {
     isFavorite: boolean;
     autoBackup: AutoBackupStatus;
     compiledComic: boolean;
+    viewMode?: viewMode;
   };
   createdAt: string;
   deletedAt: string;

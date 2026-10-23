@@ -1,4 +1,4 @@
-import { graphChapter, graphSerie } from './electron-auxiliar.interfaces';
+import { graphChapter, graphSerie, viewMode } from './electron-auxiliar.interfaces';
 import {
   LiteratureForm,
   ReadingStatus,
@@ -34,6 +34,7 @@ export interface Manga extends graphSerie<MangaChapter> {
     rating?: number;
     isFavorite: boolean;
     autoBackup: AutoBackupStatus;
+    viewMode?: viewMode;
   };
   comments: string[];
   tags: string[];

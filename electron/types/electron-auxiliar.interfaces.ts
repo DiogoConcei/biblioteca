@@ -63,7 +63,7 @@ export interface ChapterResponse<T> extends APIResponse<T> {
   lastPageRead?: number;
 }
 
-export type LiteratureForms = 'Manga' | 'Quadrinho';
+export type LiteratureForms = 'Manga' | 'Quadrinho' | 'Book';
 
 export type LiteratureChapterAttributes = string | number | boolean;
 
@@ -153,6 +153,8 @@ export interface LastReadCandidate {
   timestamp: number;
 }
 
+export type viewMode = 'List' | 'Gallery' | 'Spotlight';
+
 export interface graphSerie<C extends graphChapter = graphChapter> {
   id: number;
   name: string;
@@ -184,6 +186,7 @@ export interface graphSerie<C extends graphChapter = graphChapter> {
     isFavorite: boolean;
     autoBackup: AutoBackupStatus;
     compiledComic?: boolean;
+    viewMode?: viewMode;
   };
   comments: string[];
   tags: string[];
