@@ -10,6 +10,7 @@ import chaptersHandlers from './chaptersHandlers.ts';
 import systemHandlers from './systemHandlers.ts';
 import lanHandlers from './lanHandlers.ts';
 import historyHandlers from './historyHandlers.ts';
+import imageHandlers from './imageHandlers.ts';
 // import MetadataScraperService from '../services/MetadataManager';
 
 export function registerHandlers() {
@@ -24,6 +25,7 @@ export function registerHandlers() {
   systemHandlers(ipcMain);
   lanHandlers(ipcMain);
   historyHandlers(ipcMain);
+  imageHandlers(ipcMain);
 
   // ipcMain.handle('metadata:fetch', async (_event, input) => {
   //   try {

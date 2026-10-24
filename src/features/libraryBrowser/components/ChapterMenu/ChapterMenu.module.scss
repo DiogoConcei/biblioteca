@@ -1,0 +1,59 @@
+@use '@/shared/styles/_variables.scss' as *;
+
+.root {
+  position: relative;
+}
+
+.trigger {
+  @include interactive-button;
+  display: flex;
+  padding: $spacing-1;
+  border-radius: $radius-sm;
+  color: inherit;
+
+  &:hover {
+    color: $snow;
+    background: rgba($snow, 0.12);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $snow;
+  }
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  min-width: 14rem;
+  padding: 4px 0;
+  margin: 0;
+  list-style: none;
+  border: 1px solid rgba($snow, 0.25);
+  border-radius: $radius-md;
+  background: #2f343e; // ajuste para o fundo do seu tema
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.item {
+  @include interactive-button;
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  width: 100%;
+  padding: $spacing-2 $spacing-3;
+  color: $snow;
+  font-size: $font-base;
+  text-align: left;
+
+  &:hover,
+  &:focus-visible {
+    outline: none;
+    background: rgba($snow, 0.12);
+  }
+}
+
+.danger {
+  color: $indian-red;
+}

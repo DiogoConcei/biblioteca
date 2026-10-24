@@ -53,6 +53,10 @@ export default abstract class LibrarySystem {
     return path.join(this.imagesFolder, 'showcase images');
   }
 
+  protected get gallery(): string {
+    return path.join(this.imagesFolder, 'gallery');
+  }
+
   protected get dinamicImages(): string {
     return path.join(this.imagesFolder, 'dinamic images');
   }

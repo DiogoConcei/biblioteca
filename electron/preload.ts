@@ -260,4 +260,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getRecents: (limit?: number): Promise<APIResponse<SerieHistoryEntry[]>> =>
       ipcRenderer.invoke('history:get-recents', limit),
   },
+
+  image: {
+    getCoverGallery: (coverGalleryPath: string): Promise<APIResponse<string[]>> =>
+      ipcRenderer.invoke('image:get-cover-gallery', coverGalleryPath),
+    addCoverToGallery: (
+      coverGalleryPath: string,
+      sourcePath: string,
+    ): Promise<APIResponse<string>> =>
+      ipcRenderer.invoke('image:get-cover-gallery', coverGalleryPath, sourcePath),
+  },
 });

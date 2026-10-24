@@ -8,28 +8,11 @@ export default function useImage() {
 
     if (!imagePath) return '';
 
-    const encodedImage = await encodeImage(imagePath);
-    setPreviewSrc(encodedImage);
+    await loadExistingImage(imagePath);
     return imagePath;
   };
 
   const pickImage = async (): Promise<string | null> => {
-    const bridge = (
-      window as Window & {
-        electron?: {
-          dialog?: { openFile?: () => Promise<string | undefined> };
-        };
-      }
-    ).electron;
-
-    if (bridge?.dialog?.openFile) {
-      const pickedPath = await bridge.dialog.openFile();
-
-      if (!pickedPath) return null;
-
-      return pickedPath;
-    }
-
     const response = await window.electronAPI.system.pickImage();
 
     if (!response.success || !response.data) return null;
@@ -40,14 +23,24 @@ export default function useImage() {
   const encodeImage = async (caminhoImagem: string): Promise<string> => {
     const encodedImage =
       await window.electronAPI.webUtilities.readFileAsDataUrl(caminhoImagem);
+
     return encodedImage;
   };
 
   const loadExistingImage = async (path: string) => {
     if (!path) return;
 
-    const encodedImage = await encodeImage(path);
+    if (
+      path.startsWith('data:') ||
+      path.startsWith('http') ||
+      path.startsWith('media://') ||
+      path.startsWith('asset://')
+    ) {
+      setPreviewSrc(path);
+      return;
+    }
 
+    const encodedImage = await encodeImage(path);
     setPreviewSrc(encodedImage);
   };
 

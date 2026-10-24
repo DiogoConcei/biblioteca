@@ -127,6 +127,11 @@ export default class MangaManager extends GraphSerie<Manga, MangaChapter> {
       archivesPath: path.join(this.userLibrary, serie.name),
       chaptersPath: path.join(this.imagesFolder, serie.literatureForm, serie.name),
       dataPath: path.join(this.mangasData, `${serie.name}.json`),
+      serieGallery: path.join(this.gallery, `${serie.name}`),
+      coverGallery: path.join(this.gallery, `${serie.name}`, `covers`),
+      pagesGallery: path.join(this.gallery, `${serie.name}`, `pages`),
+      description: '',
+
       coverImage: serie.cover_path,
       totalChapters,
       genre: serie.genre,

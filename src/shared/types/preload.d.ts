@@ -217,6 +217,14 @@ declare global {
       history: {
         getRecents: (limit?: number) => Promise<APIResponse<SerieHistoryEntry[]>>;
       };
+
+      image: {
+        getCoverGallery: (coverGalleryPath: string) => Promise<APIResponse<string[]>>;
+        addCoverToGallery: (
+          coverGalleryPath: string,
+          sourcePath: string,
+        ) => Promise<APIResponse<string>>;
+      };
     };
   }
 }

@@ -1,0 +1,56 @@
+@use '@/shared/styles/_variables.scss' as *;
+
+.overlay {
+  // Fixa o fundo na tela inteira, ignorando qualquer rolagem
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6); // Fundo escuro semi-transparente
+  backdrop-filter: blur(4px); // (Opcional) Dá aquele desfoque moderno no fundo
+
+  // Flexbox para centralizar a caixa branca perfeitamente no meio
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 1000; // Garante que fique por cima da barra de navegação e outros elementos
+}
+
+.modalContent {
+  background-color: #1e1e1e; // Substitua pela variável do seu tema, ex: var(--bg-color)
+  color: #ececec; // Substitua pela variável de texto, ex: var(--text-color)
+
+  width: 90%;
+  max-width: 600px;
+  max-height: 85vh; // Se a galeria for muito grande, não passa da altura da tela
+  overflow-y: auto; // Cria uma barra de rolagem interna se precisar
+
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5); // Sombra para destacar do fundo
+
+  // Uma animação suave de entrada
+  animation: popIn 0.2s ease-out forwards;
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 12px;
+  }
+}
+
+// Keyframe para o modal dar um leve "pulo" ao abrir
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

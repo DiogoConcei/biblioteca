@@ -12,7 +12,7 @@ import useSerie from '@/shared/hooks/useSerie';
 import useSerieStore from '@/shared/store/useSerieStore';
 import { useUIStore } from '@/shared/store/useUIStore';
 import Loading from '@/shared/components/Loading/Loading';
-import ImageController from '@/features/upload/components/ImageController/ImageController';
+import ImageGallery from '../components/ImageGallery/ImageGallery';
 
 export default function EditSerie() {
   const { serie_name = '', literature_form = '' } = useParams<{
@@ -86,8 +86,7 @@ export default function EditSerie() {
     <form className={styles['form-view']} onSubmit={handleSubmit(onSubmit)}>
       <div className={styles.card}>
         <div>
-          {/* O TypeScript agora aceita o control perfeitamente */}
-          <ImageController control={control as any} name="coverImage" />
+          <ImageGallery control={control} name="coverImage" />
         </div>
       </div>
     </form>

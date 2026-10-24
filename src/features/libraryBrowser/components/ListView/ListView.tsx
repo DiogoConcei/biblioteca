@@ -11,7 +11,10 @@ import {
   Bookmark,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-
+import { Trash2 } from 'lucide-react'; // junto dos outros ícones do lucide-react
+import ChapterMenu from '../ChapterMenu/ChapterMenu';
+import ConfirmDialog from '@/shared/components/ConfirmDialog/ConfirmDialog';
+import useChapterActions from '@/shared/hooks/useChapterActions';
 import useDownload from '@/shared/hooks/useDownload';
 import useAction from '@/shared/hooks/useAction';
 import useSerieStore from '@/shared/store/useSerieStore';
@@ -52,18 +55,51 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
   const { downloadIndividual } = useDownload();
   const { openChapter, markAsRead } = useAction();
   const chapters = useSerieStore((s) => s.chapters);
+  const { deleteChapter } = useChapterActions();
+  const fetchSerie = useSerieStore((s) => s.fetchSerie);
 
+  const [chapterToDelete, setChapterToDelete] = useState<Chapter | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [ascending, setAscending] = useState(true);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
-  // Lista só para exibição: o store não é alterado.
+  const askDelete = (chapter: Chapter) => {
+    setDeleteError(null);
+    setChapterToDelete(chapter);
+  };
+
+  const closeDelete = () => {
+    if (!isDeleting) setChapterToDelete(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!chapterToDelete) return;
+
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    const result = await deleteChapter(chapterToDelete);
+
+    if (result.success) {
+      // o backend é a fonte da verdade: recarrega a série (contadores, status, histórico)
+      await fetchSerie(chapterToDelete.serieName, literatureForm);
+      setChapterToDelete(null);
+    } else {
+      setDeleteError(
+        result.error ?? 'Não foi possível excluir o capítulo. Tente novamente.',
+      );
+    }
+
+    setIsDeleting(false);
+  };
+
   const sorted = useMemo(
     () =>
       [...chapters].sort((a, b) => (ascending ? a.order - b.order : b.order - a.order)),
     [chapters, ascending],
   );
 
-  // Próximo a ler: primeiro não lido na ordem natural, independente da direção exibida.
   const nextId = useMemo(
     () => [...chapters].sort((a, b) => a.order - b.order).find((c) => !c.isRead)?.id,
     [chapters],
@@ -79,7 +115,6 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
   const { handlePage, pageNumbers, totalPages, currentItems, currentPage } =
     usePagination(sorted, PAGE_SIZE);
 
-  // Abre na página do próximo capítulo, só na primeira vez.
   const jumpedToNext = useRef(false);
   useEffect(() => {
     if (jumpedToNext.current || sorted.length === 0) return;
@@ -190,6 +225,18 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
                   >
                     <DownloadIcon state={chapter.isDownloaded} />
                   </button>
+
+                  <ChapterMenu
+                    label={`Mais ações do ${chapter.name}`}
+                    items={[
+                      {
+                        label: 'Excluir capítulo',
+                        icon: <Trash2 size={18} strokeWidth={1.5} />,
+                        danger: true,
+                        onSelect: () => askDelete(chapter),
+                      },
+                    ]}
+                  />
                 </div>
               </li>
             );
@@ -240,6 +287,17 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
           literatureForm={literatureForm}
         />
       )}
+
+      <ConfirmDialog
+        open={chapterToDelete !== null}
+        title={`Excluir ${chapterToDelete?.name ?? 'capítulo'}?`}
+        description="O capítulo será removido da biblioteca. Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        busy={isDeleting}
+        error={deleteError}
+        onConfirm={confirmDelete}
+        onCancel={closeDelete}
+      />
     </section>
   );
 }

@@ -8,20 +8,35 @@ import FileManager from '../FileManager.ts';
 import ArchiveManager from './ArchiveManager.ts';
 import PdfManager from './PdfManager.ts';
 import { ComicEdition } from '../../types/comic.interfaces.ts';
-import { StorageManager } from '../StorageManager.ts';
 
 export default class ImageManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
   private readonly archiveManager: ArchiveManager = new ArchiveManager();
   private readonly pdfManager: PdfManager = new PdfManager();
 
-  private _storageManager: StorageManager | null = null;
+  public async getSerieCoverGallery(coverGalleryPath: string): Promise<string[]> {
+    const dirents = await fse.readdir(coverGalleryPath, { withFileTypes: true });
 
-  private async getStorageManager() {
-    if (!this._storageManager) {
-      this._storageManager = (await import('../StorageManager.ts')).default;
-    }
-    return this._storageManager;
+    const imagePaths = dirents
+      .filter((d) => d.isFile() && /\.(webp|jpeg|png|jpg)$/i.test(d.name))
+      .map((d) => path.join(coverGalleryPath, d.name));
+
+    const mediaUrls = imagePaths.map((p) => this.getMediaUrl(p));
+
+    return mediaUrls;
+  }
+
+  public async addToCoverGallery(
+    coverGalleryPath: string,
+    sourcePath: string,
+  ): Promise<string> {
+    const fileName = path.basename(sourcePath);
+    const destPath = path.join(coverGalleryPath, fileName);
+
+    const finalPath = await this.normalizeImage(sourcePath, coverGalleryPath);
+
+    const mediaUrl = this.getMediaUrl(finalPath);
+    return mediaUrl;
   }
 
   public async normalizeImage(imagePath: string, finalPath: string): Promise<string> {

@@ -123,8 +123,6 @@ export class StorageManager extends LibrarySystem {
     serieName: string,
     type?: string,
   ): Promise<T> {
-    console.log(serieName);
-    console.log(type);
     for (const serie of this._seriesCache.values()) {
       if (serie.name === serieName) return serie as T;
     }
