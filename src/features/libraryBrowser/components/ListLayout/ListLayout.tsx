@@ -15,7 +15,7 @@ import { useMemo } from 'react';
 const progressPercent = (read: number, total: number) =>
   total > 0 ? Math.min(100, Math.round((read / total) * 100)) : 0;
 
-const MAX_SHELF = 9;
+const MAX_SHELF = 6;
 
 export default function ListLayout({ serie }: { serie: StoreSerie }) {
   // const tags = [...serie.tags].sort((a, b) => a.localeCompare(b)).slice(0, 2);
@@ -79,7 +79,7 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
 
           {/* <Rating serie={serie} /> */}
         </div>
-        <ListView />
+        <ListView literatureForm={serie.literatureForm} />
       </section>
       <aside className={styles.collectionInfos}>
         <section className={styles.panelSection}>

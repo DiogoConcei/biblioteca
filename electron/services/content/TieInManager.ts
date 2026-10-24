@@ -10,12 +10,12 @@ import {
   TieIn,
   ComicEdition,
   AutoBackupStatus,
-  PrivacyStatus,
 } from '../../types/comic.interfaces';
 
 import PdfManager from '../processing/PdfManager';
 import ArchiveManager from '../processing/ArchiveManager';
 import { LiteratureForm, ReadingStatus } from '../../types/book.interfaces';
+import { PrivacyStatus } from '../../../src/shared/types/series.interfaces';
 
 export default class TieInManager extends ComicManager {
   protected readonly fileManager: FileManager = new FileManager();
@@ -190,7 +190,7 @@ export default class TieInManager extends ComicManager {
         autoBackup: AutoBackupStatus.EMPTY,
         collections: [],
         compiledComic: false,
-        privacy: PrivacyStatus.IN_PROGRESS,
+        privacy: PrivacyStatus.EMPTY,
       },
       createdAt,
       deletedAt: '',

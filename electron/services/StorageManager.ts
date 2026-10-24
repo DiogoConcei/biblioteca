@@ -123,6 +123,8 @@ export class StorageManager extends LibrarySystem {
     serieName: string,
     type?: string,
   ): Promise<T> {
+    console.log(serieName);
+    console.log(type);
     for (const serie of this._seriesCache.values()) {
       if (serie.name === serieName) return serie as T;
     }
@@ -243,3 +245,119 @@ export default StorageManager.getInstance();
 //       throw error;
 //     }
 //   }
+
+// /**
+//  * Alias para ler TieIn com cache.
+//  */
+// async readTieInData(dataPath: string): Promise<TieIn | null> {
+//   return this.readSerieData<TieIn>(dataPath);
+// }
+
+// /**
+//  * Deleta um capítulo e invalida o cache.
+//  */
+// async deleteChapter(chapter: LiteratureChapter): Promise<boolean> {
+//   try {
+//     if (await fse.pathExists(chapter.chapterPath)) {
+//       // Se o caminho do capítulo for diferente do arquivo original (ex: cache de mangá), removemos do disco.
+//       // Se for igual (ex: livros PDF/EPUB), mantemos o arquivo original e apenas resetamos o status.
+//       if (chapter.chapterPath !== chapter.archivesPath) {
+//         await fse.remove(chapter.chapterPath);
+//       }
+
+//       chapter.isDownloaded = 'not_downloaded';
+//       chapter.chapterPath = '';
+
+//       // Invalida cache pois os dados da série (que contém o capítulo) mudaram
+//       this.invalidateCache();
+
+//       return true;
+//     }
+//     return false;
+//   } catch (e) {
+//     console.error('Falha ao deletar capitulo: ', e);
+//     return false;
+//   }
+// }
+
+/**
+ * Atualiza campos de uma série (Write-Through).
+ */
+// async patchSerie(data: SerieEditForm): Promise<Literatures | null> {
+//   return this.enqueue(async () => {
+//     const oldData = await this.readSerieData(data.dataPath);
+//     if (!oldData) return null;
+
+//     const changedFields = Object.fromEntries(
+//       (Object.keys(data) as (keyof SerieEditForm)[])
+//         .filter((k) => data[k] !== (oldData as Record<string, unknown>)[k])
+//         .map((k) => [k, data[k]]),
+//     ) as Partial<SerieEditForm>;
+
+//     const updated: Literatures = {
+//       ...oldData,
+//       ...changedFields,
+//     } as Literatures;
+
+//     if (updated.name !== oldData.name) {
+//       await this.fileManager.moveFiles(oldData, updated);
+//     }
+
+//     await this.atomicWrite(updated.dataPath, updated);
+
+//     // Sincroniza Cache
+//     this._seriesCache.set(updated.dataPath, updated);
+//     this.invalidateCache();
+
+//     return updated;
+//   });
+// }
+
+// buildUpdatedSerie(
+// oldData: Literatures,
+// newData: SerieEditForm,
+// ): { hasChanges: boolean; data: Literatures | null } {
+// return { hasChanges: false, data: null };
+// const updated = { ...oldData } as Record<string, unknown>;
+// let hasChanges = false;
+
+// for (const key of Object.keys(newData)) {
+//   const newValue = (newData as Record<string, unknown>)[key];
+//   const oldValue = (oldData as Record<string, unknown>)[key];
+
+//   if (!isDeepStrictEqual(oldValue, newValue)) {
+//     updated[key] = newValue;
+//     hasChanges = true;
+//   }
+// }
+
+// return { hasChanges, data: updated as unknown as Literatures };
+// }
+
+/**
+ * Busca uma série pelo ID, consultando o cache primeiro.
+ */
+// async searchSerieById(serieId: number): Promise<Literatures | TieIn | null> {
+//   // Tenta encontrar no cache de séries completo primeiro
+//   for (const serie of this._seriesCache.values()) {
+//     if (serie.id === serieId) return serie;
+//   }
+
+//   const viewDataList = await this.getViewData();
+//   if (viewDataList) {
+//     const targetSerie = viewDataList.find((serie) => serie.id === serieId);
+//     if (targetSerie) {
+//       return await this.readSerieData(targetSerie.dataPath);
+//     }
+//   }
+
+//   const dataPaths = await this.fileManager.getDataPaths();
+//   for (const dataPath of dataPaths) {
+//     const serieData = await this.readSerieData(dataPath);
+//     if (serieData && serieData.id === serieId) {
+//       return serieData;
+//     }
+//   }
+
+//   return null;
+// }

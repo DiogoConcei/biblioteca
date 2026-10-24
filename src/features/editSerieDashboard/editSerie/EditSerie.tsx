@@ -1,3 +1,99 @@
+import styles from './EditSerie.module.scss';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import {
+  LiteratureForm,
+  ReadingStatus,
+  SerieEditForm,
+  PrivacyStatus,
+  AutoBackupStatus,
+} from '@/shared/types/series.interfaces';
+import { useNavigate, useParams } from 'react-router-dom';
+import useSerie from '@/shared/hooks/useSerie';
+import useSerieStore from '@/shared/store/useSerieStore';
+import { useUIStore } from '@/shared/store/useUIStore';
+import Loading from '@/shared/components/Loading/Loading';
+import ImageController from '@/features/upload/components/ImageController/ImageController';
+
+export default function EditSerie() {
+  const { serie_name = '', literature_form = '' } = useParams<{
+    literature_form: string;
+    serie_name: string;
+  }>();
+
+  const decodedSerieName = decodeURIComponent(serie_name);
+  const navigate = useNavigate();
+
+  useSerie(decodedSerieName, literature_form);
+  const loading = useUIStore((state) => state.loading);
+  const serie = useSerieStore((state) => state.serie);
+  const chapters = useSerieStore((state) => state.chapters);
+
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<SerieEditForm>({
+    values: serie
+      ? ({
+          name: serie.name,
+          sanitizedName: serie.sanitizedName,
+          genre: serie.genre,
+          author: serie.author,
+          language: serie.language,
+          coverImage: serie.coverImage || '',
+          archivesPath: serie.archivesPath,
+          chaptersPath: serie.chaptersPath,
+          dataPath: serie.dataPath,
+          chapters: chapters || [],
+          totalChapters: serie.totalChapters,
+          chaptersRead: serie.chaptersRead,
+          literatureForm: serie.literatureForm as LiteratureForm,
+          readingData: {
+            lastChapterId: serie.readingData.lastChapterId,
+            lastReadAt: serie.readingData.lastReadAt,
+          },
+          metadata: {
+            status: serie.metadata.status as ReadingStatus,
+            collections: serie.metadata.collections || [],
+            recommendedBy: serie.metadata.recommendedBy || '',
+            originalOwner: serie.metadata.originalOwner || '',
+            lastDownload: serie.metadata.lastDownload || '',
+
+            // CORREÇÃO AQUI: Fallbacks corretos usando os Enums
+            privacy: serie.metadata.privacy || PrivacyStatus.EMPTY,
+            rating: serie.metadata.rating || 0,
+            isFavorite: serie.metadata.isFavorite || false,
+            autoBackup: serie.metadata.autoBackup || AutoBackupStatus.EMPTY,
+          },
+          comments: serie.comments || '',
+          tags: serie.tags || [],
+          deletedAt: serie.deletedAt || '',
+          createdAt: serie.createdAt,
+        } as SerieEditForm)
+      : undefined,
+  });
+
+  if (loading || !serie) return <Loading />;
+
+  // Função vazia só para tirar aviso do onSubmit no form
+  const onSubmit: SubmitHandler<SerieEditForm> = (data) => {
+    console.log(data);
+  };
+
+  return (
+    <form className={styles['form-view']} onSubmit={handleSubmit(onSubmit)}>
+      <div className={styles.card}>
+        <div>
+          {/* O TypeScript agora aceita o control perfeitamente */}
+          <ImageController control={control as any} name="coverImage" />
+        </div>
+      </div>
+    </form>
+  );
+}
+
 // import { useState } from 'react';
 // import { useNavigate, useParams } from 'react-router-dom';
 // import { EyeOff, Eye, ChevronLeft, ChevronRight, Trash } from 'lucide-react';

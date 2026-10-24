@@ -1,4 +1,5 @@
 import { graphChapter, graphSerie, viewMode } from './electron-auxiliar.interfaces';
+import { PrivacyStatus } from '@/shared/types/series.interfaces';
 
 export interface Book extends graphSerie<BookChapter> {
   name: string;
@@ -63,12 +64,6 @@ export enum ReadingStatus {
 export enum AutoBackupStatus {
   YES = 'Sim',
   NO = 'Não',
-  EMPTY = '',
-}
-
-export enum PrivacyStatus {
-  IN_PROGRESS = 'Pública',
-  COMPLETED = 'Privada',
   EMPTY = '',
 }
 

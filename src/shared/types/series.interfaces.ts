@@ -1,4 +1,3 @@
-// Preciso ajustar isso
 import { Comic } from '../../../electron/types/comic.interfaces';
 import { Manga } from '../../../electron/types/manga.interfaces';
 import { LiteratureChapter } from '../../../electron/types/electron-auxiliar.interfaces';
@@ -17,8 +16,8 @@ export enum AutoBackupStatus {
 }
 
 export enum PrivacyStatus {
-  IN_PROGRESS = 'Pública',
-  COMPLETED = 'Privada',
+  PUBLIC = 'Pública',
+  PRIVATE = 'Privada',
   EMPTY = '',
 }
 
@@ -80,11 +79,11 @@ export interface SerieEditForm {
     collections: string[];
     recommendedBy?: string;
     originalOwner?: string;
-    lastDownload: number;
-    privacy: 'Publica' | 'Privada' | '';
-    rating?: number;
+    lastDownload: string | number;
+    privacy: PrivacyStatus;
+    rating?: number; // Ajustado de string para number, conforme o backend
     isFavorite: boolean;
-    autoBackup: 'Sim' | 'Não' | '';
+    autoBackup: AutoBackupStatus;
   };
   comments: string[];
   tags: string[];

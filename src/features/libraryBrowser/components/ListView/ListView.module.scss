@@ -49,102 +49,194 @@
 
 .control {
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
   flex-flow: column;
+  align-items: stretch;
   gap: $spacing-2;
+  width: 100%;
 
-  .list-header {
+  .header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 35vw;
 
     h2 {
       font-size: $font-2xl;
       color: $snow;
     }
 
-    .sortButton,
-    .uploadButton {
-      margin: 0 auto;
-      @include interactive-button;
-      color: $snow;
-      margin: $spacing-2;
-      padding: $spacing-2;
-
-      &:hover {
-        background-color: rgba(244, 244, 237, 0.12);
-        color: rgba(137, 99, 186, 1);
-      }
+    .headerActions {
+      display: flex;
+      align-items: center;
     }
+  }
+
+  .toolButton {
+    @include interactive-button;
+    margin: $spacing-1;
+    padding: $spacing-2;
+    color: $snow;
+
+    &:hover {
+      background-color: rgba(244, 244, 237, 0.12);
+      color: rgba(137, 99, 186, 1);
+    }
+  }
+
+  .empty {
+    color: rgba($snow, 0.7);
   }
 
   .chaptersList {
     display: flex;
     flex-flow: column nowrap;
     gap: $spacing-2;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
 
-    .chapter {
-      display: flex;
-      flex-flow: row;
-      justify-content: space-between;
-      padding: $spacing-3;
-      width: 35vw;
-      max-width: 35vw;
-      background: $strong-indian-red;
-      color: $snow;
-      cursor: pointer;
+  .row {
+    display: flex;
+    align-items: center;
+    border-radius: $radius-sm;
+    background: $strong-indian-red;
+    color: $snow;
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
 
-      .chapterName {
-        font-size: $font-base;
-        font-weight: 400;
-        max-width: 28vw;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
+    &[data-read='true'] {
+      background: rgba($snow, 0.06);
+      color: rgba($snow, 0.55);
+    }
 
-      .actionButtons {
-        display: flex;
-        justify-content: space-between;
-        width: 4vw;
-
-        button {
-          @include interactive-button;
-
-          &:hover {
-            color: $snow;
-          }
-        }
-      }
+    &[data-next='true'] {
+      outline: 2px solid $snow;
+      outline-offset: 2px;
     }
   }
 
-  .ControlBtns {
+  .main {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: $spacing-3;
+    min-width: 0;
+    padding: $spacing-2 $spacing-3;
+    border: none;
+    background: none;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid $snow;
+      outline-offset: -2px;
+    }
+  }
+
+  .number {
+    flex: none;
+    min-width: 2.75rem;
+    font-size: $font-lg;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  .text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .title {
+    overflow: hidden;
+    font-size: $font-base;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+    opacity: 0.8;
+  }
+
+  .chip {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  .actions {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: $spacing-1;
+    padding-right: $spacing-2;
+  }
+
+  .iconButton {
+    @include interactive-button;
+    display: flex;
+    padding: $spacing-1;
+    border-radius: $radius-sm;
+    color: inherit;
+
+    &:hover {
+      color: $snow;
+      background: rgba($snow, 0.12);
+    }
+
+    &:focus-visible {
+      outline: 2px solid $snow;
+    }
+
+    &[data-downloaded='not_downloaded'] svg {
+      opacity: 0.7;
+    }
+  }
+
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .pagination {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-width: 35vw;
-    margin: $spacing-1;
+    margin: $spacing-1 0;
 
-    .prevBTN,
-    .nextBTN {
+    .arrow {
       @include interactive-button;
-      color: black;
+      color: $snow;
+
+      &:disabled {
+        color: rgba($snow, 0.3);
+        cursor: default;
+      }
     }
 
-    .prevBTN:disabled,
-    .nextBTN:disabled {
-      color: #ccc;
+    .page {
       @include interactive-button;
-    }
-
-    .disable {
       width: 30px;
       height: 30px;
       border-radius: 5px;
-      transition: 250ms background;
+      color: $snow;
+      font-size: $font-lg;
+      transition: background 0.25s;
 
       &:hover {
         color: #a878e5;
@@ -152,45 +244,9 @@
       }
     }
 
-    .active {
-      @include interactive-button;
-      color: black;
-      font-size: $font-lg;
-    }
-
-    .disable {
-      @include interactive-button;
-      color: $snow;
-      font-size: $font-lg;
-    }
-  }
-
-  .animate-spin {
-    color: $snow;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-
-  .iconDownloaded {
-    color: #000;
-    transition: color 0.2s ease;
-
-    &:hover {
-      color: $hover-shining;
-    }
-  }
-
-  .iconNotDownloaded {
-    color: #fcf7f8;
-    transition: color 0.2s ease;
-
-    &:hover {
-      color: $hover-shining;
+    .pageActive {
+      background-color: rgba($snow, 0.16);
+      font-weight: 600;
     }
   }
 }

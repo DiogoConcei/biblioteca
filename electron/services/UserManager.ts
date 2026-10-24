@@ -66,6 +66,7 @@ export default class UserManager extends FileSystem {
 
       serieData.metadata.isFavorite = isFavorite;
       await this.storageManager.writeData(serieData);
+
       return true;
     } catch (err) {
       console.error('Erro ao atualizar favoritação de série:', err);

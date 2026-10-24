@@ -1,15 +1,13 @@
 import { useState } from 'react';
+import { LiteratureChapter } from '../../../electron/types/electron-auxiliar.interfaces';
 
-import useSerieStore from '../store/useSerieStore';
-
-export default function usePagination() {
-  const chapters = useSerieStore((s) => s.chapters);
+export default function usePagination(items: LiteratureChapter[], pageSize = 12) {
   const itemsPage = 12;
   const [currentPage, setCurrentPage] = useState(1);
 
-  const totalPages = Math.ceil(chapters.length / itemsPage);
+  const totalPages = Math.ceil(items.length / itemsPage);
   const start = (currentPage - 1) * itemsPage;
-  const currentItems = chapters.slice(start, start + itemsPage);
+  const currentItems = items.slice(start, start + itemsPage);
 
   const maxVisiblePages = 10;
   let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
