@@ -22,6 +22,7 @@ import usePagination from '@/shared/hooks/usePagination';
 import { LiteratureForm } from '@/shared/types/series.interfaces';
 import UploadPopUp from '../UploadPopUp/UploadPopUp';
 import styles from './ListView.module.scss';
+import { LiteratureChapter } from '../../../../../electron/types/electron-auxiliar.interfaces';
 
 // Ou importe LiteratureChapter do seu arquivo de tipos.
 type Chapter = ReturnType<typeof useSerieStore.getState>['chapters'][number];

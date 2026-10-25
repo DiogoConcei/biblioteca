@@ -6,17 +6,18 @@ interface HistoryState {
 
   fetchHistory: () => Promise<void>;
   refreshHistory: () => Promise<void>;
+  upsertRecent: (entry: SerieHistoryEntry) => void;
 }
+
+const RECENTS_LIMIT = 5;
 
 export const useHistoryStore = create<HistoryState>((set, get) => ({
   recentSeries: [],
 
   fetchHistory: async () => {
-    // Trava de cache
     if (get().recentSeries.length > 0) return;
 
     try {
-      // 1. Mudança aqui: de getSummaries para getRecents
       const response = await window.electronAPI.history.getRecents();
 
       if (!response.success || !response.data) return;
@@ -29,7 +30,6 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
 
   refreshHistory: async () => {
     try {
-      // 2. Mudança aqui também
       const response = await window.electronAPI.history.getRecents();
 
       if (response.success && response.data) {
@@ -39,4 +39,12 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       console.error('Erro ao recarregar histórico:', error);
     }
   },
+
+  upsertRecent: (entry) =>
+    set((state) => ({
+      recentSeries: [
+        entry,
+        ...state.recentSeries.filter((s) => s.serieId !== entry.serieId),
+      ].slice(0, RECENTS_LIMIT),
+    })),
 }));

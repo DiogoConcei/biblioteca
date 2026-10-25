@@ -11,8 +11,6 @@ export default function Favorite({ serie }: FavoriteProps) {
 
   const favoriteSerie = async (isFav: boolean) => {
     const newFavoriteStatus = !isFav;
-    console.log(isFav);
-    console.log(newFavoriteStatus);
     updateSerie('metadata.isFavorite', newFavoriteStatus);
     const response = await updateFav(serie, newFavoriteStatus);
 

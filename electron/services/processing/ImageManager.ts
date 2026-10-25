@@ -30,15 +30,33 @@ export default class ImageManager extends LibrarySystem {
     coverGalleryPath: string,
     sourcePath: string,
   ): Promise<string> {
-    const fileName = path.basename(sourcePath);
-    const destPath = path.join(coverGalleryPath, fileName);
+    // const fileName = path.basename(sourcePath);
+    // const destPath = path.join(coverGalleryPath, fileName);
 
     const finalPath = await this.normalizeImage(sourcePath, coverGalleryPath);
 
     const mediaUrl = this.getMediaUrl(finalPath);
+
     return mediaUrl;
   }
 
+  public async deleteCover(coverPath: string): Promise<void> {
+    try {
+      let finalPath = coverPath;
+
+      // 1. Desmascara a URL customizada que veio do React
+      if (coverPath.startsWith('lib-media://local/')) {
+        const base64Part = coverPath.replace('lib-media://local/', '');
+        finalPath = Buffer.from(base64Part, 'base64').toString('utf-8');
+      }
+
+      // 2. Apaga o arquivo físico real no HD
+      await fse.remove(finalPath);
+    } catch (e) {
+      console.error('Erro ao deletar capa física:', e);
+      throw new Error('Falha em deletar a capa');
+    }
+  }
   public async normalizeImage(imagePath: string, finalPath: string): Promise<string> {
     const sanitizedPath = await this.fileManager.normalizeEncoding(imagePath);
     const normalizedPath = path.resolve(sanitizedPath);

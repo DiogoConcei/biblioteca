@@ -5,22 +5,25 @@ import { useUIStore } from '@/shared/store/useUIStore';
 import { useEffect, useState } from 'react';
 import useSerieStore from '@/shared/store/useSerieStore';
 import useImage from '@/shared/hooks/useImage';
-import { Plus } from 'lucide-react';
+import { Plus, Trash } from 'lucide-react';
 
 interface SerieGalleryProps {
+  currentCover: string; // <-- Para saber qual é a capa atual do form
   onClose: () => void;
   onSelect: (imagePath: string) => void;
 }
 
-export default function SerieGallery({ onClose, onSelect }: SerieGalleryProps) {
+export default function SerieGallery({
+  onClose,
+  onSelect,
+  currentCover,
+}: SerieGalleryProps) {
   const modalRef = useClickOutside<HTMLDivElement>(onClose);
   const serie = useSerieStore((s) => s.serie);
   const { setError, loading } = useUIStore();
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
 
   const { getPreview } = useImage();
-
-  if (!serie || loading) return <Loading />;
 
   useEffect(() => {
     async function getCoverGallery() {
@@ -38,6 +41,8 @@ export default function SerieGallery({ onClose, onSelect }: SerieGalleryProps) {
     }
     getCoverGallery();
   }, [serie, setError]);
+
+  if (!serie || loading) return <Loading />;
 
   const handleAddNewCover = async () => {
     try {
@@ -61,6 +66,30 @@ export default function SerieGallery({ onClose, onSelect }: SerieGalleryProps) {
     }
   };
 
+  // NOVA FUNÇÃO: O handler do clique da lixeira
+  const handleDelete = async (e: React.MouseEvent, imgUrl: string) => {
+    e.stopPropagation(); // 🔴 CRÍTICO: Impede que o clique na lixeira selecione a imagem como capa
+
+    try {
+      // IPC que você vai criar!
+      const response = await window.electronAPI.image.deleteCover(imgUrl);
+
+      if (response.success) {
+        // Remove visualmente da grade
+        setGalleryImages((prev) => prev.filter((img) => img !== imgUrl));
+
+        // Se o usuário apagou a capa que estava ativa no form, nós limpamos o campo
+        if (imgUrl === currentCover) {
+          onSelect('');
+        }
+      } else {
+        setError('Erro ao deletar a capa');
+      }
+    } catch (error) {
+      setError('Falha na comunicação ao deletar');
+    }
+  };
+
   return (
     <div className={styles.overlay}>
       <div ref={modalRef} className={styles.modalContent}>
@@ -71,19 +100,37 @@ export default function SerieGallery({ onClose, onSelect }: SerieGalleryProps) {
             <Plus size={20} /> Adicionar Capa
           </button>
         </header>
-
         <div className={styles.grid}>
           {galleryImages.map((imgUrl, idx) => (
-            <img
-              key={idx}
-              src={imgUrl}
-              alt={`Capa ${idx}`}
-              onClick={() => onSelect(imgUrl)}
-              role="button"
-              className={styles.clickableImage}
-            />
+            <div key={imgUrl} className={styles.imageWrapper}>
+              {/* Botão Principal: Selecionar a Capa */}
+              <button
+                type="button"
+                className={`${styles.coverButton} ${imgUrl === currentCover ? styles.active : ''}`}
+                onClick={() => onSelect(imgUrl)}
+                aria-label={`Selecionar capa ${idx + 1}`}
+              >
+                <img
+                  src={imgUrl}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className={styles.cover}
+                />
+              </button>
+
+              {/* Botão Secundário: Deletar a Capa */}
+              <button
+                type="button"
+                className={styles.deleteButton}
+                onClick={(e) => handleDelete(e, imgUrl)}
+                aria-label="Deletar capa"
+              >
+                <Trash size={16} />
+              </button>
+            </div>
           ))}
-        </div>
+        </div>{' '}
       </div>
     </div>
   );

@@ -15,10 +15,12 @@ export default function historyHandlers(ipcMain: IpcMain) {
         const safeLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 50) : 5;
 
         const recents = await historyManager.getRecents(safeLimit);
+
         const data = recents.map((s) => ({
           ...s,
           coverImage: imageManager.getMediaUrl(s.coverImage),
         }));
+
         return { success: true, data };
       } catch (error) {
         return { success: false, error: String(error) };

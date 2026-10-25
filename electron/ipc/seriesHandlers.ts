@@ -169,10 +169,14 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
         const result = await userManager.favoriteSerie(serieData);
 
-        const newFav: SerieInCollection =
-          await collectionManager.mountSerieToCollection(serieData);
+        const newFav = await collectionManager.mountSerieToCollection(serieData);
 
-        return { success: result, data: newFav };
+        const codedFav = {
+          ...newFav,
+          coverImage: await imageManager.getMediaUrl(newFav.coverImage),
+        };
+
+        return { success: result, data: codedFav };
       } catch (e) {
         console.error(`Erro em favoritar serie: ${e}`);
         return { success: false, error: String(e) };

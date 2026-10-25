@@ -7,6 +7,7 @@ import {
   LiteratureChapter,
   Literatures,
 } from '../../../electron/types/electron-auxiliar.interfaces';
+import { useHistoryStore } from '../store/useHistoryStore';
 
 export default function useAction() {
   const serie = useSerieStore((state) => state.serie) as Literatures | TieIn;
@@ -18,6 +19,8 @@ export default function useAction() {
   const setError = useUIStore((state) => state.setError);
   const navigate = useNavigate();
   const setSerie = useSerieStore((state) => state.setSerie);
+  const upsertRecent = useHistoryStore((s) => s.upsertRecent);
+  const refreshHistory = useHistoryStore((s) => s.refreshHistory);
 
   async function ratingSerie(e: React.MouseEvent, serie: Literatures, rating: number) {
     e.stopPropagation();
@@ -41,7 +44,10 @@ export default function useAction() {
     }
   }
 
-  async function markAsRead(e: React.MouseEvent, selectedChapter: LiteratureChapter) {
+  async function markAsRead(
+    e: React.MouseEvent,
+    selectedChapter: LiteratureChapter,
+  ): Promise<boolean> {
     e.stopPropagation();
 
     const originalRead = selectedChapter.isRead;
@@ -51,7 +57,6 @@ export default function useAction() {
       updateSerie('chaptersRead', newValue);
       updateSerie('readingData.lastChapterId', selectedChapter.id);
 
-      // Atualização automática de status no frontend para feedback instantâneo
       if (newValue === serie.totalChapters) {
         updateSerie('metadata.status', 'Completo');
       } else if (serie.metadata.status === 'Completo' && newValue < serie.totalChapters) {
@@ -60,6 +65,21 @@ export default function useAction() {
     }
 
     updateChapter(selectedChapter.id, 'isRead', !originalRead);
+
+    if (!originalRead && serie) {
+      const { chapters } = useSerieStore.getState();
+      upsertRecent({
+        serieId: serie.id,
+        serieName: serie.name,
+        coverImage: serie.coverImage,
+        literatureForm: serie.literatureForm,
+        lastChapterId: selectedChapter.id,
+        lastChapterLabel: selectedChapter.chapterNumber.label,
+        lastReadAt: new Date().toISOString(),
+        chaptersRead: chapters.filter((c) => c.isRead).length,
+        totalChapters: serie.totalChapters,
+      });
+    }
 
     try {
       const response = await window.electronAPI.userAction.markRead(
@@ -70,10 +90,15 @@ export default function useAction() {
 
       if (!response.success) {
         updateChapter(selectedChapter.id, 'isRead', originalRead);
+        return false;
       }
+
+      return true;
     } catch (e) {
       updateChapter(selectedChapter.id, 'isRead', originalRead);
-      console.error('Falha em realizar ação');
+      return false;
+    } finally {
+      void refreshHistory();
     }
   }
 

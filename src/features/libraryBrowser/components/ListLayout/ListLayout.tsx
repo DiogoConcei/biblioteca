@@ -19,8 +19,10 @@ const MAX_SHELF = 6;
 
 export default function ListLayout({ serie }: { serie: StoreSerie }) {
   // const tags = [...serie.tags].sort((a, b) => a.localeCompare(b)).slice(0, 2);
+
   const favorites = useCollectionStore((s) => s.favorites);
   const { recentSeries } = useHistory();
+
   const { lastChapter } = useAction();
 
   const favs = useMemo(

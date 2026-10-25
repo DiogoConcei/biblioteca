@@ -1,49 +1,182 @@
 @use '@/shared/styles/_variables.scss' as *;
 
-.overlay {
-  // Fixa o fundo na tela inteira, ignorando qualquer rolagem
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.6); // Fundo escuro semi-transparente
-  backdrop-filter: blur(4px); // (Opcional) Dá aquele desfoque moderno no fundo
+// Variáveis do seu tema
+$modal-bg: #2f343e;
+$modal-border: rgba($snow, 0.15);
 
-  // Flexbox para centralizar a caixa branca perfeitamente no meio
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  z-index: 1000; // Garante que fique por cima da barra de navegação e outros elementos
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.15s ease-out;
 }
 
 .modalContent {
-  background-color: #1e1e1e; // Substitua pela variável do seu tema, ex: var(--bg-color)
-  color: #ececec; // Substitua pela variável de texto, ex: var(--text-color)
-
-  width: 90%;
-  max-width: 600px;
-  max-height: 85vh; // Se a galeria for muito grande, não passa da altura da tela
-  overflow-y: auto; // Cria uma barra de rolagem interna se precisar
-
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5); // Sombra para destacar do fundo
-
-  // Uma animação suave de entrada
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1000px;
+  max-height: 85vh;
+  overflow: hidden; // A rolagem fica restrita à grade
+  border: 1px solid $modal-border;
+  border-radius: $radius-md;
+  background-color: $modal-bg;
+  color: $snow;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
   animation: popIn 0.2s ease-out forwards;
+}
+
+.header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid $modal-border;
 
   h2 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 12px;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    font-size: 1.25rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
-// Keyframe para o modal dar um leve "pulo" ao abrir
+.addButton {
+  @include interactive-button;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: $radius-sm;
+  background: $strong-indian-red;
+  color: $snow;
+  font-size: $font-base;
+  white-space: nowrap;
+  transition: filter 0.15s ease;
+
+  &:hover {
+    filter: brightness(1.12);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $snow;
+    outline-offset: 2px;
+  }
+}
+
+.grid {
+  display: grid;
+  // Tamanho equilibrado para capas no desktop (ajuste se quiser maior/menor)
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+  margin: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba($snow, 0.3) transparent;
+}
+
+.imageWrapper {
+  position: relative; // Fundamental para o botão de deletar ficar no canto certo
+  border-radius: $radius-sm;
+  overflow: hidden;
+  aspect-ratio: 2 / 3;
+  background-color: rgba($snow, 0.05);
+
+  // A lixeira só aparece no hover deste wrapper
+  &:hover .deleteButton {
+    opacity: 1;
+  }
+}
+
+.coverButton {
+  @include interactive-button;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  // Feedback visual de qual é a capa selecionada
+  &.active {
+    box-shadow: 0 0 0 3px $indian-red;
+  }
+
+  &:hover {
+    transform: scale(1.03);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $snow;
+    outline-offset: 2px;
+  }
+}
+
+.cover {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: filter 0.2s ease;
+
+  .coverButton:hover & {
+    filter: brightness(1.1);
+  }
+}
+
+.deleteButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(220, 53, 69, 0.85); // Vermelho destrutivo
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0; // Invisível por padrão
+  transition:
+    opacity 0.2s ease,
+    background-color 0.2s ease;
+  z-index: 10;
+
+  &:hover {
+    background-color: rgb(190, 40, 55);
+  }
+}
+
+/* ANIMAÇÕES E MEDIA QUERIES */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes popIn {
   0% {
     opacity: 0;
@@ -52,5 +185,27 @@
   100% {
     opacity: 1;
     transform: scale(1) translateY(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0.75rem 1rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    padding: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .modalContent {
+    animation: none;
+  }
+
+  .coverButton {
+    transition: none;
   }
 }

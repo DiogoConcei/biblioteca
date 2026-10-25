@@ -54,6 +54,7 @@ export default function ImageGallery<T extends FieldValues>({
 
       {isOpen && (
         <SerieGallery
+          currentCover={field.value}
           onClose={() => setIsOpen(false)}
           onSelect={(novaCapa) => {
             field.onChange(novaCapa);

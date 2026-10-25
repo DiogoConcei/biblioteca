@@ -224,6 +224,7 @@ declare global {
           coverGalleryPath: string,
           sourcePath: string,
         ) => Promise<APIResponse<string>>;
+        deleteCover: (coverPath: string) => Promise<APIResponse<void>>;
       };
     };
   }

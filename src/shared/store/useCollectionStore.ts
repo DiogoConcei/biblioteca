@@ -55,7 +55,7 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
   updateFav: async (serie, isFav) => {
     try {
       const response = await window.electronAPI.series.favoriteSerie(serie.dataPath);
-
+      console.log(response);
       if (!response.success || !response.data) return false;
 
       const favoriteSerie = response.data;

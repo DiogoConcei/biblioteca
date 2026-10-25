@@ -35,7 +35,7 @@ export default class HistoryManager extends LibrarySystem {
     } else if (serie.chaptersRead > 0) {
       serie.metadata.status = ReadingStatus.IN_PROGRESS;
     } else {
-      serie.metadata.status = ReadingStatus.PENDING; // Ou o enum correto para 'Pendente'
+      serie.metadata.status = ReadingStatus.PENDING;
     }
 
     if (isRead === true) {

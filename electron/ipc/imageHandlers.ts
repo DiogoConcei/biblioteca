@@ -35,4 +35,16 @@ export default function imageHandlers(ipcMain: IpcMain) {
       }
     },
   );
+
+  ipcMain.handle(
+    'image:delete-cover',
+    async (_event, coverGalleryPath: string): Promise<APIResponse<void>> => {
+      try {
+        await imageManager.deleteCover(coverGalleryPath);
+        return { success: true };
+      } catch (error) {
+        return { success: false, error: String(error) };
+      }
+    },
+  );
 }
