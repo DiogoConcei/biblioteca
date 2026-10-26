@@ -143,17 +143,27 @@ export default function seriesHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('serie:rating', async (_event, dataPath: string, userRating: number) => {
     try {
-      const serieData = (await storageManager.readSerieData(dataPath)) as Literatures;
-
-      serieData.metadata.rating = userRating;
-
-      const success = await collectionManager.updateSerie(serieData.dataPath);
-
-      if (!success) {
-        return { success: false };
+      if (!Number.isInteger(userRating) || userRating < 0 || userRating > 5) {
+        return { success: false, error: 'Nota inválida.' };
       }
 
-      await storageManager.writeData(serieData);
+      const serieData = (await storageManager.readSerieData(dataPath)) as Literatures;
+
+      const previous = serieData.metadata.rating;
+      serieData.metadata.rating = userRating;
+
+      try {
+        await storageManager.writeData(serieData);
+      } catch (error) {
+        serieData.metadata.rating = previous; // desfaz na memória se a gravação falhou
+        throw error;
+      }
+
+      // o snapshot nas coleções é derivado: falhar ali não invalida a nota
+      const synced = await collectionManager.updateSerie(dataPath);
+      if (!synced)
+        console.warn(`Nota salva, mas não sincronizada nas coleções: ${dataPath}`);
+
       return { success: true };
     } catch (e) {
       console.error(`Falha em ranquear serie: ${e}`);

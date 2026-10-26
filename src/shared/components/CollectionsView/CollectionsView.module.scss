@@ -1,9 +1,5 @@
 @use '@/shared/styles/_variables.scss' as *;
 
-// Variáveis do seu tema
-$modal-bg: #2f343e;
-$modal-border: rgba($snow, 0.15);
-
 .overlay {
   position: fixed;
   inset: 0;
@@ -26,7 +22,7 @@ $modal-border: rgba($snow, 0.15);
   overflow: hidden; // A rolagem fica restrita à grade
   border: 1px solid $modal-border;
   border-radius: $radius-md;
-  background-color: $modal-bg;
+  background-color: $gunmetal;
   color: $snow;
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
   animation: popIn 0.2s ease-out forwards;
@@ -60,6 +56,30 @@ $modal-border: rgba($snow, 0.15);
   padding: 0.5rem 0.875rem;
   border-radius: $radius-sm;
   background: $strong-indian-red;
+  color: $snow;
+  font-size: $font-base;
+  white-space: nowrap;
+  transition: filter 0.15s ease;
+
+  &:hover {
+    filter: brightness(1.12);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $snow;
+    outline-offset: 2px;
+  }
+}
+
+.closeButton {
+  @include interactive-button;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $radius-sm;
+  background: $amethyst;
   color: $snow;
   font-size: $font-base;
   white-space: nowrap;

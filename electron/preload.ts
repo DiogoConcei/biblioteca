@@ -269,7 +269,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       sourcePath: string,
     ): Promise<APIResponse<string>> =>
       ipcRenderer.invoke('image:add-cover', coverGalleryPath, sourcePath),
+    deleteCover: (coverPath: string): Promise<APIResponse<void>> =>
+      ipcRenderer.invoke('image:delete-cover', coverPath),
   },
-  deleteCover: (coverPath: string): Promise<APIResponse<string>> =>
-    ipcRenderer.invoke('image:delete-cover', coverPath),
 });

@@ -4,10 +4,10 @@ import { ImagePlus } from 'lucide-react';
 
 import useImage from '@/shared/hooks/useImage';
 
-import styles from './ImageGallery.module.scss';
-import SerieGallery from '../SerieGallery/SerieGallery';
+import styles from './SeriePotrait.module.scss';
+import SerieGallery from '../CoverGallery/CoverGallery';
 
-export default function ImageGallery<T extends FieldValues>({
+export default function SeriePotrait<T extends FieldValues>({
   control,
   name,
 }: {

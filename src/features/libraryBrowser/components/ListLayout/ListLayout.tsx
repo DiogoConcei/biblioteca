@@ -3,7 +3,7 @@ import { StoreSerie } from '@/shared/store/useSerieStore';
 import useAction from '@/shared/hooks/useAction';
 import DownloadButton from '@/shared/components/DonwloadButton/DownloadButton';
 import Rating from '@/shared/components/Rating/Rating';
-import CollectionButton from '../CollectionButton/CollectionButton';
+import CollectionButton from '../../../../shared/components/CollectionButton/CollectionButton';
 import Favorite from '@/shared/components/FavoriteButton/Favorite';
 import ListView from '../ListView/ListView';
 import { useCollectionStore } from '@/shared/store/useCollectionStore';

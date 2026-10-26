@@ -43,14 +43,10 @@ export default class ImageManager extends LibrarySystem {
   public async deleteCover(coverPath: string): Promise<void> {
     try {
       let finalPath = coverPath;
-
-      // 1. Desmascara a URL customizada que veio do React
       if (coverPath.startsWith('lib-media://local/')) {
         const base64Part = coverPath.replace('lib-media://local/', '');
         finalPath = Buffer.from(base64Part, 'base64').toString('utf-8');
       }
-
-      // 2. Apaga o arquivo físico real no HD
       await fse.remove(finalPath);
     } catch (e) {
       console.error('Erro ao deletar capa física:', e);

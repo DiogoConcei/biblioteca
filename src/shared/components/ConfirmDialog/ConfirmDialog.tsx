@@ -1,17 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
 import styles from './ConfirmDialog.module.scss';
-
-interface ConfirmDialogProps {
-  open: boolean;
-  title: string;
-  description?: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  busy?: boolean;
-  error?: string | null;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
+import { ConfirmDialogProps } from '@/shared/types/components.interfaces';
 
 export default function ConfirmDialog({
   open,
@@ -48,12 +37,10 @@ export default function ConfirmDialog({
       aria-labelledby={titleId}
       aria-describedby={description ? descId : undefined}
       onCancel={(event) => {
-        // Escape: quem fecha é o estado do pai, não o navegador
         event.preventDefault();
         if (!busy) onCancel();
       }}
       onClick={(event) => {
-        // clique no fundo escurecido
         if (event.target === event.currentTarget && !busy) onCancel();
       }}
     >

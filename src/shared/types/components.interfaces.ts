@@ -103,14 +103,7 @@ export interface FormTagProps {
 }
 
 export interface CollectionButtonProps {
-  dataPath: string;
-  serieData?: {
-    id: number;
-    name: string;
-    coverImage: string;
-    dataPath: string;
-    totalChapters: number;
-  };
+  serie: StoreSerie;
 }
 
 export interface SerieActionProps {
@@ -221,4 +214,16 @@ export interface EpubViewerRef {
 
 export interface PdfViewerRef {
   goToDestination: (dest: unknown) => Promise<void>;
+}
+
+export interface ConfirmDialogProps {
+  open: boolean;
+  title: string;
+  description?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  busy?: boolean;
+  error?: string | null;
+  onConfirm: () => void;
+  onCancel: () => void;
 }

@@ -12,7 +12,11 @@ import useSerie from '@/shared/hooks/useSerie';
 import useSerieStore from '@/shared/store/useSerieStore';
 import { useUIStore } from '@/shared/store/useUIStore';
 import Loading from '@/shared/components/Loading/Loading';
-import ImageGallery from '../components/ImageGallery/ImageGallery';
+import ImageGallery from '../components/SeriePotrait/SeriePotrait';
+import Favorite from '@/shared/components/FavoriteButton/Favorite';
+import CollectionButton from '@/shared/components/CollectionButton/CollectionButton';
+import Rating from '@/shared/components/Rating/Rating';
+import { Literatures } from '../../../../electron/types/electron-auxiliar.interfaces';
 
 export default function EditSerie() {
   const { serie_name = '', literature_form = '' } = useParams<{
@@ -61,7 +65,6 @@ export default function EditSerie() {
             originalOwner: serie.metadata.originalOwner || '',
             lastDownload: serie.metadata.lastDownload || '',
 
-            // CORREÇÃO AQUI: Fallbacks corretos usando os Enums
             privacy: serie.metadata.privacy || PrivacyStatus.EMPTY,
             rating: serie.metadata.rating || 0,
             isFavorite: serie.metadata.isFavorite || false,
@@ -77,7 +80,6 @@ export default function EditSerie() {
 
   if (loading || !serie) return <Loading />;
 
-  // Função vazia só para tirar aviso do onSubmit no form
   const onSubmit: SubmitHandler<SerieEditForm> = (data) => {
     console.log(data);
   };
@@ -88,22 +90,20 @@ export default function EditSerie() {
         <div>
           <ImageGallery control={control} name="coverImage" />
         </div>
+        <div className={styles.actionButtons}>
+          <Favorite serie={serie} />
+          <Rating serie={serie as Literatures} />
+          <CollectionButton serie={serie} />
+        </div>
       </div>
     </form>
   );
 }
 
 // import { useState } from 'react';
-// import { useNavigate, useParams } from 'react-router-dom';
 // import { EyeOff, Eye, ChevronLeft, ChevronRight, Trash } from 'lucide-react';
-// import { useForm, SubmitHandler } from 'react-hook-form';
 
 // // Compartilhado
-// import useSerie from '../../hooks/useSerie';
-// import useSerieStore from '../../store/useSerieStore';
-// import { useUIStore } from '../../store/useUIStore';
-// import Favorite from '../../components/FavoriteButton/Favorite';
-// import Rating from '../../components/Rating/Rating';
 // import ImageController from '../../components/Form/Fields/ImageController/ImageController';
 // import TextInput from '../../components/Form/GenericInputs/TextInput/TextInput';
 // import BackupField from '../../components/Form/Fields/BackupField/BackupField';
@@ -272,11 +272,6 @@ export default function EditSerie() {
 //         <div className={styles.card}>
 //           <div>
 //             <ImageController control={control} name={'coverImage'} />
-//           </div>
-//           <div className={styles.actionButtons}>
-//             <Favorite serie={serie} />
-//             <Rating serie={serie} />
-//             <CollectionButton dataPath={serie.dataPath} serieData={serie} />
 //           </div>
 //         </div>
 //         <div className={styles.mainInfo}>

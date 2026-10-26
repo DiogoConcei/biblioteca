@@ -83,7 +83,6 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
     const result = await deleteChapter(chapterToDelete);
 
     if (result.success) {
-      // o backend é a fonte da verdade: recarrega a série (contadores, status, histórico)
       await fetchSerie(chapterToDelete.serieName, literatureForm);
       setChapterToDelete(null);
     } else {

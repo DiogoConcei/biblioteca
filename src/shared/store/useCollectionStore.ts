@@ -7,6 +7,8 @@ interface CollectionState {
   favorites: Collection | null;
   recents: Collection | null;
 
+  addToCollection: (dataPath: string, collectionName: string) => Promise<boolean>;
+
   setFav: (collections: Collection[]) => void;
   setRecents: (collections: Collection[]) => void;
 
@@ -78,5 +80,9 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
       console.error('updateFav error', error);
       return false;
     }
+  },
+
+  addToCollection: async (dataPath, collectionName) => {
+    return true;
   },
 }));
