@@ -340,6 +340,8 @@ export default class CollectionManager extends LibrarySystem {
           .map((serie, index) => ({ ...serie, position: index + 1 })),
       };
 
+      updated.coverImage = this.calculateCover(updated);
+
       await this.updateCollection(updated);
       return true;
     } catch (e) {
@@ -475,6 +477,8 @@ export default class CollectionManager extends LibrarySystem {
         ...collection,
         series: [...collection.series, positionedSerie],
       };
+
+      update.coverImage = this.calculateCover(update);
 
       await this.updateCollection(update);
       return true;
@@ -775,5 +779,17 @@ export default class CollectionManager extends LibrarySystem {
       console.error('Falha em atualizar a coleção: ', e);
       return false;
     }
+  }
+
+  private calculateCover(collection: Collection): string {
+    if (!collection.series || collection.series.length === 0) {
+      return '';
+    }
+
+    const bestSerie = collection.series.reduce((best, current) => {
+      return current.rating > best.rating ? current : best;
+    });
+
+    return bestSerie.coverImage;
   }
 }

@@ -286,19 +286,6 @@ export default class ImageManager extends LibrarySystem {
     }
   }
 
-  public async encodeImages(filePaths: string[], useProtocol = true): Promise<string[]> {
-    if (useProtocol) {
-      return filePaths.map((filePath) => this.getMediaUrl(filePath));
-    }
-
-    return Promise.all(filePaths.map((p) => this.readFileAsDataUrl(p)));
-  }
-
-  public async encodeImage(filePath: string, useProtocol = true): Promise<string> {
-    if (useProtocol) return this.getMediaUrl(filePath);
-    return this.readFileAsDataUrl(filePath);
-  }
-
   public async getThumbnailUrl(originalPath: string): Promise<string> {
     if (!originalPath) return '';
     try {

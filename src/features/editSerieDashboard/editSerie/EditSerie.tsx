@@ -91,8 +91,8 @@ export default function EditSerie() {
           <ImageGallery control={control} name="coverImage" />
         </div>
         <div className={styles.actionButtons}>
-          <Favorite serie={serie} />
-          <Rating serie={serie as Literatures} />
+          {/* <Favorite serie={serie} /> */}
+          {/* <Rating serie={serie as Literatures} /> */}
           <CollectionButton serie={serie} />
         </div>
       </div>

@@ -2,61 +2,66 @@
 
 .collection {
   @include interactive-button;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ececec;
+  border-radius: 8px;
+  padding: 8px 12px;
+  min-width: 140px;
+  max-width: 200px;
+  height: 40px;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  justify-self: center;
-  gap: $spacing-2;
-  padding: $spacing-2;
-  background: $strong-indian-red;
-  color: $snow;
-  border-radius: $radius-md;
-  font-size: $font-lg;
-  transition:
-    background-color 0.3s,
-    color 0.3s;
+  justify-content: center;
+  overflow: hidden;
+  transition: background-color 0.2s;
 
   &:hover {
-    background-color: rgba(244, 244, 237, 0.12);
-    color: rgba(137, 99, 186, 1);
+    background-color: rgba(255, 255, 255, 0.1);
   }
 }
 
-.dropdown-list {
-  position: absolute;
-  list-style: none;
-  background-color: #282c34;
-  border-radius: $radius-md;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  margin-top: $spacing-2;
-  width: 150px;
-  z-index: 10;
-  animation: dropdown 0.3s ease-in-out;
+/* Container do conteúdo padrão (quando não está em coleções) */
+.defaultContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
 
-  .dropdown-item {
-    padding: $spacing-2;
-    border-bottom: 1px solid #444;
+/* Container do conteúdo dinâmico com animação */
+.dynamicContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  animation: fadeSlideUp 0.3s ease-out;
+}
 
-    &:last-child {
-      border-bottom: none;
-    }
+.miniCover {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0; // Impede a imagem de amassar
+}
 
-    .dropdown-option {
-      background: transparent;
-      color: $snow;
-      border: none;
-      width: 100%;
-      text-align: left;
-      font-size: $font-lg;
-      padding: $spacing-2;
-      cursor: pointer;
-      transition:
-        background-color 0.3s,
-        color 0.3s;
+.collectionName {
+  font-weight: 500;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-      &:hover {
-        border-radius: $radius-sm;
-        background-color: rgba(137, 99, 186, 0.2);
-      }
-    }
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

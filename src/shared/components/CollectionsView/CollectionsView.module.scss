@@ -186,6 +186,136 @@
   }
 }
 
+.layout {
+  display: flex;
+  height: 60vh; // Altura fixa para permitir scroll interno
+  min-height: 400px;
+  overflow: hidden; // Previne que o conteúdo vaze da borda arredondada
+}
+
+/* --- MENU LATERAL --- */
+.sidebar {
+  width: 250px;
+  background-color: rgba(0, 0, 0, 0.15); // Um pouco mais escuro que o centro
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  overflow-y: auto; // Scroll apenas na sidebar
+}
+
+.collectionList {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.collectionItem {
+  @include interactive-button; // Seu mixin, se tiver
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: #ececec;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  &.active {
+    background-color: rgba(255, 255, 255, 0.15);
+    font-weight: bold;
+  }
+}
+
+.coverThumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.fallbackThumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.collectionName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- ÁREA CENTRAL --- */
+.mainArea {
+  flex: 1; // Ocupa todo o espaço restante ao lado da sidebar
+  padding: 24px;
+  overflow-y: auto; // Scroll apenas na área central
+  background-color: transparent;
+}
+
+.mainHeader {
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 12px;
+
+  h3 {
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    margin: 0;
+    color: #aaa;
+    font-size: 0.9rem;
+  }
+}
+
+/* O grid de capas dentro da área central */
+.seriesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 16px;
+}
+
+.serieCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.serieCover {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.serieName {
+  font-size: 0.85rem;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.empty,
+.emptyCenter {
+  color: #888;
+  text-align: center;
+  margin-top: 40px;
+}
+
 /* ANIMAÇÕES E MEDIA QUERIES */
 
 @keyframes fadeIn {
