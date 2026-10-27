@@ -158,32 +158,36 @@ declare global {
 
       collections: {
         getCollections: () => Promise<APIResponse<Collection[]>>;
-        quicklyCreate: (collectionName: string) => Promise<APIResponse<boolean>>;
-        createCollection: (
-          collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
-        ) => Promise<APIResponse<boolean>>;
-        deleteCollection: (collectionName: string) => Promise<APIResponse<void>>;
-        updateCollection: (
+        updateCollectionCover: (
           collectionName: string,
-          payload: Partial<Pick<Collection, 'description' | 'coverImage' | 'name'>>,
+          cover: string,
         ) => Promise<APIResponse<void>>;
-        removeSerie: (collectionName: string, serieId: number) => Promise<boolean>;
-        reorderSeries: (
-          collectionName: string,
-          orderedSeriesIds: number[],
-        ) => Promise<APIResponse<void>>;
-        updateSerieBackground: (
-          collectionName: string,
-          serieId: number,
-          path: string | null,
-        ) => Promise<APIResponse<void>>;
-        fetchMetadata: (
-          title: string,
-          type: 'manga' | 'comic',
-          year?: number,
-          author?: string,
-        ) => Promise<APIResponse<ScrapedMetadata>>;
-        getFavSeries: () => Promise<APIResponse<Collection>>;
+        // quicklyCreate: (collectionName: string) => Promise<APIResponse<boolean>>;
+        // createCollection: (
+        //   collection: Omit<Collection, 'createdAt' | 'updatedAt'>,
+        // ) => Promise<APIResponse<boolean>>;
+        // deleteCollection: (collectionName: string) => Promise<APIResponse<void>>;
+        // updateCollection: (
+        //   collectionName: string,
+        //   payload: Partial<Pick<Collection, 'description' | 'coverImage' | 'name'>>,
+        // ) => Promise<APIResponse<void>>;
+        // removeSerie: (collectionName: string, serieId: number) => Promise<boolean>;
+        // reorderSeries: (
+        //   collectionName: string,
+        //   orderedSeriesIds: number[],
+        // ) => Promise<APIResponse<void>>;
+        // updateSerieBackground: (
+        //   collectionName: string,
+        //   serieId: number,
+        //   path: string | null,
+        // ) => Promise<APIResponse<void>>;
+        // fetchMetadata: (
+        //   title: string,
+        //   type: 'manga' | 'comic',
+        //   year?: number,
+        //   author?: string,
+        // ) => Promise<APIResponse<ScrapedMetadata>>;
+        // getFavSeries: () => Promise<APIResponse<Collection>>;
       };
 
       userAction: {

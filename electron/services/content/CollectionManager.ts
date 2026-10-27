@@ -49,6 +49,16 @@ export default class CollectionManager extends LibrarySystem {
     }
   }
 
+  public async updateCover(collectionName: string, cover: string): Promise<void> {
+    const collection = await this.getCollection(collectionName);
+
+    if (!collection) throw new Error('Falha em encontrar a coleção');
+
+    collection.coverImage = cover;
+
+    this.updateCollection(collection);
+  }
+
   private updateCache(collection: Collection): void {
     this._collectionsCache?.set(collection.name, collection);
   }

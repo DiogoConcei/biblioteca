@@ -1,5 +1,7 @@
 import styles from './CollectionsView.module.scss';
 import useClickOutside from '@/shared/hooks/useClickOutside';
+import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
+import { SerieInCollection } from '@/shared/types/collections.interfaces';
 import { Collection } from '@/shared/types/collections.interfaces';
 import { X, Bookmark } from 'lucide-react';
 import { useState } from 'react';
@@ -11,11 +13,33 @@ interface CollectionsViewProps {
 
 export default function CollectionsView({ onClose, collections }: CollectionsViewProps) {
   const modalRef = useClickOutside<HTMLDivElement>(onClose);
+  const [serieForCover, setSerieForCover] = useState<SerieInCollection | null>(null);
+  const [isUpdatingCover, setIsUpdatingCover] = useState<boolean>(false);
 
-  // O estado guarda a coleção inteira. Por padrão, seleciona a primeira da lista (se existir).
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(
     collections.length > 0 ? collections[0] : null,
   );
+
+  const handleConfirmCoverUpdate = async () => {
+    if (!selectedCollection || !serieForCover) return;
+
+    setIsUpdatingCover(true);
+    try {
+      const response = await window.electronAPI.collections.updateCollectionCover(
+        selectedCollection.name,
+        serieForCover.coverImage,
+      );
+
+      if (response.success) {
+        selectedCollection.coverImage = serieForCover.coverImage;
+        setSerieForCover(null);
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar capa:', error);
+    } finally {
+      setIsUpdatingCover(false);
+    }
+  };
 
   return (
     <div className={styles.overlay}>
@@ -27,9 +51,7 @@ export default function CollectionsView({ onClose, collections }: CollectionsVie
           </button>
         </header>
 
-        {/* Divisão do Layout (Master-Detail) */}
         <div className={styles.layout}>
-          {/* Menu Lateral (Master) */}
           <aside className={styles.sidebar}>
             {collections.length === 0 ? (
               <p className={styles.empty}>Nenhuma coleção.</p>
@@ -39,7 +61,6 @@ export default function CollectionsView({ onClose, collections }: CollectionsVie
                   <li key={collection.name}>
                     <button
                       type="button"
-                      // Aplica a classe .active se for a coleção selecionada no momento
                       className={`${styles.collectionItem} ${selectedCollection?.name === collection.name ? styles.active : ''}`}
                       onClick={() => setSelectedCollection(collection)}
                     >
@@ -62,7 +83,6 @@ export default function CollectionsView({ onClose, collections }: CollectionsVie
             )}
           </aside>
 
-          {/* Área Central (Detalhe) */}
           <main className={styles.mainArea}>
             {selectedCollection ? (
               <>
@@ -76,7 +96,13 @@ export default function CollectionsView({ onClose, collections }: CollectionsVie
                 ) : (
                   <div className={styles.seriesGrid}>
                     {selectedCollection.series.map((serie) => (
-                      <div key={serie.id} className={styles.serieCard}>
+                      <div
+                        key={serie.id}
+                        className={styles.serieCard}
+                        onClick={() => setSerieForCover(serie)}
+                        style={{ cursor: 'pointer' }}
+                        title="Clique para definir como capa da coleção"
+                      >
                         <img
                           src={serie.coverImage}
                           alt=""
@@ -95,6 +121,16 @@ export default function CollectionsView({ onClose, collections }: CollectionsVie
                 <p>Selecione uma coleção ao lado.</p>
               </div>
             )}
+
+            <ConfirmDialog
+              open={serieForCover !== null}
+              title={`Definir capa de "${serieForCover?.name}"?`}
+              description={`Desta forma, esta imagem se tornará a capa oficial da coleção "${selectedCollection?.name}".`}
+              confirmLabel="Definir capa"
+              busy={isUpdatingCover}
+              onConfirm={handleConfirmCoverUpdate}
+              onCancel={() => !isUpdatingCover && setSerieForCover(null)}
+            />
           </main>
         </div>
       </div>

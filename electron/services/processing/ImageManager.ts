@@ -422,4 +422,12 @@ export default class ImageManager extends LibrarySystem {
       return await fse.readFile(filePath);
     }
   }
+
+  public decodeMediaUrl(mediaUrl: string): string {
+    if (!mediaUrl || !mediaUrl.startsWith('lib-media://local/')) {
+      return mediaUrl;
+    }
+    const base64Part = mediaUrl.replace('lib-media://local/', '');
+    return Buffer.from(base64Part, 'base64').toString('utf-8');
+  }
 }

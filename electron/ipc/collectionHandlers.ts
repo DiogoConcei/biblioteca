@@ -41,6 +41,20 @@ export default function collectionHandlers(ipcMain: IpcMain) {
       return { success: false, error: String(e) };
     }
   });
+
+  ipcMain.handle(
+    'collection:update-collection-cover',
+    async (_event, collectionName: string, cover: string): Promise<APIResponse<void>> => {
+      try {
+        const decodedCover = await imageManager.decodeMediaUrl(cover);
+        await collectionsManager.updateCover(collectionName, decodedCover);
+        return { success: true };
+      } catch (e) {
+        console.error(`Falha em atualizar capa da coleção: ${e}`);
+        return { success: false, error: String(e) };
+      }
+    },
+  );
 }
 
 // ipcMain.handle('collection:quickly-create', async (_event, collectionName: string) => {

@@ -180,45 +180,50 @@ contextBridge.exposeInMainWorld('electronAPI', {
   collections: {
     getCollections: async (): Promise<APIResponse<Collection[]>> =>
       ipcRenderer.invoke('collection:get-all'),
-    quicklyCreate: async (collectionName: string): Promise<APIResponse<boolean>> =>
-      ipcRenderer.invoke('collection:quickly-create', collectionName),
-    createCollection: async (
-      collection: CreateCollectionDTO,
-    ): Promise<APIResponse<void>> => ipcRenderer.invoke('collection:create', collection),
-    deleteCollection: async (collectionName: string): Promise<APIResponse<void>> =>
-      ipcRenderer.invoke('collection:delete', collectionName),
-    updateCollection: async (
+    updateCollectionCover: async (
       collectionName: string,
-      payload: Partial<Pick<Collection, 'description' | 'coverImage' | 'name'>>,
-    ): Promise<APIResponse<void>> =>
-      ipcRenderer.invoke('collection:update', collectionName, payload),
-    removeSerie: async (collectionName: string, serieId: number): Promise<boolean> =>
-      ipcRenderer.invoke('collection:remove-serie', collectionName, serieId),
-    reorderSeries: async (
-      collectionName: string,
-      orderedSeriesIds: number[],
-    ): Promise<APIResponse<void>> =>
-      ipcRenderer.invoke('collection:reorder-series', collectionName, orderedSeriesIds),
-    updateSerieBackground: async (
-      collectionName: string,
-      serieId: number,
-      path: string | null,
-    ): Promise<APIResponse<void>> =>
-      ipcRenderer.invoke(
-        'collection:update-serie-background',
-        collectionName,
-        serieId,
-        path,
-      ),
-    fetchMetadata: async (
-      title: string,
-      type: 'manga' | 'comic',
-      year?: number,
-      author?: string,
-    ): Promise<APIResponse<ScrapedMetadata>> =>
-      ipcRenderer.invoke('metadata:fetch', title, type, year, author),
-    getFavSeries: async (): Promise<APIResponse<Collection>> =>
-      ipcRenderer.invoke('collection:get-all-fav'),
+      cover: string,
+    ): Promise<APIResponse<Collection[]>> =>
+      ipcRenderer.invoke('collection:update-collection-cover', collectionName, cover),
+    // quicklyCreate: async (collectionName: string): Promise<APIResponse<boolean>> =>
+    //   ipcRenderer.invoke('collection:quickly-create', collectionName),
+    // createCollection: async (
+    //   collection: CreateCollectionDTO,
+    // ): Promise<APIResponse<void>> => ipcRenderer.invoke('collection:create', collection),
+    // deleteCollection: async (collectionName: string): Promise<APIResponse<void>> =>
+    //   ipcRenderer.invoke('collection:delete', collectionName),
+    // updateCollection: async (
+    //   collectionName: string,
+    //   payload: Partial<Pick<Collection, 'description' | 'coverImage' | 'name'>>,
+    // ): Promise<APIResponse<void>> =>
+    //   ipcRenderer.invoke('collection:update', collectionName, payload),
+    // removeSerie: async (collectionName: string, serieId: number): Promise<boolean> =>
+    //   ipcRenderer.invoke('collection:remove-serie', collectionName, serieId),
+    // reorderSeries: async (
+    //   collectionName: string,
+    //   orderedSeriesIds: number[],
+    // ): Promise<APIResponse<void>> =>
+    //   ipcRenderer.invoke('collection:reorder-series', collectionName, orderedSeriesIds),
+    // updateSerieBackground: async (
+    //   collectionName: string,
+    //   serieId: number,
+    //   path: string | null,
+    // ): Promise<APIResponse<void>> =>
+    //   ipcRenderer.invoke(
+    //     'collection:update-serie-background',
+    //     collectionName,
+    //     serieId,
+    //     path,
+    //   ),
+    // fetchMetadata: async (
+    //   title: string,
+    //   type: 'manga' | 'comic',
+    //   year?: number,
+    //   author?: string,
+    // ): Promise<APIResponse<ScrapedMetadata>> =>
+    //   ipcRenderer.invoke('metadata:fetch', title, type, year, author),
+    // getFavSeries: async (): Promise<APIResponse<Collection>> =>
+    //   ipcRenderer.invoke('collection:get-all-fav'),
   },
 
   userAction: {
