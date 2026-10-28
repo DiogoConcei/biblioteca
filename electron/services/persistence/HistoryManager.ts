@@ -17,6 +17,10 @@ export default class HistoryManager extends LibrarySystem {
   private readonly collectionManager: CollectionManager = new CollectionManager();
   private readonly writer = new AtomicJsonStore();
 
+  public async getHistory(): Promise<HistoryFile> {
+    return fse.readJson(this.historyFile);
+  }
+
   public async historyControl(
     serie: graphSerie,
     chapter: graphChapter,

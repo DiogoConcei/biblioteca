@@ -18,9 +18,11 @@ const progressPercent = (read: number, total: number) =>
 const MAX_SHELF = 6;
 
 export default function ListLayout({ serie }: { serie: StoreSerie }) {
-  // const tags = [...serie.tags].sort((a, b) => a.localeCompare(b)).slice(0, 2);
+  // const tags = [...serie.tags].sort((a, b) => a.localeCompare(b)).slice(0, 3);
 
-  const favorites = useCollectionStore((s) => s.favorites);
+  const favorites = useCollectionStore((s) =>
+    s.collections.find((c) => c.name === 'Favoritos'),
+  );
   const { recentSeries } = useHistory();
 
   const { lastChapter } = useAction();
@@ -73,7 +75,7 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
         <div className={styles.serieActions}>
           {/* <DownloadButton serie={serie} />          */}
           <Favorite serie={serie} />
-          <CollectionButton dataPath={serie.dataPath} serieData={serie} />
+          <CollectionButton serie={serie} />
           <button className={styles.reading} onClick={(e) => lastChapter(e, serie.id)}>
             <Book />
             Continuar

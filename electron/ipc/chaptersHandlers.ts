@@ -7,10 +7,21 @@ import MediaFactory from '../services/adapters/MediaFactory';
 import { graphChapter, Literatures } from '../types/electron-auxiliar.interfaces.ts';
 import { ReadingStatus } from '../types/book.interfaces.ts';
 import { APIResponse } from '../types/electron-auxiliar.interfaces.ts';
+import CollectionManager from '../services/content/CollectionManager.ts';
+import HistoryManager from '../services/persistence/HistoryManager.ts';
+import {
+  Collection,
+  SerieInCollection,
+} from '../../src/shared/types/collections.interfaces.ts';
+import { SerieHistoryEntry } from '../types/history.interfaces.ts';
+import ImageManager from '../services/processing/ImageManager.ts';
 
 export default function chaptersHandlers(ipcMain: IpcMain) {
   const fileManager = new FileManager();
   const userManager = new UserManager();
+  const historyManager = new HistoryManager();
+  const collectionManager = new CollectionManager();
+  const imageManager = new ImageManager();
 
   ipcMain.handle(
     'chapter:mark-read',
@@ -19,10 +30,37 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
       dataPath: string,
       chapter_id: number,
       isRead: boolean,
-    ): Promise<APIResponse<void>> => {
+    ): Promise<APIResponse<{ recents: Collection; history: SerieHistoryEntry[] }>> => {
       try {
         await userManager.markRead(dataPath, chapter_id, isRead);
-        return { success: true };
+        const history = await historyManager.getHistory();
+        const rawRecents = await collectionManager.updateRecentCollection(
+          history.summaries,
+        );
+
+        if (!rawRecents) throw new Error('Falha em receber recentes');
+
+        const resolvedSeries: SerieInCollection[] = await Promise.all(
+          rawRecents.series.map(async (r) => ({
+            ...r,
+            coverImage: await imageManager.getMediaUrl(r.coverImage),
+          })),
+        );
+
+        const recents: Collection = {
+          ...rawRecents,
+          coverImage: await imageManager.getMediaUrl(rawRecents.coverImage),
+          series: resolvedSeries,
+        };
+
+        const resolvedHistory: SerieHistoryEntry[] = await Promise.all(
+          history.summaries.map(async (entry) => ({
+            ...entry,
+            coverImage: await imageManager.getMediaUrl(entry.coverImage),
+          })),
+        );
+
+        return { success: true, data: { recents, history: resolvedHistory } };
       } catch (e) {
         console.error(`Falha em marcar como lido: ${e}`);
         return { success: false, error: String(e) };

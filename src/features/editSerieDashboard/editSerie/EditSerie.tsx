@@ -86,15 +86,25 @@ export default function EditSerie() {
 
   return (
     <form className={styles['form-view']} onSubmit={handleSubmit(onSubmit)}>
-      <div className={styles.card}>
-        <div>
-          <ImageGallery control={control} name="coverImage" />
-        </div>
+      <aside className={styles.sidebar}>
+        <ImageGallery control={control} name="coverImage" />
         <div className={styles.actionButtons}>
-          {/* <Favorite serie={serie} /> */}
-          {/* <Rating serie={serie as Literatures} /> */}
+          <Favorite serie={serie} />
+          <Rating serie={serie} />
           <CollectionButton serie={serie} />
         </div>
+      </aside>
+
+      <div className={styles.content}>
+        <h1>
+          Editando: <span>{serie.name}</span>
+        </h1>
+
+        <section className={styles.section}>
+          <h2>Informações</h2>
+          {/* nome, autor, gênero, idioma */}
+        </section>
+        {/* Leitura, Organização, Capítulos */}
       </div>
     </form>
   );

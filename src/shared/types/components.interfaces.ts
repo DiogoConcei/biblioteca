@@ -127,7 +127,7 @@ export interface FavoriteProps {
 }
 
 export interface RatingProps {
-  serie: Literatures;
+  serie: StoreSerie;
 }
 
 export type FocusedCollectionViewProps = {

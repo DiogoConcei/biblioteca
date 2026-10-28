@@ -135,10 +135,10 @@ export default class CollectionManager extends LibrarySystem {
 
   public async updateRecentCollection(
     historySummaries: SerieHistoryEntry[],
-  ): Promise<boolean> {
+  ): Promise<Collection | null> {
     try {
       const recentesCollection = await this.getRecentCollection();
-      if (!recentesCollection) return false;
+      if (!recentesCollection) return null;
 
       const last10 = historySummaries.slice(0, 10);
       const currentRecents = recentesCollection.series;
@@ -175,11 +175,13 @@ export default class CollectionManager extends LibrarySystem {
         series: seriesForCollection,
       };
 
+      update.coverImage = this.calculateCover(update);
+
       await this.updateCollection(update);
-      return true;
+      return update;
     } catch {
       console.error('Erro ao reconstruir coleção de recentes.');
-      return false;
+      return null;
     }
   }
 

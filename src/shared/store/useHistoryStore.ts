@@ -7,6 +7,7 @@ interface HistoryState {
   fetchHistory: () => Promise<void>;
   refreshHistory: () => Promise<void>;
   upsertRecent: (entry: SerieHistoryEntry) => void;
+  setRecentHistory: (entries: SerieHistoryEntry[]) => void;
 }
 
 const RECENTS_LIMIT = 5;
@@ -47,4 +48,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         ...state.recentSeries.filter((s) => s.serieId !== entry.serieId),
       ].slice(0, RECENTS_LIMIT),
     })),
+
+  setRecentHistory: (entries: SerieHistoryEntry[]) =>
+    set({ recentSeries: entries.slice(0, 5) }),
 }));

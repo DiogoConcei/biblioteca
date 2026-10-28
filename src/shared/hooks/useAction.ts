@@ -2,12 +2,13 @@ import { useNavigate } from 'react-router-dom';
 import { TieIn, ComicTieIn } from '../../../electron/types/comic.interfaces';
 
 import { useUIStore } from '../store/useUIStore';
-import useSerieStore from '../store/useSerieStore';
+import useSerieStore, { StoreSerie } from '../store/useSerieStore';
 import {
   LiteratureChapter,
   Literatures,
 } from '../../../electron/types/electron-auxiliar.interfaces';
 import { useHistoryStore } from '../store/useHistoryStore';
+import { useCollectionStore } from '../store/useCollectionStore';
 
 export default function useAction() {
   const serie = useSerieStore((state) => state.serie) as Literatures | TieIn;
@@ -20,9 +21,11 @@ export default function useAction() {
   const navigate = useNavigate();
   const setSerie = useSerieStore((state) => state.setSerie);
   const upsertRecent = useHistoryStore((s) => s.upsertRecent);
-  const refreshHistory = useHistoryStore((s) => s.refreshHistory);
+  const setRecentHistory = useHistoryStore((s) => s.setRecentHistory);
+  const setCollection = useCollectionStore((s) => s.setCollection);
+  const updateSerieInCollection = useCollectionStore((s) => s.updateSerieInCollection);
 
-  async function ratingSerie(e: React.MouseEvent, serie: Literatures, rating: number) {
+  async function ratingSerie(e: React.MouseEvent, serie: StoreSerie, rating: number) {
     e.stopPropagation();
 
     const originalRating = serie.metadata.rating;
@@ -52,15 +55,17 @@ export default function useAction() {
 
     const originalRead = selectedChapter.isRead;
 
-    if (selectedChapter.id !== 1 && serie) {
+    if (serie) {
       const newValue = serie.chaptersRead + (selectedChapter.isRead ? -1 : 1);
       updateSerie('chaptersRead', newValue);
       updateSerie('readingData.lastChapterId', selectedChapter.id);
 
       if (newValue === serie.totalChapters) {
         updateSerie('metadata.status', 'Completo');
-      } else if (serie.metadata.status === 'Completo' && newValue < serie.totalChapters) {
+      } else if (newValue > 0) {
         updateSerie('metadata.status', 'Em andamento');
+      } else {
+        updateSerie('metadata.status', 'Pendente');
       }
     }
 
@@ -93,12 +98,15 @@ export default function useAction() {
         return false;
       }
 
+      updateSerieInCollection(serie);
+      if (response.data) {
+        setCollection(response.data.recents);
+        setRecentHistory(response.data.history);
+      }
       return true;
     } catch (e) {
       updateChapter(selectedChapter.id, 'isRead', originalRead);
       return false;
-    } finally {
-      void refreshHistory();
     }
   }
 
