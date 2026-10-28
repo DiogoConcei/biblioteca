@@ -1,85 +1,49 @@
-@use '@/shared/styles/variables' as *;
+@use '@/shared/styles/_variables.scss' as *;
 
-.tagsInfo {
+.box {
   display: flex;
-  flex-direction: column;
-  gap: $spacing-3;
-  width: 450px;
-}
+  flex-wrap: wrap;
+  gap: $spacing-1;
+  padding: $spacing-1;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: $radius-sm;
 
-.formSubtitle {
-  font-size: $font-lg;
-  color: $indian-red;
-}
+  &:focus-within {
+    border-color: $accent;
+  }
 
-.tagInput {
-  input[type='text'] {
-    @include pattern-input;
-    min-width: 300px;
-    font-size: $font-base;
-    padding: $spacing-3;
-    border: 2px solid $amethyst;
+  input {
+    flex: 1;
+    min-width: 120px;
+    border: 0;
+    outline: 0;
+    background: transparent;
     color: $snow;
-    border-radius: $radius-lg;
-
-    &::placeholder {
-      color: $indian-red;
-    }
+    font-size: $font-base;
   }
 }
 
-.formTagPreview {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-3;
-}
-
-.tagList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-2;
-  width: 400px;
-  height: 55px;
-  padding: $spacing-2;
-  border: 2px solid $amethyst;
-  scrollbar-width: none;
-  border-radius: $radius-md;
-  overflow-x: auto;
-}
-
-.tagItemWrapper {
-  list-style: none;
-  flex-shrink: 0;
-}
-
-.tagItem {
-  display: flex;
+.chip {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-
-  max-width: 200px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: $indian-red;
+  gap: 4px;
+  padding: 2px $spacing-2;
+  border-radius: 999px;
+  background: rgba(137, 99, 186, 0.25);
   color: $snow;
+  font-size: $font-base;
 
-  flex-shrink: 0;
-}
+  button {
+    display: grid;
+    place-items: center;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    opacity: 0.7;
+    cursor: pointer;
 
-.tagIcon {
-  flex-shrink: 0;
-}
-
-.tagText {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.removeTag {
-  @include interactive-button;
-  flex-shrink: 0;
-  color: $snow;
+    &:hover {
+      opacity: 1;
+    }
+  }
 }

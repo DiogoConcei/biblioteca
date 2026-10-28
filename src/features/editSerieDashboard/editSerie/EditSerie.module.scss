@@ -1,55 +1,113 @@
 @use '@/shared/styles/_variables.scss' as *;
 
-@use '@/shared/styles/_variables.scss' as *;
-
-$sidebar-width: 340px; // largura da capa
-
 .form-view {
   display: grid;
-  grid-template-columns: $sidebar-width minmax(0, 700px);
-  gap: $spacing-5;
-  justify-content: center;
-  align-items: start;
-  max-width: 1400px;
-  margin: $spacing-3 auto 0;
+  grid-template-columns: $sidebar-width minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: $spacing-3 $spacing-4;
+  height: calc(100vh - 64px); // troque 64px pela altura da sua barra de título
+  max-width: 1500px;
+  margin-inline: auto;
   padding: $spacing-3;
+  box-sizing: border-box;
+  overflow: hidden;
 
+  // ---------- esquerda ----------
   .sidebar {
-    position: sticky;
-    top: $spacing-3;
     display: flex;
     flex-direction: column;
     gap: $spacing-2;
-    width: $sidebar-width;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
   }
 
-  // Favoritar | Coleções na primeira linha, nota embaixo
   .actionButtons {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: $spacing-1;
 
     > :nth-child(2) {
-      // Rating
       order: 3;
       grid-column: 1 / -1;
       justify-self: center;
     }
   }
 
-  .content {
+  .stats {
     display: flex;
     flex-direction: column;
-    gap: $spacing-3;
+    gap: $spacing-2;
+    margin: 0;
+    padding: $spacing-3;
+    border-radius: $radius-md;
+    background: rgba(255, 255, 255, 0.03);
+
+    dt {
+      font-size: 0.75rem;
+      color: $snow;
+      opacity: 0.6;
+    }
+
+    dd {
+      margin: 0;
+      color: $snow;
+      font-size: $font-base;
+    }
+  }
+
+  // ---------- direita ----------
+  .center {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
+    min-width: 0;
+    min-height: 0;
 
     h1 {
       text-align: left;
       color: $indian-red;
       font-size: $font-lg;
+
       span {
         color: $snow;
       }
     }
+  }
+
+  .topRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-2;
+    align-items: stretch;
+
+    > * {
+      min-width: 0;
+    }
+  }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+    }
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-1;
+  }
+
+  .label {
+    font-size: 0.75rem;
+    color: $snow;
+    opacity: 0.6;
   }
 
   .section {
@@ -68,208 +126,239 @@ $sidebar-width: 340px; // largura da capa
       opacity: 0.7;
     }
   }
+
+  .description {
+    textarea {
+      height: 80px;
+      resize: none;
+      padding: $spacing-2;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: $radius-sm;
+      background: transparent;
+      color: $snow;
+      font: inherit;
+      outline: 0;
+
+      &:focus {
+        border-color: $accent;
+      }
+    }
+  }
+
+  // ---------- capítulos: ocupa o resto da altura ----------
+  .chaptersPanel {
+    flex: 1;
+    min-height: 160px;
+  }
+
+  .sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: $spacing-3;
+
+    .progress {
+      flex: 1;
+    }
+  }
+
+  .search {
+    display: flex;
+    align-items: center;
+    gap: $spacing-1;
+    padding: $spacing-1 $spacing-2;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: $radius-sm;
+    color: $snow;
+
+    &:focus-within {
+      border-color: $accent;
+    }
+
+    input {
+      width: 140px;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: $snow;
+      font-size: $font-base;
+    }
+  }
+
+  .progress {
+    display: flex;
+    align-items: center;
+    gap: $spacing-2;
+
+    .bar {
+      flex: 1;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      background: $accent;
+      transition: width 200ms;
+    }
+
+    .count {
+      min-width: 6ch;
+      text-align: right;
+      color: $snow;
+      font-size: $font-base;
+    }
+  }
+
+  .chaptersList {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+
+    &:hover {
+      scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+    }
+  }
+
+  .empty {
+    color: $snow;
+    opacity: 0.6;
+    text-align: center;
+    margin-top: $spacing-4;
+  }
+
+  .chapter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-2;
+    padding: $spacing-1 $spacing-2;
+    border-left: 3px solid transparent;
+    border-radius: $radius-sm;
+    background: rgba(255, 255, 255, 0.03);
+    color: $snow;
+
+    &[data-read='true'] {
+      border-left-color: $accent;
+    }
+
+    &[data-removed='true'] {
+      opacity: 0.5;
+
+      .chapterName {
+        text-decoration: line-through;
+      }
+    }
+
+    .chapterName {
+      flex: 1;
+      min-width: 0;
+      font-size: $font-base;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: text;
+    }
+
+    .renameInput {
+      flex: 1;
+      min-width: 0;
+      padding: 2px $spacing-1;
+      border: 1px solid $accent;
+      border-radius: $radius-sm;
+      background: transparent;
+      color: $snow;
+      font-size: $font-base;
+      outline: 0;
+    }
+
+    .rowActions {
+      display: flex;
+      gap: $spacing-1;
+
+      button {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border: 0;
+        border-radius: $radius-sm;
+        background: transparent;
+        color: $snow;
+        opacity: 0.7;
+        cursor: pointer;
+
+        &:hover {
+          opacity: 1;
+          background: rgba(255, 255, 255, 0.08);
+        }
+
+        &.danger:hover {
+          color: $indian-red;
+        }
+      }
+    }
+  }
+
+  // ---------- rodapé ----------
+  .actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: $spacing-2;
+
+    button {
+      padding: $spacing-1 $spacing-3;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: $radius-sm;
+      background: transparent;
+      color: $snow;
+      font-size: $font-base;
+      cursor: pointer;
+
+      &:hover {
+        border-color: $accent;
+      }
+
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      &.primary {
+        background: $accent;
+        border-color: $accent;
+      }
+    }
+  }
 }
 
-// h1 {
-//   text-align: center;
-//   span {
-//     color: $snow;
-//   }
-//   color: $indian-red;
-//   font-size: $font-lg;
-// }
+@media (max-width: 1000px) {
+  .form-view {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    height: auto;
+    overflow: visible;
 
-// .form-view {
-//   display: grid;
-//   grid-template-columns: auto max-content max-content;
-//   gap: $spacing-3;
-//   justify-content: center;
-//   align-items: start;
+    .sidebar {
+      align-items: center;
+    }
 
-//   max-width: 1400px;
-//   padding: $spacing-3;
+    .topRow {
+      grid-template-columns: 1fr;
+    }
 
-//   padding: $spacing-2;
-//   margin-inline: auto;
-//   margin-top: $spacing-3;
-//   gap: $spacing-5;
-
-//   .card {
-//     display: flex;
-//     flex-flow: column;
-//     align-items: center;
-//     justify-content: center;
-
-//     .actionButtons {
-//       display: flex;
-//       flex-flow: row nowrap;
-//       justify-content: space-between;
-//       width: 300px;
-//       margin-top: $spacing-1;
-//     }
-//   }
-
-//   .mainInfo {
-//     display: grid;
-//     grid-template-columns: auto 1fr;
-//     gap: $spacing-4;
-//     align-items: start;
-//     justify-content: center;
-
-//     .text-info {
-//       display: flex;
-//       flex-flow: column nowrap;
-//       gap: $spacing-3;
-//     }
-
-//     .checkInfo {
-//       display: flex;
-//       flex-flow: column;
-//       gap: $spacing-2;
-//     }
-//   }
-
-//   .Control {
-//     display: flex;
-//     align-items: flex-start;
-//     justify-content: flex-start;
-//     flex-flow: column;
-//     gap: $spacing-2;
-
-//     h2 {
-//       font-size: $font-2xl;
-//       color: $snow;
-//     }
-
-//     .chaptersList {
-//       display: flex;
-//       flex-flow: column nowrap;
-//       gap: $spacing-2;
-
-//       .chapter {
-//         display: flex;
-//         flex-flow: row;
-//         justify-content: space-between;
-//         padding: $spacing-3;
-//         width: 500px;
-//         max-width: 100%;
-//         background: $strong-indian-red;
-//         color: $snow;
-//         gap: $spacing-4;
-//         cursor: pointer;
-
-//         .chapterName {
-//           font-size: $font-base;
-//           font-weight: 400;
-//           max-width: 100%;
-//           white-space: nowrap;
-//           overflow: hidden;
-//           text-overflow: ellipsis;
-//         }
-
-//         .actionButtons {
-//           display: flex;
-//           justify-content: space-between;
-//           width: fit-content;
-//           gap: $spacing-1;
-
-//           button {
-//             @include interactive-button;
-
-//             &:hover {
-//               color: $snow;
-//             }
-//           }
-//         }
-//       }
-//     }
-
-//     .ControlBtns {
-//       display: flex;
-//       align-items: center;
-//       justify-content: space-between;
-//       width: 100%;
-//       margin: $spacing-1;
-
-//       .prevBTN,
-//       .nextBTN {
-//         @include interactive-button;
-//         color: black;
-//       }
-
-//       .prevBTN:disabled,
-//       .nextBTN:disabled {
-//         color: #ccc;
-//         @include interactive-button;
-//       }
-
-//       .disable {
-//         width: 30px;
-//         height: 30px;
-//         border-radius: 5px;
-//         transition: 250ms background;
-
-//         &:hover {
-//           color: #a878e5;
-//           background-color: $hover-shining;
-//         }
-//       }
-
-//       .active {
-//         @include interactive-button;
-//         color: black;
-//         font-size: $font-lg;
-//       }
-
-//       .disable {
-//         @include interactive-button;
-//         color: $snow;
-//         font-size: $font-lg;
-//       }
-//     }
-
-//     .animate-spin {
-//       color: $snow;
-//       animation: spin 1s linear infinite;
-//     }
-
-//     @keyframes spin {
-//       100% {
-//         transform: rotate(360deg);
-//       }
-//     }
-
-//     .iconDownloaded {
-//       color: #000;
-//       transition: color 0.2s ease;
-
-//       &:hover {
-//         color: $hover-shining;
-//       }
-//     }
-
-//     .iconNotDownloaded {
-//       color: #fcf7f8;
-//       transition: color 0.2s ease;
-
-//       &:hover {
-//         color: $hover-shining;
-//       }
-//     }
-//   }
-
-//   .form-actions {
-//     display: flex;
-//     justify-content: space-evenly;
-//     width: 500px;
-
-//     button {
-//       @include interactive-button;
-//       padding: $spacing-2;
-//       border-radius: $radius-md;
-//       background: $indian-red;
-//       color: $snow;
-//       border: 2px solid $indian-red;
-//     }
-//   }
-// }
+    .chaptersList {
+      max-height: 420px;
+    }
+  }
+}
