@@ -3,8 +3,13 @@ import { IpcMain } from 'electron';
 import FileManager from '../services/FileManager';
 import storageManager from '../services/StorageManager';
 import UserManager from '../services/UserManager.ts';
-import MediaFactory from '../services/adapters/MediaFactory';
-import { graphChapter, Literatures } from '../types/electron-auxiliar.interfaces.ts';
+import ManagerFactory from '../services/adapters/ManagerFactory.ts';
+import MediaFactory from '../services/adapters/MediaFactory.ts';
+import {
+  GetChapterResponse,
+  graphChapter,
+  Literatures,
+} from '../types/electron-auxiliar.interfaces.ts';
 import { ReadingStatus } from '../../src/shared/types/series.interfaces.ts';
 import { APIResponse } from '../types/electron-auxiliar.interfaces.ts';
 import CollectionManager from '../services/content/CollectionManager.ts';
@@ -15,6 +20,12 @@ import {
 } from '../../src/shared/types/collections.interfaces.ts';
 import { SerieHistoryEntry } from '../types/history.interfaces.ts';
 import ImageManager from '../services/processing/ImageManager.ts';
+import { TieIn } from '../types/comic.interfaces.ts';
+
+export interface LastReadResult {
+  url: string;
+  serie: Literatures | TieIn;
+}
 
 export default function chaptersHandlers(ipcMain: IpcMain) {
   const fileManager = new FileManager();
@@ -70,7 +81,11 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle(
     'chapter:get-single',
-    async (_event, serieName: string, chapter_id: number) => {
+    async (
+      _event,
+      serieName: string,
+      chapter_id: number,
+    ): Promise<GetChapterResponse> => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
         if (!dataPath)
@@ -180,42 +195,56 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle(
     'chapter:acess-last-read',
-    async (_event, serieId: number): Promise<APIResponse<Literatures | TieIn>> => {
-      // try {
+    async (
+      _event,
+      serieId: number,
+    ): Promise<APIResponse<{ url: string; serie: Literatures | TieIn }>> => {
+      try {
+        let serie = await storageManager.searchSerieById(serieId);
 
-      const serie = await storageManager.searchSerieById(serieId);
+        if (!serie) {
+          return { success: false, error: `Série com ID ${serieId} não foi encontrada.` };
+        }
 
-      if (!serie) {
-        return {
-          success: false,
-          error: 'Nenhum capítulo disponível para abrir nesta série.',
-        };
+        if (!serie.chapters?.length) {
+          return { success: false, error: 'Esta série não possui capítulos.' };
+        }
+
+        // 1) Qual capítulo abrir?
+        const events = await historyManager.getReadEvents();
+        const lastEvent = events.find((e) => e.serieId === serieId);
+
+        const target =
+          serie.chapters.find((c) => c.id === lastEvent?.chapterId) ?? serie.chapters[0];
+
+        // 2) Ele já está extraído?
+        if (target.isDownloaded !== 'downloaded') {
+          await ManagerFactory.get(serie.literatureForm).createChapterById(
+            serie.dataPath,
+            target.id,
+          );
+
+          // createChapterById leu e gravou o JSON por conta própria:
+          // o objeto `serie` que temos em memória ficou desatualizado.
+          const fresh = await storageManager.readSerieData(serie.dataPath);
+          if (!fresh) throw new Error('Falha ao recarregar a série após o download.');
+          serie = fresh;
+        }
+
+        // 3) Monta a URL com os dados do próprio capítulo
+        const url = userManager.mountChapterUrl(
+          serie,
+          target.id,
+          target.name,
+          target.page.lastPageRead,
+          target.isRead,
+        );
+
+        return { success: true, data: { url, serie } };
+      } catch (e) {
+        console.error(`Erro ao acessar último capítulo lido: ${e}`);
+        return { success: false, error: String(e) };
       }
-
-      const recents = await historyManager.getReadEvents();
-
-      const lastChapterRead = recents.find((event) => event.serieId === serieId);
-
-      if (!lastChapterRead) {
-        return {
-          success: false,
-          error: 'Não há entrada no histórico para essa série.',
-        };
-      }
-
-      const url = userManager.mountChapterUrl(
-        serie,
-        chapter.id,
-        chapter.name,
-        chapter.page.lastPageRead,
-        chapter.isRead,
-      );
-
-      //   return { success: true, data: [url, serie, chapter.page.lastCfi] };
-      // } catch (e) {
-      //   console.error(`Erro ao acessar último capítulo lido: ${e}`);
-      //   return { success: false, error: String(e) };
-      // }
     },
   );
 

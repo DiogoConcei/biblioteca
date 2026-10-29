@@ -1,6 +1,9 @@
 import path from 'path';
 import fse from 'fs-extra';
-import { SerieForm } from '../../../src/shared/types/series.interfaces.ts';
+import {
+  LiteratureForm,
+  SerieForm,
+} from '../../../src/shared/types/series.interfaces.ts';
 import {
   graphChapter,
   graphSerie,
@@ -13,7 +16,6 @@ import FileManager from '../FileManager';
 import CollectionManager from '../content/CollectionManager.ts';
 import ArchiveManager from '../processing/ArchiveManager.ts';
 import PdfManager from '../processing/PdfManager.ts';
-import { LiteratureForm } from '../../types/comic.interfaces.ts';
 import {
   ChapterUploadPayload,
   FailedItem,

@@ -179,8 +179,18 @@ export default class HistoryManager extends LibrarySystem {
   }
 
   private mountReadEvent(serie: graphSerie): ReadEvent {
+    const lastChapter = serie.chapters.find(
+      (c) => c.id === serie.readingData.lastChapterId,
+    );
+
+    if (!lastChapter) throw new Error('Sem entrada de leitura para essa série');
+
     return {
-      chapterId: serie.readingData.lastChapterId,
+      chapterId: lastChapter?.id,
+      literatureForm: serie.literatureForm,
+      chapterName: lastChapter.name,
+      isRead: lastChapter.isRead,
+      lastPageRead: lastChapter.page.lastPageRead,
       readAt: serie.readingData.lastReadAt,
       serieId: serie.id,
     };

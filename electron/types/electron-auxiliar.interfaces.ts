@@ -1,5 +1,6 @@
 import { Manga, MangaChapter } from './manga.interfaces';
 import { Book, BookChapter } from './book.interfaces';
+import { MediaContent } from './media.interfaces';
 import { Comic, ComicEdition, TieIn } from './comic.interfaces';
 import {
   ReadingStatus,
@@ -62,6 +63,8 @@ export interface ChapterResponse<T> extends APIResponse<T> {
   lastCfi?: string;
   lastPageRead?: number;
 }
+
+export type GetChapterResponse = ChapterResponse<MediaContent>;
 
 export type LiteratureForms = 'Manga' | 'Quadrinho' | 'Book';
 

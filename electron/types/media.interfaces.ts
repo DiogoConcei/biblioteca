@@ -8,7 +8,7 @@ export interface ChapterResource {
 
 export interface MediaContent {
   type: MediaType;
-  resources: string[] | ChapterResource[]; 
+  resources: string[] | ChapterResource[];
   originalPath?: string; // URL para o arquivo original (PDF ou EPUB)
   totalResources: number;
 }

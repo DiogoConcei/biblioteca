@@ -6,6 +6,8 @@ import {
   LiteratureChapter,
   Literatures,
   graphSerie,
+  ChapterResponse,
+  GetChapterResponse,
 } from './types/electron-auxiliar.interfaces.ts';
 import {
   SerieData,
@@ -25,6 +27,7 @@ import {
 } from '../src/shared/types/collections.interfaces.ts';
 import { ComicTieIn, TieIn } from './types/comic.interfaces.ts';
 import { SerieHistoryEntry } from './types/history.interfaces.ts';
+import { LastReadResult } from './ipc/chaptersHandlers.ts';
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -137,7 +140,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getChapter: async (
       serieName: string,
       chapter_id: number,
-    ): Promise<APIResponse<string[]>> =>
+    ): Promise<GetChapterResponse> =>
       ipcRenderer.invoke('chapter:get-single', serieName, chapter_id),
     saveLastRead: async (
       serieName: string,
@@ -154,9 +157,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
         totalPages,
         lastCfi,
       ),
-    acessLastRead: async (
-      serieId: number,
-    ): Promise<APIResponse<[string, Literatures | TieIn]>> =>
+    acessLastRead: async (serieId: number): Promise<APIResponse<LastReadResult>> =>
       ipcRenderer.invoke('chapter:acess-last-read', serieId),
     getNextChapter: async (
       serieName: string,

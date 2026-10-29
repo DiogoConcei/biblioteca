@@ -19,6 +19,10 @@ export interface SerieHistoryEntry {
 
 export interface ReadEvent {
   serieId: number;
+  chapterName: string;
+  lastPageRead: number;
+  literatureForm: LiteratureForm;
+  isRead: boolean;
   chapterId: number;
   readAt: string;
 }

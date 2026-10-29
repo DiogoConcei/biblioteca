@@ -2,8 +2,10 @@ import { useEffect, useState, useMemo } from 'react';
 
 import { useUIStore } from '../store/useUIStore';
 import useSerieStore from '../store/useSerieStore';
-import { ChapterView } from '../../../electron/types/electron-auxiliar.interfaces';
-
+import {
+  APIResponse,
+  ChapterView,
+} from '../../../electron/types/electron-auxiliar.interfaces';
 export default function useChapter(serieName: string, chapterId: number) {
   const setError = useUIStore((state) => state.setError);
 

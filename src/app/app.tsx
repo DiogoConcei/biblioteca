@@ -10,10 +10,11 @@ import ChapterUpload from '@/features/upload/chapterUpload/ChapterUpload';
 import UploadChoice from '@/features/upload/components/UploadChoice/UploadChoice';
 import SeriePage from '@/features/libraryBrowser/seriePage/SeriePage';
 import EditSerie from '@/features/editSerieDashboard/editSerie/EditSerie';
+import Viewer from '@/features/viewer/Viewer';
 import { LiteratureForm } from '@/shared/types/series.interfaces';
 
 // import ComicPage from '../features/comicview/comicPage/comicPage';
-// import Tie'InPage from '../components/TieInPage/TieInPage';
+// import TieInPage from '../components/TieInPage/TieInPage';
 // import Viewer from '../features/viewer/graphviewer/Viewer';
 // import EditSerie from './pages/editSerie/EditSerie';
 // import ErrorBoundary from '../shared/providers/ErrorBoundary';
@@ -53,10 +54,10 @@ const App = () => {
             path="book/:serie_name/:serie_id/:chapter_name/:chapter_id/:page/:isRead"
             element={<BookViewer />}
           /> */}
-          {/* <Route
+          <Route
             path=":serie_name/:serie_id/:chapter_name/:chapter_id/:page/:isRead"
             element={<Viewer />}
-          /> */}
+          />
         </Routes>
         <UploadChoice />
       </HashRouter>

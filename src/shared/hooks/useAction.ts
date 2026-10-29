@@ -151,12 +151,12 @@ export default function useAction() {
       return setError(`${response.error}`);
     }
 
-    const [lastChapterUrl, serieData] = response.data;
+    const { url, serie } = response.data;
 
-    setSerie(serieData);
+    setSerie(serie);
 
-    if (lastChapterUrl) {
-      navigate(lastChapterUrl);
+    if (url) {
+      navigate(url);
       setLoading(false);
     } else {
       setLoading(false);

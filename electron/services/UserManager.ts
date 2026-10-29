@@ -73,4 +73,14 @@ export default class UserManager extends FileSystem {
       return false;
     }
   }
+
+  public mountChapterUrl(
+    serie: ReadableSerie,
+    chapterId: number,
+    chapterName: string,
+    lastPageRead: number,
+    isRead: boolean,
+  ): string {
+    return `/${encodeURIComponent(serie.name)}/${serie.id}/${encodeURIComponent(chapterName)}/${chapterId}/${lastPageRead}/${isRead}`;
+  }
 }

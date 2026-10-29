@@ -28,7 +28,15 @@ import {
   AppSettings,
 } from './settings.interfaces';
 import { MediaContent } from '../../electron/types/media.interfaces';
-import { graphChapter } from '../../../electron/types/electron-auxiliar.interfaces.js';
+import {
+  GetChapterResponse,
+  graphChapter,
+} from '../../../electron/types/electron-auxiliar.interfaces.js';
+
+interface LastReadResult {
+  url: string;
+  serie: Literatures | TieIn;
+}
 
 declare global {
   interface Window {
@@ -130,7 +138,7 @@ declare global {
         getChapter: (
           serieName: string,
           chapter_id: number,
-        ) => Promise<ChapterResponse<MediaContent>>;
+        ) => Promise<GetChapterResponse>;
         saveLastRead: (
           serieName: string,
           chapter_id: number,
@@ -138,9 +146,7 @@ declare global {
           totalPages: number,
           lastCfi?: string,
         ) => Promise<APIResponse<void>>;
-        acessLastRead: (
-          serieId: number,
-        ) => Promise<APIResponse<[string, Literatures | TieIn]>>;
+        acessLastRead: (serieId: number) => Promise<APIResponse<LastReadResult>>;
         getNextChapter: (
           serieName: string,
           chapter_id: number,
