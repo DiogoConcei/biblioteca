@@ -210,6 +210,30 @@ export class StorageManager extends LibrarySystem {
     }
   }
 
+  async searchSerieById(serieId: number): Promise<Literatures | TieIn | null> {
+    for (const serie of this._seriesCache.values()) {
+      if (serie.id === serieId) return serie;
+    }
+
+    const viewDataList = await this.getViewData();
+    if (viewDataList) {
+      const targetSerie = viewDataList.find((serie) => serie.id === serieId);
+      if (targetSerie) {
+        return await this.readSerieData(targetSerie.dataPath);
+      }
+    }
+
+    const dataPaths = await this.fileManager.getDataPaths();
+    for (const dataPath of dataPaths) {
+      const serieData = await this.readSerieData(dataPath);
+      if (serieData && serieData.id === serieId) {
+        return serieData;
+      }
+    }
+
+    return null;
+  }
+
   private updateCache(serie: graphSerie): void {
     this._seriesCache.set(serie.dataPath, serie as Literatures | TieIn);
 
@@ -306,32 +330,4 @@ export default StorageManager.getInstance();
 
 //     return updated;
 //   });
-// }
-
-/**
- * Busca uma série pelo ID, consultando o cache primeiro.
- */
-// async searchSerieById(serieId: number): Promise<Literatures | TieIn | null> {
-//   // Tenta encontrar no cache de séries completo primeiro
-//   for (const serie of this._seriesCache.values()) {
-//     if (serie.id === serieId) return serie;
-//   }
-
-//   const viewDataList = await this.getViewData();
-//   if (viewDataList) {
-//     const targetSerie = viewDataList.find((serie) => serie.id === serieId);
-//     if (targetSerie) {
-//       return await this.readSerieData(targetSerie.dataPath);
-//     }
-//   }
-
-//   const dataPaths = await this.fileManager.getDataPaths();
-//   for (const dataPath of dataPaths) {
-//     const serieData = await this.readSerieData(dataPath);
-//     if (serieData && serieData.id === serieId) {
-//       return serieData;
-//     }
-//   }
-
-//   return null;
 // }

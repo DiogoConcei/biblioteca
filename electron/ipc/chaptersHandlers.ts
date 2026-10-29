@@ -178,37 +178,46 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
     },
   );
 
-  ipcMain.handle('chapter:acess-last-read', async (_event, serieId: number) => {
-    // try {
-    //   const serie = await storageManager.searchSerieById(serieId);
-    //   if (!serie) {
-    //     return {
-    //       success: false,
-    //       error: 'Nenhum capítulo disponível para abrir nesta série.',
-    //     };
-    //   }
-    //   const chapter = serie.chapters?.find(
-    //     (item) => item.id === serie.readingData.lastChapterId,
-    //   );
-    //   if (!chapter) {
-    //     return {
-    //       success: false,
-    //       error: 'Capítulo final não encontrado para a série selecionada.',
-    //     };
-    //   }
-    //   const url = userManager.mountChapterUrl(
-    //     serie,
-    //     chapter.id,
-    //     chapter.name,
-    //     chapter.page.lastPageRead,
-    //     chapter.isRead,
-    //   );
-    //   return { success: true, data: [url, serie, chapter.page.lastCfi] };
-    // } catch (e) {
-    //   console.error(`Erro ao acessar último capítulo lido: ${e}`);
-    //   return { success: false, error: String(e) };
-    // }
-  });
+  ipcMain.handle(
+    'chapter:acess-last-read',
+    async (_event, serieId: number): Promise<APIResponse<Literatures | TieIn>> => {
+      // try {
+
+      const serie = await storageManager.searchSerieById(serieId);
+
+      if (!serie) {
+        return {
+          success: false,
+          error: 'Nenhum capítulo disponível para abrir nesta série.',
+        };
+      }
+
+      const recents = await historyManager.getReadEvents();
+
+      const lastChapterRead = recents.find((event) => event.serieId === serieId);
+
+      if (!lastChapterRead) {
+        return {
+          success: false,
+          error: 'Não há entrada no histórico para essa série.',
+        };
+      }
+
+      const url = userManager.mountChapterUrl(
+        serie,
+        chapter.id,
+        chapter.name,
+        chapter.page.lastPageRead,
+        chapter.isRead,
+      );
+
+      //   return { success: true, data: [url, serie, chapter.page.lastCfi] };
+      // } catch (e) {
+      //   console.error(`Erro ao acessar último capítulo lido: ${e}`);
+      //   return { success: false, error: String(e) };
+      // }
+    },
+  );
 
   ipcMain.handle(
     'chapter:get-next-chapter',

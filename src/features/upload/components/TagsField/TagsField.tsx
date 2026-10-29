@@ -4,7 +4,13 @@ import { X } from 'lucide-react';
 import { SerieEditForm } from '@/shared/types/series.interfaces';
 import styles from './TagsField.module.scss';
 
-export default function TagsField({ control }: { control: Control<SerieEditForm> }) {
+export interface TagsFieldProps {
+  control: any;
+  name?: string;
+}
+
+// Tem que virar generic
+export default function TagsField({ control, name }: TagsFieldProps) {
   const [draft, setDraft] = useState('');
 
   return (

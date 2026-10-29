@@ -76,6 +76,17 @@ export default class HistoryManager extends LibrarySystem {
       .slice(0, limit);
   }
 
+  public async getReadEvents(): Promise<ReadEvent[]> {
+    if (!(await fse.pathExists(this.historyFile))) return [];
+
+    const history: HistoryFile = await fse.readJSON(this.historyFile);
+
+    // Adicionado fallback (history.events || []) para evitar TypeError se undefined
+    return [...(history.events || [])].sort(
+      (a, b) => new Date(b.readAt).getTime() - new Date(a.readAt).getTime(),
+    );
+  }
+
   private async addToHistory(serie: graphSerie): Promise<void> {
     try {
       const historySerie: SerieHistoryEntry = this.mountSerieHistory(serie);
@@ -111,22 +122,26 @@ export default class HistoryManager extends LibrarySystem {
     try {
       const history: HistoryFile = await fse.readJSON(this.historyFile);
 
-      const summaryIndex = history.summaries.findIndex((s) => s.serieId === serie.id);
+      // 1. LIMPEZA DOS EVENTOS FANTASMAS
+      // Remove do array events qualquer evento desta série cujo capítulo não está mais marcado como lido
+      history.events = (history.events || []).filter((e) => {
+        if (e.serieId !== serie.id) return true; // Mantém eventos de outras séries
+        const chapter = serie.chapters.find((c) => c.id === e.chapterId);
+        return chapter?.isRead === true; // Só mantém o evento se o capítulo ainda estiver lido
+      });
 
+      const summaryIndex = history.summaries.findIndex((s) => s.serieId === serie.id);
       if (summaryIndex === -1) return;
 
       const summary = history.summaries[summaryIndex];
-
       summary.chaptersRead = serie.chapters.filter((c) => c.isRead).length;
 
       if (summary.chaptersRead === 0) {
         history.summaries.splice(summaryIndex, 1);
       } else {
-        const previousValidEvent = history.events.find(
-          (e) =>
-            e.serieId === serie.id &&
-            serie.chapters.find((c) => c.id === e.chapterId)?.isRead === true,
-        );
+        // 2. CORREÇÃO DO FIND PARA FINDLAST
+        // Usa findLast para pegar o evento VÁLIDO MAIS RECENTE (do fim pro começo do array)
+        const previousValidEvent = history.events.findLast((e) => e.serieId === serie.id);
 
         if (previousValidEvent) {
           summary.lastChapterId = previousValidEvent.chapterId;
@@ -139,7 +154,6 @@ export default class HistoryManager extends LibrarySystem {
       }
 
       await this.collectionManager.updateRecentCollection(history.summaries);
-
       await this.writer.write(this.historyFile, history);
     } catch (error) {
       console.error('Erro ao remover do histórico:', error);

@@ -147,20 +147,22 @@ export default function Home() {
             </button>
 
             {showFilters && (
-              <CustomSelect
-                label=""
-                value={selectedLiteratureForm}
-                onChange={(value) => {
-                  setSelectedLiteratureForm(value);
-                  setShowFilters(false);
-                }}
-                options={[
-                  { value: '', label: 'Todos os formatos' },
-                  { value: LiteratureForm.MANGA, label: 'Manga' },
-                  { value: LiteratureForm.COMIC, label: 'Quadrinho' },
-                  { value: LiteratureForm.BOOK, label: 'Livro' },
-                ]}
-              />
+              <div className={styles.filterPanel}>
+                <CustomSelect
+                  label=""
+                  value={selectedLiteratureForm}
+                  onChange={(value) => {
+                    setSelectedLiteratureForm(value);
+                    setShowFilters(false);
+                  }}
+                  options={[
+                    { value: '', label: 'Todos os formatos' },
+                    { value: LiteratureForm.MANGA, label: 'Manga' },
+                    { value: LiteratureForm.COMIC, label: 'Quadrinho' },
+                    { value: LiteratureForm.BOOK, label: 'Livro' },
+                  ]}
+                />
+              </div>
             )}
           </div>
         </div>

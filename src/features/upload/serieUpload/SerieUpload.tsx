@@ -20,7 +20,6 @@ export default function SerieUpload() {
 
   const [initialData] = useState(() => useUploadStore.getState().pendingSeries);
 
-  // SerieUpload.tsx
   const { form, currentIndex, fields, next, prev, submit, serverError, isSubmitting } =
     useSerieUploadForm(initialData, {
       onSuccess: () => {

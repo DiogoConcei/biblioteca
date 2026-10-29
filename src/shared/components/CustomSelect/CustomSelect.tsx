@@ -1,4 +1,4 @@
-import { KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { KeyboardEvent, useEffect, useMemo, useRef, useState, useId } from 'react';
 
 import {
   SelectProps,
@@ -23,7 +23,7 @@ export default function CustomSelect<T extends SelectOptionValue = SelectOptionV
   renderOption,
 }: SelectProps<T>) {
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const listboxId = useRef(`select-listbox-${Math.random().toString(36).slice(2)}`);
+  const listboxId = useId();
 
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -122,7 +122,7 @@ export default function CustomSelect<T extends SelectOptionValue = SelectOptionV
         className={styles.trigger}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        aria-controls={listboxId.current}
+        aria-controls={listboxId}
         onKeyDown={handleTriggerKeyDown}
         onClick={() => setIsOpen((prev) => !prev)}
         disabled={disabled}
@@ -143,7 +143,7 @@ export default function CustomSelect<T extends SelectOptionValue = SelectOptionV
           )}
 
           <ul
-            id={listboxId.current}
+            id={listboxId}
             role="listbox"
             className={styles.list}
             tabIndex={-1}
