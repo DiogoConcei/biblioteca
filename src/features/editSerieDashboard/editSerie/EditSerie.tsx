@@ -16,7 +16,10 @@ import ImageGallery from '../components/SeriePotrait/SeriePotrait';
 import Favorite from '@/shared/components/FavoriteButton/Favorite';
 import CollectionButton from '@/shared/components/CollectionButton/CollectionButton';
 import Rating from '@/shared/components/Rating/Rating';
-import { Literatures } from '../../../../electron/types/electron-auxiliar.interfaces';
+import {
+  APIResponse,
+  Literatures,
+} from '../../../../electron/types/electron-auxiliar.interfaces';
 import { useState } from 'react';
 import { Eye, EyeOff, Trash2, Undo2, Pencil, Search } from 'lucide-react';
 import Segmented from '../components/Segmented/Segmented';
@@ -37,7 +40,9 @@ export default function EditSerie() {
 
   useSerie(decodedSerieName, literature_form);
   const loading = useUIStore((state) => state.loading);
+  const setLoading = useUIStore((state) => state.setLoading);
   const error = useUIStore((state) => state.error);
+  const setError = useUIStore((state) => state.setError);
   const serie = useSerieStore((state) => state.serie);
   const chapters = useSerieStore((state) => state.chapters);
 
@@ -52,6 +57,7 @@ export default function EditSerie() {
   } = useForm<SerieEditForm>({
     values: serie
       ? ({
+          id: serie.id,
           name: serie.name,
           sanitizedName: serie.sanitizedName,
           genre: serie.genre,
@@ -65,6 +71,9 @@ export default function EditSerie() {
           totalChapters: serie.totalChapters,
           chaptersRead: serie.chaptersRead,
           literatureForm: serie.literatureForm as LiteratureForm,
+          coverGallery: serie.coverGallery,
+          pagesGallery: serie.pagesGallery,
+          serieGallery: serie.serieGallery,
           readingData: {
             lastChapterId: serie.readingData.lastChapterId,
             lastReadAt: serie.readingData.lastReadAt,
@@ -107,6 +116,7 @@ export default function EditSerie() {
     : serie.chaptersRead || 0;
   const total = hasChapters ? active.length : serie.totalChapters || 0;
   const percent = total ? Math.min(100, (chaptersRead / total) * 100) : 0;
+  const lastRead = [...active].reverse().find((c) => c.isRead);
 
   const toggleRead = (index: number) =>
     setValue(`chapters.${index}.isRead`, !watched[index].isRead, { shouldDirty: true });
@@ -124,13 +134,31 @@ export default function EditSerie() {
       watched[index]?.name.toLowerCase().includes(query.trim().toLowerCase()),
     );
 
-  const onSubmit: SubmitHandler<SerieEditForm> = (data) => {
+  const onSubmit: SubmitHandler<SerieEditForm> = async (data) => {
     const kept = data.chapters.filter((c) => !removed.has(c.id));
-    console.log({
+    const last = [...kept].reverse().find((c) => c.isRead);
+
+    const editedSerie: SerieEditForm = {
       ...data,
       chapters: kept,
       chaptersRead: kept.filter((c) => c.isRead).length,
-    });
+      readingData: {
+        ...data.readingData,
+        lastChapterId: last ? last.id : data.readingData.lastChapterId,
+      },
+    };
+
+    setLoading(true);
+
+    const response: APIResponse<void> =
+      await window.electronAPI.series.updateSerie(editedSerie);
+
+    if (response.success) {
+      setLoading(false);
+      navigate('/');
+    } else {
+      setError('Falha em atualizar dados da série');
+    }
   };
 
   return (
@@ -156,10 +184,10 @@ export default function EditSerie() {
                 : '—'}
             </dd>
           </div>
-          {chaptersRead > 0 && (
+          {lastRead && (
             <div>
               <dt>Último lido</dt>
-              <dd>{serie.readingData.lastChapterId}</dd>
+              <dd>{lastRead.name}</dd>
             </div>
           )}
         </dl>

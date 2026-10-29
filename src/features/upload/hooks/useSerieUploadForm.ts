@@ -13,7 +13,7 @@ export function useSerieUploadForm(
   { onSuccess }: { onSuccess: () => void },
 ) {
   const navigate = useNavigate();
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, CurrentIndex] = useState(0);
 
   const form = useForm<UploadFormValues>({
     resolver: zodResolver(uploadSchema),

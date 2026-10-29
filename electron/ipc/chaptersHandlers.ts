@@ -5,7 +5,7 @@ import storageManager from '../services/StorageManager';
 import UserManager from '../services/UserManager.ts';
 import MediaFactory from '../services/adapters/MediaFactory';
 import { graphChapter, Literatures } from '../types/electron-auxiliar.interfaces.ts';
-import { ReadingStatus } from '../types/book.interfaces.ts';
+import { ReadingStatus } from '../../src/shared/types/series.interfaces.ts';
 import { APIResponse } from '../types/electron-auxiliar.interfaces.ts';
 import CollectionManager from '../services/content/CollectionManager.ts';
 import HistoryManager from '../services/persistence/HistoryManager.ts';

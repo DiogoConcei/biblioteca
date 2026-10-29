@@ -1,4 +1,9 @@
 import { graphChapter, graphSerie, viewMode } from './electron-auxiliar.interfaces';
+import {
+  LiteratureForm,
+  ReadingStatus,
+  AutoBackupStatus,
+} from '@/shared/types/series.interfaces';
 import { PrivacyStatus } from '@/shared/types/series.interfaces';
 
 export interface Book extends graphSerie<BookChapter> {
@@ -55,24 +60,4 @@ export interface BookChapter extends graphChapter {
     favoritePage: number;
     lastCfi?: string;
   };
-}
-
-export enum ReadingStatus {
-  IN_PROGRESS = 'Em andamento',
-  COMPLETED = 'Completo',
-  PENDING = 'Pendente',
-  EMPTY = '',
-}
-
-export enum AutoBackupStatus {
-  YES = 'Sim',
-  NO = 'Não',
-  EMPTY = '',
-}
-
-export enum LiteratureForm {
-  MANGA = 'Manga',
-  COMIC = 'Quadrinho',
-  BOOK = 'Books',
-  EMPTY = '',
 }

@@ -5,16 +5,14 @@ import ComicManager from './ComicManager';
 import FileManager from '../FileManager';
 import ImageManager from '../processing/ImageManager';
 import storageManager from '../StorageManager';
+import { ComicTieIn, TieIn, ComicEdition } from '../../types/comic.interfaces';
 import {
-  ComicTieIn,
-  TieIn,
-  ComicEdition,
+  LiteratureForm,
+  ReadingStatus,
   AutoBackupStatus,
-} from '../../types/comic.interfaces';
-
+} from '../../../src/shared/types/series.interfaces';
 import PdfManager from '../processing/PdfManager';
 import ArchiveManager from '../processing/ArchiveManager';
-import { LiteratureForm, ReadingStatus } from '../../types/book.interfaces';
 import { PrivacyStatus } from '../../../src/shared/types/series.interfaces';
 
 export default class TieInManager extends ComicManager {
@@ -190,10 +188,10 @@ export default class TieInManager extends ComicManager {
         originalOwner: '',
         recommendedBy: '',
         rating: 0,
-        autoBackup: AutoBackupStatus.EMPTY,
+        autoBackup: AutoBackupStatus.NO,
         collections: [],
         compiledComic: false,
-        privacy: PrivacyStatus.EMPTY,
+        privacy: PrivacyStatus.PUBLIC,
       },
       createdAt,
       deletedAt: '',

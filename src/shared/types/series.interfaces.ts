@@ -53,6 +53,7 @@ export interface SerieForm {
 }
 
 export interface SerieEditForm {
+  id: number;
   name: string;
   sanitizedName: string;
   genre?: string;
@@ -65,6 +66,9 @@ export interface SerieEditForm {
   chapters: LiteratureChapter[];
   totalChapters: number;
   chaptersRead: number;
+  serieGallery: string;
+  coverGallery: string;
+  pagesGallery: string;
   literatureForm: LiteratureForm;
   readingData: {
     lastChapterId: number;
@@ -75,9 +79,9 @@ export interface SerieEditForm {
     collections: string[];
     recommendedBy?: string;
     originalOwner?: string;
-    lastDownload: string | number;
+    lastDownload: number;
     privacy: PrivacyStatus;
-    rating?: number; // Ajustado de string para number, conforme o backend
+    rating?: number;
     isFavorite: boolean;
     autoBackup: AutoBackupStatus;
   };

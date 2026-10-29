@@ -145,6 +145,7 @@ export class StorageManager extends LibrarySystem {
 
     return data;
   }
+
   async getViewData(): Promise<viewData[] | null> {
     try {
       if (this._viewDataCache !== null) {
@@ -182,12 +183,46 @@ export class StorageManager extends LibrarySystem {
     }
   }
 
+  async persistSerie(oldData: Literatures, updated: SerieEditForm): Promise<string> {
+    try {
+      const oldPath = oldData.dataPath;
+      const dir = path.dirname(oldPath);
+      const nameChanged = oldData.name !== updated.name;
+      const newPath = nameChanged ? path.join(dir, `${updated.name}.json`) : oldPath;
+
+      if (nameChanged) {
+        await this.fileManager.relocateSerieDirectories(oldData, updated);
+
+        if (await fse.pathExists(oldPath)) {
+          await fse.remove(oldPath);
+        }
+      }
+
+      this.removeFromCache(oldData as graphSerie);
+      updated.dataPath = newPath;
+
+      await this.writer.write(newPath, updated);
+      this.updateCache(updated);
+
+      return newPath;
+    } catch (e) {
+      throw new Error('Falha em persistir os dados da serie');
+    }
+  }
+
   private updateCache(serie: graphSerie): void {
     this._seriesCache.set(serie.dataPath, serie as Literatures | TieIn);
 
     if (this._viewDataCache !== null) {
       const resumo = this.mountViewData(serie);
       this._viewDataCache.set(serie.dataPath, resumo);
+    }
+  }
+
+  private removeFromCache(serie: graphSerie): void {
+    this._seriesCache.delete(serie.dataPath);
+    if (this._viewDataCache !== null) {
+      this._viewDataCache.delete(serie.dataPath);
     }
   }
 
@@ -206,44 +241,6 @@ export class StorageManager extends LibrarySystem {
 }
 
 export default StorageManager.getInstance();
-
-// async persistSerie(oldData: Literatures, updated: Literatures): Promise<string> {
-//     try {
-//       const oldPath = oldData.dataPath;
-//       const dir = path.dirname(oldPath);
-//       const nameChanged = oldData.name !== updated.name;
-//       const newPath = nameChanged ? path.join(dir, `${updated.name}.json`) : oldPath;
-
-//       if (nameChanged && oldPath !== newPath) {
-//         // Move o arquivo físico no HD (assumo que fileManager.moveFiles faça isso)
-//         await this.fileManager.moveFiles(oldData, updated);
-
-//         if (await fse.pathExists(oldPath)) {
-//           await fse.remove(oldPath);
-//         }
-
-//         // LIMPEZA DO CACHE: Tira o lixo antigo
-//         this._seriesCache.delete(oldPath);
-//         if (this._viewDataCache !== null) {
-//           this._viewDataCache.delete(oldPath);
-//         }
-//       }
-
-//       updated.dataPath = newPath;
-
-//       // Escreve o arquivo novo
-//       await this.writer.write(newPath, updated);
-
-//       // Popula os caches com a chave nova
-//       this.updateCache(updated);
-
-//       return newPath;
-//     } catch (error) {
-//       console.error(`Erro ao persistir a série (${updated.name}):`, error);
-//       throw error;
-//     }
-//   }
-
 // /**
 //  * Alias para ler TieIn com cache.
 //  */
@@ -309,27 +306,6 @@ export default StorageManager.getInstance();
 
 //     return updated;
 //   });
-// }
-
-// buildUpdatedSerie(
-// oldData: Literatures,
-// newData: SerieEditForm,
-// ): { hasChanges: boolean; data: Literatures | null } {
-// return { hasChanges: false, data: null };
-// const updated = { ...oldData } as Record<string, unknown>;
-// let hasChanges = false;
-
-// for (const key of Object.keys(newData)) {
-//   const newValue = (newData as Record<string, unknown>)[key];
-//   const oldValue = (oldData as Record<string, unknown>)[key];
-
-//   if (!isDeepStrictEqual(oldValue, newValue)) {
-//     updated[key] = newValue;
-//     hasChanges = true;
-//   }
-// }
-
-// return { hasChanges, data: updated as unknown as Literatures };
 // }
 
 /**

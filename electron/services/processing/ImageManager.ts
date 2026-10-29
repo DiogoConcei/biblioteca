@@ -30,9 +30,6 @@ export default class ImageManager extends LibrarySystem {
     coverGalleryPath: string,
     sourcePath: string,
   ): Promise<string> {
-    // const fileName = path.basename(sourcePath);
-    // const destPath = path.join(coverGalleryPath, fileName);
-
     const finalPath = await this.normalizeImage(sourcePath, coverGalleryPath);
 
     const mediaUrl = this.getMediaUrl(finalPath);
@@ -335,24 +332,12 @@ export default class ImageManager extends LibrarySystem {
     return await this.normalizeImage(coverPath, destPath);
   }
 
-  public async processCoverIfNeeded(cover: string, actualCover: string): Promise<string> {
-    const isBase64 =
-      typeof cover === 'string' &&
-      cover.startsWith('data:image/') &&
-      cover.includes(';base64,');
-
-    if (isBase64) {
+  public async checkCover(cover: string, actualCover: string): Promise<string> {
+    if (cover === actualCover) {
       return actualCover;
     }
 
-    if (
-      typeof cover === 'string' &&
-      (cover.startsWith('lib-media://') || cover === actualCover)
-    ) {
-      return actualCover;
-    }
-
-    return await this.saveNewCover(cover);
+    return cover;
   }
 
   public async isImageHealthy(filePath: string): Promise<boolean> {

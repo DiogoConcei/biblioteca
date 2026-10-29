@@ -409,7 +409,7 @@ export default class CollectionManager extends LibrarySystem {
 
   // remove a série de uma ou mais coleções
   public async removeInCollections(
-    serieName: string,
+    serieId: number,
     serieCollections: string[],
   ): Promise<boolean> {
     try {
@@ -420,8 +420,7 @@ export default class CollectionManager extends LibrarySystem {
 
       const collectionsToUpdate = data.filter(
         (col) =>
-          collectionSet.has(col.name) &&
-          col.series.some((serie) => serie.name === serieName),
+          collectionSet.has(col.name) && col.series.some((serie) => serie.id === serieId),
       );
 
       if (collectionsToUpdate.length === 0) {
@@ -432,7 +431,7 @@ export default class CollectionManager extends LibrarySystem {
       const updates = collectionsToUpdate.map((col) => {
         const updatedCol = {
           ...col,
-          series: col.series.filter((serie) => serie.name !== serieName),
+          series: col.series.filter((serie) => serie.id === serieId),
         };
 
         return this.updateCollection(updatedCol);
@@ -611,17 +610,18 @@ export default class CollectionManager extends LibrarySystem {
     );
   }
 
-  public async collectionControl(
+  public async syncCollections(
     dataPath: string,
+    serieId: number,
     oldCollections: string[],
-    newCollection: string[],
+    newCollections: string[],
   ) {
     try {
       const serieName = path.basename(dataPath, path.extname(dataPath));
       const oldSet = new Set(oldCollections);
-      const newSet = new Set(newCollection);
+      const newSet = new Set(newCollections);
 
-      const toAdd = newCollection.filter((c) => !oldSet.has(c));
+      const toAdd = newCollections.filter((c) => !oldSet.has(c));
       const toRemove = oldCollections.filter((c) => !newSet.has(c));
 
       if (toAdd.length > 0) {
@@ -629,7 +629,7 @@ export default class CollectionManager extends LibrarySystem {
       }
 
       if (toRemove.length > 0) {
-        await this.removeInCollections(serieName, toRemove);
+        await this.removeInCollections(serieId, toRemove);
       }
 
       return true;

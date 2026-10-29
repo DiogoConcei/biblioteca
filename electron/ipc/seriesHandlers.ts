@@ -175,7 +175,9 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     'serie:favorite',
     async (_event, dataPath: string): Promise<APIResponse<SerieInCollection>> => {
       try {
-        const serieData = (await storageManager.readSerieData(dataPath)) as Literatures;
+        const serieData = await storageManager.readSerieData(dataPath);
+
+        if (!serieData) throw new Error('Falha em recuperar série');
 
         const result = await userManager.favoriteSerie(serieData);
 
@@ -219,65 +221,65 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     },
   );
 
-  ipcMain.handle('serie:create-TieIn', async (_event, childSerie: ComicTieIn) => {
+  // ipcMain.handle('serie:create-TieIn', async (_event, childSerie: ComicTieIn) => {
+  //   try {
+  //     const data = await storageManager.readTieInData(childSerie.dataPath);
+
+  //     if (!data) {
+  //       throw new Error('Dados da Tie-In nao encontrados');
+  //     }
+
+  //     if (!data.metadata.isCreated) {
+  //       await tieIn.createTieInSerie(data);
+  //     }
+
+  //     return {
+  //       success: true,
+  //       data: `/TieIn/${encodeURIComponent(data.name)}`,
+  //       error: '',
+  //     };
+  //   } catch (e) {
+  //     console.error(`Falha em criar as capas da Tie-In`);
+  //     return { success: false, error: 'falha em gerar Tie-In ' };
+  //   }
+  // });
+
+  ipcMain.handle('serie:update-serie', async (_event, data: SerieEditForm) => {
     try {
-      const data = await storageManager.readTieInData(childSerie.dataPath);
+      const oldData = await storageManager.readSerieData(data.dataPath);
 
-      if (!data) {
-        throw new Error('Dados da Tie-In nao encontrados');
+      if (!oldData) {
+        throw new Error('Dados antigos não encontrados para a série');
       }
 
-      if (!data.metadata.isCreated) {
-        await tieIn.createTieInSerie(data);
-      }
+      const normalizedCover = await imageManager.checkCover(
+        data.coverImage,
+        oldData.coverImage,
+      );
 
-      return {
-        success: true,
-        data: `/TieIn/${encodeURIComponent(data.name)}`,
-        error: '',
+      const preparedData: SerieEditForm = {
+        ...data,
+        coverImage: normalizedCover,
       };
-    } catch (e) {
-      console.error(`Falha em criar as capas da Tie-In`);
-      return { success: false, error: 'falha em gerar Tie-In ' };
-    }
-  });
 
-  ipcMain.handle('serie:update-serie', async (_event, editedData: SerieEditForm) => {
-    // try {
-    //   const oldData = await storageManager.readSerieData(editedData.dataPath);
-    //   if (!oldData) {
-    //     throw new Error('Dados antigos não encontrados para a série');
-    //   }
-    //   // 1️⃣ Normaliza imagem antes de qualquer merge
-    //   const normalizedCover = await imageManager.processCoverIfNeeded(
-    //     editedData.coverImage,
-    //     oldData.coverImage,
-    //   );
-    //   const preparedData: SerieEditForm = {
-    //     ...editedData,
-    //     coverImage: normalizedCover,
-    //   };
-    //   // 2️⃣ Gera updatedData com diff profundo
-    //   const updatedData = storageManager.buildUpdatedSerie(oldData, preparedData);
-    //   if (!updatedData.hasChanges) {
-    //     return { success: true }; // nada mudou
-    //   }
-    //   // 3️⃣ Persistência segura
-    //   const finalPath = await storageManager.persistSerie(oldData, updatedData.data);
-    //   // 4️⃣ Atualização de coleções
-    //   await collectionManager.updateSerie(finalPath);
-    //   await collectionManager.collectionControl(
-    //     finalPath,
-    //     oldData.metadata.collections,
-    //     updatedData.data.metadata.collections,
-    //   );
-    //   return { success: true };
-    // } catch (e) {
-    //   console.error('Erro no update de série:', e);
-    //   return {
-    //     success: false,
-    //     error: 'Falha ao salvar dados editados da série',
-    //   };
-    // }
+      const finalPath = await storageManager.persistSerie(oldData, preparedData);
+
+      await collectionManager.updateSerie(finalPath);
+
+      await collectionManager.syncCollections(
+        finalPath,
+        data.id,
+        oldData.metadata.collections,
+        data.metadata.collections,
+      );
+
+      return { success: true };
+    } catch (e) {
+      console.error('Erro no update de série:', e);
+      return {
+        success: false,
+        error: 'Falha ao salvar dados editados da série',
+      };
+    }
   });
 }

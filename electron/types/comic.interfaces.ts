@@ -1,4 +1,9 @@
 import { graphChapter, graphSerie, viewMode } from './electron-auxiliar.interfaces';
+import {
+  LiteratureForm,
+  ReadingStatus,
+  AutoBackupStatus,
+} from '@/shared/types/series.interfaces';
 import { PrivacyStatus } from '@/shared/types/series.interfaces';
 
 export interface Comic extends graphSerie<ComicEdition> {
@@ -132,24 +137,4 @@ export enum ComicCategory {
 export interface ITieInManager {
   processTieInData(basePath: string, childSeries: ComicTieIn[]): Promise<void>;
   resolveCoverSourceArchive(candidatePath: string): Promise<string>;
-}
-
-export enum ReadingStatus {
-  IN_PROGRESS = 'Em andamento',
-  COMPLETED = 'Completo',
-  PENDING = 'Pendente',
-  EMPTY = '',
-}
-
-export enum AutoBackupStatus {
-  YES = 'Sim',
-  NO = 'Não',
-  EMPTY = '',
-}
-
-export enum LiteratureForm {
-  MANGA = 'Manga',
-  COMIC = 'Quadrinho',
-  BOOK = 'Books',
-  EMPTY = '',
 }

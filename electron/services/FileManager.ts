@@ -7,6 +7,7 @@ import { randomUUID } from 'crypto';
 import LibrarySystem from './abstract/LibrarySystem';
 import { Literatures, PathKind } from '../types/electron-auxiliar.interfaces';
 import { ComicCategory } from '../types/comic.interfaces';
+import { SerieEditForm } from '../../src/shared/types/series.interfaces';
 
 export default class FileManager extends LibrarySystem {
   public async classifyPath(targetPath: string): Promise<PathKind> {
@@ -384,8 +385,17 @@ export default class FileManager extends LibrarySystem {
     );
   }
 
-  public async moveFiles(oldData: Literatures, updated: Literatures) {
-    const rootPath = path.join(this.imagesFolder, updated.literatureForm, updated.name);
+  public async relocateSerieDirectories(
+    oldData: Literatures,
+    updated: SerieEditForm,
+  ): Promise<void> {
+    const newChaptersPath = path.join(
+      this.imagesFolder,
+      updated.literatureForm,
+      updated.name,
+    );
+    const newArchivesPath = path.join(this.userLibrary, updated.name);
+    const newSerieGallery = path.join(this.gallery, updated.name);
 
     if (!oldData.chapters) return;
 
@@ -395,13 +405,15 @@ export default class FileManager extends LibrarySystem {
 
         chapter.id = idx;
 
-        const newChapterRoot = path.join(rootPath, chapter.name);
+        const newChapterRoot = path.join(newChaptersPath, chapter.name);
         const oldChapterPath = chapter.chapterPath;
 
         updated.chapters[idx].chapterPath = newChapterRoot;
 
         try {
-          await fse.move(oldChapterPath, newChapterRoot, { overwrite: true });
+          if (oldChapterPath && (await fse.pathExists(oldChapterPath))) {
+            await fse.move(oldChapterPath, newChapterRoot, { overwrite: true });
+          }
         } catch (err: unknown) {
           const error = err as { code?: string };
           if (error.code !== 'ENOENT') {
@@ -410,9 +422,13 @@ export default class FileManager extends LibrarySystem {
         }
       }),
     );
-  }
 
-  // Recursivo
+    updated.archivesPath = newArchivesPath;
+    updated.chaptersPath = newChaptersPath;
+    updated.serieGallery = newSerieGallery;
+    updated.coverGallery = path.join(newSerieGallery, 'covers');
+    updated.pagesGallery = path.join(newSerieGallery, 'pages');
+  }
   public async getAllFiles(dir: string): Promise<string[]> {
     const entries = await fse.readdir(dir, { withFileTypes: true });
     const files = await Promise.all(
