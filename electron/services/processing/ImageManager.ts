@@ -45,6 +45,7 @@ export default class ImageManager extends LibrarySystem {
         await fse.ensureDir(outDir);
         const cover = await this.generateCover(archive, outDir);
         if (!cover) return null; // generateCover devolve '' em caso de falha
+
         return {
           chapterName: path.basename(archive, path.extname(archive)),
           path: cover,

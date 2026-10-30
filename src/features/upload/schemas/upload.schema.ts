@@ -5,6 +5,7 @@ import {
   AutoBackupStatus,
   LiteratureForm,
 } from '@/shared/types/series.interfaces';
+import { ViewMode } from '../../../../electron/types/electron-auxiliar.interfaces';
 
 const serieSchema = z.object({
   name: z.string().min(1),
@@ -22,6 +23,7 @@ const serieSchema = z.object({
   archivesPath: z.string(),
   chaptersPath: z.string(),
   oldPath: z.string().min(1),
+  viewMode: z.enum(ViewMode),
   createdAt: z.string().min(1),
   deletedAt: z.string(),
 });

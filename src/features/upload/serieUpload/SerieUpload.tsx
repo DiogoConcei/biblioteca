@@ -13,11 +13,13 @@ import styles from './SerieUpload.module.scss';
 import { useAllSeriesStore } from '@/shared/store/useAllSeriesStore';
 import { useSerieUploadForm } from '@/features/upload/hooks/useSerieUploadForm';
 import { useUploadStore } from '../store/uploadStore';
+import ErrorScreen from '@/shared/components/ErrorScreen/ErrorScreen';
+import { useUIStore } from '@/shared/store/useUIStore';
 
 export default function SerieUpload() {
   const navigate = useNavigate();
   const hasPendingItems = useUploadStore((state) => state.hasPendingItems);
-
+  const error = useUIStore((s) => s.error);
   const [initialData] = useState(() => useUploadStore.getState().pendingSeries);
 
   const { form, currentIndex, fields, next, prev, submit, serverError, isSubmitting } =
@@ -47,6 +49,7 @@ export default function SerieUpload() {
     };
   }, []);
 
+  if (error) return <ErrorScreen error={error} />;
   if (initialData.length === 0 || isSubmitting === true) return <Loading />;
 
   const prefix = `series.${currentIndex}` as const;
@@ -63,7 +66,11 @@ export default function SerieUpload() {
         <form className={styles['form-view']} onSubmit={submit}>
           <div key={fields[currentIndex]?.id} className={styles['form-view']}>
             <div className={styles['image-upload']}>
-              <ImageController control={control} name={`${prefix}.cover_path`} />
+              <ImageController
+                control={control}
+                name={`${prefix}.cover_path`}
+                sourcePath={fields[currentIndex].oldPath}
+              />{' '}
             </div>
 
             <div className={styles['form-container']}>

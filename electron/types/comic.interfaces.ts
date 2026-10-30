@@ -67,6 +67,7 @@ export interface TieIn {
     lastChapterId: number;
     lastReadAt: string;
   };
+
   genre: string;
   author: string;
   language: string;
@@ -82,6 +83,7 @@ export interface TieIn {
     autoBackup: AutoBackupStatus;
     compiledComic: boolean;
     isCreated: boolean;
+    viewMode: ViewMode;
   };
   backgroundImage: string;
   description: string;

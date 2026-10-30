@@ -76,10 +76,13 @@ export interface SerieEditForm {
   coverGallery: string;
   pagesGallery: string;
   literatureForm: LiteratureForm;
+  description: string;
   readingData: {
     lastChapterId: number;
     lastReadAt: string;
   };
+  backgroundImage: string;
+
   metadata: {
     status: ReadingStatus;
     collections: string[];
@@ -90,6 +93,7 @@ export interface SerieEditForm {
     rating?: number;
     isFavorite: boolean;
     autoBackup: AutoBackupStatus;
+    viewMode: ViewMode;
   };
   comments: string[];
   tags: string[];

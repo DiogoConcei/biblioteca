@@ -1,4 +1,4 @@
-import { graphChapter, graphSerie, viewMode } from './electron-auxiliar.interfaces';
+import { graphChapter, graphSerie, ViewMode } from './electron-auxiliar.interfaces';
 import {
   LiteratureForm,
   ReadingStatus,
@@ -22,6 +22,7 @@ export interface Book extends graphSerie<BookChapter> {
   chapters: BookChapter[];
   totalChapters: number;
   chaptersRead: number;
+  viewMode: ViewMode;
   literatureForm: LiteratureForm.BOOK;
   readingData: {
     lastChapterId: number;
@@ -37,7 +38,7 @@ export interface Book extends graphSerie<BookChapter> {
     rating?: number;
     isFavorite: boolean;
     autoBackup: AutoBackupStatus;
-    viewMode?: viewMode;
+    viewMode: ViewMode;
   };
   comments: string[];
   tags: string[];

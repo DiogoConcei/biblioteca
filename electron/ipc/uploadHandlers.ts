@@ -59,36 +59,6 @@ export default function uploadHandlers(ipcMain: IpcMain) {
   );
 
   ipcMain.handle(
-    'upload:process-serie',
-    async (_event, serieData: SerieForm): Promise<APIResponse<null>> => {
-      if (typeof serieData !== 'object' || serieData === null) {
-        return { success: false, error: 'Dados da série inválidos.' };
-      }
-
-      try {
-        switch (serieData.literatureForm) {
-          case 'Manga':
-            await mangaManager.createSerie(serieData);
-            break;
-          case 'Quadrinho':
-            await comicManager.createSerie(serieData, tieInManager);
-            break;
-          case 'Books':
-            await bookManager.createSerie(serieData);
-            break;
-          default:
-            throw new Error('Tipo de literatura inválido');
-        }
-
-        return { success: true };
-      } catch (err) {
-        console.error('Erro ao criar a série:', err);
-        return { success: false, error: (err as Error).message };
-      }
-    },
-  );
-
-  ipcMain.handle(
     'upload:process-series',
     async (_event, seriesData: SerieForm[]): Promise<APIResponse<void>> => {
       if (!Array.isArray(seriesData)) {
@@ -185,13 +155,13 @@ export default function uploadHandlers(ipcMain: IpcMain) {
     async (_evento, oldPath: string): Promise<APIResponse<SuggestedCover[]>> => {
       if (typeof oldPath !== 'string')
         return { success: false, error: 'Caminho inválido.' };
-
+      console.log(`${oldPath} : teste`);
       try {
         const [entries] = await fileManager.searchChapters(oldPath);
         const result: SuggestedCover[] = await imageManager.suggestCover(entries);
         return { success: true, data: result };
       } catch (err) {
-        console.error('Erro ao criar a série:', err);
+        console.error('Erro ao criar sugestão de capas para a série:', err);
         return { success: false, error: (err as Error).message };
       }
     },

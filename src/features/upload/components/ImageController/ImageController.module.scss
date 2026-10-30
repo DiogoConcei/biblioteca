@@ -14,7 +14,7 @@
 
   .imageContainer {
     width: 100%;
-    width: 380px;
+    max-width: 380px; // Substitui o width fixo de 380px para melhor responsividade
     aspect-ratio: 3 / 4;
 
     cursor: pointer;
@@ -25,10 +25,9 @@
     justify-content: center;
 
     .coverPreview {
-      height: 650px;
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain; // mostra a imagem inteira
+      height: 100%;
+      width: 100%;
+      object-fit: contain;
       display: block;
 
       border-radius: $radius-md;
@@ -46,14 +45,43 @@
       font-size: $font-sm;
       pointer-events: none;
 
-      width: 500px;
-      height: 500px;
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain; // mostra a imagem inteira
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
 
       border-radius: $radius-md;
       border: 2px dashed $amethyst;
+    }
+  }
+
+  .error {
+    color: $indian-red; // Ajusta para a tua variável de erro, se existir
+    font-size: $font-sm;
+  }
+
+  // Novo bloco para a galeria de sugestões
+  .suggestionsGallery {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: $spacing-2;
+    width: 100%;
+    max-width: 380px; // Mantém o alinhamento com o quadro principal
+    margin-top: $spacing-1;
+
+    img {
+      width: 80px;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      border-radius: $radius-md;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s ease-in-out;
+
+      &:hover {
+        border-color: $amethyst;
+        transform: scale(1.05);
+      }
     }
   }
 }
