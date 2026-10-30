@@ -13,11 +13,21 @@ import ComicManager from '../services/content/ComicManager.ts';
 import TieInManager from '../services/content/TieInManager.ts';
 import BookManager from '../services/content/BookManager.ts';
 import MangaManager from '../services/content/MangaManager.ts';
+import FileManager from '../services/FileManager.ts';
+import ImageManager from '../services/processing/ImageManager.ts';
+
+export interface SuggestedCover {
+  chapterName: string;
+  path: string;
+  url: string;
+}
 
 export default function uploadHandlers(ipcMain: IpcMain) {
   const comicManager = new ComicManager();
   const mangaManager = new MangaManager();
   const tieInManager = new TieInManager();
+  const fileManager = new FileManager();
+  const imageManager = new ImageManager();
   const bookManager = new BookManager();
 
   ipcMain.handle(
@@ -166,6 +176,36 @@ export default function uploadHandlers(ipcMain: IpcMain) {
       } catch (e) {
         console.error('Falha no upload de novos capítulos: ', e);
         return { success: false, error: String(e) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    'upload:suggest-cover',
+    async (_evento, oldPath: string): Promise<APIResponse<SuggestedCover[]>> => {
+      if (typeof oldPath !== 'string')
+        return { success: false, error: 'Caminho inválido.' };
+
+      try {
+        const [entries] = await fileManager.searchChapters(oldPath);
+        const result: SuggestedCover[] = await imageManager.suggestCover(entries);
+        return { success: true, data: result };
+      } catch (err) {
+        console.error('Erro ao criar a série:', err);
+        return { success: false, error: (err as Error).message };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    'upload:clear-temp-covers',
+    async (_evento): Promise<APIResponse<void>> => {
+      try {
+        await fileManager.clearTempCovers();
+        return { success: true };
+      } catch (err) {
+        console.error('Erro ao criar a série:', err);
+        return { success: false, error: (err as Error).message };
       }
     },
   );

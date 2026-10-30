@@ -33,6 +33,12 @@ import {
   graphChapter,
 } from '../../../electron/types/electron-auxiliar.interfaces.js';
 
+export interface SuggestedCover {
+  chapterName: string;
+  path: string;
+  url: string;
+}
+
 interface LastReadResult {
   url: string;
   serie: Literatures | TieIn;
@@ -115,6 +121,8 @@ declare global {
         uploadChapter: (
           chapterData: ChapterUploadPayload,
         ) => Promise<APIResponse<ProcessedChapterResult>>;
+        suggestCovers: (oldPath: string) => Promise<APIResponse<SuggestedCover[]>>;
+        clearSuggestCovers: () => Promise<APIResponse<void>>;
       };
 
       series: {

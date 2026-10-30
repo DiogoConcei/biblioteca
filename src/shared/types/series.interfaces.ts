@@ -1,6 +1,9 @@
 import { Comic } from '../../../electron/types/comic.interfaces';
 import { Manga } from '../../../electron/types/manga.interfaces';
-import { LiteratureChapter } from '../../../electron/types/electron-auxiliar.interfaces';
+import {
+  LiteratureChapter,
+  ViewMode,
+} from '../../../electron/types/electron-auxiliar.interfaces';
 
 export enum ReadingStatus {
   IN_PROGRESS = 'Em andamento',
@@ -46,6 +49,9 @@ export interface SerieForm {
   readingStatus: ReadingStatus;
   sanitizedName: string;
   chaptersPath: string;
+  description?: string;
+  backgroundPath?: string;
+  viewMode: ViewMode;
   oldPath: string;
   archivesPath: string;
   createdAt: string;

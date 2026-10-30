@@ -8,6 +8,7 @@ import FileManager from '../FileManager.ts';
 import ArchiveManager from './ArchiveManager.ts';
 import PdfManager from './PdfManager.ts';
 import { ComicEdition } from '../../types/comic.interfaces.ts';
+import { randomUUID } from 'crypto';
 
 export default class ImageManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -24,6 +25,35 @@ export default class ImageManager extends LibrarySystem {
     const mediaUrls = imagePaths.map((p) => this.getMediaUrl(p));
 
     return mediaUrls;
+  }
+
+  public async suggestCover(entries: string[], count = 4) {
+    const sources = [...entries]
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+      .slice(0, count);
+
+    const sessionDir = path.join(
+      this.dataStorage,
+      'temp',
+      'biblioteca-covers',
+      randomUUID(),
+    );
+
+    const results = await Promise.all(
+      sources.map(async (archive, i) => {
+        const outDir = path.join(sessionDir, String(i)); // uma pasta por capítulo
+        await fse.ensureDir(outDir);
+        const cover = await this.generateCover(archive, outDir);
+        if (!cover) return null; // generateCover devolve '' em caso de falha
+        return {
+          chapterName: path.basename(archive, path.extname(archive)),
+          path: cover,
+          url: this.getMediaUrl(cover),
+        };
+      }),
+    );
+
+    return results.filter((r) => r !== null);
   }
 
   public async addToCoverGallery(

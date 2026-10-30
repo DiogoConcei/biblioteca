@@ -28,6 +28,7 @@ import {
 import { ComicTieIn, TieIn } from './types/comic.interfaces.ts';
 import { SerieHistoryEntry } from './types/history.interfaces.ts';
 import { LastReadResult } from './ipc/chaptersHandlers.ts';
+import { SuggestedCover } from './ipc/uploadHandlers.ts';
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -109,6 +110,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
       chapterData: ChapterUploadPayload,
     ): Promise<APIResponse<ProcessedChapterResult>> =>
       ipcRenderer.invoke('chapter:upload-chapter', chapterData),
+    suggestCovers: async (oldPath: string): Promise<APIResponse<SuggestedCover[]>> =>
+      ipcRenderer.invoke('upload:suggest-cover', oldPath),
+    clearSuggestCovers: async (): Promise<APIResponse<void>> =>
+      ipcRenderer.invoke('clear-temp-covers'),
   },
 
   series: {

@@ -44,6 +44,18 @@ export default abstract class GraphSerie<
     }
   }
 
+  // Por enquanto, até estar estabelecido pelo menos
+  protected async processBackground(serieData: T): Promise<void> {
+    const isImg = await this.imageManager.isImage(serieData.backgroundImage);
+
+    if (isImg) {
+      serieData.backgroundImage = await this.imageManager.normalizeImage(
+        serieData.backgroundImage,
+        path.join(this.backgroundImages, serieData.name),
+      );
+    }
+  }
+
   protected async generateChapter(chapter: graphChapter) {
     const normalized = path.resolve(chapter.archivesPath);
     const ext = path.extname(normalized);
@@ -104,6 +116,21 @@ export default abstract class GraphSerie<
     );
 
     return result;
+  }
+
+  protected mountMetadata(serie: SerieForm): graphSerie['metadata'] {
+    return {
+      status: serie.readingStatus,
+      collections: serie.collections,
+      recommendedBy: '',
+      originalOwner: '',
+      lastDownload: 0,
+      rating: 0,
+      isFavorite: serie.collections.includes('Favoritos'),
+      privacy: serie.privacy,
+      autoBackup: serie.autoBackup,
+      viewMode: serie.viewMode ?? 'padrão-do-seu-enum',
+    };
   }
 
   async createChapter(
@@ -297,6 +324,7 @@ export default abstract class GraphSerie<
     const serieData = await this.processSerieData(serie);
 
     await this.processCovers(serieData);
+    await this.processBackground(serieData);
 
     await this.collectionManager.initializeCollections(
       serieData,

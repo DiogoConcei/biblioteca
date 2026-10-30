@@ -156,13 +156,17 @@ export interface LastReadCandidate {
   timestamp: number;
 }
 
-export type viewMode = 'List' | 'Gallery' | 'Spotlight';
+export enum ViewMode {
+  LIST = 'List',
+  GALLERY = 'Gallery',
+  SPOTLIGHT = 'Spotlight',
+}
 
 export interface graphSerie<C extends graphChapter = graphChapter> {
   id: number;
   name: string;
   sanitizedName: string;
-  description?: string;
+  description: string;
   genre?: string;
   author?: string;
   language?: string;
@@ -192,10 +196,11 @@ export interface graphSerie<C extends graphChapter = graphChapter> {
     isFavorite: boolean;
     autoBackup: AutoBackupStatus;
     compiledComic?: boolean;
-    viewMode?: viewMode;
+    viewMode: ViewMode;
   };
   comments: string[];
   tags: string[];
+  backgroundImage: string;
   deletedAt: string;
   createdAt: string;
 }

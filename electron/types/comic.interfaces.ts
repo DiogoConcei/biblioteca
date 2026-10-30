@@ -1,4 +1,4 @@
-import { graphChapter, graphSerie, viewMode } from './electron-auxiliar.interfaces';
+import { graphChapter, graphSerie, ViewMode } from './electron-auxiliar.interfaces';
 import {
   LiteratureForm,
   ReadingStatus,
@@ -40,7 +40,7 @@ export interface Comic extends graphSerie<ComicEdition> {
     isFavorite: boolean;
     autoBackup: AutoBackupStatus;
     compiledComic: boolean;
-    viewMode?: viewMode;
+    viewMode: ViewMode;
   };
   createdAt: string;
   deletedAt: string;
@@ -83,6 +83,8 @@ export interface TieIn {
     compiledComic: boolean;
     isCreated: boolean;
   };
+  backgroundImage: string;
+  description: string;
   createdAt: string;
   deletedAt: string;
   tags: string[];

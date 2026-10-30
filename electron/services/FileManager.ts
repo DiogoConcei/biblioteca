@@ -21,6 +21,12 @@ export default class FileManager extends LibrarySystem {
     return entries ? 'serie' : 'invalid';
   }
 
+  async clearTempCovers() {
+    const sessionDir = path.join(this.dataStorage, 'temp');
+
+    await fse.remove(sessionDir);
+  }
+
   public async searchChapters(archivesPath: string): Promise<[string[], number]> {
     const entries = await fse.readdir(archivesPath, { withFileTypes: true });
     const dirEntries = entries
