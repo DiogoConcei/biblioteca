@@ -121,7 +121,10 @@ declare global {
         uploadChapter: (
           chapterData: ChapterUploadPayload,
         ) => Promise<APIResponse<ProcessedChapterResult>>;
-        suggestCovers: (oldPath: string) => Promise<APIResponse<SuggestedCover[]>>;
+        suggestCovers: (
+          oldPath: string,
+          type: LiteratureForm,
+        ) => Promise<APIResponse<SuggestedCover[]>>;
         clearSuggestCovers: () => Promise<APIResponse<void>>;
       };
 

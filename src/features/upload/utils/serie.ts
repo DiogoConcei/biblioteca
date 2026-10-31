@@ -6,6 +6,7 @@ import {
   AutoBackupStatus,
 } from '@/shared/types/series.interfaces';
 import type { UploadFormValues } from '../schemas/upload.schema';
+import { ViewMode } from '../../../../electron/types/electron-auxiliar.interfaces';
 
 export type SerieFormValues = UploadFormValues['series'][number];
 
@@ -19,7 +20,8 @@ export const EMPTY_SERIE: SerieFormValues = {
   privacy: PrivacyStatus.PUBLIC,
   autoBackup: AutoBackupStatus.NO,
   readingStatus: ReadingStatus.PENDING,
-  literatureForm: LiteratureForm.MANGA,
+  viewMode: ViewMode.LIST,
+  literatureForm: undefined as unknown as SerieFormValues['literatureForm'],
   tags: [],
   collections: [],
   archivesPath: '',

@@ -4,23 +4,26 @@ import { useUIStore } from '@/shared/store/useUIStore';
 import { ImagePlus } from 'lucide-react';
 import useImage from '@/shared/hooks/useImage';
 import styles from './ImageController.module.scss';
+import { LiteratureForm } from '@/shared/types/series.interfaces';
+import { SuggestedCover } from '@/shared/types/preload';
 
 export default function ImageController<T extends FieldValues>({
   control,
   name,
   sourcePath,
+  type,
 }: {
   control: Control<T>;
   name: Path<T>;
   sourcePath: string;
+  type: LiteratureForm;
 }) {
   const { previewSrc, getPreview, loadExistingImage } = useImage();
-  const [suggestCovers, setSuggestCovers] = useState<string[]>([]);
+  const [suggestCovers, setSuggestCovers] = useState<SuggestedCover[]>([]);
   const setError = useUIStore((s) => s.setError);
 
   const { field, fieldState } = useController({ name, control });
 
-  // Sincroniza o preview inicial caso já exista valor no form
   useEffect(() => {
     if (field.value) {
       loadExistingImage(field.value);
@@ -28,32 +31,31 @@ export default function ImageController<T extends FieldValues>({
   }, [field.value, loadExistingImage]);
 
   useEffect(() => {
-    async function getSuggestCovers() {
+    setSuggestCovers([]); // não deixa sugestão do tipo antigo na tela
+
+    if (!sourcePath || !type || type === LiteratureForm.BOOK) return;
+
+    let cancelled = false;
+
+    (async () => {
       try {
-        const response = await window.electronAPI.upload.suggestCovers(sourcePath);
-
-        if (response.success && response.data) {
-          // response.data é um array de SuggestedCover.
-          // Fazemos um map para extrair apenas a propriedade 'url' de cada objeto.
-          const urls = response.data.map((cover) => cover.url);
-          setSuggestCovers(urls);
-        }
-      } catch (e) {
-        setError('Erro ao carregar galeria');
+        const response = await window.electronAPI.upload.suggestCovers(sourcePath, type);
+        if (cancelled) return;
+        if (response.success && response.data) setSuggestCovers(response.data);
+      } catch {
+        // sugestão é opcional: falhou, a faixa simplesmente não aparece
       }
-    }
+    })();
 
-    // Só executa se sourcePath existir
-    if (sourcePath) {
-      getSuggestCovers();
-    }
-  }, [sourcePath, setError]);
+    return () => {
+      cancelled = true;
+    };
+  }, [sourcePath, type]);
 
   return (
     <div className={styles['image-upload']}>
       <span>Capa</span>
 
-      {/* Quadro Principal */}
       <div
         className={styles.imageContainer}
         onClick={async () => {
@@ -74,18 +76,16 @@ export default function ImageController<T extends FieldValues>({
       </div>
       {fieldState.error && <p className={styles.error}>{fieldState.error.message}</p>}
 
-      {/* Galeria de Sugestões (Adicione estilos no seu SCSS para alinhar isso) */}
       {suggestCovers.length > 0 && (
         <div className={styles.suggestionsGallery}>
-          {suggestCovers.map((coverImg, index) => (
+          {suggestCovers.map((coverImg) => (
             <img
-              key={index}
-              src={coverImg}
+              key={coverImg.path}
+              src={coverImg.url}
               alt="Sugestão de capa"
               onClick={(e) => {
-                e.stopPropagation(); // Evita conflito com o clique do container pai, se houver
-                field.onChange(coverImg); // Atualiza o formulário
-                loadExistingImage(coverImg); // Atualiza o quadro principal
+                e.stopPropagation();
+                field.onChange(coverImg.path);
               }}
               style={{ width: 80, height: 120, cursor: 'pointer', objectFit: 'cover' }}
             />

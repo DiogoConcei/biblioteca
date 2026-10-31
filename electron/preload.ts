@@ -10,6 +10,7 @@ import {
   GetChapterResponse,
 } from './types/electron-auxiliar.interfaces.ts';
 import {
+  LiteratureForm,
   SerieData,
   SerieEditForm,
   SerieForm,
@@ -110,8 +111,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
       chapterData: ChapterUploadPayload,
     ): Promise<APIResponse<ProcessedChapterResult>> =>
       ipcRenderer.invoke('chapter:upload-chapter', chapterData),
-    suggestCovers: async (oldPath: string): Promise<APIResponse<SuggestedCover[]>> =>
-      ipcRenderer.invoke('upload:suggest-cover', oldPath),
+    suggestCovers: async (
+      oldPath: string,
+      type: LiteratureForm,
+    ): Promise<APIResponse<SuggestedCover[]>> =>
+      ipcRenderer.invoke('upload:suggest-cover', oldPath, type),
     clearSuggestCovers: async (): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('clear-temp-covers'),
   },

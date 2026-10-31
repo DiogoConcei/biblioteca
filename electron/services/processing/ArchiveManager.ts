@@ -17,6 +17,7 @@ export default class ArchiveManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
   private readonly SEVEN_ZIP_PATH = 'C:\\Program Files\\7-Zip\\7z';
   private readonly execAsync = promisify(exec);
+  private readonly IMAGE_EXT = /\.(jpe?g|png|webp|gif)$/i;
 
   public async extractWith7zip(inputFile: string, outputDir: string): Promise<void> {
     try {
@@ -208,6 +209,67 @@ export default class ArchiveManager extends LibrarySystem {
       );
       throw err;
     }
+  }
+
+  // entre extractCoverWith7zip e safeExtract
+  public async listImages(archive: string): Promise<string[]> {
+    const { stdout } = await this.execAsync(`"${this.SEVEN_ZIP_PATH}" l "${archive}"`);
+
+    return this.parse7zList(stdout)
+      .map((f) => path.normalize(f)) // \ do Windows e / do archive viram o mesmo formato
+      .filter((f) => !f.startsWith('..') && !path.isAbsolute(f) && this.IMAGE_EXT.test(f))
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }
+
+  public async extractEntries(
+    archive: string,
+    entries: string[],
+    outputDir: string,
+  ): Promise<string[]> {
+    if (entries.length === 0) return [];
+    await fse.mkdirp(outputDir);
+
+    // um único 7z para todas as páginas
+    const names = entries.map((e) => `"${e}"`).join(' ');
+    try {
+      await this.execAsync(
+        `"${this.SEVEN_ZIP_PATH}" x "${archive}" ${names} -o"${outputDir}" -y`,
+      );
+    } catch (err) {
+      const execErr = err as ExecError;
+      const crcOnly =
+        execErr.code === 2 &&
+        typeof execErr.stderr === 'string' &&
+        execErr.stderr.includes('CRC Failed');
+
+      if (!crcOnly) throw err; // só o CRC é tolerado; o resto sobe
+      console.warn('extractEntries: CRC Failed (não-fatal):', archive);
+    }
+
+    const results: string[] = [];
+    for (const entry of entries) {
+      const extracted = path.join(outputDir, entry);
+      if (!(await fse.pathExists(extracted))) continue; // item não saiu: pula
+
+      const ext = path.extname(entry);
+      const safeBase = path.basename(entry, ext).replace(/[. ]+$/, '');
+      const finalPath = this.fileManager.buildImagePath(
+        outputDir,
+        `${safeBase}_${randomBytes(3).toString('hex')}`,
+        ext,
+      );
+
+      await fse.move(extracted, finalPath, { overwrite: true });
+      results.push(finalPath);
+    }
+
+    // o 7z recria as subpastas internas: depois de mover tudo, sobram só pastas vazias
+    for (const entry of entries) {
+      const [top] = entry.split(path.sep);
+      if (top !== entry) await fse.remove(path.join(outputDir, top));
+    }
+
+    return results;
   }
 
   public async safeExtract(inputFile: string, outputPath: string): Promise<string> {

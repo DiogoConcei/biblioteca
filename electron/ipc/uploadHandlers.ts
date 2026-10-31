@@ -1,6 +1,10 @@
 import { IpcMain } from 'electron';
 
-import { SerieData, SerieForm } from '../../src/shared/types/series.interfaces.ts';
+import {
+  LiteratureForm,
+  SerieData,
+  SerieForm,
+} from '../../src/shared/types/series.interfaces.ts';
 import { APIResponse, LiteratureChapter } from '../types/electron-auxiliar.interfaces.ts';
 import {
   ChapterUploadPayload,
@@ -152,13 +156,16 @@ export default function uploadHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle(
     'upload:suggest-cover',
-    async (_evento, oldPath: string): Promise<APIResponse<SuggestedCover[]>> => {
+    async (
+      _evento,
+      oldPath: string,
+      type: LiteratureForm,
+    ): Promise<APIResponse<SuggestedCover[]>> => {
       if (typeof oldPath !== 'string')
         return { success: false, error: 'Caminho inválido.' };
-      console.log(`${oldPath} : teste`);
       try {
         const [entries] = await fileManager.searchChapters(oldPath);
-        const result: SuggestedCover[] = await imageManager.suggestCover(entries);
+        const result: SuggestedCover[] = await imageManager.suggestCover(entries, type);
         return { success: true, data: result };
       } catch (err) {
         console.error('Erro ao criar sugestão de capas para a série:', err);

@@ -53,6 +53,7 @@ export default function SerieUpload() {
   if (initialData.length === 0 || isSubmitting === true) return <Loading />;
 
   const prefix = `series.${currentIndex}` as const;
+  const literatureForm = form.watch(`${prefix}.literatureForm`);
   const serieErrors = errors.series?.[currentIndex];
 
   return (
@@ -70,6 +71,7 @@ export default function SerieUpload() {
                 control={control}
                 name={`${prefix}.cover_path`}
                 sourcePath={fields[currentIndex].oldPath}
+                type={literatureForm}
               />{' '}
             </div>
 
