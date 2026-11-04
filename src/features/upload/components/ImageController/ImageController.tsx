@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useController, Control, FieldValues, Path } from 'react-hook-form';
-import { useUIStore } from '@/shared/store/useUIStore';
 import { ImagePlus } from 'lucide-react';
 import useImage from '@/shared/hooks/useImage';
 import styles from './ImageController.module.scss';
@@ -16,13 +15,18 @@ export default function ImageController<T extends FieldValues>({
   control: Control<T>;
   name: Path<T>;
   sourcePath: string;
-  type: LiteratureForm;
+  type?: LiteratureForm;
 }) {
   const { previewSrc, getPreview, loadExistingImage } = useImage();
   const [suggestCovers, setSuggestCovers] = useState<SuggestedCover[]>([]);
-  const setError = useUIStore((s) => s.setError);
-
   const { field, fieldState } = useController({ name, control });
+
+  // refs: dentro do effect assíncrono, o valor capturado seria antigo
+  const valueRef = useRef(field.value);
+  valueRef.current = field.value;
+  const onChangeRef = useRef(field.onChange);
+  onChangeRef.current = field.onChange;
+  const sourceRef = useRef<'none' | 'suggestion' | 'manual'>('none');
 
   useEffect(() => {
     if (field.value) {
@@ -31,8 +35,7 @@ export default function ImageController<T extends FieldValues>({
   }, [field.value, loadExistingImage]);
 
   useEffect(() => {
-    setSuggestCovers([]); // não deixa sugestão do tipo antigo na tela
-
+    setSuggestCovers([]);
     if (!sourcePath || !type || type === LiteratureForm.BOOK) return;
 
     let cancelled = false;
@@ -41,9 +44,18 @@ export default function ImageController<T extends FieldValues>({
       try {
         const response = await window.electronAPI.upload.suggestCovers(sourcePath, type);
         if (cancelled) return;
-        if (response.success && response.data) setSuggestCovers(response.data);
+        if (!response.success || !response.data) return;
+
+        setSuggestCovers(response.data);
+
+        const pick = response.data.find((c: SuggestedCover) => c.recommended);
+        const canReplace = !valueRef.current || sourceRef.current === 'suggestion';
+        if (pick && canReplace) {
+          sourceRef.current = 'suggestion';
+          onChangeRef.current(pick.path);
+        }
       } catch {
-        // sugestão é opcional: falhou, a faixa simplesmente não aparece
+        // sugestão é opcional: se falhar, a faixa simplesmente não aparece
       }
     })();
 
@@ -61,6 +73,7 @@ export default function ImageController<T extends FieldValues>({
         onClick={async () => {
           const image = await getPreview();
           if (!image) return;
+          sourceRef.current = 'manual';
           field.onChange(image);
         }}
         role="button"
@@ -78,16 +91,23 @@ export default function ImageController<T extends FieldValues>({
 
       {suggestCovers.length > 0 && (
         <div className={styles.suggestionsGallery}>
-          {suggestCovers.map((coverImg) => (
+          {suggestCovers.map((cover) => (
             <img
-              key={coverImg.path}
-              src={coverImg.url}
-              alt="Sugestão de capa"
+              key={cover.path}
+              src={cover.url}
+              alt={`Sugestão de capa: pág. ${cover.page + 1}`}
               onClick={(e) => {
                 e.stopPropagation();
-                field.onChange(coverImg.path);
+                sourceRef.current = 'suggestion';
+                field.onChange(cover.path);
               }}
-              style={{ width: 80, height: 120, cursor: 'pointer', objectFit: 'cover' }}
+              style={{
+                width: 80,
+                height: 120,
+                cursor: 'pointer',
+                objectFit: 'cover',
+                outline: field.value === cover.path ? '2px solid #8e5fc9' : 'none',
+              }}
             />
           ))}
         </div>

@@ -37,8 +37,9 @@ export interface SuggestedCover {
   chapterName: string;
   path: string;
   url: string;
+  page: number;
+  recommended?: boolean;
 }
-
 interface LastReadResult {
   url: string;
   serie: Literatures | TieIn;
@@ -125,6 +126,7 @@ declare global {
           oldPath: string,
           type: LiteratureForm,
         ) => Promise<APIResponse<SuggestedCover[]>>;
+        clearSuggestedCovers: () => Promise<APIResponse<void>>;
         clearSuggestCovers: () => Promise<APIResponse<void>>;
       };
 

@@ -24,8 +24,9 @@ export interface SuggestedCover {
   chapterName: string;
   path: string;
   url: string;
+  page: number;
+  recommended?: boolean;
 }
-
 export default function uploadHandlers(ipcMain: IpcMain) {
   const comicManager = new ComicManager();
   const mangaManager = new MangaManager();
@@ -157,7 +158,7 @@ export default function uploadHandlers(ipcMain: IpcMain) {
   ipcMain.handle(
     'upload:suggest-cover',
     async (
-      _evento,
+      _event,
       oldPath: string,
       type: LiteratureForm,
     ): Promise<APIResponse<SuggestedCover[]>> => {
@@ -165,7 +166,7 @@ export default function uploadHandlers(ipcMain: IpcMain) {
         return { success: false, error: 'Caminho inválido.' };
       try {
         const [entries] = await fileManager.searchChapters(oldPath);
-        const result: SuggestedCover[] = await imageManager.suggestCover(entries, type);
+        const result = await imageManager.suggestCover(entries, type);
         return { success: true, data: result };
       } catch (err) {
         console.error('Erro ao criar sugestão de capas para a série:', err);
@@ -174,16 +175,12 @@ export default function uploadHandlers(ipcMain: IpcMain) {
     },
   );
 
-  ipcMain.handle(
-    'upload:clear-temp-covers',
-    async (_evento): Promise<APIResponse<void>> => {
-      try {
-        await fileManager.clearTempCovers();
-        return { success: true };
-      } catch (err) {
-        console.error('Erro ao criar a série:', err);
-        return { success: false, error: (err as Error).message };
-      }
-    },
-  );
+  ipcMain.handle('upload:clear-temp-covers', async (): Promise<APIResponse<void>> => {
+    try {
+      await imageManager.clearSuggestedCovers();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
 }

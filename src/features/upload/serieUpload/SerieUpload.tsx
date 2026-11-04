@@ -27,6 +27,7 @@ export default function SerieUpload() {
       onSuccess: () => {
         const store = useUploadStore.getState();
         store.consumeSeries();
+        void window.electronAPI.upload.clearSuggestedCovers();
         useAllSeriesStore.getState().fetchAllSeries();
         navigate(store.pendingChapters.length > 0 ? '/local-upload/chapter' : '/');
       },
@@ -46,6 +47,7 @@ export default function SerieUpload() {
   useEffect(() => {
     return () => {
       useUploadStore.getState().consumeSeries();
+      void window.electronAPI.upload.clearSuggestedCovers();
     };
   }, []);
 
@@ -72,7 +74,7 @@ export default function SerieUpload() {
                 name={`${prefix}.cover_path`}
                 sourcePath={fields[currentIndex].oldPath}
                 type={literatureForm}
-              />{' '}
+              />
             </div>
 
             <div className={styles['form-container']}>

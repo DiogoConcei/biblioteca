@@ -225,11 +225,10 @@ export default class ArchiveManager extends LibrarySystem {
     archive: string,
     entries: string[],
     outputDir: string,
-  ): Promise<string[]> {
+  ): Promise<(string | null)[]> {
     if (entries.length === 0) return [];
     await fse.mkdirp(outputDir);
 
-    // um único 7z para todas as páginas
     const names = entries.map((e) => `"${e}"`).join(' ');
     try {
       await this.execAsync(
@@ -242,14 +241,18 @@ export default class ArchiveManager extends LibrarySystem {
         typeof execErr.stderr === 'string' &&
         execErr.stderr.includes('CRC Failed');
 
-      if (!crcOnly) throw err; // só o CRC é tolerado; o resto sobe
+      if (!crcOnly) throw err;
       console.warn('extractEntries: CRC Failed (não-fatal):', archive);
     }
 
-    const results: string[] = [];
+    const results: (string | null)[] = [];
     for (const entry of entries) {
       const extracted = path.join(outputDir, entry);
-      if (!(await fse.pathExists(extracted))) continue; // item não saiu: pula
+
+      if (!(await fse.pathExists(extracted))) {
+        results.push(null); // mantém a posição de cada página
+        continue;
+      }
 
       const ext = path.extname(entry);
       const safeBase = path.basename(entry, ext).replace(/[. ]+$/, '');
@@ -263,7 +266,6 @@ export default class ArchiveManager extends LibrarySystem {
       results.push(finalPath);
     }
 
-    // o 7z recria as subpastas internas: depois de mover tudo, sobram só pastas vazias
     for (const entry of entries) {
       const [top] = entry.split(path.sep);
       if (top !== entry) await fse.remove(path.join(outputDir, top));
@@ -271,7 +273,6 @@ export default class ArchiveManager extends LibrarySystem {
 
     return results;
   }
-
   public async safeExtract(inputFile: string, outputPath: string): Promise<string> {
     const tempSuffix = `${Date.now()}-${randomBytes(2).toString('hex')}`;
     const tempDir = path.join(outputPath, `__7z_extract_tmp_${tempSuffix}`);

@@ -7,6 +7,7 @@ import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { registerHandlers } from './ipc';
 import DownloadManager from './services/network/DownloadManager';
 import MediaServer from './services/network/MediaServer';
+import ImageManager from './services/processing/ImageManager';
 
 // Polyfill para URL.parse (ES2024), necessário para algumas versões do Node.js
 if (typeof URL.parse !== 'function') {
@@ -246,6 +247,7 @@ app.on('activate', () => {
 app.whenReady().then(async () => {
   // Inicializamos as pastas vitais primeiro (é rápido com Promise.all)
   await ensureAppFolders().catch((err) => console.error('Erro folders:', err));
+  new ImageManager().clearSuggestedCovers().catch(console.error);
 
   // Registros síncronos de handlers e protocolos
   mediaServer.register();

@@ -116,8 +116,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       type: LiteratureForm,
     ): Promise<APIResponse<SuggestedCover[]>> =>
       ipcRenderer.invoke('upload:suggest-cover', oldPath, type),
-    clearSuggestCovers: async (): Promise<APIResponse<void>> =>
-      ipcRenderer.invoke('clear-temp-covers'),
+    clearSuggestedCovers: (): Promise<APIResponse<void>> =>
+      ipcRenderer.invoke('upload:clear-temp-covers'),
   },
 
   series: {

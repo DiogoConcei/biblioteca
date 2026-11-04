@@ -11,12 +11,12 @@ import { ComicEdition } from '../../types/comic.interfaces.ts';
 import { randomUUID } from 'crypto';
 import { SuggestedCover } from '../../ipc/uploadHandlers.ts';
 
-type CoverPlan = { chapters: number; pages: number[] };
+type CoverPlan = { chapters: number; pages: number[]; defaultPage: number };
 
 const COVER_PLANS: Record<LiteratureForm, CoverPlan | null> = {
-  [LiteratureForm.MANGA]: { chapters: 1, pages: [0, 1, 2] },
-  [LiteratureForm.COMIC]: { chapters: 4, pages: [0] },
-  [LiteratureForm.BOOK]: null, // sem sugestões na v1
+  [LiteratureForm.MANGA]: { chapters: 1, pages: [0, 1, 2], defaultPage: 1 },
+  [LiteratureForm.COMIC]: { chapters: 4, pages: [0], defaultPage: 0 },
+  [LiteratureForm.BOOK]: null,
 };
 
 export default class ImageManager extends LibrarySystem {
@@ -36,32 +36,28 @@ export default class ImageManager extends LibrarySystem {
     return mediaUrls;
   }
 
-  public async suggestCover(entries: string[], literatureForm: LiteratureForm) {
-    const plan = COVER_PLANS[literatureForm]; // procura o plano desse tipo
-    if (!plan) return []; // Livro é null: nada a sugerir, sai aqui
+  public async suggestCover(
+    entries: string[],
+    literatureForm: LiteratureForm,
+  ): Promise<SuggestedCover[]> {
+    const plan = COVER_PLANS[literatureForm];
+    if (!plan) return [];
 
     const sources = [...entries]
       .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
-      .slice(0, plan.chapters); // 1 arquivo no mangá, 4 no quadrinho
+      .slice(0, plan.chapters);
 
-    const sessionDir = path.join(
-      this.dataStorage,
-      'temp',
-      'biblioteca-covers',
-      randomUUID(),
-    );
-
-    // TESTE TEMPORÁRIO: apague depois
-    const am = this.archiveManager;
-    const imgs = await am.listImages(sources[0]);
-    console.log('PÁGINAS:', imgs.slice(0, 3));
+    const sessionDir = path.join(this.coversTempDir, randomUUID());
 
     const perArchive = await Promise.all(
       sources.map((archive, i) =>
         this.coverCandidates(archive, path.join(sessionDir, String(i)), plan.pages),
       ),
     );
-    return perArchive.flat();
+
+    const list = perArchive.flat();
+    const recommended = list.find((c) => c.page === plan.defaultPage) ?? list[0];
+    return list.map((c) => ({ ...c, recommended: c === recommended }));
   }
 
   public async addToCoverGallery(
@@ -454,12 +450,12 @@ export default class ImageManager extends LibrarySystem {
     return Buffer.from(base64Part, 'base64').toString('utf-8');
   }
 
-  private toSuggestion(archive: string, coverPath: string): SuggestedCover {
-    return {
-      chapterName: path.basename(archive, path.extname(archive)),
-      path: coverPath,
-      url: this.getMediaUrl(coverPath),
-    };
+  public async clearSuggestedCovers(): Promise<void> {
+    await fse.remove(this.coversTempDir); // não falha se a pasta não existe
+  }
+
+  private get coversTempDir(): string {
+    return path.join(this.dataStorage, 'temp', 'biblioteca-covers');
   }
 
   private async coverCandidates(
@@ -473,17 +469,27 @@ export default class ImageManager extends LibrarySystem {
     if (!onlyFirst && path.extname(archive).toLowerCase() !== '.pdf') {
       try {
         const images = await this.archiveManager.listImages(archive);
-        const wanted = pages.map((p) => images[p]).filter(Boolean); // índice fora do arquivo some
+        const picks = pages
+          .map((page) => ({ page, entry: images[page] }))
+          .filter((p) => p.entry); // página que não existe no arquivo some
         const extracted = await this.archiveManager.extractEntries(
           archive,
-          wanted,
+          picks.map((p) => p.entry),
           outDir,
         );
-        const normalized = await Promise.all(
-          extracted.map((p) => this.normalizeCover(p).catch(() => '')), // uma página ruim não derruba as outras
-        );
-        const ok = normalized.filter(Boolean);
-        if (ok.length > 0) return ok.map((p) => this.toSuggestion(archive, p));
+
+        const out: SuggestedCover[] = [];
+        for (let i = 0; i < picks.length; i++) {
+          const raw = extracted[i];
+          if (!raw) continue;
+          try {
+            const normalized = await this.normalizeCover(raw);
+            out.push(this.toSuggestion(archive, normalized, picks[i].page));
+          } catch {
+            // página ruim: segue com as outras
+          }
+        }
+        if (out.length > 0) return out;
       } catch (e) {
         console.warn('Extração por página falhou, usando a capa padrão:', archive, e);
       }
@@ -491,6 +497,15 @@ export default class ImageManager extends LibrarySystem {
 
     // quadrinho (só página 0), PDF, ou a extração por página falhou
     const cover = await this.generateCover(archive, outDir);
-    return cover ? [this.toSuggestion(archive, cover)] : [];
+    return cover ? [this.toSuggestion(archive, cover, 0)] : [];
+  }
+
+  private toSuggestion(archive: string, coverPath: string, page: number): SuggestedCover {
+    return {
+      chapterName: path.basename(archive, path.extname(archive)),
+      path: coverPath,
+      url: this.getMediaUrl(coverPath),
+      page,
+    };
   }
 }
