@@ -11,7 +11,7 @@ import {
   Bookmark,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Trash2 } from 'lucide-react'; // junto dos outros ícones do lucide-react
+import { Trash2 } from 'lucide-react';
 import ChapterMenu from '../ChapterMenu/ChapterMenu';
 import ConfirmDialog from '@/shared/components/ConfirmDialog/ConfirmDialog';
 import useChapterActions from '@/shared/hooks/useChapterActions';
@@ -53,7 +53,7 @@ function DownloadIcon({ state }: { state: Chapter['isDownloaded'] }) {
 }
 
 export default function ListView({ literatureForm }: { literatureForm: LiteratureForm }) {
-  const { downloadIndividual } = useDownload();
+  const { downloadIndividual, ensureDownloaded } = useDownload();
   const { openChapter, markAsRead } = useAction();
   const chapters = useSerieStore((s) => s.chapters);
   const { deleteChapter } = useChapterActions();
@@ -180,7 +180,9 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
                 <button
                   type="button"
                   className={styles.main}
-                  onClick={(e) => openChapter(e, chapter)}
+                  onClick={async (e) => {
+                    if (await ensureDownloaded(chapter)) openChapter(e, chapter);
+                  }}
                 >
                   <span className={styles.number}>{chapter.chapterNumber?.label}</span>
                   <span className={styles.text}>

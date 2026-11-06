@@ -272,33 +272,6 @@ export default StorageManager.getInstance();
 //   return this.readSerieData<TieIn>(dataPath);
 // }
 
-// /**
-//  * Deleta um capítulo e invalida o cache.
-//  */
-// async deleteChapter(chapter: LiteratureChapter): Promise<boolean> {
-//   try {
-//     if (await fse.pathExists(chapter.chapterPath)) {
-//       // Se o caminho do capítulo for diferente do arquivo original (ex: cache de mangá), removemos do disco.
-//       // Se for igual (ex: livros PDF/EPUB), mantemos o arquivo original e apenas resetamos o status.
-//       if (chapter.chapterPath !== chapter.archivesPath) {
-//         await fse.remove(chapter.chapterPath);
-//       }
-
-//       chapter.isDownloaded = 'not_downloaded';
-//       chapter.chapterPath = '';
-
-//       // Invalida cache pois os dados da série (que contém o capítulo) mudaram
-//       this.invalidateCache();
-
-//       return true;
-//     }
-//     return false;
-//   } catch (e) {
-//     console.error('Falha ao deletar capitulo: ', e);
-//     return false;
-//   }
-// }
-
 /**
  * Atualiza campos de uma série (Write-Through).
  */
@@ -330,4 +303,28 @@ export default StorageManager.getInstance();
 
 //     return updated;
 //   });
+// }
+
+// async deleteChapter(chapter: LiteratureChapter): Promise<boolean> {
+//   try {
+//     if (await fse.pathExists(chapter.chapterPath)) {
+//       // Se o caminho do capítulo for diferente do arquivo original (ex: cache de mangá), removemos do disco.
+//       // Se for igual (ex: livros PDF/EPUB), mantemos o arquivo original e apenas resetamos o status.
+//       if (chapter.chapterPath !== chapter.archivesPath) {
+//         await fse.remove(chapter.chapterPath);
+//       }
+
+//       chapter.isDownloaded = 'not_downloaded';
+//       chapter.chapterPath = '';
+
+//       // Invalida cache pois os dados da série (que contém o capítulo) mudaram
+//       this.invalidateCache();
+
+//       return true;
+//     }
+//     return false;
+//   } catch (e) {
+//     console.error('Falha ao deletar capitulo: ', e);
+//     return false;
+//   }
 // }

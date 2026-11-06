@@ -81,13 +81,12 @@ export default class HistoryManager extends LibrarySystem {
 
     const history: HistoryFile = await fse.readJSON(this.historyFile);
 
-    // Adicionado fallback (history.events || []) para evitar TypeError se undefined
     return [...(history.events || [])].sort(
       (a, b) => new Date(b.readAt).getTime() - new Date(a.readAt).getTime(),
     );
   }
 
-  private async addToHistory(serie: graphSerie): Promise<void> {
+  public async addToHistory(serie: graphSerie): Promise<void> {
     try {
       const historySerie: SerieHistoryEntry = this.mountSerieHistory(serie);
       const readEvent: ReadEvent = this.mountReadEvent(serie);
@@ -122,12 +121,10 @@ export default class HistoryManager extends LibrarySystem {
     try {
       const history: HistoryFile = await fse.readJSON(this.historyFile);
 
-      // 1. LIMPEZA DOS EVENTOS FANTASMAS
-      // Remove do array events qualquer evento desta série cujo capítulo não está mais marcado como lido
       history.events = (history.events || []).filter((e) => {
-        if (e.serieId !== serie.id) return true; // Mantém eventos de outras séries
+        if (e.serieId !== serie.id) return true;
         const chapter = serie.chapters.find((c) => c.id === e.chapterId);
-        return chapter?.isRead === true; // Só mantém o evento se o capítulo ainda estiver lido
+        return chapter?.isRead === true;
       });
 
       const summaryIndex = history.summaries.findIndex((s) => s.serieId === serie.id);
@@ -139,8 +136,6 @@ export default class HistoryManager extends LibrarySystem {
       if (summary.chaptersRead === 0) {
         history.summaries.splice(summaryIndex, 1);
       } else {
-        // 2. CORREÇÃO DO FIND PARA FINDLAST
-        // Usa findLast para pegar o evento VÁLIDO MAIS RECENTE (do fim pro começo do array)
         const previousValidEvent = history.events.findLast((e) => e.serieId === serie.id);
 
         if (previousValidEvent) {
@@ -160,6 +155,7 @@ export default class HistoryManager extends LibrarySystem {
       throw error;
     }
   }
+
   private mountSerieHistory(serie: graphSerie): SerieHistoryEntry {
     return {
       chaptersRead: serie.chapters.filter((c) => c.isRead).length,

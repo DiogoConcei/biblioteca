@@ -196,31 +196,6 @@ export default function seriesHandlers(ipcMain: IpcMain) {
     },
   );
 
-  ipcMain.handle(
-    'serie:recent-read',
-    async (_event, dataPath: string, serie_name: string) => {
-      try {
-        let pathData: string;
-
-        if (serie_name) {
-          pathData = await fileManager.getDataPath(serie_name);
-        } else {
-          pathData = dataPath;
-        }
-
-        const serieData = await storageManager.readSerieData(pathData);
-
-        if (!serieData) return { success: false };
-
-        const result = await userManager.addToRecentes(serieData);
-        return { success: result };
-      } catch (e) {
-        console.error(`Erro em adicionar em recentes: ${e}`);
-        return { success: false, error: String(e) };
-      }
-    },
-  );
-
   // ipcMain.handle('serie:create-TieIn', async (_event, childSerie: ComicTieIn) => {
   //   try {
   //     const data = await storageManager.readTieInData(childSerie.dataPath);

@@ -171,7 +171,7 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
             </ul>
           )}
         </section>
-      </aside>{' '}
+      </aside>
     </main>
   );
 }

@@ -29,74 +29,39 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
   protected readonly pdfManager: PdfManager = new PdfManager();
   protected readonly archiveManager: ArchiveManager = new ArchiveManager();
 
-  async createEditions(serieName: string, archivesPath: string): Promise<ComicEdition[]> {
+  async createEditions(
+    serieName: string,
+    chaptersPath: string,
+    archivesPath: string,
+  ): Promise<ComicEdition[]> {
     const [comicEntries] = await this.fileManager.searchChapters(archivesPath);
-    const orderComics = await this.orderChapters(comicEntries);
-
     if (!comicEntries || comicEntries.length === 0) return [];
 
-    const chapters: ComicEdition[] = await Promise.all(
-      orderComics.map(async (comicPath, idx) => {
-        const fileName = path
-          .basename(comicPath, path.extname(comicPath))
-          .replaceAll('#', '');
-        const sanitizedName = this.fileManager.sanitizeFilename(fileName);
+    const ordered = await this.orderChapters(comicEntries);
 
-        return {
-          ...this.mountEmptyChapter(serieName, fileName),
-          id: idx,
-          sanitizedName,
-          chapterPath: await this.fileManager.buildChapterPath(
-            this.comicsImages,
+    return Promise.all(
+      ordered.map(
+        (comicPath, idx) =>
+          this.createChapter(
             serieName,
-            fileName,
-          ),
-          archivesPath: comicPath,
-        };
-      }),
-    );
-
-    return chapters;
-  }
-
-  async createEdition(
-    serieName: string,
-    archivePath: string,
-    id: number,
-  ): Promise<ComicEdition> {
-    const fileName = path
-      .basename(archivePath, path.extname(archivePath))
-      .replaceAll('#', '');
-    const sanitizedName = this.fileManager.sanitizeFilename(fileName);
-
-    return {
-      ...this.mountEmptyChapter(serieName, fileName),
-      id: id,
-      sanitizedName,
-      chapterPath: await this.fileManager.buildChapterPath(
-        this.comicsImages,
-        serieName,
-        fileName,
+            chaptersPath,
+            comicPath,
+            idx,
+          ) as Promise<ComicEdition>,
       ),
-      archivesPath: archivePath,
-    };
+    );
   }
 
-  async createEditionCovers(archivesPath: string, comicEdition: ComicEdition[]) {
-    const dirName = path.basename(archivesPath);
-
+  async createEditionCovers(comicEdition: ComicEdition[]) {
     try {
       await Promise.all(
         comicEdition.map(async (chap) => {
-          const rawName = chap.name;
           const safeDirName = this.fileManager
-            .sanitizeDirName(rawName)
+            .sanitizeDirName(chap.name)
             .replaceAll('_', '')
             .replaceAll('-', '');
 
           const outputPath = path.join(this.showcaseImages, chap.name, safeDirName);
-
-          chap.chapterPath = path.join(this.comicsImages, dirName, chap.name);
 
           if (!chap.archivesPath) {
             console.warn(
@@ -116,7 +81,6 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
       throw e;
     }
   }
-
   async postProcessChapters(chapter: ComicEdition): Promise<ComicEdition> {
     if (chapter.coverImage) {
       return chapter;
@@ -204,14 +168,14 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
 
   async processSerieData(serie: SerieForm): Promise<Comic> {
     const comic = await this.mountEmptyComic(serie);
-    const chapters = await this.createEditions(serie.name, serie.oldPath);
+    const chapters = await this.createEditions(
+      comic.name,
+      comic.chaptersPath,
+      serie.oldPath,
+    );
     const childSeries = await this.createChilds(comic.name, comic.id, serie.oldPath);
 
-    return {
-      ...comic,
-      chapters,
-      childSeries,
-    };
+    return { ...comic, chapters, childSeries };
   }
 
   async createSerie(
@@ -224,7 +188,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
 
     // Gera as capas para cada edição (capítulo) do quadrinho principal
     if (serieData.chapters && serieData.chapters.length > 0) {
-      await this.createEditionCovers(serie.oldPath, serieData.chapters);
+      await this.createEditionCovers(serieData.chapters);
     }
 
     if (tieInManager && serieData.childSeries && serieData.childSeries.length > 0) {
@@ -281,6 +245,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
         isFavorite: serie.collections.includes('Favoritos'),
         privacy: serie.privacy,
         autoBackup: serie.autoBackup,
+        viewMode: serie.viewMode,
         compiledComic: totalChapters ? false : true,
       },
       createdAt: serie.createdAt,

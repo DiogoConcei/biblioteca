@@ -13,7 +13,6 @@ import { useCollectionStore } from '../store/useCollectionStore';
 export default function useAction() {
   const serie = useSerieStore((state) => state.serie) as Literatures | TieIn;
   const clearSerie = useSerieStore((state) => state.clearSerie);
-  const dataPath = useSerieStore((state) => state.serie?.dataPath || '');
   const updateChapter = useSerieStore((state) => state.updateChapter);
   const updateSerie = useSerieStore((state) => state.updateSerie);
   const setLoading = useUIStore((state) => state.setLoading);
@@ -88,7 +87,7 @@ export default function useAction() {
 
     try {
       const response = await window.electronAPI.userAction.markRead(
-        dataPath,
+        serie.dataPath,
         selectedChapter.id,
         !originalRead,
       );
@@ -114,15 +113,15 @@ export default function useAction() {
     e.stopPropagation();
     const { name: serieName, id: serieId } = serie;
     const { name: chapterName, id: chapterId, page, isRead } = selectedChapter;
-
-    // Registra como recente ao abrir
-    const result = await window.electronAPI.series.recentSerie(dataPath, serieName);
+    const result = await window.electronAPI.history.addToHistory(
+      serie.dataPath,
+      chapterId,
+    );
 
     if (!result.success) {
       setError(`Não foi possível registar a série no histórico de recentes`);
     }
 
-    // Pequenos detalhes: Atualiza o store local para refletir a abertura
     updateSerie('readingData.lastChapterId', chapterId);
     updateSerie('readingData.lastReadAt', new Date().toISOString());
 

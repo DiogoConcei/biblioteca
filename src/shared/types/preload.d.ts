@@ -128,6 +128,12 @@ declare global {
         ) => Promise<APIResponse<SuggestedCover[]>>;
         clearSuggestedCovers: () => Promise<APIResponse<void>>;
         clearSuggestCovers: () => Promise<APIResponse<void>>;
+        fetchMetadata: (
+          title: string,
+          type: 'manga' | 'comic',
+          year?: number,
+          author?: string,
+        ) => Promise<APIResponse<ScrapedMetadata>>;
       };
 
       series: {
@@ -163,11 +169,11 @@ declare global {
         getNextChapter: (
           serieName: string,
           chapter_id: number,
-        ) => Promise<APIResponse<string>>;
+        ) => Promise<APIResponse<{ url: string }>>;
         getPrevChapter: (
           serieName: string,
           chapter_id: number,
-        ) => Promise<APIResponse<string>>;
+        ) => Promise<APIResponse<{ url: string; lastPageRead: number }>>;
         reorderChapters: (
           dataPath: string,
           newOrderIds: number[],
@@ -200,12 +206,7 @@ declare global {
         //   serieId: number,
         //   path: string | null,
         // ) => Promise<APIResponse<void>>;
-        // fetchMetadata: (
-        //   title: string,
-        //   type: 'manga' | 'comic',
-        //   year?: number,
-        //   author?: string,
-        // ) => Promise<APIResponse<ScrapedMetadata>>;
+
         // getFavSeries: () => Promise<APIResponse<Collection>>;
       };
 
@@ -222,9 +223,16 @@ declare global {
       };
 
       download: {
+        singleDownload: (
+          dataPath: string,
+          chapter_id: number,
+        ) => Promise<APIResponse<void>>;
+        singleRemove: (
+          dataPath: string,
+          chapter_id: number,
+        ) => Promise<APIResponse<void>>;
+
         multipleDownload: (dataPath: string, quantity: number) => Promise<boolean>;
-        singleDownload: (dataPath: string, chapter_id: number) => Promise<boolean>;
-        singleRemove: (dataPath: string, chapter_id: number) => Promise<boolean>;
 
         readingDownload: (serieName: string, chapter_id: number) => Promise<boolean>;
         checkDownload: (serieName: string, chapter_id: number) => Promise<boolean>;
@@ -239,6 +247,7 @@ declare global {
 
       history: {
         getRecents: (limit?: number) => Promise<APIResponse<SerieHistoryEntry[]>>;
+        addToHistory: (dataPath: string, chapterId: number) => Promise<APIResponse<void>>;
       };
 
       image: {

@@ -4,13 +4,18 @@ import { MediaContent } from './media.interfaces';
 import { Comic, ComicEdition, TieIn } from './comic.interfaces';
 import {
   ReadingStatus,
-  LiteratureForm,
   AutoBackupStatus,
   PrivacyStatus,
 } from '../../src/shared/types/series.interfaces';
 
 export type LiteratureChapter = ComicEdition | MangaChapter | BookChapter;
 export type PathKind = 'serie' | 'chapter' | 'tie-in' | 'invalid';
+
+export enum LiteratureForm {
+  MANGA = 'Manga',
+  COMIC = 'Quadrinho',
+  BOOK = 'Books',
+}
 
 export type LiteraturesAttributes =
   | string

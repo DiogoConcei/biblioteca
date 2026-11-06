@@ -116,6 +116,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
       type: LiteratureForm,
     ): Promise<APIResponse<SuggestedCover[]>> =>
       ipcRenderer.invoke('upload:suggest-cover', oldPath, type),
+    fetchMetadata: async (
+      title: string,
+      type: 'manga' | 'comic',
+      year?: number,
+      author?: string,
+    ): Promise<APIResponse<ScrapedMetadata>> =>
+      ipcRenderer.invoke('metadata:fetch', title, type, year, author),
+
     clearSuggestedCovers: (): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('upload:clear-temp-covers'),
   },
@@ -139,8 +147,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('serie:rating', dataPath, userRating),
     favoriteSerie: (dataPath: string): Promise<APIResponse<SerieInCollection>> =>
       ipcRenderer.invoke('serie:favorite', dataPath),
-    recentSerie: (dataPath: string, serie_name: string): Promise<APIResponse<void>> =>
-      ipcRenderer.invoke('serie:recent-read', dataPath, serie_name),
     updateSerie: (data: SerieEditForm): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('serie:update-serie', data),
   },
@@ -171,7 +177,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getNextChapter: async (
       serieName: string,
       chapter_id: number,
-    ): Promise<APIResponse<number>> =>
+    ): Promise<APIResponse<{ url: string }>> =>
       ipcRenderer.invoke('chapter:get-next-chapter', serieName, chapter_id),
     getPrevChapter: async (
       serieName: string,
@@ -225,13 +231,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     //     serieId,
     //     path,
     //   ),
-    // fetchMetadata: async (
-    //   title: string,
-    //   type: 'manga' | 'comic',
-    //   year?: number,
-    //   author?: string,
-    // ): Promise<APIResponse<ScrapedMetadata>> =>
-    //   ipcRenderer.invoke('metadata:fetch', title, type, year, author),
     // getFavSeries: async (): Promise<APIResponse<Collection>> =>
     //   ipcRenderer.invoke('collection:get-all-fav'),
   },
@@ -251,12 +250,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   download: {
+    singleDownload: async (
+      dataPath: string,
+      chapter_id: number,
+    ): Promise<APIResponse<void>> =>
+      ipcRenderer.invoke('download:single', dataPath, chapter_id),
+    singleRemove: async (
+      dataPath: string,
+      chapter_id: number,
+    ): Promise<APIResponse<void>> =>
+      ipcRenderer.invoke('download:delete', dataPath, chapter_id),
+
     multipleDownload: async (dataPath: string, quantity: number): Promise<boolean> =>
       ipcRenderer.invoke('donwload:multiple', dataPath, quantity),
-    singleDownload: async (dataPath: string, chapter_id: number): Promise<boolean> =>
-      ipcRenderer.invoke('download:single', dataPath, chapter_id),
-    singleRemove: async (dataPath: string, chapter_id: number): Promise<boolean> =>
-      ipcRenderer.invoke('download:delete', dataPath, chapter_id),
 
     readingDownload: async (serieName: string, chapter_id: number): Promise<boolean> =>
       ipcRenderer.invoke('download:reading', serieName, chapter_id),
@@ -274,6 +280,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   history: {
     getRecents: (limit?: number): Promise<APIResponse<SerieHistoryEntry[]>> =>
       ipcRenderer.invoke('history:get-recents', limit),
+    addToHistory: (dataPath: string, chapterId: number): Promise<APIResponse<void>> =>
+      ipcRenderer.invoke('history:add-to-history', dataPath, chapterId),
   },
 
   image: {

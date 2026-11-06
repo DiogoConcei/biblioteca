@@ -126,11 +126,12 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
     ) => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
+
         if (!dataPath) throw new Error('Caminho da série não encontrado');
 
         const serieData = (await storageManager.readSerieData(dataPath)) as Literatures;
 
-        if (!serieData?.chapters?.length) throw new Error('Capítulos não encontrados');
+        if (!serieData.chapters.length) throw new Error('Capítulos não encontrados');
 
         let chapterFound = false;
 
@@ -161,7 +162,6 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
         const updatedChaptersRead = updatedChapters.filter((c) => c.isRead).length;
 
-        // Atualização automática de status
         let updatedStatus = serieData.metadata.status;
         if (updatedChaptersRead === serieData.totalChapters) {
           updatedStatus = ReadingStatus.COMPLETED;
@@ -250,40 +250,53 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle(
     'chapter:get-next-chapter',
-    async (_event, serieName: string, chapter_id: number) => {
-      // try {
-      //   const dataPath = await fileManager.getDataPath(serieName);
-      //   const serieData = await storageManager.readSerieData(dataPath!);
-      //   if (!serieData) {
-      //     return { success: false, error: `Falha em recuperar dados` };
-      //   }
-      //   const nextChapter = serieData.chapters?.find(
-      //     (chapter) => Number(chapter.id) === Number(chapter_id),
-      //   );
-      //   if (!nextChapter) {
-      //     return null;
-      //   }
-      //   const url = userManager.mountChapterUrl(
-      //     serieData,
-      //     nextChapter.id,
-      //     nextChapter.name,
-      //     nextChapter.page.lastPageRead,
-      //     nextChapter.isRead,
-      //   );
-      //   return {
-      //     success: true,
-      //     data: url,
-      //     lastPageRead: nextChapter.page.lastPageRead,
-      //   };
-      // } catch (e) {
-      //   return { success: false, error: String(e) };
-      // }
+    async (
+      _event,
+      serieName: string,
+      chapter_id: number,
+    ): Promise<APIResponse<{ url: string }>> => {
+      try {
+        const dataPath = await fileManager.getDataPath(serieName);
+
+        const serieData = await storageManager.readSerieData(dataPath!);
+
+        if (!serieData) {
+          return { success: false, error: `Falha em recuperar dados` };
+        }
+
+        const nextChapter = serieData.chapters.find(
+          (chapter) => Number(chapter.id) === Number(chapter_id),
+        );
+
+        if (!nextChapter) {
+          return { success: false, error: `Capítulo ${chapter_id} não encontrado` };
+        }
+
+        const url = userManager.mountChapterUrl(
+          serieData,
+          nextChapter.id,
+          nextChapter.name,
+          nextChapter.page.lastPageRead,
+          nextChapter.isRead,
+        );
+
+        return {
+          success: true,
+          data: { url },
+        };
+      } catch (e) {
+        return { success: false, error: String(e) };
+      }
     },
   );
 
   ipcMain.handle(
     'chapter:get-prev-chapter',
-    async (_event, serieName: string, chapter_id: number) => {
+    async (
+      _event,
+      serieName: string,
+      chapter_id: number,
+    ): Promise<APIResponse<{ url: string; lastPageRead: number }>> => {
       // try {
       //   const dataPath = await fileManager.getDataPath(serieName);
       //   if (!dataPath) {
@@ -314,40 +327,40 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
     },
   );
 
-  ipcMain.handle(
-    'chapter:reorder',
-    async (_event, dataPath: string, newOrderIds: number[]) => {
-      try {
-        const serie = await storageManager.readSerieData<Literatures>(dataPath);
-        if (!serie || !serie.chapters) {
-          throw new Error('Série ou capítulos não encontrados.');
-        }
+  // ipcMain.handle(
+  //   'chapter:reorder',
+  //   async (_event, dataPath: string, newOrderIds: number[]) => {
+  //     try {
+  //       const serie = await storageManager.readSerieData<Literatures>(dataPath);
+  //       if (!serie || !serie.chapters) {
+  //         throw new Error('Série ou capítulos não encontrados.');
+  //       }
 
-        const chaptersMap = new Map(serie.chapters.map((c) => [c.id, c]));
+  //       const chaptersMap = new Map(serie.chapters.map((c) => [c.id, c]));
 
-        const reorderedChapters = newOrderIds
-          .map((id) => chaptersMap.get(id))
-          .filter((c): c is Literatures['chapters'][0] => !!c);
+  //       const reorderedChapters = newOrderIds
+  //         .map((id) => chaptersMap.get(id))
+  //         .filter((c): c is Literatures['chapters'][0] => !!c);
 
-        if (reorderedChapters.length !== serie.chapters.length) {
-          throw new Error('Inconsistência na quantidade de capítulos reordenados.');
-        }
+  //       if (reorderedChapters.length !== serie.chapters.length) {
+  //         throw new Error('Inconsistência na quantidade de capítulos reordenados.');
+  //       }
 
-        reorderedChapters.forEach((chapter, index) => {
-          chapter.id = index + 1;
-        });
+  //       reorderedChapters.forEach((chapter, index) => {
+  //         chapter.id = index + 1;
+  //       });
 
-        serie.chapters = reorderedChapters;
-        serie.totalChapters = reorderedChapters.length;
+  //       serie.chapters = reorderedChapters;
+  //       serie.totalChapters = reorderedChapters.length;
 
-        await storageManager.writeData(serie);
-        return { success: true };
-      } catch (e) {
-        console.error(`Erro ao reordenar capítulos: ${e}`);
-        return { success: false, error: String(e) };
-      }
-    },
-  );
+  //       await storageManager.writeData(serie);
+  //       return { success: true };
+  //     } catch (e) {
+  //       console.error(`Erro ao reordenar capítulos: ${e}`);
+  //       return { success: false, error: String(e) };
+  //     }
+  //   },
+  // );
 
   ipcMain.handle(
     'chapter:get-by-serie',

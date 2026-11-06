@@ -4,8 +4,13 @@ import path from 'path';
 import LibrarySystem from '../abstract/LibrarySystem.ts';
 import storageManager from '../StorageManager.ts';
 import FileManager from '../FileManager.ts';
-import { Literatures } from '../../types/electron-auxiliar.interfaces.ts';
+import {
+  Literatures,
+  LiteratureForm,
+  graphChapter,
+} from '../../types/electron-auxiliar.interfaces.ts';
 import { Comic } from '../../types/comic.interfaces.ts';
+import readline from 'node:readline/promises';
 
 export default class MigrationManager extends LibrarySystem {
   private readonly fileManager: FileManager = new FileManager();
@@ -379,11 +384,420 @@ export default class MigrationManager extends LibrarySystem {
       return false;
     }
   }
+
+  public async fixMisplacedChapters(apply = false): Promise<void> {
+    const rl = apply
+      ? readline.createInterface({ input: process.stdin, output: process.stdout })
+      : null;
+
+    try {
+      const dataPaths = await this.fileManager.getDataPaths();
+
+      for (const dataPath of dataPaths) {
+        const serie = await this.storageManager.readSerieData(dataPath);
+        if (!serie?.chapters) continue;
+
+        const form = this.fileManager.foundLiteratureForm(dataPath);
+        if (form === LiteratureForm.COMIC) continue; // comic em comicsImages está certo
+
+        const rightRoot = this.expectedRoot(form);
+        let changed = false;
+
+        for (const ch of serie.chapters) {
+          if (!ch.chapterPath || !this.isInside(ch.chapterPath, this.comicsImages))
+            continue;
+
+          const rel = path.relative(this.comicsImages, ch.chapterPath);
+          const target = path.join(rightRoot, rel);
+          const onDisk = await fse.pathExists(ch.chapterPath);
+
+          console.log(
+            `\n[${serie.name}] cap ${ch.id} (${ch.isDownloaded})\n` +
+              `  atual:    ${ch.chapterPath}${onDisk ? '' : '  (não existe no disco)'}\n` +
+              `  deveria:  ${target}`,
+          );
+
+          if (!rl) continue;
+          const answer = (await rl.question('  Corrigir? [s/N] ')).trim().toLowerCase();
+          if (answer !== 's') continue;
+
+          try {
+            if (onDisk) await fse.move(ch.chapterPath, target); // não sobrescreve
+            ch.chapterPath = target;
+            changed = true;
+          } catch (e) {
+            console.error(`  Falha ao mover: ${(e as Error).message}`);
+          }
+        }
+
+        if (changed) await this.storageManager.writeData(serie);
+      }
+    } finally {
+      rl?.close();
+    }
+  }
+
+  public async auditChapterPaths(apply = false): Promise<void> {
+    const rl = apply
+      ? readline.createInterface({ input: process.stdin, output: process.stdout })
+      : null;
+    let total = 0,
+      bad = 0;
+
+    try {
+      for (const dataPath of await this.fileManager.getDataPaths()) {
+        const serie = await this.storageManager.readSerieData(dataPath);
+        if (!serie?.chapters) continue;
+
+        const rightRoot = this.expectedRoot(
+          this.fileManager.foundLiteratureForm(dataPath),
+        );
+        let changed = false;
+
+        for (const ch of serie.chapters) {
+          total++;
+          const { expected, problems, onDisk, hasFiles } = await this.diagnoseChapter(
+            ch,
+            rightRoot,
+          );
+          if (problems.length === 0) continue;
+          bad++;
+
+          console.log(
+            `\n[${serie.name}] cap ${ch.id} "${ch.name}" (${ch.isDownloaded})\n` +
+              `  problemas: ${problems.join('; ')}\n` +
+              `  atual:     ${ch.chapterPath || '(vazio)'}\n` +
+              `  esperado:  ${expected}`,
+          );
+          if (!rl) continue;
+
+          const answer = (await rl.question('  Corrigir caminho? [s/N] '))
+            .trim()
+            .toLowerCase();
+          if (answer !== 's') continue;
+
+          try {
+            const canMove =
+              onDisk &&
+              hasFiles &&
+              ch.isDownloaded === 'downloaded' &&
+              path.resolve(ch.chapterPath) !== path.resolve(expected);
+
+            if (canMove) {
+              if (await fse.pathExists(expected)) {
+                console.log('  Destino já existe, pulando para não sobrescrever.');
+                continue;
+              }
+              await fse.move(ch.chapterPath, expected);
+            }
+            ch.chapterPath = expected;
+            changed = true;
+          } catch (e) {
+            console.error(`  Falha: ${(e as Error).message}`);
+          }
+        }
+
+        if (changed) await this.storageManager.writeData(serie);
+      }
+      console.log(`\nAuditoria: ${bad} de ${total} capítulos com problema.`);
+    } finally {
+      rl?.close();
+    }
+  }
+
+  public async migrateMangaChapters(apply = false): Promise<void> {
+    type Move = { from: string; to: string; onDisk: boolean };
+    const plan: { dataPath: string; moves: Move[] }[] = [];
+
+    // 1. Planejamento (não altera nada)
+    for (const dataPath of await this.fileManager.getDataPaths()) {
+      if (this.fileManager.foundLiteratureForm(dataPath) !== LiteratureForm.MANGA)
+        continue;
+
+      const serie = await this.storageManager.readSerieData(dataPath);
+      if (!serie?.chapters) continue;
+
+      const moves: Move[] = [];
+      for (const ch of serie.chapters) {
+        if (!ch.chapterPath || !this.isInside(ch.chapterPath, this.comicsImages))
+          continue;
+
+        const rel = path.relative(this.comicsImages, ch.chapterPath);
+        moves.push({
+          from: ch.chapterPath,
+          to: path.join(this.mangasImages, rel),
+          onDisk: await fse.pathExists(ch.chapterPath),
+        });
+      }
+      if (moves.length) plan.push({ dataPath, moves });
+    }
+
+    const total = plan.reduce((n, p) => n + p.moves.length, 0);
+    const toMove = plan.reduce((n, p) => n + p.moves.filter((m) => m.onDisk).length, 0);
+    for (const p of plan) {
+      console.log(`\n${path.basename(p.dataPath)}: ${p.moves.length} capítulo(s)`);
+      p.moves.slice(0, 2).forEach((m) => console.log(`  ${m.from}\n  -> ${m.to}`));
+    }
+    console.log(
+      `\n${plan.length} séries, ${total} capítulos no JSON, ${toMove} pastas a mover.`,
+    );
+
+    if (!apply || total === 0) return;
+
+    // 2. Confirmação única
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const answer = (await rl.question('Aplicar? [s/N] ')).trim().toLowerCase();
+    rl.close();
+    if (answer !== 's') return;
+
+    // 3. Execução: move o disco primeiro, grava o JSON da série só depois
+    for (const { dataPath, moves } of plan) {
+      const serie = await this.storageManager.readSerieData(dataPath);
+      if (!serie) continue;
+
+      let changed = false;
+      for (const m of moves) {
+        const ch = serie.chapters.find((c) => c.chapterPath === m.from);
+        if (!ch) continue;
+
+        try {
+          if (m.onDisk) {
+            if (await fse.pathExists(m.to)) {
+              console.warn(`Destino já existe, pulando: ${m.to}`);
+              continue;
+            }
+            await fse.move(m.from, m.to);
+          }
+          ch.chapterPath = m.to;
+          changed = true;
+        } catch (e) {
+          console.error(`Falha em ${m.from}: ${(e as Error).message}`);
+        }
+      }
+
+      if (changed) await this.storageManager.writeData(serie);
+
+      // limpa a pasta da série em comic se ficou vazia (rmdir não apaga se tiver conteúdo)
+      const oldSerieDir = path.dirname(moves[0].from);
+      if (this.isInside(oldSerieDir, this.comicsImages)) {
+        await fse.rmdir(oldSerieDir).catch(() => {});
+      }
+    }
+    console.log('Migração concluída.');
+  }
+
+  private isInside(target: string, root: string): boolean {
+    const rel = path.relative(path.resolve(root), path.resolve(target));
+    return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel);
+  }
+
+  private expectedRoot(form: LiteratureForm): string {
+    switch (form) {
+      case LiteratureForm.MANGA:
+        return this.mangasImages;
+      case LiteratureForm.COMIC:
+        return this.comicsImages;
+      case LiteratureForm.BOOK:
+        return this.booksImages; // confirme o nome no LibrarySystem
+      default:
+        throw new Error(`Tipo sem raiz definida: ${form}`);
+    }
+  }
+
+  private async diagnoseChapter(
+    ch: graphChapter,
+    rightRoot: string,
+  ): Promise<{
+    expected: string;
+    problems: string[];
+    onDisk: boolean;
+    hasFiles: boolean;
+  }> {
+    // mesma fórmula do generateChapter
+    const expected = await this.fileManager.buildChapterPath(
+      rightRoot,
+      ch.serieName,
+      this.fileManager.sanitizeDirName(ch.name),
+    );
+
+    const problems: string[] = [];
+    const onDisk = !!ch.chapterPath && (await fse.pathExists(ch.chapterPath));
+    const hasFiles = onDisk && (await fse.readdir(ch.chapterPath)).length > 0;
+
+    if (!ch.chapterPath) problems.push('chapterPath vazio');
+    else {
+      if (!this.isInside(ch.chapterPath, rightRoot))
+        problems.push('fora da raiz do tipo');
+      if (path.resolve(ch.chapterPath) !== path.resolve(expected))
+        problems.push('diferente do caminho esperado');
+    }
+    if (ch.isDownloaded === 'downloaded' && !hasFiles)
+      problems.push('marcado como downloaded, mas pasta ausente/vazia');
+    if (ch.isDownloaded === 'not_downloaded' && hasFiles)
+      problems.push('not_downloaded, mas há arquivos no disco');
+
+    return { expected, problems, onDisk, hasFiles };
+  }
+
+  private sameFsPath(a: string, b: string): boolean {
+    const na = path.resolve(a);
+    const nb = path.resolve(b);
+    return process.platform === 'win32'
+      ? na.toLowerCase() === nb.toLowerCase()
+      : na === nb;
+  }
+
+  public async fixChapterPaths(apply = false): Promise<void> {
+    type Item = {
+      id: number;
+      name: string;
+      from: string;
+      to: string;
+      action: 'move' | 'rewrite' | 'skip';
+      note?: string;
+    };
+    const plan: {
+      dataPath: string;
+      serieName: string;
+      chaptersPath: string;
+      items: Item[];
+    }[] = [];
+
+    // 1. Planejamento (não altera nada)
+    for (const dataPath of await this.fileManager.getDataPaths()) {
+      if (this.fileManager.foundLiteratureForm(dataPath) === LiteratureForm.BOOK)
+        continue;
+
+      const serie = await this.storageManager.readSerieData(dataPath);
+      if (!serie?.chapters?.length || !serie.chaptersPath) continue;
+
+      const items: Item[] = [];
+      const seen = new Set<string>();
+
+      for (const ch of serie.chapters) {
+        if (!ch.archivesPath) continue;
+
+        const fileName = path
+          .basename(ch.archivesPath, path.extname(ch.archivesPath))
+          .replaceAll('#', '');
+        const to = this.fileManager.buildChapterDir(serie.chaptersPath, fileName);
+        const from = ch.chapterPath ?? '';
+
+        if (from && this.sameFsPath(from, to)) continue; // já está certo
+
+        const base = { id: ch.id, name: ch.name, from, to };
+        const key = to.toLowerCase();
+
+        if (seen.has(key)) {
+          items.push({
+            ...base,
+            action: 'skip',
+            note: 'destino duplicado (mesmo nome de arquivo)',
+          });
+          continue;
+        }
+        seen.add(key);
+
+        const onDisk = !!from && (await fse.pathExists(from));
+
+        if (!onDisk) {
+          items.push({
+            ...base,
+            action: 'rewrite',
+            note:
+              ch.isDownloaded === 'downloaded'
+                ? 'downloaded, mas sem pasta no disco'
+                : undefined,
+          });
+        } else if (!this.isInside(from, this.imagesFolder)) {
+          items.push({ ...base, action: 'skip', note: 'origem fora de images files' });
+        } else if (await fse.pathExists(to)) {
+          items.push({ ...base, action: 'skip', note: 'destino já existe' });
+        } else {
+          items.push({ ...base, action: 'move' });
+        }
+      }
+
+      if (items.length) {
+        plan.push({
+          dataPath,
+          serieName: serie.name,
+          chaptersPath: serie.chaptersPath,
+          items,
+        });
+      }
+    }
+
+    // 2. Relatório
+    let moves = 0,
+      rewrites = 0,
+      skips = 0;
+    for (const p of plan) {
+      console.log(`\n[${p.serieName}] ${p.items.length} capítulo(s)`);
+      for (const it of p.items) {
+        if (it.action === 'move') moves++;
+        else if (it.action === 'rewrite') rewrites++;
+        else skips++;
+        console.log(
+          `  ${it.action.toUpperCase()} cap ${it.id} "${it.name}"${it.note ? ` (${it.note})` : ''}\n` +
+            `    ${it.from || '(vazio)'}\n    -> ${it.to}`,
+        );
+      }
+    }
+    console.log(
+      `\n${plan.length} séries: ${moves} pastas a mover, ${rewrites} só no JSON, ${skips} puladas.`,
+    );
+    if (!apply || moves + rewrites === 0) return;
+
+    // 3. Confirmação única
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const ok = (await rl.question('Aplicar? [s/N] ')).trim().toLowerCase() === 's';
+    rl.close();
+    if (!ok) return;
+
+    // 4. Execução: disco primeiro, JSON da série depois
+    for (const p of plan) {
+      const serie = await this.storageManager.readSerieData(p.dataPath);
+      if (!serie) continue;
+
+      const oldDirs = new Set<string>();
+      let changed = false;
+
+      for (const it of p.items) {
+        if (it.action === 'skip') continue;
+        const ch = serie.chapters.find((c) => c.id === it.id);
+        if (!ch) continue;
+
+        try {
+          if (it.action === 'move') {
+            if (await fse.pathExists(it.to)) continue; // reconfere, sem sobrescrever
+            await fse.move(it.from, it.to);
+            oldDirs.add(path.dirname(it.from));
+          }
+          ch.chapterPath = it.to;
+          changed = true;
+        } catch (e) {
+          console.error(`Falha em "${it.name}" (${it.from}): ${(e as Error).message}`);
+        }
+      }
+
+      if (changed) await this.storageManager.writeData(serie);
+
+      // remove pastas antigas de série que ficaram vazias (rmdir não apaga se tiver conteúdo)
+      for (const d of oldDirs) {
+        if (this.isInside(d, this.imagesFolder) && !this.sameFsPath(d, p.chaptersPath)) {
+          await fse.rmdir(d).catch(() => {});
+        }
+      }
+    }
+    console.log('Migração concluída.');
+  }
 }
 
 // (async () => {
 //   console.log('Iniciando migração global de caminhos de capa...');
-//   const migrationManager = new MigrationManager();
+// const migrationManager = new MigrationManager();
+// await migrationManager.fixChapterPaths(true);
 //   await migrationManager.migrateCoverPathsFromSeriesSource();
 //   console.log('Migração global finalizada!');
 // })();

@@ -46,7 +46,6 @@ export default function useDownload() {
     const { serie, chapters } = useSerieStore.getState();
     const dataPath = serie?.dataPath;
 
-    // Busca o capítulo mais atualizado para evitar stale closures
     const freshChapter =
       chapters.find((ch) => ch.id === selectedChapter.id) || selectedChapter;
 
@@ -104,5 +103,35 @@ export default function useDownload() {
     }
   };
 
-  return { downloadInReading, downloadIndividual, downloadMultipleChapters };
+  const ensureDownloaded = async (chapter: LiteratureChapter): Promise<boolean> => {
+    const { serie, chapters } = useSerieStore.getState();
+    const fresh = chapters.find((c) => c.id === chapter.id) ?? chapter;
+
+    if (fresh.isDownloaded === 'downloaded') return true;
+    if (fresh.isDownloaded === 'downloading') return false; // já em andamento, não duplica
+
+    updateChapter(fresh.id, 'isDownloaded', 'downloading');
+    try {
+      const res = await window.electronAPI.download.singleDownload(
+        serie!.dataPath,
+        fresh.id,
+      );
+      const ok = typeof res === 'boolean' ? res : !!res?.success;
+      if (!ok) throw new Error();
+
+      updateChapter(fresh.id, 'isDownloaded', 'downloaded');
+      return true;
+    } catch {
+      setError('Falha ao baixar capítulo');
+      updateChapter(fresh.id, 'isDownloaded', 'not_downloaded');
+      return false;
+    }
+  };
+
+  return {
+    downloadInReading,
+    downloadIndividual,
+    downloadMultipleChapters,
+    ensureDownloaded,
+  };
 }

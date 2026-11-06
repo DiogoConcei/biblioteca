@@ -4,6 +4,7 @@ import { useUIStore } from '../store/useUIStore';
 import useSerieStore from '../store/useSerieStore';
 import useSettingsStore from '../store/useSettingsStore';
 import { ChapterView } from '../../../electron/types/electron-auxiliar.interfaces';
+import { APIResponse } from '../../../electron/types/electron-auxiliar.interfaces';
 import useDownload from './useDownload';
 
 export default function useNavigation(currentChapter: ChapterView) {
@@ -12,9 +13,7 @@ export default function useNavigation(currentChapter: ChapterView) {
   const { downloadInReading } = useDownload();
   const navigate = useNavigate();
 
-  const readingMode = useSettingsStore(
-    (state) => state.settings.viewer.readingMode,
-  );
+  const readingMode = useSettingsStore((state) => state.settings.viewer.readingMode);
   const step = readingMode === 'double' ? 2 : 1;
 
   const saveProgress = async () => {
@@ -29,10 +28,7 @@ export default function useNavigation(currentChapter: ChapterView) {
       );
 
       if (serie?.dataPath) {
-        await window.electronAPI.series.recentSerie(
-          serie.dataPath,
-          currentChapter.serieName,
-        );
+        await window.electronAPI.history.addToHistory(serie.dataPath, currentChapter.id);
       }
     } catch (e) {
       console.error('Erro ao salvar progresso:', e);
@@ -92,12 +88,16 @@ export default function useNavigation(currentChapter: ChapterView) {
         isDownloaded = await downloadInReading(nextChapterData);
       }
 
-      const response = await window.electronAPI.chapters.getNextChapter(
-        nextChapterData.serieName,
-        nextChapterData.id,
-      );
+      const response: APIResponse<{ url: string; lastPageRead: number }> =
+        await window.electronAPI.chapters.getNextChapter(
+          nextChapterData.serieName,
+          nextChapterData.id,
+        );
 
-      const nextChapterUrl = response.data;
+      if (!response.success || !response.data) return;
+
+      const nextChapterUrl = response.data.url;
+      const lastPageRead = response.data.lastPageRead;
 
       await saveProgress();
 

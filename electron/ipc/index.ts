@@ -11,11 +11,9 @@ import systemHandlers from './systemHandlers.ts';
 import lanHandlers from './lanHandlers.ts';
 import historyHandlers from './historyHandlers.ts';
 import imageHandlers from './imageHandlers.ts';
-// import MetadataScraperService from '../services/MetadataManager';
+import metadataHandlers from './metadataHandlers.ts';
 
 export function registerHandlers() {
-  // const metadataScraper = new MetadataScraperService();
-
   uploadHandlers(ipcMain);
   seriesHandlers(ipcMain);
   collectionHandlers(ipcMain);
@@ -26,13 +24,5 @@ export function registerHandlers() {
   lanHandlers(ipcMain);
   historyHandlers(ipcMain);
   imageHandlers(ipcMain);
-
-  // ipcMain.handle('metadata:fetch', async (_event, input) => {
-  //   try {
-  //     const data = await metadataScraper.fetchMetadata(input);
-  //     return { success: true, data };
-  //   } catch (e) {
-  //     return { success: false, error: String(e) };
-  //   }
-  // });
+  metadataHandlers(ipcMain);
 }

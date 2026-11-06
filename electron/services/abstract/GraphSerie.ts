@@ -56,18 +56,14 @@ export default abstract class GraphSerie<
     }
   }
 
-  protected async generateChapter(chapter: graphChapter) {
+  protected async generateChapter(serieName: string, chapter: graphChapter) {
+    if (!chapter.chapterPath) {
+      throw new Error(`Capítulo "${chapter.name}" sem chapterPath.`);
+    }
+
     const normalized = path.resolve(chapter.archivesPath);
     const ext = path.extname(normalized);
-
-    const rawName = chapter.name;
-    const safeName = this.fileManager.sanitizeDirName(rawName);
-
-    const chapterOut = await this.fileManager.buildChapterPath(
-      this.comicsImages,
-      chapter.serieName,
-      safeName,
-    );
+    const chapterOut = chapter.chapterPath;
 
     try {
       if (ext === '.pdf') {
@@ -75,8 +71,6 @@ export default abstract class GraphSerie<
       } else {
         await this.archiveManager.extractWith7zip(normalized, chapterOut);
       }
-
-      chapter.chapterPath = chapterOut;
     } catch (e) {
       console.error(`Erro ao processar os capítulos em "${chapter.name}":`, e);
       throw e;
@@ -84,8 +78,12 @@ export default abstract class GraphSerie<
       await this.imageManager.normalizeChapter(chapterOut);
     }
   }
-
-  protected async createNewChapter(filesPath: string[], chapters: C[]) {
+  protected async createNewChapter(
+    filesPath: string[],
+    chapters: C[],
+    serieName: string,
+    chaptersPath: string,
+  ) {
     const chapterMap = new Map(chapters.map((ch) => [ch.archivesPath, ch]));
     const existingPaths = chapters.map((ch) => ch.archivesPath);
     const allPaths = [...existingPaths, ...filesPath];
@@ -101,13 +99,14 @@ export default abstract class GraphSerie<
           return exits;
         }
 
-        this.fileManager.moveChapter(
+        await this.fileManager.moveChapter(
           chapterPath,
-          path.join(this.userLibrary, chapters[0].serieName, path.basename(chapterPath)),
+          path.join(this.userLibrary, serieName, path.basename(chapterPath)),
         );
 
         const newChapter = await this.createChapter(
-          chapters[0].serieName,
+          serieName,
+          chaptersPath,
           chapterPath,
           nextId++,
         );
@@ -133,27 +132,40 @@ export default abstract class GraphSerie<
     };
   }
 
+  protected async destroyChapter(chapter: graphChapter, root: string) {
+    if (!chapter.chapterPath) return;
+    await this.fileManager.removeChapterDir(chapter.chapterPath, root);
+  }
+
   async createChapter(
     serieName: string,
+    chaptersPath: string, // novo
     archivePath: string,
     id: number,
   ): Promise<graphChapter> {
     const fileName = path
       .basename(archivePath, path.extname(archivePath))
       .replaceAll('#', '');
-    const sanitizedName = this.fileManager.sanitizeFilename(fileName);
-
     return {
       ...this.mountEmptyChapter(serieName, fileName),
-      id: id,
-      sanitizedName,
-      chapterPath: await this.fileManager.buildChapterPath(
-        this.comicsImages,
-        serieName,
-        fileName,
-      ),
+      id,
+      sanitizedName: this.fileManager.sanitizeFilename(fileName),
+      chapterPath: this.fileManager.buildChapterDir(chaptersPath, fileName),
       archivesPath: archivePath,
     };
+  }
+
+  async deleteChapterById(dataPath: string, chapter_id: number) {
+    const serie = await this.storageManager.readSerieData<T>(dataPath);
+    if (!serie) throw new Error('Série não encontrada.');
+
+    const chapter = serie.chapters.find((c) => c.id === chapter_id);
+    if (!chapter) throw new Error(`Capitulo com id ${chapter_id} nao foi encontrado.`);
+
+    await this.destroyChapter(chapter, serie.chaptersPath);
+
+    chapter.isDownloaded = 'not_downloaded';
+    await this.storageManager.writeData(serie);
   }
 
   async getChapter(dataPath: string, chapter_id: number): Promise<string[]> {
@@ -205,7 +217,12 @@ export default abstract class GraphSerie<
       try {
         await this.fileManager.moveChapter(item.sourcePath, dest);
 
-        const raw = (await this.createChapter(serie.name, dest, tempId++)) as C;
+        const raw = (await this.createChapter(
+          serie.name,
+          serie.chaptersPath,
+          dest,
+          tempId++,
+        )) as C;
         raw.name = item.label;
         raw.order = item.order;
 
@@ -242,26 +259,6 @@ export default abstract class GraphSerie<
 
     return { succeeded: created.map((c) => c.sourcePath), failed };
   }
-  async deleteChapterById(dataPath: string, chapter_id: number) {
-    const serie = await this.storageManager.readSerieData<T>(dataPath);
-
-    if (!serie) {
-      throw new Error('Série não encontrada.');
-    }
-
-    const chapterToProcess = serie.chapters.find((chapter) => chapter.id === chapter_id);
-
-    if (!chapterToProcess) {
-      throw new Error(`Capitulo com id ${chapter_id} nao foi encontrado.`);
-    }
-
-    if (await fse.pathExists(chapterToProcess.chapterPath)) {
-      await fse.remove(chapterToProcess.chapterPath);
-    }
-
-    chapterToProcess.isDownloaded = 'not_downloaded';
-    await this.storageManager.writeData(serie);
-  }
 
   async createChapterById(dataPath: string, chapter_id: number) {
     const serie = await this.storageManager.readSerieData<T>(dataPath);
@@ -276,7 +273,7 @@ export default abstract class GraphSerie<
       throw new Error(`Capitulo com id ${chapter_id} nao foi encontrado.`);
     }
 
-    await this.generateChapter(chapterToProcess);
+    await this.generateChapter(serie.name, chapterToProcess);
 
     chapterToProcess.isDownloaded = 'downloaded';
     serie.metadata.lastDownload = chapterToProcess.id;
@@ -307,7 +304,7 @@ export default abstract class GraphSerie<
 
     await Promise.all(
       chaptersToProcess.map(async (chapter) => {
-        await this.generateChapter(chapter);
+        await this.generateChapter(serie.name, chapter);
         chapter.isDownloaded = 'downloaded';
         serie.metadata.lastDownload = chapter.id;
       }),

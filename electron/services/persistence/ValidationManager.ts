@@ -2,7 +2,7 @@ import path from 'path';
 import fse from 'fs-extra';
 
 import FileSystem from '../abstract/LibrarySystem.ts';
-import { Literatures } from '../../types/electron-auxiliar.interfaces.ts';
+import { Literatures, APIResponse } from '../../types/electron-auxiliar.interfaces.ts';
 import { TieIn } from '../../types/comic.interfaces.ts';
 
 export default class ValidationManager extends FileSystem {
@@ -52,26 +52,26 @@ export default class ValidationManager extends FileSystem {
   public async checkDownload(
     serieData: Literatures | TieIn,
     chapterId: number,
-  ): Promise<boolean> {
+  ): Promise<APIResponse<void>> {
     try {
       const chapters = serieData.chapters;
 
       if (!chapters || chapterId > chapters.length) {
-        return false;
+        return { success: false };
       }
 
       const chapter = chapters.find((ch) => ch.id === chapterId);
 
-      if (!chapter) return false;
+      if (!chapter) return { success: false };
 
       if (chapter.isDownloaded === 'downloaded') {
-        return true;
+        return { success: true };
       } else {
-        return false;
+        return { success: false };
       }
     } catch (error) {
       console.error(`Erro ao verificar estado do capítulo ${chapterId}:`, error);
-      return false;
+      return { success: false, error: (error as Error).message };
     }
   }
 

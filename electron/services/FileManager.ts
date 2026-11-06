@@ -2,12 +2,12 @@ import fse from 'fs-extra';
 import path from 'path';
 import iconv from 'iconv-lite';
 import pLimit from 'p-limit';
-import { randomUUID } from 'crypto';
+import { randomUUID, createHash } from 'crypto';
 
 import LibrarySystem from './abstract/LibrarySystem';
 import { Literatures, PathKind } from '../types/electron-auxiliar.interfaces';
 import { ComicCategory } from '../types/comic.interfaces';
-import { SerieEditForm } from '../../src/shared/types/series.interfaces';
+import { LiteratureForm, SerieEditForm } from '../../src/shared/types/series.interfaces';
 
 export default class FileManager extends LibrarySystem {
   public async classifyPath(targetPath: string): Promise<PathKind> {
@@ -369,25 +369,33 @@ export default class FileManager extends LibrarySystem {
     }
   }
 
+  private shortHash(s: string): string {
+    return createHash('sha1').update(s).digest('hex').slice(0, 6);
+  }
+
+  public buildSerieDir(baseDir: string, serieName: string): string {
+    const safe = this.sanitizeFilename(serieName).slice(0, 8);
+    return path.join(path.resolve(baseDir), `${safe}_-${this.shortHash(serieName)}`);
+  }
+
   public buildChapterPath(
     baseDir: string,
     serieName: string,
     chapterName: string,
   ): string {
-    const resolvedBase = path.resolve(baseDir);
-
-    const safeSerie = this.sanitizeFilename(serieName).slice(0, 8);
-    const safeChapter = this.sanitizeFilename(chapterName).slice(0, 8);
-
-    const serieHash = randomUUID().slice(0, 6);
-    const chapterHash = randomUUID().slice(0, 6);
-
-    // Formato: baseDir / serie(8)_hash(6) / chapter(8)_hash(6)
-    // Ex: .../Quadrinho/Spider-M_a1b2c3/spider-m_d4e5f6
+    const safe = this.sanitizeFilename(chapterName).slice(0, 8);
     return path.join(
-      resolvedBase,
-      `${safeSerie}_-${serieHash}`,
-      `${safeChapter}_-${chapterHash}`,
+      this.buildSerieDir(baseDir, serieName),
+      `${safe}_-${this.shortHash(chapterName)}`,
+    );
+  }
+
+  // FileManager
+  public buildChapterDir(chaptersPath: string, chapterName: string): string {
+    const safe = this.sanitizeDirName(chapterName);
+    return path.join(
+      path.resolve(chaptersPath),
+      `${safe}_-${this.shortHash(chapterName)}`,
     );
   }
 
@@ -407,22 +415,18 @@ export default class FileManager extends LibrarySystem {
 
     await Promise.all(
       oldData.chapters.map(async (chapter, idx) => {
-        if (!updated.chapters) return;
+        if (!updated.chapters || !chapter.chapterPath) return;
 
-        chapter.id = idx;
-
-        const newChapterRoot = path.join(newChaptersPath, chapter.name);
         const oldChapterPath = chapter.chapterPath;
-
+        const newChapterRoot = path.join(newChaptersPath, path.basename(oldChapterPath));
         updated.chapters[idx].chapterPath = newChapterRoot;
 
         try {
-          if (oldChapterPath && (await fse.pathExists(oldChapterPath))) {
-            await fse.move(oldChapterPath, newChapterRoot, { overwrite: true });
+          if (await fse.pathExists(oldChapterPath)) {
+            await fse.move(oldChapterPath, newChapterRoot); // sem overwrite
           }
         } catch (err: unknown) {
-          const error = err as { code?: string };
-          if (error.code !== 'ENOENT') {
+          if ((err as { code?: string }).code !== 'ENOENT') {
             console.warn(`Falha ao mover capítulo ${chapter.name}:`, err);
           }
         }
@@ -604,15 +608,46 @@ export default class FileManager extends LibrarySystem {
     }
   }
 
-  public foundLiteratureForm(dataPath: string): string {
+  public foundLiteratureForm(dataPath: string): LiteratureForm {
     try {
       const LiteratureForm = path.basename(path.dirname(dataPath));
-      return LiteratureForm;
+      const normalizedForm = this.normalizeLiteratureForm(LiteratureForm);
+      return normalizedForm;
     } catch (e) {
       console.error(`Falha em descobrir o tipo da serie: ${path.basename(dataPath)}`);
       throw e;
     }
   }
+
+  private normalizeLiteratureForm(litForm: string): LiteratureForm {
+    const normalized = litForm.toLowerCase().trim();
+
+    switch (normalized) {
+      case 'mangas':
+      case 'manga':
+        return LiteratureForm.MANGA;
+      case 'comics':
+      case 'comic':
+        return LiteratureForm.COMIC;
+      case 'books':
+      case 'book':
+        return LiteratureForm.BOOK;
+      // case 'childseries':
+      //   return LiteratureForm.CHILD_SERIES;
+      default:
+        throw new Error(`Tipo de literatura desconhecido: ${litForm}`);
+    }
+  }
+
+  async removeChapterDir(target: string, root: string) {
+    const resolved = path.resolve(target);
+    const rel = path.relative(path.resolve(root), resolved);
+    if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) {
+      throw new Error(`Caminho fora da pasta de imagens: ${resolved}`);
+    }
+    await fse.remove(resolved);
+  }
+
   public async moveChapter(from: string, to: string) {
     await fse.move(from, to);
   }

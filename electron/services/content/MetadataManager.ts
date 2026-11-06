@@ -18,7 +18,7 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 10000;
 const MAX_RETRIES = 3;
 
-export default class MetadataScraperService extends LibrarySystem {
+export default class MetadataManager extends LibrarySystem {
   private readonly cachePath: string;
 
   constructor() {
@@ -27,20 +27,71 @@ export default class MetadataScraperService extends LibrarySystem {
   }
 
   public async fetchMetadata(input: MetadataFetchInput): Promise<ScrapedMetadata | null> {
-    const query = this.normalizeInput(input);
+    console.log(
+      '[fetchMetadata] 🚀 Iniciando processo de busca de metadata com input:',
+      input,
+    );
 
-    if (!query.title) return null;
+    const query = this.normalizeInput(input);
+    console.log('[fetchMetadata] 🔍 Input normalizado:', query);
+
+    if (!query.title) {
+      console.warn('[fetchMetadata] ⚠️ Título inválido ou em branco. Abortando.');
+      return null;
+    }
 
     const cacheKey = this.mountCacheKey(query);
+    console.log(`[fetchMetadata] 🔑 Chave de cache gerada: "${cacheKey}"`);
+
+    console.log('[fetchMetadata] 📦 Verificando existência no cache local...');
     const cached = await this.getFromCache(cacheKey);
-    if (cached) return cached;
+
+    if (cached) {
+      console.log('[fetchMetadata] ✅ HIT no Cache! Retornando dados em cache:', cached);
+      return cached;
+    }
+
+    console.log(
+      '[fetchMetadata] ❌ MISS no Cache. Coletando candidatos dos provedores externos...',
+    );
 
     const candidates = await this.collectCandidates(query);
-    const best = candidates
-      .filter((item) => (item.description || '').length > 50)
-      .sort((a, b) => b.score - a.score)[0];
+    console.log(
+      `[fetchMetadata] 📊 Total de candidatos retornados: ${candidates.length}`,
+    );
 
-    if (!best || !best.description) return null;
+    if (candidates.length > 0) {
+      console.log(
+        '[fetchMetadata] 📋 Candidatos encontrados:',
+        candidates.map((c) => ({
+          fonte: c.source,
+          titulo: c.title,
+          score: c.score,
+          descLength: (c.description || '').length,
+        })),
+      );
+    }
+
+    const validCandidates = candidates.filter(
+      (item) => (item.description || '').length > 50,
+    );
+    console.log(
+      `[fetchMetadata] 🧹 Candidatos com sinopse válida (> 50 chars): ${validCandidates.length}`,
+    );
+
+    const sortedCandidates = validCandidates.sort((a, b) => b.score - a.score);
+    const best = sortedCandidates[0];
+
+    if (!best || !best.description) {
+      console.warn(
+        '[fetchMetadata] ❌ Nenhum candidato atendeu aos critérios mínimos (descrição válida ou score superior).',
+      );
+      return null;
+    }
+
+    console.log(
+      `[fetchMetadata] 🏆 Melhor candidato selecionado (Fonte: ${best.source} | Score: ${best.score}): "${best.title}"`,
+    );
 
     const normalized: ScrapedMetadata = {
       title: best.title,
@@ -56,10 +107,16 @@ export default class MetadataScraperService extends LibrarySystem {
       scrapedAt: new Date().toISOString(),
     };
 
+    console.log('[fetchMetadata] ✨ Objeto ScrapedMetadata normalizado:', normalized);
+
+    console.log(
+      `[fetchMetadata] 💾 Persistindo resultado no cache com a chave "${cacheKey}"...`,
+    );
     await this.saveToCache(cacheKey, normalized);
+
+    console.log('[fetchMetadata] 🎉 Processo concluído com sucesso.');
     return normalized;
   }
-
   private normalizeInput(input: MetadataFetchInput): MetadataFetchInput {
     return {
       ...input,
@@ -259,7 +316,7 @@ export default class MetadataScraperService extends LibrarySystem {
         method: 'GET',
         signal: controller.signal,
         headers: {
-          Accept: 'application/json',
+          Accept: 'application/vnd.api+json, application/json',
           'User-Agent': 'biblioteca-metadata-scraper/1.0',
         },
       });
@@ -272,6 +329,37 @@ export default class MetadataScraperService extends LibrarySystem {
     } finally {
       clearTimeout(timeout);
     }
+  }
+
+  private async getFromCache(key: string): Promise<ScrapedMetadata | null> {
+    const cache = await this.readCache();
+    const item = cache.find((entry) => entry.key === key);
+
+    if (!item) return null;
+
+    if (new Date(item.expiresAt).getTime() < Date.now()) {
+      await this.deleteCacheKey(key);
+      return null;
+    }
+
+    return item.value;
+  }
+
+  private async saveToCache(key: string, value: ScrapedMetadata): Promise<void> {
+    const cache = await this.readCache();
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + THIRTY_DAYS_MS);
+
+    const updated = cache
+      .filter((entry) => entry.key !== key)
+      .concat({
+        key,
+        value,
+        createdAt: now.toISOString(),
+        expiresAt: expiresAt.toISOString(),
+      });
+
+    await this.writeCache(updated);
   }
 
   private sanitizeDescription(input: string): string {
@@ -380,37 +468,6 @@ export default class MetadataScraperService extends LibrarySystem {
     return Number(match[0]);
   }
 
-  private async getFromCache(key: string): Promise<ScrapedMetadata | null> {
-    const cache = await this.readCache();
-    const item = cache.find((entry) => entry.key === key);
-
-    if (!item) return null;
-
-    if (new Date(item.expiresAt).getTime() < Date.now()) {
-      await this.deleteCacheKey(key);
-      return null;
-    }
-
-    return item.value;
-  }
-
-  private async saveToCache(key: string, value: ScrapedMetadata): Promise<void> {
-    const cache = await this.readCache();
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + THIRTY_DAYS_MS);
-
-    const updated = cache
-      .filter((entry) => entry.key !== key)
-      .concat({
-        key,
-        value,
-        createdAt: now.toISOString(),
-        expiresAt: expiresAt.toISOString(),
-      });
-
-    await this.writeCache(updated);
-  }
-
   private async deleteCacheKey(key: string): Promise<void> {
     const cache = await this.readCache();
     const updated = cache.filter((entry) => entry.key !== key);
@@ -463,3 +520,13 @@ export default class MetadataScraperService extends LibrarySystem {
     });
   }
 }
+
+// (async () => {
+//   const metadataManager = new MetadataManager();
+//   const response = await metadataManager.fetchMetadata({
+//     title: 'One Piece',
+//     type: 'manga',
+//     author: 'Eiichiro Oda',
+//   });
+//   console.log(response);
+// })();

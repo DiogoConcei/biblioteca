@@ -22,7 +22,6 @@ export interface Book extends graphSerie<BookChapter> {
   chapters: BookChapter[];
   totalChapters: number;
   chaptersRead: number;
-  viewMode: ViewMode;
   literatureForm: LiteratureForm.BOOK;
   readingData: {
     lastChapterId: number;
