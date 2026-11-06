@@ -73,8 +73,8 @@ export default function downloadHandlers(ipcMain: IpcMain) {
         throw new Error(`Capítulo com id ${chapter_id} não encontrado.`);
       }
 
-      if (await validationManager.checkDownload(serieData, chapter.id))
-        return { success: true };
+      const check = await validationManager.checkDownload(serieData, chapter.id);
+      if (check.success) return { success: true };
 
       try {
         const manager = ManagerFactory.get(literatureForm);

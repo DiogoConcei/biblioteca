@@ -81,29 +81,19 @@ export default function useNavigation(currentChapter: ChapterView) {
     try {
       const nextChapterData = chapters[currentIndex + 1];
 
-      let isDownloaded = nextChapterData.isDownloaded === 'downloaded';
+      const ok =
+        nextChapterData.isDownloaded === 'downloaded' ||
+        (await downloadInReading(nextChapterData));
+      if (!ok) throw new Error('download falhou');
 
-      if (!isDownloaded) {
-        // downloadInReading retorna boolean, usamos o retorno em vez de confiar no objeto local
-        isDownloaded = await downloadInReading(nextChapterData);
-      }
-
-      const response: APIResponse<{ url: string; lastPageRead: number }> =
-        await window.electronAPI.chapters.getNextChapter(
-          nextChapterData.serieName,
-          nextChapterData.id,
-        );
-
-      if (!response.success || !response.data) return;
-
-      const nextChapterUrl = response.data.url;
-      const lastPageRead = response.data.lastPageRead;
+      const res = await window.electronAPI.chapters.getNextChapter(
+        nextChapterData.serieName,
+        nextChapterData.id,
+      );
+      if (!res.success || !res.data) throw new Error(res.error);
 
       await saveProgress();
-
-      if (isDownloaded && nextChapterUrl) {
-        navigate(nextChapterUrl);
-      }
+      navigate(res.data.url);
     } catch (e) {
       setError('Falha ao solicitar o próximo capítulo.');
     } finally {
@@ -121,24 +111,24 @@ export default function useNavigation(currentChapter: ChapterView) {
 
     if (currentIndex <= 0) return;
 
+    currentChapter.setIsLoading(true);
+
     try {
       const prevChapterData = chapters[currentIndex - 1];
 
-      let isDownloaded = prevChapterData.isDownloaded === 'downloaded';
+      const ok =
+        prevChapterData.isDownloaded === 'downloaded' ||
+        (await downloadInReading(prevChapterData));
+      if (!ok) throw new Error('download falhou');
 
-      if (!isDownloaded) {
-        isDownloaded = await downloadInReading(prevChapterData);
-      }
-
-      const response = await window.electronAPI.chapters.getPrevChapter(
+      const res = await window.electronAPI.chapters.getPrevChapter(
         prevChapterData.serieName,
         prevChapterData.id,
       );
-      const prevChapterUrl = response.data;
+      if (!res.success || !res.data) throw new Error(res.error);
+
       await saveProgress();
-      if (isDownloaded && prevChapterUrl) {
-        navigate(prevChapterUrl);
-      }
+      navigate(res.data.url);
     } catch (e) {
       setError('Falha ao solicitar o capítulo anterior.');
     }

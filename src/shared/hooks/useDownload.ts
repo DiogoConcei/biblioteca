@@ -1,4 +1,7 @@
-import { LiteratureChapter } from '../../../electron/types/electron-auxiliar.interfaces';
+import {
+  APIResponse,
+  LiteratureChapter,
+} from '../../../electron/types/electron-auxiliar.interfaces';
 import useSerieStore from '../store/useSerieStore';
 import { useUIStore } from '../store/useUIStore';
 
@@ -18,12 +21,13 @@ export default function useDownload() {
     updateChapter(readingChapter.id, 'isDownloaded', 'downloading');
 
     try {
-      const response = await window.electronAPI.download.readingDownload(
-        readingChapter.serieName,
-        readingChapter.id,
-      );
+      const response: APIResponse<void> =
+        await window.electronAPI.download.readingDownload(
+          readingChapter.serieName,
+          readingChapter.id,
+        );
 
-      if (!response) {
+      if (!response.success) {
         setError('Falha ao baixar capítulo');
         updateChapter(readingChapter.id, 'isDownloaded', 'not_downloaded');
         return false;
@@ -32,7 +36,6 @@ export default function useDownload() {
       updateChapter(readingChapter.id, 'isDownloaded', 'downloaded');
       return true;
     } catch {
-      setError('Falha ao baixar o capítulo');
       updateChapter(readingChapter.id, 'isDownloaded', 'not_downloaded');
       return false;
     }
@@ -52,12 +55,12 @@ export default function useDownload() {
     if (freshChapter.isDownloaded === 'downloaded') {
       updateChapter(freshChapter.id, 'isDownloaded', 'downloading');
 
-      const success = await window.electronAPI.download.singleRemove(
+      const success: APIResponse<void> = await window.electronAPI.download.singleRemove(
         dataPath!,
         freshChapter.id,
       );
 
-      if (!success) {
+      if (!success.success) {
         setError('Falha ao remover o capítulo');
         updateChapter(freshChapter.id, 'isDownloaded', 'downloaded');
         return;
@@ -67,12 +70,12 @@ export default function useDownload() {
     } else {
       updateChapter(freshChapter.id, 'isDownloaded', 'downloading');
 
-      const success = await window.electronAPI.download.singleDownload(
+      const success: APIResponse<void> = await window.electronAPI.download.singleDownload(
         dataPath!,
         freshChapter.id,
       );
 
-      if (!success) {
+      if (!success.success) {
         setError('Falha ao baixar capítulo');
         updateChapter(freshChapter.id, 'isDownloaded', 'not_downloaded');
         return;

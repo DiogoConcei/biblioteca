@@ -6,6 +6,8 @@ import {
   APIResponse,
   ChapterView,
 } from '../../../electron/types/electron-auxiliar.interfaces';
+import { ChapterResource, MediaContent } from '../../../electron/types/media.interfaces';
+
 export default function useChapter(serieName: string, chapterId: number) {
   const setError = useUIStore((state) => state.setError);
 
@@ -23,6 +25,9 @@ export default function useChapter(serieName: string, chapterId: number) {
   useEffect(() => {
     const fetchChapter = async () => {
       setIsLoading(true);
+      setError(null);
+      setPages([]);
+
       try {
         const response = await window.electronAPI.chapters.getChapter(
           serieName,
@@ -32,7 +37,7 @@ export default function useChapter(serieName: string, chapterId: number) {
         if (response.success && response.data) {
           const resources = response.data.resources;
 
-          const pagesArray = resources.map((res) =>
+          const pagesArray = resources.map((res: string | ChapterResource) =>
             typeof res === 'string' ? res : res.path,
           );
 
@@ -49,6 +54,7 @@ export default function useChapter(serieName: string, chapterId: number) {
           setLastPageRead(resolvedLastPage);
           setCurrentPage(resolvedLastPage ?? 0);
         } else {
+          console.error('get-single falhou:', response.error);
           setError(
             'Infelizmente não conseguimos encontrar o seu capítulo. Tente baixar novamente ou verifique a página de configurações para mais detalhes.',
           );

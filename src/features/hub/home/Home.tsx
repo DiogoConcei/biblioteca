@@ -53,7 +53,7 @@ export default function Home() {
     try {
       const response = await window.electronAPI.upload.processFiles(filePaths);
       populateQueue(response.data);
-      console.log(response.data);
+
       if (response.data.tieIns?.length > 0) {
         console.warn(
           `${response.data.tieIns.length} item(ns) de Tie-In foram ignorados — fluxo ainda não implementado.`,

@@ -30,6 +30,7 @@ import { ComicTieIn, TieIn } from './types/comic.interfaces.ts';
 import { SerieHistoryEntry } from './types/history.interfaces.ts';
 import { LastReadResult } from './ipc/chaptersHandlers.ts';
 import { SuggestedCover } from './ipc/uploadHandlers.ts';
+import { MediaContent } from './types/media.interfaces.ts';
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -155,7 +156,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getChapter: async (
       serieName: string,
       chapter_id: number,
-    ): Promise<GetChapterResponse> =>
+    ): Promise<APIResponse<MediaContent>> =>
       ipcRenderer.invoke('chapter:get-single', serieName, chapter_id),
     saveLastRead: async (
       serieName: string,
@@ -182,7 +183,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getPrevChapter: async (
       serieName: string,
       chapter_id: number,
-    ): Promise<APIResponse<string>> =>
+    ): Promise<APIResponse<{ url: string }>> =>
       ipcRenderer.invoke('chapter:get-prev-chapter', serieName, chapter_id),
     reorderChapters: async (
       dataPath: string,
@@ -264,7 +265,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     multipleDownload: async (dataPath: string, quantity: number): Promise<boolean> =>
       ipcRenderer.invoke('donwload:multiple', dataPath, quantity),
 
-    readingDownload: async (serieName: string, chapter_id: number): Promise<boolean> =>
+    readingDownload: async (
+      serieName: string,
+      chapter_id: number,
+    ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('download:reading', serieName, chapter_id),
     checkDownload: async (serieName: string, chapter_id: number): Promise<boolean> =>
       ipcRenderer.invoke('download:check', serieName, chapter_id),

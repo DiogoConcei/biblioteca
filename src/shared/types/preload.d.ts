@@ -157,7 +157,7 @@ declare global {
         getChapter: (
           serieName: string,
           chapter_id: number,
-        ) => Promise<GetChapterResponse>;
+        ) => Promise<APIResponse<MediaContent>>;
         saveLastRead: (
           serieName: string,
           chapter_id: number,
@@ -173,7 +173,7 @@ declare global {
         getPrevChapter: (
           serieName: string,
           chapter_id: number,
-        ) => Promise<APIResponse<{ url: string; lastPageRead: number }>>;
+        ) => Promise<APIResponse<{ url: string }>>;
         reorderChapters: (
           dataPath: string,
           newOrderIds: number[],
@@ -234,7 +234,10 @@ declare global {
 
         multipleDownload: (dataPath: string, quantity: number) => Promise<boolean>;
 
-        readingDownload: (serieName: string, chapter_id: number) => Promise<boolean>;
+        readingDownload: (
+          serieName: string,
+          chapter_id: number,
+        ) => Promise<APIResponse<void>>;
         checkDownload: (serieName: string, chapter_id: number) => Promise<boolean>;
 
         getTasks: () => Promise<DownloadTask[]>;

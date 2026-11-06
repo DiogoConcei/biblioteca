@@ -3,13 +3,13 @@ export type MediaType = 'comic' | 'book' | 'pdf';
 export interface ChapterResource {
   id: string;
   label: string;
-  path: string; // URL do protocolo lib-media://
+  path: string;
 }
 
 export interface MediaContent {
   type: MediaType;
   resources: string[] | ChapterResource[];
-  originalPath?: string; // URL para o arquivo original (PDF ou EPUB)
+  originalPath?: string;
   totalResources: number;
 }
 
