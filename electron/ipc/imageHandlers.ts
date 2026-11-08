@@ -37,6 +37,25 @@ export default function imageHandlers(ipcMain: IpcMain) {
   );
 
   ipcMain.handle(
+    'image:add-background',
+    async (
+      _event,
+      backgroundGalleryPath: string,
+      sourcePath: string,
+    ): Promise<APIResponse<string>> => {
+      try {
+        const mediaUrl = await imageManager.addToBackgroundGallery(
+          backgroundGalleryPath,
+          sourcePath,
+        );
+        return { success: true, data: mediaUrl };
+      } catch (error) {
+        return { success: false, error: String(error) };
+      }
+    },
+  );
+
+  ipcMain.handle(
     'image:delete-cover',
     async (_event, coverGalleryPath: string): Promise<APIResponse<void>> => {
       try {

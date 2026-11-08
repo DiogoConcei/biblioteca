@@ -1,11 +1,12 @@
 import { FormInputProps } from '@/features/upload/types/uploadSerieForm.interfaces';
-import './StatusField.scss';
+import styles from './StatusField.module.scss'; // Atualizado para module.scss
 
 export default function StatusField({ register, error }: FormInputProps) {
   return (
-    <div className="status-info">
-      <h2 className="form-subtitle">Status de leitura:</h2>
-      <div className="status-container">
+    <div className={styles.statusInfo}>
+      <h2 className={styles.formSubtitle}>Status de leitura:</h2>
+
+      <div className={styles.statusContainer}>
         <input type="radio" value="Em andamento" id="StatusEmAndamento" {...register} />
         <label htmlFor="StatusEmAndamento">Em andamento</label>
 
@@ -15,7 +16,8 @@ export default function StatusField({ register, error }: FormInputProps) {
         <input type="radio" value="Pendente" id="StatusPendente" {...register} />
         <label htmlFor="StatusPendente">Pendente</label>
       </div>
-      {error && <p className="error">{error.message}</p>}
+
+      {error && <p className={styles.error}>{error.message}</p>}
     </div>
   );
 }

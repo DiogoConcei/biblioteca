@@ -14,6 +14,7 @@ export interface ScrapedMetadata {
   authors?: string[];
   artists?: string[];
   genres?: string[];
+  coverPath?: string;
   publishedAt?: string;
   status?: 'ongoing' | 'completed' | 'unknown';
   coverUrl?: string;
@@ -37,7 +38,7 @@ export interface CandidateMetadata {
 
 export interface CacheEntry {
   key: string;
-  value: ScrapedMetadata;
+  value: ScrapedMetadata[]; // antes: ScrapedMetadata
   createdAt: string;
   expiresAt: string;
 }

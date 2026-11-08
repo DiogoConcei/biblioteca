@@ -248,7 +248,7 @@ export default function EditSerie() {
               />
               <div className={styles.field}>
                 <span className={styles.label}>Tags</span>
-                <TagsField control={control} />
+                <TagsField control={control} name="tags" />
               </div>
             </div>
           </section>

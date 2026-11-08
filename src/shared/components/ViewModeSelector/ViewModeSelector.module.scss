@@ -1,0 +1,63 @@
+@use '@/shared/styles/variables' as *;
+
+.viewModeInfo {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: flex-start;
+  width: 100%; // Ocupa todo o espaço da coluna perfeitamente
+  box-sizing: border-box;
+
+  .formSubtitle {
+    font-size: $font-lg;
+    color: $indian-red;
+    font-weight: 600;
+    margin-bottom: $spacing-2;
+    margin-top: 0;
+  }
+
+  .optionsContainer {
+    display: flex;
+    gap: $spacing-2;
+    width: 100%;
+
+    .option {
+      flex: 1; // Divide o espaço igualmente entre as 3 opções
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: $spacing-1;
+
+      padding: $spacing-2;
+      cursor: pointer;
+      font-size: $font-base;
+      font-weight: 500;
+      color: $snow;
+
+      // Padrão vidro fosco
+      border: 2px solid rgba($amethyst, 0.5);
+      border-radius: $radius-md;
+      background-color: rgba($gunmetal, 0.6);
+      backdrop-filter: blur(4px);
+      transition: all 0.2s ease;
+
+      &:hover:not(:disabled) {
+        border-color: $amethyst;
+        background-color: rgba($gunmetal, 0.8);
+      }
+
+      &:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
+      // Estado selecionado (brilho e cor sólida)
+      &.selected {
+        background-color: $amethyst;
+        border-color: $amethyst;
+        color: $snow;
+        box-shadow: 0 4px 12px rgba(137, 99, 186, 0.3);
+      }
+    }
+  }
+}

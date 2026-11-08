@@ -1,11 +1,12 @@
 import { FormInputProps } from '@/features/upload/types/uploadSerieForm.interfaces';
-import './LiteratureField.scss';
+import styles from './LiteratureField.module.scss'; // Atualizado para module
 
 export default function LiteratureField({ register, error }: FormInputProps) {
   return (
-    <div className="literature-info">
-      <h2 className="form-subtitle">Forma de literatura:</h2>
-      <div className="form-radio">
+    <div className={styles.literatureInfo}>
+      <h2 className={styles.formSubtitle}>Forma de literatura:</h2>
+
+      <div className={styles.formRadio}>
         <input type="radio" value="Manga" id="Manga" {...register} />
         <label htmlFor="Manga">Manga</label>
 
@@ -15,7 +16,8 @@ export default function LiteratureField({ register, error }: FormInputProps) {
         <input type="radio" value="Books" id="Books" {...register} />
         <label htmlFor="Books">Livro</label>
       </div>
-      {error && <p className="error">{error.message}</p>}
+
+      {error && <p className={styles.error}>{error.message}</p>}
     </div>
   );
 }

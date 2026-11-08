@@ -20,12 +20,14 @@ const serieSchema = z.object({
   literatureForm: z.enum(LiteratureForm),
   tags: z.array(z.string()),
   collections: z.array(z.string()),
+  backgroundImage: z.string().optional(),
   archivesPath: z.string(),
   chaptersPath: z.string(),
   oldPath: z.string().min(1),
   viewMode: z.enum(ViewMode),
   createdAt: z.string().min(1),
   deletedAt: z.string(),
+  description: z.string().optional(),
 });
 
 export const uploadSchema = z.object({ series: z.array(serieSchema).min(1) });

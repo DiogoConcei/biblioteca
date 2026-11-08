@@ -1,0 +1,64 @@
+@use '@/shared/styles/variables' as *;
+
+.privacyInfo {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: flex-start;
+  width: 100%; // Ocupa o espaço da coluna
+  box-sizing: border-box;
+
+  .formSubtitle {
+    font-size: $font-lg;
+    color: $indian-red;
+    font-weight: 600;
+    margin-bottom: $spacing-2;
+    margin-top: 0;
+  }
+
+  .privacyContainer {
+    display: flex;
+    gap: $spacing-2;
+
+    input[type='radio'] {
+      display: none;
+
+      &:checked + label {
+        background-color: $amethyst;
+        border-color: $amethyst;
+        color: $snow;
+        box-shadow: 0 4px 12px rgba(137, 99, 186, 0.3); // Brilho na opção ativa
+      }
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 90px; // Largura mínima para os botões ficarem uniformes
+      padding: $spacing-1 $spacing-4;
+      cursor: pointer;
+      font-size: $font-lg;
+      font-weight: 500;
+      color: $snow;
+
+      border: 2px solid rgba($amethyst, 0.5);
+      border-radius: $radius-md;
+
+      // Fundo vidro fosco padrão
+      background-color: rgba($gunmetal, 0.6);
+      backdrop-filter: blur(4px);
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: $amethyst;
+        background-color: rgba($gunmetal, 0.8);
+      }
+    }
+  }
+
+  .error {
+    color: $indian-red;
+    font-size: $font-sm;
+    margin-top: $spacing-1;
+  }
+}

@@ -25,9 +25,11 @@ export const EMPTY_SERIE: SerieFormValues = {
   tags: [],
   collections: [],
   archivesPath: '',
+  backgroundImage: '',
   chaptersPath: '',
   oldPath: '',
   createdAt: '',
+  description: '',
   deletedAt: '',
 };
 

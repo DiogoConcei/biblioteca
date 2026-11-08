@@ -1,7 +1,9 @@
+import { createHash } from 'crypto';
 import fse from 'fs-extra';
 import path from 'path';
 
 import LibrarySystem from '../abstract/LibrarySystem';
+import ImageManager from '../../services/processing/ImageManager';
 import {
   CandidateMetadata,
   JikanItem,
@@ -18,85 +20,90 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 10000;
 const MAX_RETRIES = 3;
 
+const MAX_RESULTS = 3;
+const MIN_DESCRIPTION_LENGTH = 50;
+
+// Mude essa versão sempre que o formato guardado no cache mudar.
+// Chaves antigas deixam de bater e expiram sozinhas.
+const CACHE_VERSION = 'v2';
+
+const COVER_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+
 export default class MetadataManager extends LibrarySystem {
+  private readonly imageManager: ImageManager = new ImageManager();
   private readonly cachePath: string;
+  private readonly coversPath: string;
 
   constructor() {
     super();
     this.cachePath = path.join(this.appConfigFolder, 'metadataScraperCache.json');
+    this.coversPath = path.join(this.appConfigFolder, 'metadataCovers');
   }
 
+  /** Mantido por compatibilidade: devolve só o melhor resultado. */
   public async fetchMetadata(input: MetadataFetchInput): Promise<ScrapedMetadata | null> {
-    console.log(
-      '[fetchMetadata] 🚀 Iniciando processo de busca de metadata com input:',
-      input,
-    );
+    const results = await this.fetchTopMetadata(input, 1);
+    return results[0] ?? null;
+  }
+
+  /** Devolve até `limit` resultados, do melhor para o pior, prontos para exibir. */
+  public async fetchTopMetadata(
+    input: MetadataFetchInput,
+    limit: number = MAX_RESULTS,
+  ): Promise<ScrapedMetadata[]> {
+    console.log('[fetchTopMetadata] 🚀 Iniciando busca com input:', input);
 
     const query = this.normalizeInput(input);
-    console.log('[fetchMetadata] 🔍 Input normalizado:', query);
 
     if (!query.title) {
-      console.warn('[fetchMetadata] ⚠️ Título inválido ou em branco. Abortando.');
-      return null;
+      console.warn('[fetchTopMetadata] ⚠️ Título inválido ou em branco. Abortando.');
+      return [];
     }
 
     const cacheKey = this.mountCacheKey(query);
-    console.log(`[fetchMetadata] 🔑 Chave de cache gerada: "${cacheKey}"`);
-
-    console.log('[fetchMetadata] 📦 Verificando existência no cache local...');
     const cached = await this.getFromCache(cacheKey);
 
     if (cached) {
-      console.log('[fetchMetadata] ✅ HIT no Cache! Retornando dados em cache:', cached);
-      return cached;
+      console.log(`[fetchTopMetadata] ✅ HIT no cache ("${cacheKey}")`);
+      return this.toDisplay(cached.slice(0, limit));
     }
 
-    console.log(
-      '[fetchMetadata] ❌ MISS no Cache. Coletando candidatos dos provedores externos...',
-    );
+    console.log('[fetchTopMetadata] ❌ MISS no cache. Consultando provedores...');
 
     const candidates = await this.collectCandidates(query);
+    console.log(`[fetchTopMetadata] 📊 Candidatos brutos: ${candidates.length}`);
+
+    // 1) junta o mesmo título vindo de provedores diferentes (completa autores/gêneros)
+    // 2) descarta quem não tem sinopse utilizável
+    // 3) ordena por score e fica com os melhores
+    const top = this.mergeDuplicates(candidates)
+      .filter((item) => (item.description || '').length > MIN_DESCRIPTION_LENGTH)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+
     console.log(
-      `[fetchMetadata] 📊 Total de candidatos retornados: ${candidates.length}`,
+      '[fetchTopMetadata] 🏆 Selecionados:',
+      top.map((c) => ({ fonte: c.source, titulo: c.title, score: c.score })),
     );
 
-    if (candidates.length > 0) {
-      console.log(
-        '[fetchMetadata] 📋 Candidatos encontrados:',
-        candidates.map((c) => ({
-          fonte: c.source,
-          titulo: c.title,
-          score: c.score,
-          descLength: (c.description || '').length,
-        })),
-      );
+    if (top.length === 0) {
+      console.warn('[fetchTopMetadata] ❌ Nenhum candidato válido. Não vou cachear.');
+      return [];
     }
 
-    const validCandidates = candidates.filter(
-      (item) => (item.description || '').length > 50,
-    );
-    console.log(
-      `[fetchMetadata] 🧹 Candidatos com sinopse válida (> 50 chars): ${validCandidates.length}`,
-    );
+    const normalized = top.map((item) => this.toScrapedMetadata(item));
 
-    const sortedCandidates = validCandidates.sort((a, b) => b.score - a.score);
-    const best = sortedCandidates[0];
+    // O cache guarda a versão "crua" (capa remota). A capa local é resolvida na saída.
+    await this.saveToCache(cacheKey, normalized);
 
-    if (!best || !best.description) {
-      console.warn(
-        '[fetchMetadata] ❌ Nenhum candidato atendeu aos critérios mínimos (descrição válida ou score superior).',
-      );
-      return null;
-    }
+    return this.toDisplay(normalized);
+  }
 
-    console.log(
-      `[fetchMetadata] 🏆 Melhor candidato selecionado (Fonte: ${best.source} | Score: ${best.score}): "${best.title}"`,
-    );
-
-    const normalized: ScrapedMetadata = {
+  private toScrapedMetadata(best: CandidateMetadata): ScrapedMetadata {
+    return {
       title: best.title,
       altTitles: this.cleanStringArray(best.altTitles),
-      description: this.sanitizeDescription(best.description),
+      description: this.sanitizeDescription(best.description ?? ''),
       authors: this.cleanStringArray(best.authors),
       artists: this.cleanStringArray(best.artists),
       genres: this.cleanStringArray(best.genres),
@@ -106,17 +113,8 @@ export default class MetadataManager extends LibrarySystem {
       source: best.source,
       scrapedAt: new Date().toISOString(),
     };
-
-    console.log('[fetchMetadata] ✨ Objeto ScrapedMetadata normalizado:', normalized);
-
-    console.log(
-      `[fetchMetadata] 💾 Persistindo resultado no cache com a chave "${cacheKey}"...`,
-    );
-    await this.saveToCache(cacheKey, normalized);
-
-    console.log('[fetchMetadata] 🎉 Processo concluído com sucesso.');
-    return normalized;
   }
+
   private normalizeInput(input: MetadataFetchInput): MetadataFetchInput {
     return {
       ...input,
@@ -124,6 +122,10 @@ export default class MetadataManager extends LibrarySystem {
       author: input.author?.trim(),
     };
   }
+
+  // ---------------------------------------------------------------------------
+  // Candidatos
+  // ---------------------------------------------------------------------------
 
   private async collectCandidates(
     input: MetadataFetchInput,
@@ -147,6 +149,46 @@ export default class MetadataManager extends LibrarySystem {
     return candidates;
   }
 
+  /**
+   * Agrupa candidatos com o mesmo título normalizado. O de maior score vence,
+   * e os campos que ele não tem são preenchidos pelo outro.
+   * Resolve o caso do Kitsu (sem autores/gêneros) vencendo o Jikan.
+   */
+  private mergeDuplicates(candidates: CandidateMetadata[]): CandidateMetadata[] {
+    const groups = new Map<string, CandidateMetadata>();
+
+    for (const candidate of candidates) {
+      const key = this.normalizeText(candidate.title);
+      const existing = groups.get(key);
+
+      if (!existing) {
+        groups.set(key, candidate);
+        continue;
+      }
+
+      const [winner, loser] =
+        candidate.score > existing.score ? [candidate, existing] : [existing, candidate];
+
+      groups.set(key, {
+        ...winner,
+        altTitles: [...(winner.altTitles || []), ...(loser.altTitles || [])],
+        description:
+          (winner.description || '').length >= (loser.description || '').length
+            ? winner.description
+            : loser.description,
+        authors: winner.authors?.length ? winner.authors : loser.authors,
+        artists: winner.artists?.length ? winner.artists : loser.artists,
+        genres: winner.genres?.length ? winner.genres : loser.genres,
+        publishedAt: winner.publishedAt || loser.publishedAt,
+        coverUrl: winner.coverUrl || loser.coverUrl,
+        status:
+          winner.status && winner.status !== 'unknown' ? winner.status : loser.status,
+      });
+    }
+
+    return [...groups.values()];
+  }
+
   private async fetchFromJikan(input: MetadataFetchInput): Promise<CandidateMetadata[]> {
     const data = await this.safeRequest<{ data?: JikanItem[] }>(
       `https://api.jikan.moe/v4/manga?q=${encodeURIComponent(input.title)}&limit=8`,
@@ -163,6 +205,7 @@ export default class MetadataManager extends LibrarySystem {
       const genres = Array.isArray(item.genres)
         ? item.genres.map((genre: { name?: string }) => genre.name || '')
         : [];
+      const publishedAt = item.published?.from || undefined;
 
       return {
         title,
@@ -173,11 +216,11 @@ export default class MetadataManager extends LibrarySystem {
         authors,
         artists: [],
         genres,
-        publishedAt: item.published?.from || undefined,
+        publishedAt,
         status: this.normalizeStatus(item.status),
         coverUrl: item.images?.jpg?.large_image_url || item.images?.jpg?.image_url,
         source: 'jikan',
-        score: this.computeScore(input, title, authors),
+        score: this.computeScore(input, title, authors, publishedAt),
       };
     });
   }
@@ -195,6 +238,7 @@ export default class MetadataManager extends LibrarySystem {
       const description = this.sanitizeDescription(
         attrs.synopsis || attrs.description || '',
       );
+      const publishedAt = attrs.startDate || undefined;
 
       return {
         title,
@@ -205,11 +249,11 @@ export default class MetadataManager extends LibrarySystem {
         authors: [],
         artists: [],
         genres: [],
-        publishedAt: attrs.startDate || undefined,
+        publishedAt,
         status: this.normalizeStatus(attrs.status),
         coverUrl: attrs.posterImage?.large || attrs.posterImage?.original,
         source: 'kitsu',
-        score: this.computeScore(input, title, []),
+        score: this.computeScore(input, title, [], publishedAt),
       };
     });
   }
@@ -231,6 +275,9 @@ export default class MetadataManager extends LibrarySystem {
       const subjects = (doc.subject || [])
         .filter((name: unknown): name is string => typeof name === 'string')
         .slice(0, 8);
+      const publishedAt = doc.first_publish_year
+        ? String(doc.first_publish_year)
+        : undefined;
 
       return {
         title,
@@ -241,13 +288,13 @@ export default class MetadataManager extends LibrarySystem {
         authors,
         artists: [],
         genres: subjects,
-        publishedAt: doc.first_publish_year ? String(doc.first_publish_year) : undefined,
+        publishedAt,
         status: 'unknown',
         coverUrl: doc.cover_i
           ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`
           : undefined,
         source: 'openlibrary',
-        score: this.computeScore(input, title, authors),
+        score: this.computeScore(input, title, authors, publishedAt),
       };
     });
   }
@@ -283,10 +330,14 @@ export default class MetadataManager extends LibrarySystem {
         status: 'unknown',
         coverUrl: volume.imageLinks?.thumbnail || volume.imageLinks?.smallThumbnail,
         source: 'google-books',
-        score: this.computeScore(input, title, authors),
+        score: this.computeScore(input, title, authors, volume.publishedDate),
       };
     });
   }
+
+  // ---------------------------------------------------------------------------
+  // Rede
+  // ---------------------------------------------------------------------------
 
   private async safeRequest<T>(url: string): Promise<T | null> {
     for (let attempt = 0; attempt < MAX_RETRIES; attempt += 1) {
@@ -331,7 +382,81 @@ export default class MetadataManager extends LibrarySystem {
     }
   }
 
-  private async getFromCache(key: string): Promise<ScrapedMetadata | null> {
+  // ---------------------------------------------------------------------------
+  // Capas locais (exibição no front via getMediaUrl)
+  // --------------------------------------------------------------------------
+
+  /** Caminho local determinístico para uma capa remota (mesma URL = mesmo arquivo). */
+  private coverFilePath(url: string): string {
+    const hash = createHash('sha1').update(url).digest('hex');
+    let ext = '.jpg';
+
+    try {
+      const candidate = path.extname(new URL(url).pathname).toLowerCase();
+      if (COVER_EXTENSIONS.includes(candidate)) ext = candidate;
+    } catch {
+      // URL inválida: segue com .jpg
+    }
+
+    return path.join(this.coversPath, `${hash}${ext}`);
+  }
+
+  /** Baixa a capa se ainda não existir em disco. Retorna o caminho local ou undefined. */
+  private async ensureCover(url?: string): Promise<string | undefined> {
+    if (!url) return undefined;
+
+    const filePath = this.coverFilePath(url);
+    if (await fse.pathExists(filePath)) return filePath;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'biblioteca-metadata-scraper/1.0' },
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+      await fse.ensureDir(this.coversPath);
+      await fse.writeFile(filePath, buffer);
+
+      return filePath;
+    } catch (error) {
+      console.error('Falha ao baixar capa:', url, error);
+      return undefined;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  /**
+   * Prepara os resultados para o front: baixa as capas (em paralelo) e troca
+   * `coverUrl` pela URL servida por getMediaUrl. `coverPath` fica disponível
+   * para quando o usuário aplicar a capa ao formulário.
+   * Se o download falhar, mantém a URL remota como fallback.
+   */
+  private async toDisplay(items: ScrapedMetadata[]): Promise<ScrapedMetadata[]> {
+    return Promise.all(
+      items.map(async (item) => {
+        const coverPath = await this.ensureCover(item.coverUrl);
+
+        return {
+          ...item,
+          coverPath,
+          coverUrl: coverPath ? this.imageManager.getMediaUrl(coverPath) : item.coverUrl,
+        };
+      }),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Cache
+  // ---------------------------------------------------------------------------
+
+  private async getFromCache(key: string): Promise<ScrapedMetadata[] | null> {
     const cache = await this.readCache();
     const item = cache.find((entry) => entry.key === key);
 
@@ -342,16 +467,17 @@ export default class MetadataManager extends LibrarySystem {
       return null;
     }
 
-    return item.value;
+    return Array.isArray(item.value) ? item.value : null;
   }
 
-  private async saveToCache(key: string, value: ScrapedMetadata): Promise<void> {
+  private async saveToCache(key: string, value: ScrapedMetadata[]): Promise<void> {
     const cache = await this.readCache();
     const now = new Date();
     const expiresAt = new Date(now.getTime() + THIRTY_DAYS_MS);
 
     const updated = cache
-      .filter((entry) => entry.key !== key)
+      // aproveita para limpar entradas expiradas
+      .filter((entry) => entry.key !== key && new Date(entry.expiresAt) > now)
       .concat({
         key,
         value,
@@ -361,6 +487,50 @@ export default class MetadataManager extends LibrarySystem {
 
     await this.writeCache(updated);
   }
+
+  private async deleteCacheKey(key: string): Promise<void> {
+    const cache = await this.readCache();
+    const updated = cache.filter((entry) => entry.key !== key);
+    await this.writeCache(updated);
+  }
+
+  private mountCacheKey(input: MetadataFetchInput): string {
+    return [
+      CACHE_VERSION,
+      input.type,
+      this.normalizeText(input.title),
+      input.year || '',
+      this.normalizeText(input.author || ''),
+    ].join('::');
+  }
+
+  private async readCache(): Promise<CacheEntry[]> {
+    try {
+      await fse.ensureDir(this.appConfigFolder);
+      if (!(await fse.pathExists(this.cachePath))) {
+        return [];
+      }
+
+      const data = (await fse.readJson(this.cachePath)) as CacheEntry[];
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('Falha ao ler cache de metadata:', error);
+      return [];
+    }
+  }
+
+  private async writeCache(entries: CacheEntry[]): Promise<void> {
+    try {
+      await fse.ensureDir(this.appConfigFolder);
+      await fse.writeJson(this.cachePath, entries, { spaces: 2 });
+    } catch (error) {
+      console.error('Falha ao salvar cache de metadata:', error);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Texto, score e utilitários
+  // ---------------------------------------------------------------------------
 
   private sanitizeDescription(input: string): string {
     const withoutHtml = input
@@ -393,13 +563,14 @@ export default class MetadataManager extends LibrarySystem {
     input: MetadataFetchInput,
     candidateTitle: string,
     candidateAuthors: string[],
+    candidatePublishedAt?: string,
   ): number {
-    const titleScore = this.titleSimilarity(input.title, candidateTitle) * 100;
-    let score = titleScore;
+    let score = this.titleSimilarity(input.title, candidateTitle) * 100;
 
-    if (input.year) {
-      const yearInCandidate = this.extractYear(candidateTitle);
-      if (yearInCandidate === input.year) score += 10;
+    if (input.year && candidatePublishedAt) {
+      // antes comparava o ano com o TÍTULO do candidato; o certo é a data de publicação
+      const candidateYear = this.extractYear(candidatePublishedAt);
+      if (candidateYear === input.year) score += 10;
     }
 
     if (input.author) {
@@ -468,50 +639,11 @@ export default class MetadataManager extends LibrarySystem {
     return Number(match[0]);
   }
 
-  private async deleteCacheKey(key: string): Promise<void> {
-    const cache = await this.readCache();
-    const updated = cache.filter((entry) => entry.key !== key);
-    await this.writeCache(updated);
-  }
-
-  private mountCacheKey(input: MetadataFetchInput): string {
-    return [
-      input.type,
-      this.normalizeText(input.title),
-      input.year || '',
-      this.normalizeText(input.author || ''),
-    ].join('::');
-  }
-
   private cleanStringArray(items?: string[]): string[] | undefined {
     if (!items || !items.length) return undefined;
 
     const normalized = [...new Set(items.map((item) => item.trim()).filter(Boolean))];
     return normalized.length ? normalized : undefined;
-  }
-
-  private async readCache(): Promise<CacheEntry[]> {
-    try {
-      await fse.ensureDir(this.appConfigFolder);
-      if (!(await fse.pathExists(this.cachePath))) {
-        return [];
-      }
-
-      const data = (await fse.readJson(this.cachePath)) as CacheEntry[];
-      return Array.isArray(data) ? data : [];
-    } catch (error) {
-      console.error('Falha ao ler cache de metadata:', error);
-      return [];
-    }
-  }
-
-  private async writeCache(entries: CacheEntry[]): Promise<void> {
-    try {
-      await fse.ensureDir(this.appConfigFolder);
-      await fse.writeJson(this.cachePath, entries, { spaces: 2 });
-    } catch (error) {
-      console.error('Falha ao salvar cache de metadata:', error);
-    }
   }
 
   private async sleep(ms: number): Promise<void> {
@@ -520,13 +652,3 @@ export default class MetadataManager extends LibrarySystem {
     });
   }
 }
-
-// (async () => {
-//   const metadataManager = new MetadataManager();
-//   const response = await metadataManager.fetchMetadata({
-//     title: 'One Piece',
-//     type: 'manga',
-//     author: 'Eiichiro Oda',
-//   });
-//   console.log(response);
-// })();

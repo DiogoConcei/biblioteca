@@ -1,0 +1,381 @@
+@use '@/shared/styles/variables' as *;
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-4;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modalContent {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+
+  // Padrão de vidro fosco
+  background-color: rgba($gunmetal, 0.95);
+  color: $snow;
+  border: 2px solid rgba($amethyst, 0.5);
+  border-radius: $radius-lg;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+
+  overflow: hidden;
+  animation: popIn 0.2s ease-out forwards;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-4 $spacing-6;
+  border-bottom: 1px solid rgba($snow, 0.1);
+  background-color: rgba(0, 0, 0, 0.2);
+
+  h2 {
+    margin: 0;
+    color: $indian-red;
+    font-size: $font-xl;
+    font-weight: 600;
+  }
+
+  .closeIcon {
+    @include interactive-button;
+    color: $text-muted;
+    font-size: $font-xl;
+    transition: color 0.2s;
+
+    &:hover {
+      color: $snow;
+    }
+  }
+}
+
+// Formulário de busca do topo
+.searchForm {
+  display: flex;
+  gap: $spacing-2;
+  padding: $spacing-4 $spacing-6;
+  border-bottom: 1px solid rgba($snow, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+
+  input,
+  select {
+    flex: 1;
+    padding: $spacing-2 $spacing-3;
+    border-radius: $radius-md;
+    border: 2px solid rgba($amethyst, 0.4);
+
+    // Vidro fosco nos inputs do form
+    background-color: rgba($gunmetal, 0.6);
+    backdrop-filter: blur(4px);
+
+    color: $snow;
+    font-size: $font-sm;
+    outline: none;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+
+    &:focus {
+      border-color: $amethyst;
+      background-color: rgba($gunmetal, 0.8);
+    }
+
+    &::placeholder {
+      color: $text-muted;
+    }
+  }
+
+  input[type='number'] {
+    flex: 0.5;
+  }
+  select {
+    flex: 0.5;
+  }
+
+  .btnSearch {
+    @include interactive-button;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 $spacing-4;
+    background-color: $amethyst;
+    color: $snow;
+    border-radius: $radius-md;
+    transition: filter 0.2s;
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.15);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .spinner {
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+.errorMsg {
+  color: $weak-indian-red;
+  text-align: center;
+  padding: $spacing-2;
+  margin: 0;
+}
+
+// Container do Carrossel
+.carouselContainer {
+  flex: 1;
+  position: relative;
+  min-height: 400px;
+  display: flex;
+  overflow: hidden;
+}
+
+.emptyState {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $text-muted;
+}
+
+.carouselView {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+// Efeito de "Capa ao fundo"
+.carouselBg {
+  position: absolute;
+  inset: -20px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(15px) brightness(0.25);
+  z-index: 1;
+}
+
+// Conteúdo real
+.carouselContent {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  padding: $spacing-4 $spacing-2;
+}
+
+.navBtn {
+  @include interactive-button;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba($gunmetal, 0.7);
+  border: 1px solid rgba($amethyst, 0.4);
+  color: $snow;
+  margin: 0 $spacing-2;
+  transition:
+    background 0.2s,
+    transform 0.2s,
+    border-color 0.2s;
+
+  &:hover:not(:disabled) {
+    background: $amethyst;
+    border-color: $amethyst;
+    transform: scale(1.05);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+}
+
+.itemDetails {
+  display: flex;
+  flex: 1;
+  gap: $spacing-6;
+  padding: 0 $spacing-4;
+  height: 100%;
+
+  .coverWrapper {
+    flex: 0 0 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-md;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba($amethyst, 0.3);
+
+    img {
+      width: 100%;
+      height: auto;
+      max-height: 330px;
+      object-fit: cover;
+    }
+
+    .noCover {
+      width: 100%;
+      height: 330px;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $text-muted;
+    }
+  }
+
+  .info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-2;
+    overflow-y: auto;
+    padding-right: $spacing-2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+
+    h3 {
+      margin: 0 0 $spacing-2 0;
+      color: $amethyst;
+      font-size: $font-2xl;
+    }
+
+    p {
+      margin: 0;
+      font-size: $font-sm;
+      line-height: 1.4;
+      color: rgba($snow, 0.9);
+
+      strong {
+        color: $snow;
+      }
+    }
+
+    .synopsis {
+      margin-top: $spacing-2;
+      font-size: $font-sm;
+      color: $text-muted;
+      line-height: 1.6;
+    }
+  }
+}
+
+.indicators {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: $spacing-2;
+  padding-bottom: $spacing-4;
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba($snow, 0.3);
+    cursor: pointer;
+    transition:
+      background 0.2s,
+      transform 0.2s;
+
+    &.active {
+      background: $amethyst;
+      transform: scale(1.2);
+    }
+
+    &:hover:not(.active) {
+      background: rgba($snow, 0.6);
+    }
+  }
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-3;
+  padding: $spacing-4 $spacing-6;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba($snow, 0.1);
+
+  button {
+    @include interactive-button;
+    padding: $spacing-2 $spacing-6;
+    border-radius: $radius-md;
+    font-weight: 500;
+  }
+
+  .btnCancel {
+    background: transparent;
+    border: 2px solid rgba($amethyst, 0.5);
+    color: $snow;
+
+    &:hover {
+      background: rgba($amethyst, 0.2);
+    }
+  }
+
+  .btnApply {
+    background: $amethyst;
+    color: $snow;
+    border: 2px solid $amethyst;
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.15);
+    }
+
+    &:disabled {
+      background: $weak-gunmental;
+      border-color: transparent;
+      color: $text-muted;
+      cursor: not-allowed;
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

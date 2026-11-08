@@ -1,250 +1,158 @@
 @use '@/shared/styles/_variables.scss' as *;
 
-.sec-form {
+// Altura da barra de título que fica ACIMA desta tela (home + minimizar/fechar).
+// No print ela mede ~64px. Era isso que empurrava o rodapé para fora da janela:
+// a página tinha 100dvh e ainda começava 64px abaixo do topo.
+// Ajuste aqui, ou defina --app-chrome-height no layout.
+$app-chrome-height: 64px;
+
+.page {
+  display: flex;
+  flex-flow: column nowrap;
+  box-sizing: border-box;
+  height: calc(100dvh - var(--app-chrome-height, #{$app-chrome-height}));
+  padding: $spacing-4;
+  gap: $spacing-3;
+  overflow: hidden;
+}
+
+.title {
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: $font-2xl;
+  color: $indian-red;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// O <form> contém o bloco das colunas (linha que estica) e o rodapé (linha fixa).
+.form {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: $spacing-3;
+}
+
+// Bloco central: 3 colunas de largura limitada, centralizadas na horizontal
+// e na vertical dentro do espaço disponível.
+.columns {
+  display: grid;
+  grid-template-columns: 320px repeat(2, minmax(0, 480px));
+  justify-content: center;
+  align-content: center;
+  align-items: start;
+  column-gap: $spacing-10;
+  min-height: 0;
+}
+
+.column {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: $spacing-3;
+  min-width: 0;
+  min-height: 0;
+  text-align: left;
+
+  // Centraliza os grupos de botões (Sim/Não, Pública/Privada, status...)
+  // dos componentes filhos. :where() não aumenta a especificidade.
+  :where(div, fieldset) {
+    justify-content: center;
+  }
+
+  // O texto digitado continua alinhado à esquerda.
+  input,
+  textarea {
+    text-align: left;
+    width: 100%;
+  }
+}
+
+// Grade 2x2 para nome, autor, gênero e idioma.
+// O TextInput tem largura própria maior que a célula, então ela é forçada
+// a caber: sem isso, um input invade o vizinho.
+.fields-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-3;
+
+  > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  label,
+  input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+// Altura limitada: não cresce para preencher a coluna.
+.description {
+  @include pattern-input;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 100%;
+  height: clamp(110px, 18vh, 180px);
+  resize: none;
+  padding: $spacing-3;
+  border: 2px solid rgba($amethyst, 0.5); // Borda um pouco mais suave
+  border-radius: $radius-md;
+  font-size: $font-base;
+  color: $snow;
+
+  // Adiciona um fundo escuro semi-transparente para separar o texto da imagem de fundo
+  background-color: rgba($gunmetal, 0.6);
+  backdrop-filter: blur(4px); // Dá um efeito de vidro fosco muito legal
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+
+  &:focus {
+    border-color: $amethyst;
+    background-color: rgba($gunmetal, 0.8); // Fica um pouco mais escuro ao digitar
+  }
+
+  &::placeholder {
+    // Troca o indian-red por um tom neutro próprio para placeholders
+    color: $text-muted;
+  }
+}
+// Rodapé centralizado: navegação, busca de metadados e salvar na mesma linha.
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-4;
+
+  button {
+    @include interactive-button;
+    color: $indian-red;
+    padding: $spacing-2 $spacing-4;
+    border-radius: $radius-md;
+    border: 2px solid $amethyst;
+  }
+}
+
+.footer-group {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.btn-network {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-flow: column nowrap;
+}
 
-  h1 {
-    font-size: $font-2xl;
-    color: $indian-red;
-  }
-
-  .form-view {
-    display: flex;
-    flex-flow: row nowrap;
-    align-items: start;
-    justify-content: center;
-    gap: $spacing-10;
-    padding: $spacing-6;
-
-    .form-container {
-      display: flex;
-      flex-flow: column nowrap;
-      align-items: center;
-      justify-content: center;
-      gap: $spacing-2;
-
-      .text-info {
-        display: flex;
-        align-items: flex-start;
-        justify-content: center;
-        flex-flow: column nowrap;
-        gap: $spacing-3;
-      }
-
-      .literature-info {
-        display: flex;
-        align-items: flex-start;
-        justify-content: center;
-        flex-flow: column nowrap;
-        width: 450px;
-
-        .form-radio {
-          display: flex;
-          justify-content: space-evenly;
-          gap: $spacing-2;
-          margin-top: $spacing-4;
-
-          input {
-            display: none;
-
-            &:checked + label {
-              background-color: $amethyst;
-              color: $snow;
-            }
-          }
-
-          label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid $amethyst;
-            border-radius: $radius-md;
-            padding: $spacing-3;
-            cursor: pointer;
-            font-size: $font-lg;
-            color: $indian-red;
-            transition: all 0.3s ease;
-            background-color: transparent;
-          }
-        }
-      }
-
-      .backup-info {
-        display: flex;
-        flex-flow: column nowrap;
-        gap: $spacing-3;
-        width: 450px;
-
-        .backup-container {
-          display: flex;
-          gap: $spacing-3;
-
-          input[type='radio'] {
-            display: none;
-
-            &:checked + label {
-              background-color: $amethyst;
-              color: $snow;
-            }
-          }
-
-          label {
-            font-size: $font-base;
-            color: $indian-red;
-            padding: $spacing-6;
-            border: 2px solid $amethyst;
-            border-radius: $radius-md;
-            transition: all 0.3s ease;
-            cursor: pointer;
-          }
-        }
-      }
-
-      .privacy-info {
-        display: flex;
-        flex-flow: column nowrap;
-        gap: $spacing-3;
-        width: 450px;
-
-        .privacy-container {
-          display: flex;
-          gap: $spacing-3;
-
-          input[type='radio'] {
-            display: none;
-
-            &:checked + label {
-              background-color: $amethyst;
-              color: $snow;
-            }
-          }
-
-          label {
-            font-size: $font-base;
-            color: $indian-red;
-            padding: $spacing-6;
-            border: 2px solid $amethyst;
-            border-radius: $radius-md;
-            transition: all 0.3s ease;
-            cursor: pointer;
-          }
-        }
-      }
-
-      .status-info {
-        display: flex;
-        flex-flow: column nowrap;
-        gap: $spacing-3;
-        width: 450px;
-
-        .status-container {
-          display: flex;
-          gap: $spacing-3;
-
-          input[type='radio'] {
-            display: none;
-
-            &:checked + label {
-              background-color: $amethyst;
-              color: $snow;
-            }
-          }
-
-          label {
-            font-size: $font-sm;
-            color: $indian-red;
-            padding: $spacing-6;
-            border: 2px solid $amethyst;
-            border-radius: $radius-md;
-            transition: all 0.3s ease;
-            cursor: pointer;
-          }
-        }
-      }
-
-      .tags-info {
-        display: flex;
-        flex-flow: column;
-        gap: $spacing-3;
-        width: 450px;
-
-        input[type='text'] {
-          @include pattern-input;
-          min-width: 300px;
-          font-size: $font-base;
-          padding: $spacing-3;
-          border: 2px solid $amethyst;
-          color: $snow;
-          border-radius: $radius-lg;
-
-          &::placeholder {
-            color: $indian-red;
-          }
-        }
-
-        .form-tag-preview {
-          display: flex;
-          flex-flow: column nowrap;
-          gap: $spacing-3;
-
-          .tag-list {
-            display: flex;
-            flex-flow: row nowrap;
-            border: 2px solid $amethyst;
-            border-radius: $radius-md;
-            padding: $spacing-2;
-            overflow: auto;
-            width: 400px;
-            height: 100px;
-            gap: $spacing-2;
-
-            li {
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              font-size: $font-base;
-              color: $snow;
-              padding: $spacing-0;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-              min-width: 0;
-
-              span {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                min-width: 125px;
-                border-radius: 10px;
-                padding: 10px;
-                background: $indian-red;
-
-                .remove-tag {
-                  @include interactive-button;
-                  color: $snow;
-                }
-              }
-            }
-          }
-        }
-      }
-
-      .navigation-buttons {
-        display: flex;
-        justify-content: space-evenly;
-        width: 300px;
-
-        button {
-          @include interactive-button;
-          color: $indian-red;
-          padding: $spacing-2;
-          border-radius: $radius-md;
-          border: 2px solid $amethyst;
-        }
-      }
-    }
-  }
+.error {
+  margin: 0;
+  color: $indian-red;
 }

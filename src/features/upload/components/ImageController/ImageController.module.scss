@@ -4,18 +4,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-2;
+  gap: $spacing-4; // Aumentado levemente para respirar melhor
   text-align: center;
 
   > span {
     font-size: $font-2xl;
     color: $indian-red;
+    font-weight: 600;
   }
 
   .imageContainer {
+    // Capa maior e com proporção fixa
     width: 100%;
-    max-width: 380px; // Substitui o width fixo de 380px para melhor responsividade
+    max-width: 420px; // Aumentado em relação à sidebar
     aspect-ratio: 3 / 4;
+    flex-shrink: 0;
 
     cursor: pointer;
     overflow: hidden;
@@ -24,14 +27,26 @@
     align-items: center;
     justify-content: center;
 
+    // Novo visual da moldura (substitui a borda tracejada)
+    background-color: rgba($gunmetal, 0.4);
+    border: 1px solid rgba($amethyst, 0.2);
+    border-radius: $radius-lg;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:hover {
+      border-color: rgba($amethyst, 0.8);
+      box-shadow: 0 8px 24px rgba(137, 99, 186, 0.15);
+    }
+
     .coverPreview {
       height: 100%;
       width: 100%;
-      object-fit: contain;
+      object-fit: cover; // Preenche a moldura sem distorcer
       display: block;
-
-      border-radius: $radius-md;
-      border: 2px dashed $amethyst;
+      border-radius: $radius-lg;
     }
 
     .placeholder {
@@ -39,48 +54,89 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: $spacing-1;
+      gap: $spacing-2;
 
-      color: $amethyst;
-      font-size: $font-sm;
+      color: $weak-amethyst;
+      font-size: $font-base;
       pointer-events: none;
 
       width: 100%;
       height: 100%;
-      object-fit: contain;
-
-      border-radius: $radius-md;
-      border: 2px dashed $amethyst;
     }
   }
 
   .error {
-    color: $indian-red; // Ajusta para a tua variável de erro, se existir
+    color: $indian-red;
     font-size: $font-sm;
   }
 
-  // Novo bloco para a galeria de sugestões
-  .suggestionsGallery {
+  .carouselContainer {
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
     gap: $spacing-2;
     width: 100%;
-    max-width: 380px; // Mantém o alinhamento com o quadro principal
-    margin-top: $spacing-1;
+    max-width: 420px;
+    margin-top: $spacing-2;
 
-    img {
-      width: 80px;
+    // NOVO: Altura mínima fixa para reservar o espaço na tela
+    min-height: 140px;
+
+    .carouselArrow {
+      @include interactive-button;
+      color: $amethyst;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: $spacing-1;
+      border-radius: $radius-full;
+      transition: background-color 0.2s ease-in-out;
+
+      &:hover:not(:disabled) {
+        background-color: $hover-shining;
+      }
+
+      &:disabled {
+        color: $weak-gunmental;
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+    }
+
+    .carouselWindow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: $spacing-4;
+      min-width: 280px;
+      // Garante que a janela em si também mantenha o espaço
+      height: 140px;
+    }
+
+    .carouselItem {
+      width: 86px;
       aspect-ratio: 3 / 4;
       object-fit: cover;
       border-radius: $radius-md;
       cursor: pointer;
+      transition: all 0.3s ease-in-out;
       border: 2px solid transparent;
-      transition: all 0.2s ease-in-out;
 
-      &:hover {
+      &.center {
+        transform: scale(1.1);
         border-color: $amethyst;
-        transform: scale(1.05);
+        z-index: 2;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      &.side {
+        opacity: 0.4;
+        transform: scale(0.9);
+        z-index: 1;
+
+        &:hover {
+          opacity: 0.8;
+        }
       }
     }
   }

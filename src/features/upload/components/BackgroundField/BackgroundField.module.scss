@@ -1,0 +1,134 @@
+@use '@/shared/styles/variables' as *;
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  width: 100%;
+}
+
+.label {
+  font-size: $font-lg;
+  color: $indian-red;
+  font-weight: 600;
+}
+
+.uploadArea {
+  width: 100%;
+  aspect-ratio: 16 / 6;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  position: relative;
+  background-color: rgba($gunmetal, 0.4);
+  transition: all 0.2s ease-in-out;
+
+  // Estado sem imagem
+  &[data-has-image='false'] {
+    border: 2px dashed rgba($amethyst, 0.5);
+    cursor: pointer;
+
+    &:hover {
+      border-color: $amethyst;
+      background-color: rgba($gunmetal, 0.6);
+
+      .icon {
+        transform: scale(1.1);
+        color: $weak-amethyst;
+      }
+    }
+  }
+
+  // Estado com imagem
+  &[data-has-image='true'] {
+    border: 1px solid $border-color;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+    &:hover .overlay {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  gap: $spacing-3;
+  outline: none;
+
+  .icon {
+    color: rgba($amethyst, 0.7);
+    transition:
+      transform 0.3s ease,
+      color 0.3s ease;
+  }
+
+  .text {
+    color: $text-muted;
+    font-size: $font-base;
+  }
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba($gunmetal, 0.75);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-4;
+
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+}
+
+.actionBtn {
+  @include interactive-button;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-2;
+  color: $snow;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-md;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+
+  span {
+    font-size: $font-sm;
+    font-weight: 500;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: rgba($amethyst, 0.3);
+    transform: translateY(-2px);
+  }
+
+  &.danger {
+    &:hover:not(:disabled) {
+      background-color: rgba($indian-red, 0.3);
+      color: $weak-indian-red;
+    }
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}

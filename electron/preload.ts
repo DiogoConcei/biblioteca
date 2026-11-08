@@ -117,13 +117,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
       type: LiteratureForm,
     ): Promise<APIResponse<SuggestedCover[]>> =>
       ipcRenderer.invoke('upload:suggest-cover', oldPath, type),
-    fetchMetadata: async (
-      title: string,
-      type: 'manga' | 'comic',
-      year?: number,
-      author?: string,
-    ): Promise<APIResponse<ScrapedMetadata>> =>
-      ipcRenderer.invoke('metadata:fetch', title, type, year, author),
 
     clearSuggestedCovers: (): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('upload:clear-temp-covers'),
@@ -296,7 +289,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
       sourcePath: string,
     ): Promise<APIResponse<string>> =>
       ipcRenderer.invoke('image:add-cover', coverGalleryPath, sourcePath),
+    addToBackgroundGallery: (
+      backgroundGalleryPath: string,
+      sourcePath: string,
+    ): Promise<APIResponse<string>> =>
+      ipcRenderer.invoke('image:add-background', backgroundGalleryPath, sourcePath),
+
     deleteCover: (coverPath: string): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('image:delete-cover', coverPath),
+  },
+
+  metadata: {
+    fetchMetadata: async (
+      title: string,
+      type: 'manga' | 'comic',
+      year?: number,
+      author?: string,
+    ): Promise<APIResponse<ScrapedMetadata[]>> =>
+      ipcRenderer.invoke('metadata:fetch', title, type, year, author),
   },
 });

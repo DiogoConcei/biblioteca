@@ -335,7 +335,11 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle(
     'chapter:reorder',
-    async (_event, dataPath: string, newOrderIds: number[]) => {
+    async (
+      _event,
+      dataPath: string,
+      newOrderIds: number[],
+    ): Promise<APIResponse<void>> => {
       try {
         const serie = await storageManager.readSerieData<Literatures>(dataPath);
         if (!serie || !serie.chapters) {

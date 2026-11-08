@@ -1,14 +1,23 @@
 import { IpcMain } from 'electron';
-import MetadataScrapperService from '../services/content/MetadataManager';
+import MetadataManager from '../services/content/MetadataManager';
+import { APIResponse } from '../types/electron-auxiliar.interfaces';
+import { ScrapedMetadata } from '../types/metadata.interfaces';
 
 export default function metadataHandlers(ipcMain: IpcMain) {
-  // const metadataScraper = new MetadataScraperService();
-  // ipcMain.handle('metadata:fetch', async (_event, input) => {
-  //   try {
-  //     const data = await metadataScraper.fetchMetadata(input);
-  //     return { success: true, data };
-  //   } catch (e) {
-  //     return { success: false, error: String(e) };
-  //   }
-  // });
+  const metadataManager = new MetadataManager();
+
+  ipcMain.handle(
+    'metadata:fetch',
+    async (
+      _event,
+      title: string,
+      type: 'manga' | 'comic',
+      year?: number,
+      author?: string,
+    ): Promise<APIResponse<ScrapedMetadata[] | null>> => {
+      const data = await metadataManager.fetchTopMetadata({ title, type, year, author });
+
+      return { success: data.length > 0, data };
+    },
+  );
 }

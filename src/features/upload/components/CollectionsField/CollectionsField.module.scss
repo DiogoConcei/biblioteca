@@ -1,46 +1,72 @@
 @use '@/shared/styles/variables' as *;
 
-.formContainer {
+.collectionsInfo {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
+
+  .formSubtitle {
+    font-size: $font-lg;
+    color: $indian-red;
+    font-weight: 600;
+    margin-bottom: $spacing-2;
+    margin-top: 0;
+  }
+}
+
+.container {
   display: flex;
   flex-direction: column;
   gap: $spacing-3;
-  width: 450px;
-}
+  width: 100%;
+  padding: $spacing-3;
 
-.subtitle {
-  font-size: $font-lg;
-  color: $indian-red;
-}
+  border: 2px solid rgba($amethyst, 0.5);
+  border-radius: $radius-md;
+  background-color: rgba($gunmetal, 0.6);
+  backdrop-filter: blur(4px);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
 
-/* ===== LISTA ===== */
+  &:focus-within {
+    border-color: $amethyst;
+    background-color: rgba($gunmetal, 0.8);
+  }
+}
 
 .collectionList {
   display: flex;
   flex-wrap: wrap;
   gap: $spacing-2;
-  width: 400px;
-  height: 55px;
-  padding: $spacing-2;
-  border: 2px solid $amethyst;
-  scrollbar-width: none;
-  border-radius: $radius-md;
-  overflow-x: auto;
+  max-height: 120px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba($amethyst, 0.5);
+    border-radius: $radius-full;
+  }
 }
 
-/* ===== ITEM ===== */
-
 .collectionItem {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  padding: $spacing-1 $spacing-3;
+  border-radius: $radius-sm;
 
-  max-width: 200px;
-  padding: 8px 12px;
-  border-radius: $radius-md;
-
-  border: 2px solid $amethyst;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
   color: $snow;
+  font-size: $font-base;
   cursor: pointer;
-
   transition: all 0.2s ease;
 
   input {
@@ -48,46 +74,45 @@
   }
 
   &:hover {
-    background: rgba($amethyst, 0.1);
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  &.checked {
+    background-color: rgba($amethyst, 0.8);
+    border-color: $amethyst;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(137, 99, 186, 0.3);
   }
 }
 
-.checked {
-  background: $amethyst;
-  color: $snow;
-}
-
-/* ===== TEXTO ===== */
-
-.collectionText {
-  flex: 1;
-  min-width: 0;
-
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-/* ===== ADD ===== */
-
-.addCollection {
+/* ===== NOVO BOTÃO DE GERENCIAR ===== */
+.manageAction {
   display: flex;
-  gap: $spacing-2;
-  font-size: $font-lg;
-
-  input[type='text'] {
-    @include pattern-input;
-    border: 1px solid $amethyst;
-    font-size: $font-lg;
-    flex: 1;
-  }
+  margin-top: $spacing-1;
+  padding-top: $spacing-3;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 
   button {
     @include interactive-button;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-2;
+    width: 100%; // Ocupa toda a largura do container
+
+    padding: $spacing-2 $spacing-3;
+    border-radius: $radius-sm;
+    background-color: rgba($amethyst, 0.2); // Fundo sutil vazado
+    border: 1px solid $amethyst; // Borda forte
     color: $snow;
-    padding: $spacing-2;
-    font-size: $font-lg;
-    border-radius: $radius-md;
-    background: $indian-red;
+
+    font-size: $font-base;
+    font-weight: 500;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: $amethyst; // Preenche de cor ao passar o mouse
+      box-shadow: 0 4px 12px rgba(137, 99, 186, 0.3);
+    }
   }
 }

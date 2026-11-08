@@ -2,14 +2,36 @@
 
 .genericInput {
   @include pattern-button;
+  box-sizing: border-box;
+  width: 100%; // Deixado em 100% para o grid do form pai controlar o tamanho perfeitamente
   font-size: $font-2xl;
   color: $snow;
   padding: $spacing-2;
-  border: 2px solid $amethyst;
+
+  // Borda suave que acende no focus
+  border: 2px solid rgba($amethyst, 0.5);
   border-radius: $radius-md;
-  width: 450px;
+
+  // Fundo com vidro fosco para separar da imagem de fundo
+  background-color: rgba($gunmetal, 0.6);
+  backdrop-filter: blur(4px);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+
+  &:focus {
+    border-color: $amethyst;
+    background-color: rgba($gunmetal, 0.8);
+    outline: none;
+  }
 
   &::placeholder {
-    color: $indian-red;
+    color: $text-muted; // Substitui o indian-red por texto neutro
   }
+}
+
+.error {
+  color: $indian-red;
+  font-size: $font-sm;
+  margin-top: $spacing-1;
 }

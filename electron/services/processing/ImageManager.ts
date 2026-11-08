@@ -71,6 +71,19 @@ export default class ImageManager extends LibrarySystem {
     return mediaUrl;
   }
 
+  public async addToBackgroundGallery(
+    backgroundGalleryPath: string,
+    sourcePath: string,
+  ): Promise<string> {
+    if (backgroundGalleryPath.length === 0) backgroundGalleryPath = this.backgroundImages;
+
+    const finalPath = await this.normalizeImage(sourcePath, backgroundGalleryPath);
+
+    const mediaUrl = this.getMediaUrl(finalPath);
+
+    return mediaUrl;
+  }
+
   public async deleteCover(coverPath: string): Promise<void> {
     try {
       let finalPath = coverPath;

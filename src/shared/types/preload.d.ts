@@ -128,12 +128,6 @@ declare global {
         ) => Promise<APIResponse<SuggestedCover[]>>;
         clearSuggestedCovers: () => Promise<APIResponse<void>>;
         clearSuggestCovers: () => Promise<APIResponse<void>>;
-        fetchMetadata: (
-          title: string,
-          type: 'manga' | 'comic',
-          year?: number,
-          author?: string,
-        ) => Promise<APIResponse<ScrapedMetadata>>;
       };
 
       series: {
@@ -259,7 +253,20 @@ declare global {
           coverGalleryPath: string,
           sourcePath: string,
         ) => Promise<APIResponse<string>>;
+        addToBackgroundGallery: (
+          backgroundGalleryPath: string,
+          sourcePath: string,
+        ) => Promise<APIResponse<string>>;
         deleteCover: (coverPath: string) => Promise<APIResponse<void>>;
+      };
+
+      metadata: {
+        fetchMetadata: (
+          title: string,
+          type: 'manga' | 'comic',
+          year?: number,
+          author?: string,
+        ) => Promise<APIResponse<ScrapedMetadata[]>>;
       };
     };
   }
