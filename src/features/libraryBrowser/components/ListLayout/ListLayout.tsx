@@ -3,6 +3,7 @@ import { StoreSerie } from '@/shared/store/useSerieStore';
 import useAction from '@/shared/hooks/useAction';
 import DownloadButton from '@/shared/components/DonwloadButton/DownloadButton';
 import Rating from '@/shared/components/Rating/Rating';
+import useImage from '@/shared/hooks/useImage';
 import CollectionButton from '../../../../shared/components/CollectionButton/CollectionButton';
 import Favorite from '@/shared/components/FavoriteButton/Favorite';
 import ListView from '../ListView/ListView';
@@ -10,7 +11,7 @@ import { useCollectionStore } from '@/shared/store/useCollectionStore';
 import styles from './ListLayout.module.scss';
 import { Link } from 'react-router-dom';
 import useHistory from '@/shared/hooks/useHistory';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 
 const progressPercent = (read: number, total: number) =>
   total > 0 ? Math.min(100, Math.round((read / total) * 100)) : 0;
@@ -18,7 +19,12 @@ const progressPercent = (read: number, total: number) =>
 const MAX_SHELF = 6;
 
 export default function ListLayout({ serie }: { serie: StoreSerie }) {
+  const { previewSrc: bgSrc, loadExistingImage } = useImage();
   // const tags = [...serie.tags].sort((a, b) => a.localeCompare(b)).slice(0, 3);
+
+  useEffect(() => {
+    loadExistingImage(serie.backgroundImage ?? '');
+  }, [serie.backgroundImage, loadExistingImage]);
 
   const favorites = useCollectionStore((s) =>
     s.collections.find((c) => c.name === 'Favoritos'),
@@ -26,7 +32,6 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
   const { recentSeries } = useHistory();
 
   const { lastChapter } = useAction();
-
   const favs = useMemo(
     () => [...(favorites?.series ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
     [favorites],
@@ -35,8 +40,12 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
   const hiddenFavs = favs.length - visibleFavs.length;
   const recents = recentSeries ?? [];
 
+  const pageStyle = bgSrc
+    ? ({ '--bg-image': `url("${bgSrc}")` } as React.CSSProperties)
+    : undefined;
+
   return (
-    <main className={styles.mangaPage}>
+    <main className={styles.mangaPage} style={pageStyle}>
       <figure className={styles.imageContainer}>
         <img
           className={styles.mangaCover}

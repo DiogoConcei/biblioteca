@@ -89,6 +89,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         );
 
         const childSeries = 'childSeries' in data ? (data.childSeries ?? []) : [];
+
         const updatedChildSeries = await Promise.all(
           childSeries.map(async (tieIn) => ({
             ...tieIn,
@@ -100,6 +101,7 @@ export default function seriesHandlers(ipcMain: IpcMain) {
           success: true,
           data: {
             ...data,
+            backgroundImage: imageManager.getMediaUrl(data.backgroundImage),
             coverImage: imageManager.getMediaUrl(data.coverImage),
             chapters: updatedChapters,
             childSeries: updatedChildSeries,

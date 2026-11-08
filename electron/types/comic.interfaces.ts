@@ -17,6 +17,7 @@ export interface Comic extends graphSerie<ComicEdition> {
   backgroundGallery: string;
   coverGallery: string;
   pagesGallery: string;
+  backgroundImage: string;
   coverImage: string;
   totalChapters: number;
   chaptersRead: number;

@@ -16,7 +16,6 @@ export default function SeriePage({
   useCollection();
 
   const serie = useSerieStore((state) => state.serie);
-
   if (!serie || serie.name !== serie_name) return <Loading />;
 
   return <ListLayout serie={serie} />;

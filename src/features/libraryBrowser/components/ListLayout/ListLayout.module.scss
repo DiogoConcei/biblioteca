@@ -3,10 +3,21 @@
 .mangaPage {
   display: flex;
   flex-flow: row wrap;
-  align-items: flex-start;
+  align-items: center; // era flex-start: centraliza na vertical
+  align-content: center; // idem quando as colunas quebram de linha
   justify-content: center;
   gap: $spacing-3;
   padding: $spacing-2;
+  box-sizing: border-box;
+  min-height: 100%; // no lugar de height: 100vh
+
+  background-image:
+    radial-gradient(circle, rgba(40, 44, 52, 0.3) 0%, rgba(40, 44, 52, 0.85) 100%),
+    var(--bg-image, none);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: background-image 0.3s ease-in-out;
 
   .imageContainer {
     display: flex;
