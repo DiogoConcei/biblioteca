@@ -8,8 +8,8 @@
   align-items: center;
   justify-content: center;
   padding: $spacing-4;
-  background-color: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -19,14 +19,12 @@
   width: 100%;
   max-width: 800px;
   max-height: 90vh;
-
-  // Padrão de vidro fosco
-  background-color: rgba($gunmetal, 0.95);
+  background-color: rgba($gunmetal, 0.65);
+  backdrop-filter: blur(14px);
   color: $snow;
   border: 2px solid rgba($amethyst, 0.5);
   border-radius: $radius-lg;
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
-
   overflow: hidden;
   animation: popIn 0.2s ease-out forwards;
 }
@@ -66,19 +64,16 @@
   border-bottom: 1px solid rgba($snow, 0.1);
   background: rgba(255, 255, 255, 0.02);
 
-  input,
-  select {
+  input {
     flex: 1;
+    min-width: 0;
     padding: $spacing-2 $spacing-3;
     border-radius: $radius-md;
     border: 2px solid rgba($amethyst, 0.4);
-
-    // Vidro fosco nos inputs do form
     background-color: rgba($gunmetal, 0.6);
     backdrop-filter: blur(4px);
-
     color: $snow;
-    font-size: $font-sm;
+    font-size: $font-base;
     outline: none;
     transition:
       border-color 0.2s ease,
@@ -94,11 +89,28 @@
     }
   }
 
-  input[type='number'] {
+  .yearInput {
     flex: 0.5;
   }
-  select {
-    flex: 0.5;
+
+  .typeToggle {
+    display: flex;
+    gap: $spacing-2;
+
+    button {
+      @include interactive-button;
+      padding: $spacing-2 $spacing-3;
+      border-radius: $radius-md;
+      border: 2px solid rgba($amethyst, 0.4);
+      background-color: rgba($gunmetal, 0.6);
+      color: $snow;
+      font-size: $font-sm;
+
+      &[data-active='true'] {
+        background-color: $amethyst;
+        border-color: $amethyst;
+      }
+    }
   }
 
   .btnSearch {
@@ -126,7 +138,6 @@
     }
   }
 }
-
 .errorMsg {
   color: $weak-indian-red;
   text-align: center;
@@ -325,8 +336,8 @@
 
   .btnCancel {
     background: transparent;
-    border: 2px solid rgba($amethyst, 0.5);
-    color: $snow;
+    color: $indian-red;
+    border: 2px solid $amethyst;
 
     &:hover {
       background: rgba($amethyst, 0.2);
@@ -343,9 +354,9 @@
     }
 
     &:disabled {
-      background: $weak-gunmental;
+      background: rgba($amethyst, 0.25);
       border-color: transparent;
-      color: $text-muted;
+      color: rgba($snow, 0.5);
       cursor: not-allowed;
     }
   }

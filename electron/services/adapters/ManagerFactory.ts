@@ -1,32 +1,21 @@
-import { LiteratureForm } from '../../../src/shared/types/series.interfaces';
-import MangaManager from '../content/MangaManager';
-import ComicManager from '../content/ComicManager';
-import BookManager from '../content/BookManager';
-import TieInManager from '../content/TieInManager';
+import { LiteratureForm, SerieForm } from '../../../src/shared/types/series.interfaces';
 
 export interface ChapterManager {
   createChapterById(dataPath: string, chapterId: number): Promise<void>;
   deleteChapterById(dataPath: string, chapterId: number): Promise<void>;
+  createSerie(serie: SerieForm): Promise<void>;
 }
 
-const builders: Record<LiteratureForm, () => ChapterManager> = {
-  [LiteratureForm.MANGA]: () => new MangaManager(),
-  [LiteratureForm.COMIC]: () => new ComicManager(),
-  [LiteratureForm.BOOK]: () => new BookManager(),
-  // [LiteratureForm.CHILD_SERIES]: () => new TieInManager(), // Adicionado caso exista no Enum
-};
-
-const instances = new Map<LiteratureForm, ChapterManager>();
-
 export default class ManagerFactory {
-  public static get(form: LiteratureForm): ChapterManager {
-    let manager = instances.get(form);
+  private static managers = new Map<LiteratureForm, ChapterManager>();
 
-    if (!manager) {
-      manager = builders[form]();
-      instances.set(form, manager);
-    }
+  static register(form: LiteratureForm, manager: ChapterManager) {
+    this.managers.set(form, manager);
+  }
 
+  static get(form: LiteratureForm): ChapterManager {
+    const manager = this.managers.get(form);
+    if (!manager) throw new Error(`Tipo de literatura inválido: ${form}`);
     return manager;
   }
 }

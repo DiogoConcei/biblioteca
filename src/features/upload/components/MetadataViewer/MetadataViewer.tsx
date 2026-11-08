@@ -4,14 +4,19 @@ import styles from './MetadataViewer.module.scss';
 import { ScrapedMetadata } from '@/shared/types/collections.interfaces';
 
 interface MetadataProps {
+  initialValues?: { title?: string; author?: string; type?: 'manga' | 'comic' };
   onClose: (value: boolean) => void;
   onSelect?: (metadata: ScrapedMetadata) => void;
 }
 
-export default function MetadataViewer({ onClose, onSelect }: MetadataProps) {
-  const [title, setTitle] = useState('');
-  const [type, setType] = useState<'manga' | 'comic'>('manga');
-  const [author, setAuthor] = useState('');
+export default function MetadataViewer({
+  initialValues,
+  onClose,
+  onSelect,
+}: MetadataProps) {
+  const [title, setTitle] = useState(initialValues?.title ?? '');
+  const [type, setType] = useState<'manga' | 'comic'>(initialValues?.type ?? 'manga');
+  const [author, setAuthor] = useState(initialValues?.author ?? '');
   const [year, setYear] = useState('');
 
   const [results, setResults] = useState<ScrapedMetadata[]>([]);
@@ -57,7 +62,6 @@ export default function MetadataViewer({ onClose, onSelect }: MetadataProps) {
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : prev));
   }, []);
 
-  // Navegação pelo teclado
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (results.length === 0) return;
@@ -93,13 +97,20 @@ export default function MetadataViewer({ onClose, onSelect }: MetadataProps) {
             onChange={(e) => setTitle(e.target.value)}
             required
           />
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value as 'manga' | 'comic')}
-          >
-            <option value="manga">Manga</option>
-            <option value="comic">Comic</option>
-          </select>
+
+          <div className={styles.typeToggle} role="group" aria-label="Tipo">
+            {(['manga', 'comic'] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                data-active={type === t}
+                onClick={() => setType(t)}
+              >
+                {t === 'manga' ? 'Manga' : 'Quadrinho'}
+              </button>
+            ))}
+          </div>
+
           <input
             type="text"
             placeholder="Autor (Opcional)"
@@ -107,10 +118,13 @@ export default function MetadataViewer({ onClose, onSelect }: MetadataProps) {
             onChange={(e) => setAuthor(e.target.value)}
           />
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
+            maxLength={4}
+            className={styles.yearInput}
             placeholder="Ano (Opcional)"
             value={year}
-            onChange={(e) => setYear(e.target.value)}
+            onChange={(e) => setYear(e.target.value.replace(/\D/g, ''))}
           />
           <button type="submit" disabled={isLoading} className={styles.btnSearch}>
             {isLoading ? (
@@ -123,7 +137,6 @@ export default function MetadataViewer({ onClose, onSelect }: MetadataProps) {
 
         {error && <p className={styles.errorMsg}>{error}</p>}
 
-        {/* Carrossel de Resultados */}
         <div className={styles.carouselContainer}>
           {!isLoading && results.length === 0 && !error && (
             <div className={styles.emptyState}>
@@ -133,14 +146,12 @@ export default function MetadataViewer({ onClose, onSelect }: MetadataProps) {
 
           {!isLoading && results.length > 0 && currentItem && (
             <div className={styles.carouselView}>
-              {/* Background desfocado com a capa da série */}
               <div
                 className={styles.carouselBg}
                 style={{ backgroundImage: `url(${currentItem.coverUrl || ''})` }}
               />
 
               <div className={styles.carouselContent}>
-                {/* Seta Esquerda */}
                 <button
                   type="button"
                   className={styles.navBtn}
@@ -150,7 +161,6 @@ export default function MetadataViewer({ onClose, onSelect }: MetadataProps) {
                   <ChevronLeft size={32} />
                 </button>
 
-                {/* Conteúdo Central */}
                 <div className={styles.itemDetails}>
                   <div className={styles.coverWrapper}>
                     {currentItem.coverUrl ? (
@@ -178,7 +188,6 @@ export default function MetadataViewer({ onClose, onSelect }: MetadataProps) {
                   </div>
                 </div>
 
-                {/* Seta Direita */}
                 <button
                   type="button"
                   className={styles.navBtn}
@@ -189,7 +198,6 @@ export default function MetadataViewer({ onClose, onSelect }: MetadataProps) {
                 </button>
               </div>
 
-              {/* Indicadores (Pontos) */}
               <div className={styles.indicators}>
                 {results.map((_, idx) => (
                   <span

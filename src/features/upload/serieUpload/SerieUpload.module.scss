@@ -1,9 +1,5 @@
 @use '@/shared/styles/_variables.scss' as *;
 
-// Altura da barra de título que fica ACIMA desta tela (home + minimizar/fechar).
-// No print ela mede ~64px. Era isso que empurrava o rodapé para fora da janela:
-// a página tinha 100dvh e ainda começava 64px abaixo do topo.
-// Ajuste aqui, ou defina --app-chrome-height no layout.
 $app-chrome-height: 64px;
 
 .page {
@@ -133,13 +129,37 @@ $app-chrome-height: 64px;
 
   button {
     @include interactive-button;
-    color: $indian-red;
     padding: $spacing-2 $spacing-4;
     border-radius: $radius-md;
-    border: 2px solid $amethyst;
+    border: 2px solid rgba($amethyst, 0.5);
+    background-color: rgba($gunmetal, 0.6);
+    backdrop-filter: blur(4px);
+    color: $snow;
+    font-size: $font-base;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+
+    &:hover:not(:disabled) {
+      border-color: $amethyst;
+      background-color: rgba($gunmetal, 0.8);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    &[type='submit'] {
+      background-color: $amethyst;
+      border-color: $amethyst;
+
+      &:hover:not(:disabled) {
+        filter: brightness(1.15);
+      }
+    }
   }
 }
-
 .footer-group {
   display: flex;
   align-items: center;
@@ -155,4 +175,14 @@ $app-chrome-height: 64px;
 .error {
   margin: 0;
   color: $indian-red;
+}
+
+.page {
+  background-image:
+    radial-gradient(circle, rgba(40, 44, 52, 0.3) 0%, rgba(40, 44, 52, 0.85) 100%),
+    var(--bg-image, none);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: background-image 0.3s ease-in-out;
 }

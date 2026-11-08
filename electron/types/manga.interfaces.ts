@@ -18,6 +18,7 @@ export interface Manga extends graphSerie<MangaChapter> {
   dataPath: string;
   serieGallery: string;
   coverGallery: string;
+  backgroundGallery: string;
   pagesGallery: string;
   chapters: MangaChapter[];
   totalChapters: number;

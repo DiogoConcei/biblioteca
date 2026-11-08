@@ -195,7 +195,9 @@ export default abstract class GraphSerie<
       throw new Error('Arquivos inválidos encontrados no capítulo.');
     }
 
-    return this.imageManager.encodeImages(imageFiles);
+    const encodedImages = imageFiles.map((file) => this.imageManager.getMediaUrl(file));
+
+    return encodedImages;
   }
 
   async updateChapters(

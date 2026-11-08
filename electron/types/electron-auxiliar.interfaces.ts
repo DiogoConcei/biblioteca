@@ -181,6 +181,7 @@ export interface graphSerie<C extends graphChapter = graphChapter> {
   dataPath: string;
   serieGallery: string;
   coverGallery: string;
+  backgroundGallery: string;
   pagesGallery: string;
   chapters: C[];
   totalChapters: number;

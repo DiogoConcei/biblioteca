@@ -14,11 +14,11 @@ import {
 
 import storageManager from '../services/StorageManager.ts';
 import ComicManager from '../services/content/ComicManager.ts';
-import TieInManager from '../services/content/TieInManager.ts';
 import BookManager from '../services/content/BookManager.ts';
 import MangaManager from '../services/content/MangaManager.ts';
 import FileManager from '../services/FileManager.ts';
 import ImageManager from '../services/processing/ImageManager.ts';
+import ManagerFactory from '../services/adapters/ManagerFactory.ts';
 
 export interface SuggestedCover {
   chapterName: string;
@@ -30,10 +30,13 @@ export interface SuggestedCover {
 export default function uploadHandlers(ipcMain: IpcMain) {
   const comicManager = new ComicManager();
   const mangaManager = new MangaManager();
-  const tieInManager = new TieInManager();
   const fileManager = new FileManager();
   const imageManager = new ImageManager();
   const bookManager = new BookManager();
+
+  ManagerFactory.register(LiteratureForm.MANGA, mangaManager);
+  ManagerFactory.register(LiteratureForm.COMIC, comicManager);
+  ManagerFactory.register(LiteratureForm.BOOK, bookManager);
 
   ipcMain.handle(
     'upload:process-files',
@@ -87,21 +90,9 @@ export default function uploadHandlers(ipcMain: IpcMain) {
         }
 
         try {
-          switch (s.literatureForm) {
-            case 'Manga':
-              await mangaManager.createSerie(s);
-              break;
-            case 'Quadrinho':
-              await comicManager.createSerie(s, tieInManager);
-              break;
-            case 'Books':
-              await bookManager.createSerie(s);
-              break;
-            default:
-              throw new Error(`Tipo de literatura inválido: ${s.literatureForm}`);
-          }
+          const manager = ManagerFactory.get(s.literatureForm);
+          await manager.createSerie(s);
         } catch (err) {
-          // Logamos e seguimos com os demais itens
           const msg = err instanceof Error ? err.message : String(err);
           console.error(`Erro ao criar série (index=${i}, name=${s.name}):`, err);
           errors.push({ index: i, name: s.name, message: msg });
@@ -109,7 +100,6 @@ export default function uploadHandlers(ipcMain: IpcMain) {
       }
 
       if (errors.length > 0) {
-        // Retornamos um resumo limitado para o renderer. Não retornamos objetos grandes.
         return {
           success: false,
           error: `Algumas séries falharam. Exemplos: ${errors

@@ -7,6 +7,7 @@ import ImageManager from '../processing/ImageManager.ts';
 import CollectionManager from './CollectionManager.ts';
 import PdfManager from '../processing/PdfManager.ts';
 import ArchiveManager from '../processing/ArchiveManager.ts';
+import TieInManager from './TieInManager.ts';
 import { SerieForm } from '../../../src/shared/types/series.interfaces.ts';
 
 import {
@@ -28,6 +29,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
   protected readonly storageManager = storageManager;
   protected readonly pdfManager: PdfManager = new PdfManager();
   protected readonly archiveManager: ArchiveManager = new ArchiveManager();
+  protected readonly tieInManager: TieInManager = new TieInManager();
 
   async createEditions(
     serieName: string,
@@ -178,33 +180,26 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
     return { ...comic, chapters, childSeries };
   }
 
-  async createSerie(
-    serie: SerieForm,
-    tieInManager?: ITieInManager & {
-      generateChildCovers: (childs: ComicTieIn[], basePath: string) => Promise<void>;
-    },
-  ): Promise<void> {
+  async createSerie(serie: SerieForm): Promise<void> {
     const serieData = await this.processSerieData(serie);
 
-    // Gera as capas para cada edição (capítulo) do quadrinho principal
-    if (serieData.chapters && serieData.chapters.length > 0) {
+    if (serieData.chapters?.length) {
       await this.createEditionCovers(serieData.chapters);
     }
 
-    if (tieInManager && serieData.childSeries && serieData.childSeries.length > 0) {
-      await tieInManager.processTieInData(serie.oldPath, serieData.childSeries);
-      // Extrai as capas para as child series (Tie-ins)
-      await tieInManager.generateChildCovers(serieData.childSeries, serie.oldPath);
+    if (serieData.childSeries?.length) {
+      await this.tieInManager.processTieInData(serie.oldPath, serieData.childSeries);
+      await this.tieInManager.generateChildCovers(serieData.childSeries, serie.oldPath);
     }
 
     await this.processCovers(serieData);
+    await this.processBackground(serieData);
     await this.collectionManager.initializeCollections(
       serieData,
       serieData.metadata.collections,
     );
     await this.updateSystem(serieData, serie.oldPath);
   }
-
   async mountEmptyComic(serie: SerieForm): Promise<Comic> {
     const nextId = await this.consumeNextSerieId();
     const subDir = await this.fileManager.searchDirectories(serie.oldPath);
@@ -223,6 +218,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
       serieGallery: path.join(this.gallery, `${serie.name}`),
       coverGallery: path.join(this.gallery, `${serie.name}`, `covers`),
       pagesGallery: path.join(this.gallery, `${serie.name}`, `pages`),
+      backgroundGallery: path.join(this.gallery, `${serie.name}`, `pages`),
       description: serie.description ?? '',
       backgroundImage: serie.backgroundImage ?? '',
       coverImage: serie.cover_path,

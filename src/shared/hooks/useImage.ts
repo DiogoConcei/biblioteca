@@ -1,54 +1,39 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+
+const DIRECT_SRC = /^(data:|https?:|media:|asset:)/;
+
+const encodeImage = (path: string) =>
+  window.electronAPI.webUtilities.readFileAsDataUrl(path);
 
 export default function useImage() {
-  const [previewSrc, setPreviewSrc] = useState<string | null>('');
+  const [previewSrc, setPreviewSrc] = useState('');
+  const requestId = useRef(0);
 
-  const getPreview = async (): Promise<string> => {
-    const imagePath = await pickImage();
+  const loadExistingImage = useCallback(async (path: string) => {
+    const id = ++requestId.current;
 
-    if (!imagePath) return '';
-
-    await loadExistingImage(imagePath);
-    return imagePath;
-  };
-
-  const pickImage = async (): Promise<string | null> => {
-    const response = await window.electronAPI.system.pickImage();
-
-    if (!response.success || !response.data) return null;
-
-    return response.data;
-  };
-
-  const encodeImage = async (caminhoImagem: string): Promise<string> => {
-    const encodedImage =
-      await window.electronAPI.webUtilities.readFileAsDataUrl(caminhoImagem);
-
-    return encodedImage;
-  };
-
-  const loadExistingImage = async (path: string) => {
-    if (!path) return;
-
-    if (
-      path.startsWith('data:') ||
-      path.startsWith('http') ||
-      path.startsWith('media://') ||
-      path.startsWith('asset://')
-    ) {
+    if (!path) {
+      setPreviewSrc('');
+      return;
+    }
+    if (DIRECT_SRC.test(path)) {
       setPreviewSrc(path);
       return;
     }
 
-    const encodedImage = await encodeImage(path);
-    setPreviewSrc(encodedImage);
+    try {
+      const encoded = await encodeImage(path);
+      if (id === requestId.current) setPreviewSrc(encoded);
+    } catch {
+      if (id === requestId.current) setPreviewSrc('');
+    }
+  }, []);
+
+  const getPreview = async (): Promise<string> => {
+    const response = await window.electronAPI.system.pickImage();
+    if (!response.success || !response.data) return '';
+    return response.data;
   };
 
-  return {
-    getPreview,
-    encodeImage,
-    setPreviewSrc,
-    loadExistingImage,
-    previewSrc,
-  };
+  return { previewSrc, setPreviewSrc, loadExistingImage, getPreview, encodeImage };
 }

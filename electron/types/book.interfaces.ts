@@ -18,6 +18,7 @@ export interface Book extends graphSerie<BookChapter> {
   dataPath: string;
   serieGallery: string;
   coverGallery: string;
+  backgroundGallery: string;
   pagesGallery: string;
   chapters: BookChapter[];
   totalChapters: number;

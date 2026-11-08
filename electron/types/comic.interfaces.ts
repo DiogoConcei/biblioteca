@@ -14,6 +14,7 @@ export interface Comic extends graphSerie<ComicEdition> {
   chaptersPath: string;
   dataPath: string;
   serieGallery: string;
+  backgroundGallery: string;
   coverGallery: string;
   pagesGallery: string;
   coverImage: string;
@@ -58,6 +59,7 @@ export interface TieIn {
   serieGallery: string;
   coverGallery: string;
   pagesGallery: string;
+  backgroundGallery: string;
   coverImage: string;
   totalChapters: number;
   chaptersRead: number;

@@ -17,17 +17,17 @@ import { useUploadStore } from '../store/uploadStore';
 import BackgroundField from '@/features/upload/components/BackgroundField/BackgroundField';
 import ErrorScreen from '@/shared/components/ErrorScreen/ErrorScreen';
 import { useUIStore } from '@/shared/store/useUIStore';
+import useImage from '@/shared/hooks/useImage';
 import ViewModeSelector from '@/shared/components/ViewModeSelector/ViewModeSelector';
 import MetadataViewer from '@/features/upload/components/MetadataViewer/MetadataViewer';
 import { ScrapedMetadata } from '@/shared/types/collections.interfaces';
+import { LiteratureForm } from '@/shared/types/series.interfaces';
 import { Globe } from 'lucide-react';
 
 export default function SerieUpload() {
   const navigate = useNavigate();
   const error = useUIStore((s) => s.error);
   const [initialData] = useState(() => useUploadStore.getState().pendingSeries);
-
-  // Estado para controlar o modal de "Rede"
   const [isNetworkModalOpen, setIsNetworkModalOpen] = useState(false);
 
   const { form, currentIndex, fields, next, prev, submit, serverError, isSubmitting } =
@@ -46,10 +46,16 @@ export default function SerieUpload() {
     formState: { errors },
   } = form;
 
+  const prefix = `series.${currentIndex}` as const;
+  const backgroundImage = form.watch(`${prefix}.backgroundImage`);
+  const { previewSrc: backgroundSrc, loadExistingImage } = useImage();
+
   useEffect(() => {
-    if (initialData.length === 0) {
-      navigate('/');
-    }
+    loadExistingImage(backgroundImage ?? '');
+  }, [backgroundImage, loadExistingImage]);
+
+  useEffect(() => {
+    if (initialData.length === 0) navigate('/');
   }, [initialData, navigate]);
 
   useEffect(() => {
@@ -74,20 +80,12 @@ export default function SerieUpload() {
   if (error) return <ErrorScreen error={error} />;
   if (initialData.length === 0 || isSubmitting === true) return <Loading />;
 
-  const prefix = `series.${currentIndex}` as const;
-  const backgroundImage = form.watch(`${prefix}.backgroundImage`);
   const literatureForm = form.watch(`${prefix}.literatureForm`);
   const serieErrors = errors.series?.[currentIndex];
 
-  const pageStyle = backgroundImage
-    ? {
-        backgroundImage: `radial-gradient(circle, rgba(40, 44, 52, 0.3) 0%, rgba(40, 44, 52, 0.85) 100%), url("${backgroundImage}")`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        transition: 'background-image 0.3s ease-in-out',
-      }
-    : {};
+  const pageStyle = backgroundSrc
+    ? ({ '--bg-image': `url("${backgroundSrc}")` } as React.CSSProperties)
+    : undefined;
 
   return (
     <article className={styles.page} style={pageStyle}>
@@ -107,7 +105,6 @@ export default function SerieUpload() {
             />
           </div>
 
-          {/* Coluna 2: informações */}
           <div className={styles.column}>
             <div className={styles['fields-grid']}>
               <TextInput
@@ -144,13 +141,7 @@ export default function SerieUpload() {
               placeholder="Sinopse, anotações..."
             />
 
-            <Controller
-              control={control}
-              name={`${prefix}.backgroundImage`}
-              render={({ field }) => (
-                <BackgroundField value={field.value ?? ''} onChange={field.onChange} />
-              )}
-            />
+            <BackgroundField control={control} name={`${prefix}.backgroundImage`} />
           </div>
 
           <div className={styles.column}>
@@ -213,6 +204,11 @@ export default function SerieUpload() {
 
       {isNetworkModalOpen && (
         <MetadataViewer
+          initialValues={{
+            title: form.getValues(`${prefix}.name`) ?? '',
+            author: form.getValues(`${prefix}.author`) ?? '',
+            type: literatureForm === LiteratureForm.COMIC ? 'comic' : 'manga',
+          }}
           onClose={() => setIsNetworkModalOpen(false)}
           onSelect={handleApplyMetadata}
         />
