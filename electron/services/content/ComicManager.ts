@@ -224,7 +224,7 @@ export default class ComicManager extends GraphSerie<Comic, ComicEdition> {
       coverGallery: path.join(this.gallery, `${serie.name}`, `covers`),
       pagesGallery: path.join(this.gallery, `${serie.name}`, `pages`),
       description: serie.description ?? '',
-      backgroundImage: serie.backgroundPath ?? '',
+      backgroundImage: serie.backgroundImage ?? '',
       coverImage: serie.cover_path,
       totalChapters,
       genre: serie.genre,

@@ -50,7 +50,7 @@ export interface SerieForm {
   sanitizedName: string;
   chaptersPath: string;
   description?: string;
-  backgroundPath?: string;
+  backgroundImage?: string;
   viewMode: ViewMode;
   oldPath: string;
   archivesPath: string;
