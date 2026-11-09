@@ -161,7 +161,7 @@ export default function ImageController<T extends FieldValues>({
             </button>
           </>
         )}
-      </div>{' '}
+      </div>
     </div>
   );
 }

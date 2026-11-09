@@ -83,3 +83,14 @@ $font-5xl: 3rem; // 48px
   outline: none;
   cursor: pointer;
 }
+
+$surface: rgba($gunmetal, 0.72);
+$surface-strong: rgba($gunmetal, 0.88);
+
+@mixin panel($bg: $surface) {
+  background: $bg;
+  border: 1px solid $border-color;
+  border-radius: $radius-md;
+  backdrop-filter: blur(14px) saturate(120%);
+  box-shadow: 0 4px 24px rgba(black, 0.35);
+}

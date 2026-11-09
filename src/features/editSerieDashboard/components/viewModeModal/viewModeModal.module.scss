@@ -1,0 +1,63 @@
+@use '@/shared/styles/variables' as *;
+
+.modal {
+  width: min(560px, 90vw);
+  padding: 0;
+  margin: auto;
+  border: 1px solid $border-color;
+  border-radius: $radius-lg;
+  background: $surface-strong;
+  color: $snow;
+
+  &::backdrop {
+    background: rgba(black, 0.6);
+    backdrop-filter: blur(4px);
+  }
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  padding: $spacing-5;
+
+  h2 {
+    margin: 0;
+    font-size: $font-lg;
+    color: $weak-amethyst;
+  }
+}
+
+.preview {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  border: 1px dashed $border-color;
+  border-radius: $radius-md;
+  color: $text-muted;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-2;
+
+  button {
+    padding: $spacing-1 $spacing-3;
+    border: 1px solid $modal-border;
+    border-radius: $radius-sm;
+    background: transparent;
+    color: $snow;
+    font-size: $font-base;
+    cursor: pointer;
+
+    &:hover {
+      border-color: $accent;
+    }
+
+    &.primary {
+      background: $accent;
+      border-color: $accent;
+    }
+  }
+}

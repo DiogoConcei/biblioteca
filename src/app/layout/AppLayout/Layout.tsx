@@ -18,6 +18,7 @@ const NAV_MODES: { pattern: string; mode: NavMode }[] = [
   { pattern: '/collections', mode: 'hidden' },
   { pattern: '/local-upload/serie', mode: 'overlay' },
   { pattern: '/local-upload/chapter', mode: 'overlay' },
+  { pattern: '/edit/serie/:serie_name/:literature_form', mode: 'overlay' },
   ...SERIE_PAGE_MODES,
 ];
 function getNavMode(pathname: string): NavMode {

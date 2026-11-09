@@ -16,15 +16,15 @@ import ImageGallery from '../components/SeriePotrait/SeriePotrait';
 import Favorite from '@/shared/components/FavoriteButton/Favorite';
 import CollectionButton from '@/shared/components/CollectionButton/CollectionButton';
 import Rating from '@/shared/components/Rating/Rating';
-import {
-  APIResponse,
-  Literatures,
-} from '../../../../electron/types/electron-auxiliar.interfaces';
+import { APIResponse } from '../../../../electron/types/electron-auxiliar.interfaces';
 import { useState } from 'react';
 import { Eye, EyeOff, Trash2, Undo2, Pencil, Search } from 'lucide-react';
 import Segmented from '../components/Segmented/Segmented';
 import TextInput from '@/shared/components/TextInput/TextInput';
 import ErrorScreen from '@/shared/components/ErrorScreen/ErrorScreen';
+import ViewModeSelector from '@/shared/components/ViewModeSelector/ViewModeSelector';
+import ViewModeModal from '../components/viewModeModal/viewModeModal';
+import { ViewMode } from '../../../../electron/types/electron-auxiliar.interfaces';
 import TagsField from '@/features/upload/components/TagsField/TagsField';
 
 type ChapterId = SerieEditForm['chapters'][number]['id'];
@@ -72,6 +72,9 @@ export default function EditSerie() {
           chaptersRead: serie.chaptersRead,
           literatureForm: serie.literatureForm as LiteratureForm,
           coverGallery: serie.coverGallery,
+          backgroundGallery: serie.backgroundGallery,
+          backgroundImage: serie.backgroundImage,
+          description: serie.description,
           pagesGallery: serie.pagesGallery,
           serieGallery: serie.serieGallery,
           readingData: {
@@ -84,7 +87,7 @@ export default function EditSerie() {
             recommendedBy: serie.metadata.recommendedBy || '',
             originalOwner: serie.metadata.originalOwner || '',
             lastDownload: serie.metadata.lastDownload || '',
-
+            viewMode: serie.metadata.viewMode,
             privacy: serie.metadata.privacy || PrivacyStatus.PUBLIC,
             rating: serie.metadata.rating || 0,
             isFavorite: serie.metadata.isFavorite || false,
@@ -105,6 +108,8 @@ export default function EditSerie() {
     null,
   );
   const watched = watch('chapters') ?? [];
+  const [pendingMode, setPendingMode] = useState<ViewMode | null>(null);
+  const viewMode = watch('metadata.viewMode');
 
   if (error) return <ErrorScreen error={error} serieName={serie_name} />;
 
@@ -120,6 +125,13 @@ export default function EditSerie() {
 
   const toggleRead = (index: number) =>
     setValue(`chapters.${index}.isRead`, !watched[index].isRead, { shouldDirty: true });
+
+  const confirmViewMode = () => {
+    if (pendingMode) {
+      setValue('metadata.viewMode', pendingMode, { shouldDirty: true });
+    }
+    setPendingMode(null);
+  };
 
   const toggleRemoved = (id: ChapterId) =>
     setRemoved((prev) => {
@@ -161,253 +173,274 @@ export default function EditSerie() {
     }
   };
 
+  const pageStyle = serie.backgroundImage
+    ? ({ '--bg-image': `url("${serie.backgroundImage}")` } as React.CSSProperties)
+    : undefined;
+
   return (
-    <form className={styles['form-view']} onSubmit={handleSubmit(onSubmit)}>
-      <aside className={styles.sidebar}>
-        <ImageGallery control={control} name="coverImage" />
-        <div className={styles.actionButtons}>
-          <Favorite serie={serie} />
-          <Rating serie={serie} />
-          <CollectionButton serie={serie} />
-        </div>
+    <section className={styles.background} style={pageStyle}>
+      <form className={styles['form-view']} onSubmit={handleSubmit(onSubmit)}>
+        <aside className={styles.sidebar}>
+          <ImageGallery control={control} name="coverImage" />
+          <div className={styles.actionButtons}>
+            <Favorite serie={serie} />
+            <Rating serie={serie} />
+            <CollectionButton serie={serie} />
+          </div>
 
-        <dl className={styles.stats}>
-          <div>
-            <dt>Criado em</dt>
-            <dd>{new Date(serie.createdAt).toLocaleDateString()}</dd>
-          </div>
-          <div>
-            <dt>Último download</dt>
-            <dd title={new Date(serie.metadata.lastDownload).toLocaleString()}>
-              {serie.metadata.lastDownload
-                ? new Date(serie.metadata.lastDownload).toLocaleDateString()
-                : '—'}
-            </dd>
-          </div>
-          {lastRead && (
+          <dl className={styles.stats}>
             <div>
-              <dt>Último lido</dt>
-              <dd>{lastRead.name}</dd>
+              <dt>Criado em</dt>
+              <dd>{new Date(serie.createdAt).toLocaleDateString()}</dd>
             </div>
-          )}
-        </dl>
-      </aside>
-
-      <div className={styles.center}>
-        <h1>
-          Editando: <span>{serie.name}</span>
-        </h1>
-
-        <div className={styles.topRow}>
-          <section className={styles.section}>
-            <h2>Informações</h2>
-            <div className={styles.list}>
-              <TextInput
-                register={register('name', { required: true })}
-                error={errors.name}
-                msg="Nome da série"
-              />
-              <TextInput
-                register={register('author', { required: true })}
-                error={errors.author}
-                msg="Autor"
-              />
-              <TextInput
-                register={register('genre', { required: true })}
-                error={errors.genre}
-                msg="Gênero da série"
-              />
-              <TextInput
-                register={register('language', { required: true })}
-                error={errors.language}
-                msg="Idioma"
-              />
+            <div>
+              <dt>Último download</dt>
+              <dd title={new Date(serie.metadata.lastDownload).toLocaleString()}>
+                {serie.metadata.lastDownload
+                  ? new Date(serie.metadata.lastDownload).toLocaleDateString()
+                  : '—'}
+              </dd>
             </div>
+            {lastRead && (
+              <div>
+                <dt>Último lido</dt>
+                <dd>{lastRead.name}</dd>
+              </div>
+            )}
+          </dl>
+        </aside>
+
+        <div className={styles.center}>
+          <h1>
+            Editando: <span>{serie.name}</span>
+          </h1>
+
+          <div className={styles.topRow}>
+            <section className={styles.section}>
+              <h2>Informações</h2>
+              <div className={styles.list}>
+                <TextInput
+                  register={register('name', { required: true })}
+                  error={errors.name}
+                  msg="Nome da série"
+                />
+                <TextInput
+                  register={register('author', { required: true })}
+                  error={errors.author}
+                  msg="Autor"
+                />
+                <TextInput
+                  register={register('genre', { required: true })}
+                  error={errors.genre}
+                  msg="Gênero da série"
+                />
+                <TextInput
+                  register={register('language', { required: true })}
+                  error={errors.language}
+                  msg="Idioma"
+                />
+              </div>
+            </section>
+
+            <section className={styles.section}>
+              <h2>Organização</h2>
+              <div className={styles.list}>
+                <Segmented
+                  control={control}
+                  name="metadata.status"
+                  label="Status"
+                  options={Object.values(ReadingStatus)}
+                />
+                <Segmented
+                  control={control}
+                  name="metadata.privacy"
+                  label="Privacidade"
+                  options={Object.values(PrivacyStatus)}
+                />
+                <Segmented
+                  control={control}
+                  name="metadata.autoBackup"
+                  label="Backup"
+                  options={Object.values(AutoBackupStatus)}
+                />
+                <div className={styles.field}>
+                  <TagsField control={control} name="tags" />
+                </div>
+              </div>
+            </section>
+
+            <section className={styles.section}>
+              <h2>Extras</h2>
+              <ViewModeSelector
+                value={viewMode}
+                onChange={(mode) => mode !== viewMode && setPendingMode(mode)}
+              />
+            </section>
+          </div>
+
+          <section className={`${styles.section} ${styles.description}`}>
+            <h2>Descrição</h2>
+            <textarea
+              {...register('description')}
+              aria-label="Descrição"
+              placeholder="Sinopse, anotações..."
+            />
           </section>
 
-          <section className={styles.section}>
-            <h2>Organização</h2>
-            <div className={styles.list}>
-              <Segmented
-                control={control}
-                name="metadata.status"
-                label="Status"
-                options={Object.values(ReadingStatus)}
-              />
-              <Segmented
-                control={control}
-                name="metadata.privacy"
-                label="Privacidade"
-                options={Object.values(PrivacyStatus)}
-              />
-              <Segmented
-                control={control}
-                name="metadata.autoBackup"
-                label="Backup"
-                options={Object.values(AutoBackupStatus)}
-              />
-              <div className={styles.field}>
-                <span className={styles.label}>Tags</span>
-                <TagsField control={control} name="tags" />
+          <section className={`${styles.section} ${styles.chaptersPanel}`}>
+            <div className={styles.sectionHeader}>
+              <h2>Capítulos</h2>
+              <div className={styles.progress}>
+                <div className={styles.bar}>
+                  <div className={styles.fill} style={{ width: `${percent}%` }} />
+                </div>
+                <span className={styles.count}>
+                  {chaptersRead} / {total}
+                </span>
               </div>
+              <label className={styles.search}>
+                <Search size={16} />
+                <input
+                  type="search"
+                  placeholder="Buscar capítulo"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                />
+              </label>
             </div>
+
+            {hasChapters ? (
+              <ul className={styles.chaptersList}>
+                {visible.map(({ field, index }) => {
+                  const chapter = watched[index];
+                  const isRemoved = removed.has(chapter.id);
+                  const isEditing = editing?.id === chapter.id;
+                  const nameReg = register(`chapters.${index}.name`);
+
+                  return (
+                    <li
+                      key={field.key}
+                      className={styles.chapter}
+                      data-read={chapter.isRead}
+                      data-removed={isRemoved}
+                    >
+                      {isEditing ? (
+                        <input
+                          {...nameReg}
+                          autoFocus
+                          className={styles.renameInput}
+                          onBlur={(e) => {
+                            nameReg.onBlur(e);
+                            setEditing(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              setEditing(null);
+                            }
+                            if (e.key === 'Escape') {
+                              setValue(
+                                `chapters.${index}.name`,
+                                editing?.original ?? chapter.name,
+                                { shouldDirty: true },
+                              );
+                              setEditing(null);
+                            }
+                          }}
+                        />
+                      ) : (
+                        <span
+                          className={styles.chapterName}
+                          onDoubleClick={() =>
+                            !isRemoved &&
+                            setEditing({ id: chapter.id, original: chapter.name })
+                          }
+                        >
+                          {chapter.name}
+                        </span>
+                      )}
+
+                      <div className={styles.rowActions}>
+                        {isRemoved ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleRemoved(chapter.id)}
+                            aria-label="Restaurar capítulo"
+                          >
+                            <Undo2 size={18} />
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditing({ id: chapter.id, original: chapter.name })
+                              }
+                              aria-label="Renomear capítulo"
+                            >
+                              <Pencil size={18} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => toggleRead(index)}
+                              aria-label={
+                                chapter.isRead
+                                  ? 'Marcar como não lido'
+                                  : 'Marcar como lido'
+                              }
+                            >
+                              {chapter.isRead ? <Eye size={18} /> : <EyeOff size={18} />}
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.danger}
+                              onClick={() => toggleRemoved(chapter.id)}
+                              aria-label="Remover capítulo"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className={styles.empty}>Nenhum capítulo nesta série.</p>
+            )}
           </section>
         </div>
 
-        <section className={`${styles.section} ${styles.description}`}>
-          <h2>Descrição</h2>
-          <textarea
-            {...register('comments')}
-            aria-label="Descrição"
-            placeholder="Sinopse, anotações..."
-          />
-        </section>
+        <div className={styles.actions}>
+          <button type="button" onClick={() => navigate('/')}>
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              reset();
+              setRemoved(new Set());
+            }}
+          >
+            Limpar
+          </button>
+          <button
+            type="submit"
+            className={styles.primary}
+            disabled={!isDirty && removed.size === 0}
+          >
+            Salvar
+          </button>
+        </div>
+      </form>
 
-        <section className={`${styles.section} ${styles.chaptersPanel}`}>
-          <div className={styles.sectionHeader}>
-            <h2>Capítulos</h2>
-            <div className={styles.progress}>
-              <div className={styles.bar}>
-                <div className={styles.fill} style={{ width: `${percent}%` }} />
-              </div>
-              <span className={styles.count}>
-                {chaptersRead} / {total}
-              </span>
-            </div>
-            <label className={styles.search}>
-              <Search size={16} />
-              <input
-                type="search"
-                placeholder="Buscar capítulo"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
-              />
-            </label>
-          </div>
-
-          {hasChapters ? (
-            <ul className={styles.chaptersList}>
-              {visible.map(({ field, index }) => {
-                const chapter = watched[index];
-                const isRemoved = removed.has(chapter.id);
-                const isEditing = editing?.id === chapter.id;
-                const nameReg = register(`chapters.${index}.name`);
-
-                return (
-                  <li
-                    key={field.key}
-                    className={styles.chapter}
-                    data-read={chapter.isRead}
-                    data-removed={isRemoved}
-                  >
-                    {isEditing ? (
-                      <input
-                        {...nameReg}
-                        autoFocus
-                        className={styles.renameInput}
-                        onBlur={(e) => {
-                          nameReg.onBlur(e);
-                          setEditing(null);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            setEditing(null);
-                          }
-                          if (e.key === 'Escape') {
-                            setValue(
-                              `chapters.${index}.name`,
-                              editing?.original ?? chapter.name,
-                              { shouldDirty: true },
-                            );
-                            setEditing(null);
-                          }
-                        }}
-                      />
-                    ) : (
-                      <span
-                        className={styles.chapterName}
-                        onDoubleClick={() =>
-                          !isRemoved &&
-                          setEditing({ id: chapter.id, original: chapter.name })
-                        }
-                      >
-                        {chapter.name}
-                      </span>
-                    )}
-
-                    <div className={styles.rowActions}>
-                      {isRemoved ? (
-                        <button
-                          type="button"
-                          onClick={() => toggleRemoved(chapter.id)}
-                          aria-label="Restaurar capítulo"
-                        >
-                          <Undo2 size={18} />
-                        </button>
-                      ) : (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setEditing({ id: chapter.id, original: chapter.name })
-                            }
-                            aria-label="Renomear capítulo"
-                          >
-                            <Pencil size={18} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => toggleRead(index)}
-                            aria-label={
-                              chapter.isRead ? 'Marcar como não lido' : 'Marcar como lido'
-                            }
-                          >
-                            {chapter.isRead ? <Eye size={18} /> : <EyeOff size={18} />}
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.danger}
-                            onClick={() => toggleRemoved(chapter.id)}
-                            aria-label="Remover capítulo"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className={styles.empty}>Nenhum capítulo nesta série.</p>
-          )}
-        </section>
-      </div>
-
-      <div className={styles.actions}>
-        <button type="button" onClick={() => navigate('/')}>
-          Cancelar
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            reset();
-            setRemoved(new Set());
-          }}
-        >
-          Limpar
-        </button>
-        <button
-          type="submit"
-          className={styles.primary}
-          disabled={!isDirty && removed.size === 0}
-        >
-          Salvar
-        </button>
-      </div>
-    </form>
+      <ViewModeModal
+        mode={pendingMode}
+        onConfirm={confirmViewMode}
+        onCancel={() => setPendingMode(null)}
+      />
+    </section>
   );
 }

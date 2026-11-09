@@ -60,10 +60,14 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
               </span>
             ))}
           </div> */}
-          <p className={styles.owner}>Upload por: {serie.metadata.originalOwner}</p>
-          <p className={styles.recomend}>
-            recomendada por: {serie.metadata.recommendedBy}
-          </p>
+          {serie.metadata.originalOwner && (
+            <p className={styles.owner}>Upload por: {serie.metadata.originalOwner}</p>
+          )}
+          {serie.metadata.recommendedBy && (
+            <p className={styles.recomend}>
+              recomendada por: {serie.metadata.recommendedBy}
+            </p>
+          )}
         </figcaption>
       </figure>
       <section className={styles.mangaInfo}>

@@ -15,6 +15,10 @@ const OPTIONS: ViewModeOption[] = [
   { value: ViewMode.SPOTLIGHT, label: 'Destaque', Icon: ImageIcon },
 ];
 
+export const VIEW_MODE_LABEL = Object.fromEntries(
+  OPTIONS.map((o) => [o.value, o.label]),
+) as Record<ViewMode, string>;
+
 interface ViewModeSelectorProps {
   value: ViewMode;
   onChange: (mode: ViewMode) => void;

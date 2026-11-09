@@ -73,6 +73,7 @@ export interface SerieEditForm {
   totalChapters: number;
   chaptersRead: number;
   serieGallery: string;
+  backgroundGallery: string;
   coverGallery: string;
   pagesGallery: string;
   literatureForm: LiteratureForm;
@@ -82,7 +83,6 @@ export interface SerieEditForm {
     lastReadAt: string;
   };
   backgroundImage: string;
-
   metadata: {
     status: ReadingStatus;
     collections: string[];

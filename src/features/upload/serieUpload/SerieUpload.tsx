@@ -18,7 +18,7 @@ import BackgroundField from '@/features/upload/components/BackgroundField/Backgr
 import ErrorScreen from '@/shared/components/ErrorScreen/ErrorScreen';
 import { useUIStore } from '@/shared/store/useUIStore';
 import useImage from '@/shared/hooks/useImage';
-import ViewModeSelector from '@/shared/components/ViewModeSelector/ViewModeSelector';
+import ViewModeSelector from '../../../shared/components/ViewModeSelector/ViewModeSelector';
 import MetadataViewer from '@/features/upload/components/MetadataViewer/MetadataViewer';
 import { ScrapedMetadata } from '@/shared/types/collections.interfaces';
 import { LiteratureForm } from '@/shared/types/series.interfaces';
