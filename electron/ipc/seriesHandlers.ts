@@ -229,15 +229,18 @@ export default function seriesHandlers(ipcMain: IpcMain) {
         throw new Error('Dados antigos não encontrados para a série');
       }
 
-      const normalizedCover = await imageManager.checkCover(
+      const coverImage = await imageManager.resolveCover(
         data.coverImage,
         oldData.coverImage,
+        data.coverGallery,
+      );
+      const backgroundImage = await imageManager.resolveBackground(
+        data.backgroundImage,
+        oldData.backgroundImage,
+        data.backgroundGallery,
       );
 
-      const preparedData: SerieEditForm = {
-        ...data,
-        coverImage: normalizedCover,
-      };
+      const preparedData: SerieEditForm = { ...data, coverImage, backgroundImage };
 
       const finalPath = await storageManager.persistSerie(oldData, preparedData);
 

@@ -94,7 +94,7 @@
 
   .topRow {
     display: grid;
-    grid-template-columns: 1.5fr 1fr 1fr;
+    grid-template-columns: 1.3fr 1fr;
     gap: $spacing-2;
     align-items: stretch;
 
@@ -106,6 +106,17 @@
   .list {
     display: flex;
     flex-direction: column;
+    gap: $spacing-2;
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+    }
+  }
+
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: $spacing-2;
 
     input {

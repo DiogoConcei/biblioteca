@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 
-const DIRECT_SRC = /^(data:|https?:|media:|asset:)/;
+const DIRECT_SRC = /^(data:|https?:|media:|asset:|lib-media:)/;
 
 const encodeImage = (path: string) =>
   window.electronAPI.webUtilities.readFileAsDataUrl(path);

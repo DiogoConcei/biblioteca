@@ -253,6 +253,9 @@ declare global {
           coverGalleryPath: string,
           sourcePath: string,
         ) => Promise<APIResponse<string>>;
+        getBackgroundGallery: (
+          backgroundGalleryPath: string,
+        ) => Promise<APIResponse<string[]>>;
         addToBackgroundGallery: (
           backgroundGalleryPath: string,
           sourcePath: string,

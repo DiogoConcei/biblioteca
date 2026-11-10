@@ -6,11 +6,13 @@ import styles from './TagsField.module.scss';
 export interface TagsFieldProps<T extends FieldValues> {
   control: Control<T>;
   name: Path<T>;
+  compact?: boolean;
 }
 
 export default function TagsField<T extends FieldValues>({
   control,
   name,
+  compact = false,
 }: TagsFieldProps<T>) {
   const [draft, setDraft] = useState('');
   const MAX_TAGS = 5;
@@ -18,12 +20,12 @@ export default function TagsField<T extends FieldValues>({
   return (
     <Controller
       control={control}
-      name={name} // Usando a prop name em vez do valor fixo "tags"
+      name={name}
       render={({ field }) => {
         const tags: string[] = field.value ?? [];
 
         const add = (raw: string) => {
-          if (tags.length >= MAX_TAGS) return; // Trava a adição se já tiver 5
+          if (tags.length >= MAX_TAGS) return;
 
           const tag = raw.trim();
           const exists = tags.some((t) => t.toLowerCase() === tag.toLowerCase());
@@ -44,11 +46,10 @@ export default function TagsField<T extends FieldValues>({
         };
 
         return (
-          <div className={styles.container}>
+          <div className={`${styles.container} ${compact ? styles.compact : ''}`}>
             <span className={styles.label}>
               Tags ({tags.length}/{MAX_TAGS})
             </span>
-
             <div
               className={`${styles.box} ${tags.length >= MAX_TAGS ? styles.disabled : ''}`}
             >
@@ -65,7 +66,6 @@ export default function TagsField<T extends FieldValues>({
                 </span>
               ))}
 
-              {/* Esconde o input se atingir o limite */}
               {tags.length < MAX_TAGS && (
                 <input
                   value={draft}

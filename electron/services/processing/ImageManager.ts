@@ -24,12 +24,12 @@ export default class ImageManager extends LibrarySystem {
   private readonly archiveManager: ArchiveManager = new ArchiveManager();
   private readonly pdfManager: PdfManager = new PdfManager();
 
-  public async getSerieCoverGallery(coverGalleryPath: string): Promise<string[]> {
-    const dirents = await fse.readdir(coverGalleryPath, { withFileTypes: true });
+  public async getGallery(galleryPath: string): Promise<string[]> {
+    const dirents = await fse.readdir(galleryPath, { withFileTypes: true });
 
     const imagePaths = dirents
       .filter((d) => d.isFile() && /\.(webp|jpeg|png|jpg)$/i.test(d.name))
-      .map((d) => path.join(coverGalleryPath, d.name));
+      .map((d) => path.join(galleryPath, d.name));
 
     const mediaUrls = imagePaths.map((p) => this.getMediaUrl(p));
 
@@ -97,6 +97,7 @@ export default class ImageManager extends LibrarySystem {
       throw new Error('Falha em deletar a capa');
     }
   }
+
   public async normalizeImage(imagePath: string, finalPath: string): Promise<string> {
     const sanitizedPath = await this.fileManager.normalizeEncoding(imagePath);
     const normalizedPath = path.resolve(sanitizedPath);
@@ -379,12 +380,24 @@ export default class ImageManager extends LibrarySystem {
     return await this.normalizeImage(coverPath, destPath);
   }
 
-  public async checkCover(cover: string, actualCover: string): Promise<string> {
-    if (cover === actualCover) {
-      return actualCover;
-    }
+  private isManaged(value: string): boolean {
+    return !value || value.startsWith('lib-media://');
+  }
 
-    return cover;
+  public async resolveCover(cover: string, oldCover: string, galleryPath: string) {
+    if (cover === oldCover || this.isManaged(cover)) return cover;
+    return this.addToCoverGallery(galleryPath, cover);
+  }
+
+  public async resolveBackground(bg: string, oldBg: string, galleryPath: string) {
+    if (bg === oldBg || this.isManaged(bg)) return bg;
+    return this.addToBackgroundGallery(galleryPath, bg);
+  }
+
+  public async getBackgroundGallery(galleryPath: string): Promise<string[]> {
+    const dir = galleryPath || this.backgroundImages; // mesmo fallback do add
+    if (!(await fse.pathExists(dir))) return [];
+    return this.getGallery(dir);
   }
 
   public async isImageHealthy(filePath: string): Promise<boolean> {

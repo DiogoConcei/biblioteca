@@ -20,6 +20,7 @@ export const VIEW_MODE_LABEL = Object.fromEntries(
 ) as Record<ViewMode, string>;
 
 interface ViewModeSelectorProps {
+  compact?: boolean;
   value: ViewMode;
   onChange: (mode: ViewMode) => void;
   disabled?: boolean;
@@ -28,14 +29,14 @@ interface ViewModeSelectorProps {
 export default function ViewModeSelector({
   value,
   onChange,
+  compact = false,
   disabled = false,
 }: ViewModeSelectorProps) {
   return (
-    <div className={styles.viewModeInfo}>
+    <div className={`${styles.viewModeInfo} ${compact ? styles.compact : ''}`}>
       <h2 className={styles.formSubtitle} id="view-mode-label">
         Modo de exibição:
       </h2>
-
       <div
         className={styles.optionsContainer}
         role="radiogroup"

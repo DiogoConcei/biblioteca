@@ -3,7 +3,7 @@
 .container {
   display: flex;
   flex-direction: column;
-  align-items: flex-start; // Alinha título e caixa à esquerda
+  align-items: flex-start;
   gap: $spacing-2;
   width: 100%;
 }
@@ -20,10 +20,9 @@
   align-items: center;
   gap: $spacing-2;
   width: 100%;
-  min-height: 52px; // Altura mínima para ficar bonito mesmo sem tags
+  min-height: 52px;
   padding: $spacing-2;
 
-  // Padrão de vidro fosco idêntico ao TextInput
   border: 2px solid rgba($amethyst, 0.5);
   border-radius: $radius-md;
   background-color: rgba($gunmetal, 0.6);
@@ -43,7 +42,7 @@
 
   input {
     flex: 1;
-    min-width: 120px; // Espaço mínimo para digitar
+    min-width: 120px;
     border: none;
     outline: none;
     background: transparent;
@@ -64,7 +63,7 @@
   padding: $spacing-1 $spacing-2;
   border-radius: $radius-md;
 
-  background-color: $amethyst; // Fundo sólido para destacar bem do fundo escuro
+  background-color: $amethyst;
   color: $snow;
   font-size: $font-sm;
   font-weight: 500;
@@ -85,5 +84,27 @@
     &:hover {
       opacity: 1;
     }
+  }
+}
+
+.container.compact {
+  gap: $spacing-1;
+
+  .label {
+    font-size: $font-xs;
+    font-weight: 400;
+    color: $snow;
+  }
+
+  .box {
+    min-height: 40px;
+    padding: $spacing-1 $spacing-2;
+    gap: $spacing-1;
+    border-width: 1px;
+  }
+
+  .chip {
+    padding: 2px $spacing-2;
+    font-size: $font-xs;
   }
 }

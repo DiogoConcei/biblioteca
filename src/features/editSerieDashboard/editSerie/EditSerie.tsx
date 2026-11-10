@@ -17,13 +17,15 @@ import Favorite from '@/shared/components/FavoriteButton/Favorite';
 import CollectionButton from '@/shared/components/CollectionButton/CollectionButton';
 import Rating from '@/shared/components/Rating/Rating';
 import { APIResponse } from '../../../../electron/types/electron-auxiliar.interfaces';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import useImage from '@/shared/hooks/useImage';
 import { Eye, EyeOff, Trash2, Undo2, Pencil, Search } from 'lucide-react';
 import Segmented from '../components/Segmented/Segmented';
 import TextInput from '@/shared/components/TextInput/TextInput';
 import ErrorScreen from '@/shared/components/ErrorScreen/ErrorScreen';
 import ViewModeSelector from '@/shared/components/ViewModeSelector/ViewModeSelector';
 import ViewModeModal from '../components/viewModeModal/viewModeModal';
+import BackgroundPicker from '../components/BackgroundPicker/BackgroundPicker';
 import { ViewMode } from '../../../../electron/types/electron-auxiliar.interfaces';
 import TagsField from '@/features/upload/components/TagsField/TagsField';
 
@@ -111,6 +113,13 @@ export default function EditSerie() {
   const [pendingMode, setPendingMode] = useState<ViewMode | null>(null);
   const viewMode = watch('metadata.viewMode');
 
+  const { previewSrc: bgSrc, loadExistingImage: loadBg } = useImage();
+  const backgroundImage = watch('backgroundImage');
+
+  useEffect(() => {
+    loadBg(backgroundImage ?? '');
+  }, [backgroundImage, loadBg]);
+
   if (error) return <ErrorScreen error={error} serieName={serie_name} />;
 
   if (loading || !serie) return <Loading />;
@@ -173,8 +182,8 @@ export default function EditSerie() {
     }
   };
 
-  const pageStyle = serie.backgroundImage
-    ? ({ '--bg-image': `url("${serie.backgroundImage}")` } as React.CSSProperties)
+  const pageStyle = bgSrc
+    ? ({ '--bg-image': `url("${bgSrc}")` } as React.CSSProperties)
     : undefined;
 
   return (
@@ -211,35 +220,58 @@ export default function EditSerie() {
         </aside>
 
         <div className={styles.center}>
-          <h1>
-            Editando: <span>{serie.name}</span>
-          </h1>
+          <BackgroundPicker
+            control={control}
+            name="backgroundImage"
+            galleryPath={serie.backgroundGallery}
+          >
+            <h1>
+              Editando: <span>{serie.name}</span>
+            </h1>
+          </BackgroundPicker>
 
           <div className={styles.topRow}>
             <section className={styles.section}>
               <h2>Informações</h2>
-              <div className={styles.list}>
-                <TextInput
-                  register={register('name', { required: true })}
-                  error={errors.name}
-                  msg="Nome da série"
-                />
-                <TextInput
-                  register={register('author', { required: true })}
-                  error={errors.author}
-                  msg="Autor"
-                />
-                <TextInput
-                  register={register('genre', { required: true })}
-                  error={errors.genre}
-                  msg="Gênero da série"
-                />
-                <TextInput
-                  register={register('language', { required: true })}
-                  error={errors.language}
-                  msg="Idioma"
-                />
+              <div className={styles.grid2}>
+                <div className={styles.field}>
+                  <span className={styles.label}>Nome</span>
+                  <TextInput
+                    compact
+                    register={register('name', { required: true })}
+                    error={errors.name}
+                    msg="Nome da série"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <span className={styles.label}>Autor</span>
+                  <TextInput
+                    compact
+                    register={register('author', { required: true })}
+                    error={errors.author}
+                    msg="Autor"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <span className={styles.label}>Gênero</span>
+                  <TextInput
+                    compact
+                    register={register('genre', { required: true })}
+                    error={errors.genre}
+                    msg="Gênero da série"
+                  />
+                </div>
+                <div className={styles.field}>
+                  <span className={styles.label}>Idioma</span>
+                  <TextInput
+                    compact
+                    register={register('language', { required: true })}
+                    error={errors.language}
+                    msg="Idioma"
+                  />
+                </div>
               </div>
+              <TagsField compact control={control} name="tags" />
             </section>
 
             <section className={styles.section}>
@@ -263,18 +295,12 @@ export default function EditSerie() {
                   label="Backup"
                   options={Object.values(AutoBackupStatus)}
                 />
-                <div className={styles.field}>
-                  <TagsField control={control} name="tags" />
-                </div>
+                <ViewModeSelector
+                  compact
+                  value={viewMode}
+                  onChange={(mode) => mode !== viewMode && setPendingMode(mode)}
+                />
               </div>
-            </section>
-
-            <section className={styles.section}>
-              <h2>Extras</h2>
-              <ViewModeSelector
-                value={viewMode}
-                onChange={(mode) => mode !== viewMode && setPendingMode(mode)}
-              />
             </section>
           </div>
 

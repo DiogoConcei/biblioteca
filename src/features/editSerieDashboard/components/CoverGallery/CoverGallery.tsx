@@ -46,25 +46,9 @@ export default function CoverGallery({
   if (!serie || loading) return <Loading />;
 
   const handleAddNewCover = async () => {
-    try {
-      const pickedPath = await getPreview();
-      if (!pickedPath) return;
-
-      const response = await window.electronAPI.image.addCoverToGallery(
-        serie.coverGallery,
-        pickedPath,
-      );
-
-      if (response.success && response.data) {
-        const newMediaUrl = response.data;
-
-        setGalleryImages((prev) => [...prev, newMediaUrl]);
-
-        onSelect(newMediaUrl);
-      }
-    } catch (e) {
-      setError('Erro ao adicionar nova capa');
-    }
+    const pickedPath = await getPreview();
+    if (!pickedPath) return;
+    onSelect(pickedPath);
   };
 
   const askDelete = (e: React.MouseEvent, imgUrl: string) => {

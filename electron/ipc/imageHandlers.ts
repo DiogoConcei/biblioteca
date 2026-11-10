@@ -9,7 +9,7 @@ export default function imageHandlers(ipcMain: IpcMain) {
     'image:get-cover-gallery',
     async (_event, coverGalleryPath: string): Promise<APIResponse<string[]>> => {
       try {
-        const data = await imageManager.getSerieCoverGallery(coverGalleryPath);
+        const data = await imageManager.getGallery(coverGalleryPath);
         return { success: true, data: data };
       } catch (error) {
         return { success: false, error: String(error) };
@@ -30,6 +30,18 @@ export default function imageHandlers(ipcMain: IpcMain) {
           sourcePath,
         );
         return { success: true, data: mediaUrl };
+      } catch (error) {
+        return { success: false, error: String(error) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    'image:get-background-gallery',
+    async (_event, backgroundGalleryPath: string): Promise<APIResponse<string[]>> => {
+      try {
+        const data = await imageManager.getBackgroundGallery(backgroundGalleryPath);
+        return { success: true, data: data };
       } catch (error) {
         return { success: false, error: String(error) };
       }

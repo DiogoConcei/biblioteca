@@ -22,7 +22,6 @@
   background-color: rgba($gunmetal, 0.4);
   transition: all 0.2s ease-in-out;
 
-  // Estado sem imagem
   &[data-has-image='false'] {
     border: 2px dashed rgba($amethyst, 0.5);
     cursor: pointer;
@@ -38,7 +37,6 @@
     }
   }
 
-  // Estado com imagem
   &[data-has-image='true'] {
     border: 1px solid $border-color;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
