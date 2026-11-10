@@ -116,12 +116,16 @@ export default function BackgroundGallery({
           </div>
         </header>
 
-        <button type="button" className={styles.addTile} onClick={handleAddNewBackground}>
-          <Plus size={28} />
-          <span>Do computador</span>
-        </button>
-
         <div className={styles.grid}>
+          <button
+            type="button"
+            className={styles.addTile}
+            onClick={handleAddNewBackground}
+          >
+            <Plus size={28} />
+            <span>Adicionar novo background</span>
+          </button>
+
           {tiles.map(({ value, src }) => (
             <div key={value} className={styles.ImageWrapper}>
               <button key={value} type="button" className={styles.tile}>

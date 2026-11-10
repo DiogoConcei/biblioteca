@@ -7,7 +7,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 2.1rem;
   background-color: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   animation: fadeIn 0.15s ease-out;
@@ -17,14 +17,14 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 1000px;
-  max-height: 85vh;
+  max-width: 1560px; // Reduzido em 5% (de 1650px)
+  max-height: 94vh;
   overflow: hidden;
   border: 1px solid $modal-border;
   border-radius: $radius-md;
   background-color: $gunmetal;
   color: $snow;
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 26px 52px rgba(0, 0, 0, 0.7);
   animation: popIn 0.2s ease-out forwards;
 }
 
@@ -33,20 +33,21 @@
   flex: none;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
+  gap: 2.1rem;
+  padding: 1.65rem 2.6rem;
   border-bottom: 1px solid $modal-border;
 
   div {
     display: flex;
-    gap: $spacing-2;
+    gap: $spacing-3;
   }
 
   h2 {
     min-width: 0;
     margin: 0;
     overflow: hidden;
-    font-size: 1.25rem;
+    font-size: 1.9rem;
+    font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -58,11 +59,11 @@
   flex: none;
   align-items: center;
   gap: $spacing-2;
-  padding: $spacing-2 $spacing-3;
+  padding: $spacing-2 $spacing-4;
   border-radius: $radius-sm;
   background: $amethyst;
   color: $snow;
-  font-size: $font-base;
+  font-size: $font-sm;
   white-space: nowrap;
   transition: filter 0.15s ease;
 
@@ -78,9 +79,10 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 1rem;
-  padding: 1.5rem;
+  // Reduzido em 5% (de 330px para 313px)
+  grid-template-columns: repeat(auto-fill, minmax(313px, 1fr));
+  gap: 2.1rem;
+  padding: 2.6rem;
   margin: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -94,19 +96,23 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: $spacing-1;
+  gap: $spacing-2;
   border: 2px dashed rgba($amethyst, 0.5);
   border-radius: $radius-md;
   background: rgba($gunmetal, 0.6);
   color: $weak-amethyst;
+  font-size: $font-sm;
+  font-weight: 500;
   cursor: pointer;
   transition:
     border-color 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    transform 0.15s ease;
 
   &:hover {
     border-color: $amethyst;
     color: $snow;
+    transform: scale(1.02);
   }
 }
 
@@ -150,26 +156,28 @@
 
 .deleteButton {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 13px;
+  right: 13px;
   z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 45px;
+  height: 45px;
   border: none;
   border-radius: 50%;
-  background-color: rgba(220, 53, 69, 0.85);
+  background-color: rgba(220, 53, 69, 0.9);
   color: white;
   cursor: pointer;
   opacity: 0;
   transition:
     opacity 0.2s ease,
-    background-color 0.2s ease;
+    background-color 0.2s ease,
+    transform 0.15s ease;
 
   &:hover {
     background-color: rgb(190, 40, 55);
+    transform: scale(1.08);
   }
 }
 
@@ -195,14 +203,19 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .header {
-    padding: 0.75rem 1rem;
+    padding: 1.2rem 1.4rem;
+
+    h2 {
+      font-size: 1.4rem;
+    }
   }
 
   .grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    padding: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 1.4rem;
+    padding: 1.6rem;
   }
 }
 
