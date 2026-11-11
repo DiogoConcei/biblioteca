@@ -8,6 +8,7 @@ import {
   Literatures,
 } from '../../../electron/types/electron-auxiliar.interfaces';
 import { useHistoryStore } from '../store/useHistoryStore';
+import useCollection from './useCollection';
 import { useCollectionStore } from '../store/useCollectionStore';
 
 export default function useAction() {
@@ -23,8 +24,9 @@ export default function useAction() {
   const setRecentHistory = useHistoryStore((s) => s.setRecentHistory);
   const setCollection = useCollectionStore((s) => s.setCollection);
   const updateSerieInCollection = useCollectionStore((s) => s.updateSerieInCollection);
+  const { updateFav } = useCollection();
 
-  async function ratingSerie(e: React.MouseEvent, serie: StoreSerie, rating: number) {
+  const ratingSerie = async (e: React.MouseEvent, serie: StoreSerie, rating: number) => {
     e.stopPropagation();
 
     const originalRating = serie.metadata.rating;
@@ -44,12 +46,12 @@ export default function useAction() {
       updateSerie('metadata.rating', originalRating || 0);
       console.error('Falha em realizar ação');
     }
-  }
+  };
 
-  async function markAsRead(
+  const markAsRead = async (
     e: React.MouseEvent,
     selectedChapter: LiteratureChapter,
-  ): Promise<boolean> {
+  ): Promise<boolean> => {
     e.stopPropagation();
 
     const originalRead = selectedChapter.isRead;
@@ -107,9 +109,9 @@ export default function useAction() {
       updateChapter(selectedChapter.id, 'isRead', originalRead);
       return false;
     }
-  }
+  };
 
-  async function openChapter(e: React.MouseEvent, selectedChapter: LiteratureChapter) {
+  const openChapter = async (e: React.MouseEvent, selectedChapter: LiteratureChapter) => {
     e.stopPropagation();
     const { name: serieName, id: serieId } = serie;
     const { name: chapterName, id: chapterId, page, isRead } = selectedChapter;
@@ -134,11 +136,11 @@ export default function useAction() {
         chapterName,
       )}/${chapterId}/${page}/${isRead}`,
     );
-  }
+  };
 
-  const lastChapter = async (
+  const OpenLastChapter = async (
     e: React.MouseEvent<HTMLButtonElement | SVGElement>,
-    serieId: number,
+    serieId: number = serie.id,
   ) => {
     e.preventDefault();
     setLoading(true);
@@ -180,5 +182,22 @@ export default function useAction() {
     navigate(url!);
   };
 
-  return { ratingSerie, markAsRead, openChapter, openTieIn, lastChapter };
+  const favoriteSerie = async (isFav: boolean) => {
+    const newFavoriteStatus = !isFav;
+    updateSerie('metadata.isFavorite', newFavoriteStatus);
+    const response = await updateFav(serie, newFavoriteStatus);
+
+    if (!response) {
+      updateSerie('metadata.isFavorite', isFav);
+    }
+  };
+
+  return {
+    ratingSerie,
+    markAsRead,
+    openChapter,
+    openTieIn,
+    OpenLastChapter,
+    favoriteSerie,
+  };
 }

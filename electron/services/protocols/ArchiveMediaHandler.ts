@@ -1,6 +1,6 @@
 import path from 'path';
 import fse from 'fs-extra';
-
+import ArchiveManager from '../processing/ArchiveManager';
 import { BaseMediaHandler } from './BaseMediaHandler';
 
 export class ArchiveMediaHandler extends BaseMediaHandler {
@@ -36,7 +36,6 @@ export class ArchiveMediaHandler extends BaseMediaHandler {
 
     if (!(await fse.pathExists(filePath))) {
       try {
-        const ArchiveManager = (await import('../processing/ArchiveManager')).default;
         const archiveManager = new ArchiveManager();
         await archiveManager.extractWith7zip(zipPath, tempDest);
       } catch (extractErr) {

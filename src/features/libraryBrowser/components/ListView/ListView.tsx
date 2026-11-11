@@ -3,6 +3,7 @@ import {
   Upload,
   Eye,
   EyeOff,
+  Book,
   ArrowDownToLine,
   ArrowDownFromLine,
   ChevronLeft,
@@ -24,12 +25,11 @@ import UploadPopUp from '../UploadPopUp/UploadPopUp';
 import styles from './ListView.module.scss';
 import { LiteratureChapter } from '../../../../../electron/types/electron-auxiliar.interfaces';
 
-// Ou importe LiteratureChapter do seu arquivo de tipos.
 type Chapter = ReturnType<typeof useSerieStore.getState>['chapters'][number];
 
 const PAGE_SIZE = 12;
 const NEW_CHAPTER_DAYS = 7;
-const MAX_NEW_BADGES = 10; // acima disso foi um envio em lote: não marca ninguém
+const MAX_NEW_BADGES = 10;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const isRecent = (chapter: Chapter) =>
@@ -54,7 +54,8 @@ function DownloadIcon({ state }: { state: Chapter['isDownloaded'] }) {
 
 export default function ListView({ literatureForm }: { literatureForm: LiteratureForm }) {
   const { downloadIndividual, ensureDownloaded } = useDownload();
-  const { openChapter, markAsRead } = useAction();
+  const { openChapter, markAsRead, OpenLastChapter } = useAction();
+
   const chapters = useSerieStore((s) => s.chapters);
   const { deleteChapter } = useChapterActions();
   const fetchSerie = useSerieStore((s) => s.fetchSerie);
@@ -133,6 +134,10 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
     <section className={styles.control}>
       <div className={styles.header}>
         <h2>Capítulos</h2>
+        <button className={styles.reading} onClick={(e) => OpenLastChapter(e)}>
+          <Book />
+          Continuar
+        </button>
         <div className={styles.headerActions}>
           <button
             type="button"

@@ -1,17 +1,17 @@
+import { useMemo, useEffect } from 'react';
 import { Tag, Book } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { StoreSerie } from '@/shared/store/useSerieStore';
-import useAction from '@/shared/hooks/useAction';
+import { useCollectionStore } from '@/shared/store/useCollectionStore';
+import useImage from '@/shared/hooks/useImage';
+import useHistory from '@/shared/hooks/useHistory';
+import ListView from '../ListView/ListView';
 import DownloadButton from '@/shared/components/DonwloadButton/DownloadButton';
 import Rating from '@/shared/components/Rating/Rating';
-import useImage from '@/shared/hooks/useImage';
-import CollectionButton from '../../../../shared/components/CollectionButton/CollectionButton';
-import Favorite from '@/shared/components/FavoriteButton/Favorite';
-import ListView from '../ListView/ListView';
-import { useCollectionStore } from '@/shared/store/useCollectionStore';
+// import Favorite from '@/shared/components/FavoriteButton/Favorite';
+import QuicklyFavorite from '../QuicklyFavorite/QuicklyFavorite';
+import QuicklyCollections from '../QuicklyCollections/QuicklyCollections';
 import styles from './ListLayout.module.scss';
-import { Link } from 'react-router-dom';
-import useHistory from '@/shared/hooks/useHistory';
-import { useMemo, useEffect } from 'react';
 
 const progressPercent = (read: number, total: number) =>
   total > 0 ? Math.min(100, Math.round((read / total) * 100)) : 0;
@@ -20,6 +20,7 @@ const MAX_SHELF = 6;
 
 export default function ListLayout({ serie }: { serie: StoreSerie }) {
   const { previewSrc: bgSrc, loadExistingImage } = useImage();
+
   // const tags = [...serie.tags].sort((a, b) => a.localeCompare(b)).slice(0, 3);
 
   useEffect(() => {
@@ -31,7 +32,6 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
   );
   const { recentSeries } = useHistory();
 
-  const { lastChapter } = useAction();
   const favs = useMemo(
     () => [...(favorites?.series ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
     [favorites],
@@ -52,26 +52,21 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
           src={`${serie.coverImage}`}
           alt={`Capa do quadrinho ${serie.name}`}
         />
-        <figcaption className={styles.mangaTags}>
-          {/* <div>
-            {tags.map((tag) => (
-              <span key={tag}>
-                <Tag /> {tag}
-              </span>
-            ))}
-          </div> */}
-          {serie.metadata.originalOwner && (
-            <p className={styles.owner}>Upload por: {serie.metadata.originalOwner}</p>
-          )}
-          {serie.metadata.recommendedBy && (
-            <p className={styles.recomend}>
-              recomendada por: {serie.metadata.recommendedBy}
-            </p>
-          )}
+        <figcaption className={styles['serie-actions']}>
+          <QuicklyFavorite isFavorite={serie.metadata.isFavorite} />
+          <QuicklyCollections serie={serie} />
+          {/* <CollectionButton serie={serie} 
+          <button
+            className={styles.reading}
+            onClick={(e) => OpenLastChapter(e, serie.id)}
+          >
+            <Book />
+            Continuar
+          </button> */}
         </figcaption>
       </figure>
       <section className={styles.mangaInfo}>
-        <span className={styles.serieTitle}>
+        {/* <span className={styles.serieTitle}>
           <h1>{serie.name}</h1>
         </span>
         <div className={styles.mangaMetadata}>
@@ -84,18 +79,11 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
           ) : (
             <p></p>
           )}
-        </div>
-        <div className={styles.serieActions}>
-          {/* <DownloadButton serie={serie} />          */}
-          <Favorite serie={serie} />
-          <CollectionButton serie={serie} />
-          <button className={styles.reading} onClick={(e) => lastChapter(e, serie.id)}>
-            <Book />
-            Continuar
-          </button>
+        </div> */}
+        {/* <div className={styles.serieActions}> */}
+        <DownloadButton serie={serie} />
 
-          {/* <Rating serie={serie} /> */}
-        </div>
+        {/* </div> */}
         <ListView literatureForm={serie.literatureForm} />
       </section>
       <aside className={styles.collectionInfos}>
@@ -187,4 +175,23 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
       </aside>
     </main>
   );
+}
+{
+  /* <div>
+            {tags.map((tag) => (
+              <span key={tag}>
+                <Tag /> {tag}
+              </span>
+            ))}
+          </div> */
+}
+{
+  /* {serie.metadata.originalOwner && (
+            <p className={styles.owner}>Upload por: {serie.metadata.originalOwner}</p>
+          )}
+          {serie.metadata.recommendedBy && (
+            <p className={styles.recomend}>
+              recomendada por: {serie.metadata.recommendedBy}
+            </p>
+          )} */
 }

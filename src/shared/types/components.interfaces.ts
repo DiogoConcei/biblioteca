@@ -66,7 +66,7 @@ export interface ComicCardsProps {
 }
 
 export interface downloadButtonProps {
-  serie: Literatures;
+  serie: StoreSerie;
 }
 
 export interface GlobalContext {
@@ -120,10 +120,6 @@ export interface ErrorScreenProps {
 export interface FormControllerProps {
   control: Control<SerieEditForm>;
   label?: string;
-}
-
-export interface FavoriteProps {
-  serie: StoreSerie;
 }
 
 export interface RatingProps {

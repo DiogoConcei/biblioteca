@@ -1,0 +1,102 @@
+@use '@/shared/styles/_variables.scss' as *;
+
+.root {
+  @include interactive-button;
+
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex: 1;
+  min-width: 0;
+  height: $spacing-10;
+  padding: 0 $spacing-3;
+  border-radius: $radius-md;
+  color: $snow;
+  background: $surface;
+  border: 1px solid $border-color;
+  backdrop-filter: blur(14px) saturate(120%);
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover {
+    background: $surface-strong;
+    transform: scale(1.03);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent;
+    outline-offset: 2px;
+  }
+}
+
+.empty {
+  color: $text-muted;
+  border-style: dashed;
+  justify-content: center;
+
+  &:hover {
+    color: $snow;
+    border-color: rgba($amethyst, 0.7);
+  }
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+.active {
+  border-color: rgba($amethyst, 0.5);
+
+  &:hover {
+    border-color: $amethyst;
+  }
+}
+
+.stack {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.cover {
+  width: 28px;
+  height: 28px;
+  border-radius: $radius-sm;
+  object-fit: cover;
+  border: 2px solid $gunmetal;
+  box-sizing: content-box;
+
+  & + .cover {
+    margin-left: -12px;
+  }
+}
+
+.extra {
+  margin-left: -8px;
+  min-width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  padding: 0 $spacing-1;
+  border-radius: $radius-full;
+  font-size: $font-xs;
+  font-weight: 600;
+  background: $amethyst;
+  color: $snow;
+  border: 2px solid $gunmetal;
+  z-index: 0;
+}
+
+.label {
+  font-size: $font-sm;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
