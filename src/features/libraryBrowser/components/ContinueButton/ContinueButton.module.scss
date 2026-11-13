@@ -1,0 +1,51 @@
+@use '@/shared/styles/_variables.scss' as *;
+
+.reading {
+  @include interactive-button;
+
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  height: $spacing-10;
+  padding: 0 $spacing-4;
+  border-radius: $radius-md;
+  font-size: $font-sm;
+  font-weight: 600;
+  white-space: nowrap;
+  color: $snow;
+  background: $amethyst;
+  border: 1px solid rgba($snow, 0.15);
+  transition:
+    filter 0.15s ease,
+    transform 0.15s ease;
+  width: 20rem; // cabe "Continuar · Cap. 999"
+  justify-content: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.12);
+    transform: scale(1.03);
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $snow;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

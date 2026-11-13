@@ -1,0 +1,78 @@
+@use '@/shared/styles/_variables.scss' as *;
+
+$gold: #f5c542;
+
+.wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.root {
+  @include interactive-button;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-1;
+  min-width: $spacing-10;
+  height: $spacing-10;
+  padding: 0 $spacing-3;
+  border-radius: $radius-md;
+  color: $text-muted;
+  background: $surface;
+  border: 1px solid $border-color;
+  backdrop-filter: blur(14px) saturate(120%);
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover {
+    background: $surface-strong;
+    color: $gold;
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent;
+    outline-offset: 2px;
+  }
+
+  &.active {
+    color: $gold;
+    border-color: rgba($gold, 0.5);
+  }
+}
+
+.value {
+  font-size: $font-sm;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.popover {
+  @include panel($surface-strong);
+
+  position: absolute;
+  top: calc(100% + #{$spacing-2});
+  right: 0; // alinhado à direita, já que é o último botão da barra
+  z-index: 20;
+  padding: $spacing-2 $spacing-3;
+  animation: popIn 0.15s ease-out;
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

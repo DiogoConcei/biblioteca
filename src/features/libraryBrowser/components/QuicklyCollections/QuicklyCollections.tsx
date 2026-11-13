@@ -22,12 +22,6 @@ export default function QuicklyCollections({ serie }: CollectionButtonProps) {
   const visible = activeCollections.slice(0, MAX_VISIBLE_COVERS);
   const extra = count - visible.length;
 
-  const label = !hasCollections
-    ? 'Coleções'
-    : count === 1
-      ? activeCollections[0].name
-      : `${count} coleções`;
-
   const tooltip = hasCollections
     ? activeCollections.map((c) => c.name).join(', ')
     : 'Adicionar a uma coleção';
@@ -45,20 +39,19 @@ export default function QuicklyCollections({ serie }: CollectionButtonProps) {
           <div className={styles.stack}>
             {visible.map((c, i) => (
               <img
-                key={c.id}
+                key={`${c.id}_${i}`}
                 src={c.coverImage}
                 alt=""
                 className={styles.cover}
                 style={{ zIndex: visible.length - i }}
               />
             ))}
+
             {extra > 0 && <span className={styles.extra}>+{extra}</span>}
           </div>
         ) : (
           <FolderPlus size={18} className={styles.icon} />
         )}
-
-        <span className={styles.label}>{label}</span>
       </button>
 
       {isOpen && (

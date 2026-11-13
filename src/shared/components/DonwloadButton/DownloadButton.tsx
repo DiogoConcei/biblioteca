@@ -5,80 +5,78 @@ import useDownload from '@/shared/hooks/useDownload';
 import { useUIStore } from '@/shared/store/useUIStore';
 import useClickOutside from '@/shared/hooks/useClickOutside';
 import useSerieStore from '@/shared/store/useSerieStore';
-import ErrorScreen from '../ErrorScreen/ErrorScreen';
-import { downloadButtonProps } from '../../types/components.interfaces';
 import styles from './DownloadButton.module.scss';
 
-export default function DownloadButton({ serie }: downloadButtonProps) {
-  const chapters = useSerieStore((state) => state.chapters);
-  const error = useUIStore((state) => state.error);
-  const setError = useUIStore((state) => state.setError);
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const updateChapter = useSerieStore((state) => state.updateChapter);
-  const containerRef = useClickOutside<HTMLDivElement>(() => setIsOpen(false), isOpen);
+const BASE_OPTIONS = [1, 5, 10, 20, 25];
 
+export default function DownloadButton() {
+  const serie = useSerieStore((state) => state.serie);
+  const chapters = useSerieStore((state) => state.chapters);
+  const updateChapter = useSerieStore((state) => state.updateChapter);
+  const setError = useUIStore((state) => state.setError);
   const { downloadMultipleChapters } = useDownload();
 
-  const options = [1, 5, 10, 20, 25];
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const containerRef = useClickOutside<HTMLDivElement>(() => setIsOpen(false), isOpen);
 
-  const onToggle = () => {
-    setIsOpen((prevState) => !prevState);
-  };
+  const startIndex = serie?.metadata.lastDownload ?? 0;
+  const remaining = Math.max(chapters.length - startIndex, 0);
+  const options =
+    remaining > 0 ? [...BASE_OPTIONS.filter((q) => q < remaining), remaining] : [];
+
+  const setStatus = (list: typeof chapters, status: string) =>
+    list.forEach((c) => updateChapter(c.id, 'isDownloaded', status));
 
   const onSelect = async (quantity: number) => {
-    if (quantity > 0) {
-      const startIndex = serie.metadata.lastDownload;
-      const endIndex = startIndex + quantity;
-      const downloadingChapters = chapters.slice(startIndex, endIndex);
+    const target = chapters.slice(startIndex, startIndex + quantity);
 
-      for (let i = 0; i < downloadingChapters.length; i++) {
-        updateChapter(downloadingChapters[i].id, 'isDownloaded', 'downloading');
-      }
+    setIsOpen(false);
+    setIsDownloading(true);
+    setStatus(target, 'downloading');
 
-      const response = await downloadMultipleChapters(quantity);
+    const response = await downloadMultipleChapters(quantity);
 
-      if (!response) {
-        for (let i = 0; i < downloadingChapters.length; i++) {
-          updateChapter(downloadingChapters[i].id, 'isDownloaded', 'not_downloaded');
-        }
-
-        setError('Falha ao baixar capítulos');
-      } else {
-        for (let i = 0; i < downloadingChapters.length; i++) {
-          updateChapter(downloadingChapters[i].id, 'isDownloaded', 'downloaded');
-        }
-      }
-
-      setIsOpen(false);
+    if (response) {
+      setStatus(target, 'downloaded');
+    } else {
+      setStatus(target, 'not_downloaded');
+      setError('Falha ao baixar capítulos');
     }
+    setIsDownloading(false);
   };
 
-  if (error) {
-    return <ErrorScreen error={error} serieName="" />;
-  }
+  const labelFor = (quantity: number) =>
+    quantity === remaining && remaining > 1
+      ? `Todos (${quantity})`
+      : `${quantity} ${quantity === 1 ? 'capítulo' : 'capítulos'}`;
 
   return (
-    <div ref={containerRef}>
+    <div className={styles.wrapper} ref={containerRef}>
       <button
-        className={`${styles.download} ${isOpen ? styles.open : ''}`}
-        onClick={onToggle}
+        type="button"
+        className={styles.download}
+        onClick={() => setIsOpen((open) => !open)}
+        disabled={remaining === 0 || isDownloading}
         aria-haspopup="menu"
         aria-expanded={isOpen}
+        title={remaining === 0 ? 'Tudo já foi baixado' : undefined}
       >
-        <Download />
-        Download
+        <Download size={18} />
+        {isDownloading ? 'Baixando...' : 'Download'}
       </button>
 
       {isOpen && (
-        <ul className={styles['dropdown-list']} role="menu">
+        <ul className={styles.list} role="menu">
           {options.map((quantity) => (
-            <li key={quantity} className={styles['dropdown-item']} role="none">
+            <li key={quantity} role="none">
               <button
-                className={styles['dropdown-option']}
+                type="button"
+                className={styles.option}
                 role="menuitem"
                 onClick={() => onSelect(quantity)}
               >
-                {quantity}
+                {labelFor(quantity)}
               </button>
             </li>
           ))}

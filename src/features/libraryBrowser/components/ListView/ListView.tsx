@@ -23,7 +23,8 @@ import usePagination from '@/shared/hooks/usePagination';
 import { LiteratureForm } from '@/shared/types/series.interfaces';
 import UploadPopUp from '../UploadPopUp/UploadPopUp';
 import styles from './ListView.module.scss';
-import { LiteratureChapter } from '../../../../../electron/types/electron-auxiliar.interfaces';
+import DownloadButton from '@/shared/components/DonwloadButton/DownloadButton';
+import ContinueButton from '../ContinueButton/ContinueButton';
 
 type Chapter = ReturnType<typeof useSerieStore.getState>['chapters'][number];
 
@@ -133,11 +134,12 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
   return (
     <section className={styles.control}>
       <div className={styles.header}>
-        <h2>Capítulos</h2>
-        <button className={styles.reading} onClick={(e) => OpenLastChapter(e)}>
-          <Book />
-          Continuar
-        </button>
+        <div className={styles.headerMain}>
+          <h2>Capítulos</h2>
+          <DownloadButton />
+          <ContinueButton onOpen={(e) => OpenLastChapter(e)} />
+        </div>
+
         <div className={styles.headerActions}>
           <button
             type="button"
@@ -150,7 +152,7 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
                 : 'Mostrar os mais antigos primeiro'
             }
           >
-            <ArrowDownUp size={26} strokeWidth={1} />
+            <ArrowDownUp size={20} strokeWidth={1.75} />
           </button>
           <button
             type="button"
@@ -159,11 +161,10 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
             aria-label="Enviar capítulos"
             title="Enviar capítulos"
           >
-            <Upload size={26} strokeWidth={1} />
+            <Upload size={20} strokeWidth={1.75} />
           </button>
         </div>
       </div>
-
       {chapters.length === 0 ? (
         <p className={styles.empty}>
           Nenhum capítulo ainda. Use o botão de envio para adicionar.
@@ -191,7 +192,9 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
                 >
                   <span className={styles.number}>{chapter.chapterNumber?.label}</span>
                   <span className={styles.text}>
-                    <span className={styles.title}>{chapter.name}</span>
+                    <span className={styles.title} title={chapter.name}>
+                      {chapter.name}
+                    </span>{' '}
                     {subtitle && <span className={styles.subtitle}>{subtitle}</span>}
                   </span>
 

@@ -7,7 +7,11 @@ export default function QuicklyFavorite({ isFavorite }: { isFavorite: boolean })
 
   return (
     <button className={styles.favorite} onClick={() => favoriteSerie(isFavorite)}>
-      {isFavorite ? <FaStar /> : <FaStar />}
+      {isFavorite ? (
+        <FaStar className={styles.activeStar} />
+      ) : (
+        <FaStar className={styles.star} />
+      )}
     </button>
   );
 }

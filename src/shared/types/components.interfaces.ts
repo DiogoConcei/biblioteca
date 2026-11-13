@@ -65,10 +65,6 @@ export interface ComicCardsProps {
   searchInput: string;
 }
 
-export interface downloadButtonProps {
-  serie: StoreSerie;
-}
-
 export interface GlobalContext {
   isHidden: boolean;
   setIsHidden: (value: boolean) => void;

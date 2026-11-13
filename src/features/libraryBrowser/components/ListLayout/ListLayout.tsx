@@ -6,10 +6,8 @@ import { useCollectionStore } from '@/shared/store/useCollectionStore';
 import useImage from '@/shared/hooks/useImage';
 import useHistory from '@/shared/hooks/useHistory';
 import ListView from '../ListView/ListView';
-import DownloadButton from '@/shared/components/DonwloadButton/DownloadButton';
-import Rating from '@/shared/components/Rating/Rating';
-// import Favorite from '@/shared/components/FavoriteButton/Favorite';
 import QuicklyFavorite from '../QuicklyFavorite/QuicklyFavorite';
+import QuicklyRating from '../QuicklyRating/QuicklyRating';
 import QuicklyCollections from '../QuicklyCollections/QuicklyCollections';
 import styles from './ListLayout.module.scss';
 
@@ -55,14 +53,7 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
         <figcaption className={styles['serie-actions']}>
           <QuicklyFavorite isFavorite={serie.metadata.isFavorite} />
           <QuicklyCollections serie={serie} />
-          {/* <CollectionButton serie={serie} 
-          <button
-            className={styles.reading}
-            onClick={(e) => OpenLastChapter(e, serie.id)}
-          >
-            <Book />
-            Continuar
-          </button> */}
+          <QuicklyRating serie={serie} />
         </figcaption>
       </figure>
       <section className={styles.mangaInfo}>
@@ -81,7 +72,6 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
           )}
         </div> */}
         {/* <div className={styles.serieActions}> */}
-        <DownloadButton serie={serie} />
 
         {/* </div> */}
         <ListView literatureForm={serie.literatureForm} />

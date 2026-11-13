@@ -7,11 +7,10 @@
   place-items: center;
   width: $spacing-10;
   height: $spacing-10;
-  border-radius: 50%;
-  font-size: $font-lg;
-  color: $snow;
   background: $surface;
   border: 1px solid $border-color;
+
+  border-radius: 50%;
   backdrop-filter: blur(14px) saturate(120%);
   transition:
     transform 0.15s ease,
@@ -41,5 +40,15 @@
     &:hover {
       color: $weak-indian-red;
     }
+  }
+
+  .star {
+    font-size: $font-lg;
+    color: $snow;
+  }
+
+  .activeStar {
+    font-size: $font-lg;
+    color: $amethyst;
   }
 }
