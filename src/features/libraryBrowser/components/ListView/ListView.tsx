@@ -1,18 +1,17 @@
 import {
   ArrowDownUp,
   Upload,
-  Eye,
   EyeOff,
-  Book,
+  CircleCheck,
   ArrowDownToLine,
-  ArrowDownFromLine,
   ChevronLeft,
   ChevronRight,
   LoaderCircle,
   Bookmark,
+  Trash2,
+  CheckCheck,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Trash2 } from 'lucide-react';
 import ChapterMenu from '../ChapterMenu/ChapterMenu';
 import ConfirmDialog from '@/shared/components/ConfirmDialog/ConfirmDialog';
 import useChapterActions from '@/shared/hooks/useChapterActions';
@@ -25,32 +24,18 @@ import UploadPopUp from '../UploadPopUp/UploadPopUp';
 import styles from './ListView.module.scss';
 import DownloadButton from '@/shared/components/DonwloadButton/DownloadButton';
 import ContinueButton from '../ContinueButton/ContinueButton';
-
-type Chapter = ReturnType<typeof useSerieStore.getState>['chapters'][number];
-
-const PAGE_SIZE = 12;
-const NEW_CHAPTER_DAYS = 7;
-const MAX_NEW_BADGES = 10;
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-const isRecent = (chapter: Chapter) =>
-  Date.now() - new Date(chapter.createdAt).getTime() < NEW_CHAPTER_DAYS * DAY_MS;
-
-const subtitleOf = (chapter: Chapter): string => {
-  if (chapter.isDownloaded === 'downloading') return 'Baixando…';
-  if (chapter.isRead) return 'Lido';
-  const lastPage = chapter.page?.lastPageRead ?? 0;
-  if (lastPage > 0) return `Parou na pág. ${lastPage}`;
-  if (chapter.isDownloaded === 'downloaded') return 'Baixado';
-  return '';
-};
+import { Chapter, Filter } from '../../types/chapter.interfaces';
+import { isRecent, subtitleOf, formatChapterNumber } from '../../utils/chapterUtils';
+import { MAX_NEW_BADGES, PAGE_SIZE, FILTERS } from '../../constants/chapterConstants';
 
 function DownloadIcon({ state }: { state: Chapter['isDownloaded'] }) {
   if (state === 'downloading') {
-    return <LoaderCircle size={22} strokeWidth={1.5} className={styles.spin} />;
+    return <LoaderCircle size={20} strokeWidth={1.75} className={styles.spin} />;
   }
-  if (state === 'downloaded') return <ArrowDownFromLine size={22} strokeWidth={1.5} />;
-  return <ArrowDownToLine size={22} strokeWidth={1.5} />;
+  if (state === 'downloaded') {
+    return <CircleCheck size={20} strokeWidth={1.75} className={styles.downloadedIcon} />;
+  }
+  return <ArrowDownToLine size={20} strokeWidth={1.75} />;
 }
 
 export default function ListView({ literatureForm }: { literatureForm: LiteratureForm }) {
@@ -66,6 +51,11 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [ascending, setAscending] = useState(true);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+
+  const [filter, setFilter] = useState<Filter>('all');
+  const [jumpValue, setJumpValue] = useState('');
+  const [jumpError, setJumpError] = useState(false);
+  const [pendingJump, setPendingJump] = useState<number | null>(null);
 
   const askDelete = (chapter: Chapter) => {
     setDeleteError(null);
@@ -96,6 +86,25 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
     setIsDeleting(false);
   };
 
+  // Ações em lote (Imagem 2)
+  const markReadUntil = (target: Chapter) => {
+    const ordered = [...chapters].sort((a, b) => a.order - b.order);
+    for (const ch of ordered) {
+      if (ch.order <= target.order && !ch.isRead) {
+        markAsRead(new MouseEvent('click') as unknown as React.MouseEvent, ch);
+      }
+    }
+  };
+
+  const markUnreadFrom = (target: Chapter) => {
+    const ordered = [...chapters].sort((a, b) => a.order - b.order);
+    for (const ch of ordered) {
+      if (ch.order >= target.order && ch.isRead) {
+        markAsRead(new MouseEvent('click') as unknown as React.MouseEvent, ch);
+      }
+    }
+  };
+
   const sorted = useMemo(
     () =>
       [...chapters].sort((a, b) => (ascending ? a.order - b.order : b.order - a.order)),
@@ -107,6 +116,10 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
     [chapters],
   );
 
+  const readCount = useMemo(() => chapters.filter((c) => c.isRead).length, [chapters]);
+  const percent =
+    chapters.length > 0 ? Math.round((readCount / chapters.length) * 100) : 0;
+
   const newIds = useMemo(() => {
     const recent = chapters.filter(isRecent);
     return recent.length <= MAX_NEW_BADGES
@@ -114,66 +127,158 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
       : new Set<number>();
   }, [chapters]);
 
+  const visible = useMemo(() => {
+    const test = FILTERS.find((f) => f.id === filter)?.test ?? (() => true);
+    return sorted.filter(test);
+  }, [sorted, filter]);
+
   const { handlePage, pageNumbers, totalPages, currentItems, currentPage } =
-    usePagination(sorted, PAGE_SIZE);
+    usePagination(visible, PAGE_SIZE);
 
   const jumpedToNext = useRef(false);
   useEffect(() => {
-    if (jumpedToNext.current || sorted.length === 0) return;
+    if (jumpedToNext.current || visible.length === 0) return;
     jumpedToNext.current = true;
 
-    const index = sorted.findIndex((c) => c.id === nextId);
+    const index = visible.findIndex((c) => c.id === nextId);
     if (index >= 0) handlePage(Math.floor(index / PAGE_SIZE) + 1);
-  }, [sorted, nextId, handlePage]);
+  }, [visible, nextId, handlePage]);
+
+  useEffect(() => {
+    if (pendingJump === null || filter !== 'all') return;
+
+    const index = visible.findIndex((c) => c.chapterNumber?.value === pendingJump);
+    if (index >= 0) handlePage(Math.floor(index / PAGE_SIZE) + 1);
+    else setJumpError(true);
+
+    setPendingJump(null);
+  }, [pendingJump, filter, visible, handlePage]);
 
   const toggleOrder = () => {
     setAscending((prev) => !prev);
     handlePage(1);
   };
 
+  const changeFilter = (next: Filter) => {
+    setFilter(next);
+    handlePage(1);
+  };
+
+  const submitJump = (e: React.FormEvent) => {
+    e.preventDefault();
+    const value = Number(jumpValue.trim().replace(',', '.'));
+
+    if (jumpValue.trim() === '' || Number.isNaN(value)) {
+      setJumpError(true);
+      return;
+    }
+
+    setJumpError(false);
+    setFilter('all');
+    setPendingJump(value);
+  };
+
   return (
     <section className={styles.control}>
       <div className={styles.header}>
-        <div className={styles.headerMain}>
-          <h2>Capítulos</h2>
+        <h2>Capítulos</h2>
+
+        <div className={styles.headerRight}>
           <DownloadButton />
           <ContinueButton onOpen={(e) => OpenLastChapter(e)} />
         </div>
-
-        <div className={styles.headerActions}>
-          <button
-            type="button"
-            className={styles.toolButton}
-            onClick={toggleOrder}
-            aria-label="Inverter a ordem dos capítulos"
-            title={
-              ascending
-                ? 'Mostrar os mais recentes primeiro'
-                : 'Mostrar os mais antigos primeiro'
-            }
-          >
-            <ArrowDownUp size={20} strokeWidth={1.75} />
-          </button>
-          <button
-            type="button"
-            className={styles.toolButton}
-            onClick={() => setIsUploadOpen(true)}
-            aria-label="Enviar capítulos"
-            title="Enviar capítulos"
-          >
-            <Upload size={20} strokeWidth={1.75} />
-          </button>
-        </div>
       </div>
+
+      {chapters.length > 0 && (
+        <>
+          <div className={styles.toolbar}>
+            <div className={styles.filters} role="group" aria-label="Filtrar capítulos">
+              {FILTERS.map((f) => (
+                <button
+                  type="button"
+                  key={f.id}
+                  className={styles.filterChip}
+                  aria-pressed={filter === f.id}
+                  onClick={() => changeFilter(f.id)}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            <div className={styles.toolbarRight}>
+              <form className={styles.jump} onSubmit={submitJump}>
+                <input
+                  className={styles.jumpInput}
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ir para o capítulo…"
+                  aria-label="Ir para o capítulo"
+                  aria-invalid={jumpError}
+                  value={jumpValue}
+                  onChange={(e) => {
+                    setJumpValue(e.target.value);
+                    setJumpError(false);
+                  }}
+                />
+              </form>
+
+              <button
+                type="button"
+                className={styles.toolButton}
+                onClick={toggleOrder}
+                aria-label="Inverter a ordem dos capítulos"
+                title={
+                  ascending
+                    ? 'Mostrar os mais recentes primeiro'
+                    : 'Mostrar os mais antigos primeiro'
+                }
+              >
+                <ArrowDownUp size={18} strokeWidth={1.75} />
+              </button>
+
+              <button
+                type="button"
+                className={styles.toolButton}
+                onClick={() => setIsUploadOpen(true)}
+                aria-label="Enviar capítulos"
+                title="Enviar capítulos"
+              >
+                <Upload size={18} strokeWidth={1.75} />
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.progressRow}>
+            <span className={styles.progressLabel}>
+              {readCount} de {chapters.length} lidos
+            </span>
+            <div
+              className={styles.progressTrack}
+              role="progressbar"
+              aria-valuenow={percent}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`${percent}% lido`}
+            >
+              <div className={styles.progressFill} style={{ width: `${percent}%` }} />
+            </div>
+          </div>
+        </>
+      )}
+
       {chapters.length === 0 ? (
         <p className={styles.empty}>
           Nenhum capítulo ainda. Use o botão de envio para adicionar.
         </p>
+      ) : visible.length === 0 ? (
+        <p className={styles.empty}>Nenhum capítulo neste filtro.</p>
       ) : (
         <ul className={styles.chaptersList}>
           {currentItems.map((chapter) => {
             const isNext = chapter.id === nextId;
-            const subtitle = subtitleOf(chapter);
+            const isNew = newIds.has(chapter.id) && !chapter.isRead;
+            const subtitle = subtitleOf(chapter, isNew);
             const favoritePage = chapter.page?.favoritePage ?? 0;
 
             return (
@@ -190,23 +295,23 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
                     if (await ensureDownloaded(chapter)) openChapter(e, chapter);
                   }}
                 >
-                  <span className={styles.number}>{chapter.chapterNumber?.label}</span>
+                  <span className={styles.number}>{formatChapterNumber(chapter)}</span>
                   <span className={styles.text}>
                     <span className={styles.title} title={chapter.name}>
                       {chapter.name}
-                    </span>{' '}
+                    </span>
                     {subtitle && <span className={styles.subtitle}>{subtitle}</span>}
                   </span>
 
-                  {isNext && <span className={styles.chip}>Continuar</span>}
-                  {newIds.has(chapter.id) && !chapter.isRead && (
-                    <span className={styles.chip}>Novo</span>
-                  )}
-                  {favoritePage > 0 && (
-                    <span className={styles.chip}>
-                      <Bookmark size={12} aria-hidden="true" /> pág. {favoritePage}
-                    </span>
-                  )}
+                  <span className={styles.badges}>
+                    {isNext && <span className={styles.chip}>Continuar</span>}
+                    {isNew && <span className={styles.chip}>Novo</span>}
+                    {favoritePage > 0 && (
+                      <span className={styles.chip}>
+                        <Bookmark size={12} aria-hidden="true" /> pág. {favoritePage}
+                      </span>
+                    )}
+                  </span>
                 </button>
 
                 <div className={styles.actions}>
@@ -214,14 +319,20 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
                     type="button"
                     className={styles.iconButton}
                     onClick={(e) => markAsRead(e, chapter)}
-                    aria-label="Lido"
+                    aria-label={
+                      chapter.isRead ? 'Marcar como não lido' : 'Marcar como lido'
+                    }
                     aria-pressed={chapter.isRead}
                     title={chapter.isRead ? 'Marcar como não lido' : 'Marcar como lido'}
                   >
                     {chapter.isRead ? (
-                      <Eye size={22} strokeWidth={1.5} />
+                      <CircleCheck
+                        size={20}
+                        strokeWidth={1.75}
+                        className={styles.readIcon}
+                      />
                     ) : (
-                      <EyeOff size={22} strokeWidth={1.5} />
+                      <EyeOff size={20} strokeWidth={1.75} />
                     )}
                   </button>
 
@@ -239,6 +350,28 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
                   <ChapterMenu
                     label={`Mais ações do ${chapter.name}`}
                     items={[
+                      {
+                        label: 'Marcar como lido até aqui',
+                        icon: <CheckCheck size={18} strokeWidth={1.5} />,
+                        onSelect: () => markReadUntil(chapter),
+                      },
+                      {
+                        label: 'Marcar como não lido daqui em diante',
+                        icon: <EyeOff size={18} strokeWidth={1.5} />,
+                        onSelect: () => markUnreadFrom(chapter),
+                      },
+                      {
+                        label:
+                          chapter.isDownloaded === 'downloaded'
+                            ? 'Remover download'
+                            : 'Baixar',
+                        icon: <ArrowDownToLine size={18} strokeWidth={1.5} />,
+                        onSelect: () =>
+                          downloadIndividual(
+                            new MouseEvent('click') as unknown as React.MouseEvent,
+                            chapter,
+                          ),
+                      },
                       {
                         label: 'Excluir capítulo',
                         icon: <Trash2 size={18} strokeWidth={1.5} />,

@@ -167,6 +167,7 @@ export default function EditSerie() {
         ...data.readingData,
         lastChapterId: last ? last.id : data.readingData.lastChapterId,
       },
+      totalChapters: chapters.length,
     };
 
     setLoading(true);

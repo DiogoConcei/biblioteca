@@ -1,292 +1,411 @@
 @use '@/shared/styles/_variables.scss' as *;
 
-.dialog-root {
-  position: relative;
-  z-index: 50;
-}
-
-.dialog-overlay {
-  position: fixed;
-  inset: 0;
-
-  display: flex;
-  width: 100vw;
-  align-items: center;
-  justify-content: center;
-
-  padding: 1rem; // p-4
-}
-
-.dialog-panel {
-  max-width: 32rem; // max-w-lg (512px)
-  width: 100%;
-
-  display: flex;
-  flex-direction: column;
-  gap: 1rem; // space-y-4
-
-  border: 1px solid #e5e7eb; // border (gray-200)
-  background-color: #ffffff;
-  padding: 3rem; // p-12
-}
-
-.dialog-title {
-  font-weight: 700; // font-bold
-}
-
-.dialog-description {
-  color: #6b7280; // equivalente ao text-gray-500 (opcional)
-}
-
-.dialog-text {
-  line-height: 1.5;
-}
-
-.dialog-actions {
-  display: flex;
-  gap: 1rem; // gap-4
-}
-
 .control {
   display: flex;
-  flex-flow: column;
-  align-items: stretch;
-  gap: $spacing-2;
+  flex-direction: column;
+  gap: $spacing-4;
+  width: 100%;
+  max-width: 1000px;
+  flex-shrink: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-4;
   width: 100%;
 
-  .header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: $spacing-4;
-    height: $spacing-10;
-    margin-bottom: $spacing-3;
-    flex-shrink: 0;
-
-    h2 {
-      font-size: $font-2xl;
-      color: $snow;
-      margin: 0;
-      white-space: nowrap;
-    }
-
-    .headerMain {
-      display: flex;
-      align-items: center;
-      gap: $spacing-3;
-      min-width: 0;
-    }
-
-    .headerActions {
-      display: flex;
-      align-items: center;
-      gap: $spacing-2;
-      flex-shrink: 0;
-    }
-
-    .toolButton {
-      @include interactive-button;
-
-      display: grid;
-      place-items: center;
-      width: $spacing-10;
-      height: $spacing-10;
-      border-radius: $radius-md;
-      color: $snow;
-      background: $surface;
-      border: 1px solid $border-color;
-      backdrop-filter: blur(14px) saturate(120%);
-      transition:
-        transform 0.15s ease,
-        background-color 0.15s ease,
-        color 0.15s ease,
-        border-color 0.15s ease;
-
-      &:hover {
-        background: $surface-strong;
-        color: $weak-amethyst;
-        border-color: rgba($amethyst, 0.6);
-        transform: scale(1.05);
-      }
-
-      &:active {
-        transform: scale(0.95);
-      }
-
-      &:focus-visible {
-        outline: 2px solid $accent;
-        outline-offset: 2px;
-      }
-    }
-  }
-
-  .empty {
-    color: rgba($snow, 0.7);
-  }
-
-  .chaptersList {
-    display: flex;
-    flex-flow: column nowrap;
-    gap: $spacing-2;
-    padding: 0;
+  h2 {
     margin: 0;
-    list-style: none;
+    font-size: $font-2xl;
+    font-weight: 700;
+    color: $text-color;
+  }
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-2;
+  margin-left: auto;
+}
+
+.headerMain {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+
+  h2 {
+    margin: 0;
+    font-size: $font-2xl;
+    font-weight: 700;
+    color: $text-color;
+  }
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+}
+
+.filterChip {
+  @include interactive-button;
+  padding: $spacing-1 $spacing-3;
+  border-radius: $radius-full;
+  font-size: $font-xs;
+  font-weight: 500;
+  color: $text-muted;
+  background: rgba(#181a1b, 0.78);
+  border: 1px solid rgba($snow, 0.12);
+  backdrop-filter: blur(10px);
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease;
+
+  &:hover {
+    color: $text-color;
+    border-color: rgba($snow, 0.28);
   }
 
-  .row {
-    display: flex;
-    align-items: center;
-    border-radius: $radius-sm;
-    background: $strong-indian-red;
-    color: $snow;
-    transition:
-      background 0.2s ease,
-      color 0.2s ease;
-    min-width: 0;
+  &[aria-pressed='true'] {
+    color: $text-color;
+    background: rgba(#272a2d, 0.95);
+    border-color: rgba($snow, 0.45);
+    font-weight: 600;
+  }
+}
 
-    &[data-read='true'] {
-      background: rgba($snow, 0.06);
-      color: rgba($snow, 0.55);
-    }
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-left: auto;
+}
 
-    &[data-next='true'] {
-      outline: 2px solid $snow;
-      outline-offset: 2px;
-    }
+.jump {
+  display: flex;
+  align-items: center;
+}
+
+.jumpInput {
+  @include pattern-input;
+  width: 175px;
+  padding: $spacing-1 $spacing-3;
+  border-radius: $radius-full;
+  font-size: $font-xs;
+  color: $text-color;
+  background: rgba(#181a1b, 0.82);
+  border: 1px solid rgba($snow, 0.14);
+  backdrop-filter: blur(10px);
+  transition:
+    border-color 0.18s ease,
+    width 0.2s ease;
+
+  &::placeholder {
+    color: $text-muted;
   }
 
-  .main {
-    display: flex;
-    flex: 1;
-    align-items: center;
-    gap: $spacing-3;
-    min-width: 0;
-    padding: $spacing-2 $spacing-3;
-    border: none;
-    background: none;
-    color: inherit;
-    text-align: left;
-    cursor: pointer;
-
-    &:focus-visible {
-      outline: 2px solid $snow;
-      outline-offset: -2px;
-    }
+  &:focus {
+    border-color: rgba($snow, 0.42);
+    width: 195px;
   }
 
-  .number {
-    flex: none;
-    min-width: 2.75rem;
-    font-size: $font-lg;
-    font-weight: 500;
-    text-align: center;
+  &[aria-invalid='true'] {
+    border-color: $weak-indian-red;
+  }
+}
+
+.toolButton {
+  @include interactive-button;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: $radius-full;
+  color: rgba($snow, 0.8);
+  background: rgba(#181a1b, 0.78);
+  border: 1px solid rgba($snow, 0.12);
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+
+  &:hover {
+    color: $text-color;
+    background: rgba(#2a2e33, 0.92);
+  }
+}
+
+.progressRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: 0 $spacing-1;
+}
+
+.progressLabel {
+  font-size: $font-xs;
+  font-weight: 500;
+  color: rgba($snow, 0.75);
+  white-space: nowrap;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 4px;
+  border-radius: $radius-full;
+  background: rgba($snow, 0.14);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: $radius-full;
+  background: $strong-indian-red;
+  transition: width 0.25s ease;
+}
+
+.chaptersList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  width: 750px;
+  max-width: 100%;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px $spacing-3;
+  min-height: 40px;
+  border-radius: $radius-md;
+  background: $terracotta-bg;
+  border: 1px solid rgba($snow, 0.08);
+  backdrop-filter: blur(12px);
+  transition:
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+  position: relative;
+  z-index: 1;
+
+  &:has([aria-expanded='true']) {
+    z-index: 50;
   }
 
-  .text {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    min-width: 0;
-    overflow: hidden;
+  &:hover {
+    background: $terracotta-hover;
   }
 
-  .title {
-    overflow: hidden;
-    font-size: $font-base;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .subtitle {
-    font-size: 0.8rem;
-    opacity: 0.8;
-  }
-
-  .chip {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 8px;
-    border: 1px solid currentColor;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    white-space: nowrap;
-  }
-
-  .actions {
-    display: flex;
-    flex: none;
-    align-items: center;
-    gap: $spacing-1;
-    padding-right: $spacing-2;
-  }
-
-  .iconButton {
-    @include interactive-button;
-    display: flex;
-    padding: $spacing-1;
-    border-radius: $radius-sm;
-    color: inherit;
+  &[data-read='true'] {
+    background: $read-bg;
+    border-color: rgba($snow, 0.06);
 
     &:hover {
-      color: $snow;
-      background: rgba($snow, 0.12);
+      background: $read-hover;
     }
 
-    &:focus-visible {
-      outline: 2px solid $snow;
+    .number,
+    .title {
+      color: rgba($snow, 0.85);
     }
 
-    &[data-downloaded='not_downloaded'] svg {
-      opacity: 0.7;
-    }
-  }
-
-  .spin {
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
+    .subtitle {
+      color: rgba($snow, 0.5);
     }
   }
 
-  .pagination {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: $spacing-1 0;
-
-    .arrow {
-      @include interactive-button;
-      color: $snow;
-
-      &:disabled {
-        color: rgba($snow, 0.3);
-        cursor: default;
-      }
-    }
-
-    .page {
-      @include interactive-button;
-      width: 30px;
-      height: 30px;
-      border-radius: 5px;
-      color: $snow;
-      font-size: $font-lg;
-      transition: background 0.25s;
-
-      &:hover {
-        color: #a878e5;
-        background-color: $hover-shining;
-      }
-    }
-
-    .pageActive {
-      background-color: rgba($snow, 0.16);
-      font-weight: 600;
-    }
+  &[data-next='true'] {
+    border: 1.5px solid rgba($snow, 0.85);
+    box-shadow:
+      0 0 0 2px rgba(#181a1b, 0.85),
+      0 0 0 3.5px rgba($snow, 0.55);
+    margin: 2px 0;
   }
+}
+
+.main {
+  @include interactive-button;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  text-align: left;
+  color: $text-color;
+}
+
+.number {
+  flex-shrink: 0;
+  min-width: 22px;
+  font-size: $font-xs;
+  font-weight: 700;
+  color: rgba($snow, 0.9);
+  font-variant-numeric: tabular-nums;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.2;
+}
+
+.title {
+  display: block;
+  width: 100%;
+  font-size: $font-xs;
+  font-weight: 600;
+  color: $text-color;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subtitle {
+  display: block;
+  width: 100%;
+  font-size: 0.6875rem;
+  color: rgba($snow, 0.78);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badges {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  flex-shrink: 0;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: 2px $spacing-3;
+  border-radius: $radius-full;
+  font-size: $font-xs;
+  font-weight: 500;
+  color: $text-color;
+  border: 1px solid rgba($snow, 0.55);
+  background: rgba(black, 0.14);
+  white-space: nowrap;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  flex-shrink: 0;
+}
+
+.iconButton {
+  @include interactive-button;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: $radius-full;
+  color: rgba($snow, 0.85);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    color: $text-color;
+    background: $hover-shining;
+  }
+}
+
+.readIcon {
+  color: $read-green;
+}
+
+.downloadedIcon {
+  color: rgba($snow, 0.85);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.empty {
+  padding: $spacing-8;
+  text-align: center;
+  color: $text-muted;
+  font-size: $font-sm;
+  @include panel;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  margin-top: $spacing-2;
+}
+
+.arrow,
+.page {
+  @include interactive-button;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 $spacing-2;
+  border-radius: $radius-sm;
+  font-size: $font-sm;
+  color: rgba($snow, 0.8);
+  transition: background 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: $hover-shining;
+    color: $text-color;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.pageActive {
+  background: rgba($snow, 0.22);
+  color: $text-color;
+  font-weight: 700;
 }

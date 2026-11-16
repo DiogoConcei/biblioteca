@@ -2,7 +2,6 @@ import { Play, RotateCcw } from 'lucide-react';
 
 import useSerieStore from '@/shared/store/useSerieStore';
 import styles from './ContinueButton.module.scss';
-import { MouseEventHandler } from 'react';
 
 export default function ContinueButton({
   onOpen,
