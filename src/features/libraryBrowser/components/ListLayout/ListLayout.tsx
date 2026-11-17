@@ -166,22 +166,3 @@ export default function ListLayout({ serie }: { serie: StoreSerie }) {
     </main>
   );
 }
-{
-  /* <div>
-            {tags.map((tag) => (
-              <span key={tag}>
-                <Tag /> {tag}
-              </span>
-            ))}
-          </div> */
-}
-{
-  /* {serie.metadata.originalOwner && (
-            <p className={styles.owner}>Upload por: {serie.metadata.originalOwner}</p>
-          )}
-          {serie.metadata.recommendedBy && (
-            <p className={styles.recomend}>
-              recomendada por: {serie.metadata.recommendedBy}
-            </p>
-          )} */
-}

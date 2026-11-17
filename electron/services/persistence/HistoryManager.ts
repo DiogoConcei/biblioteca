@@ -87,34 +87,7 @@ export default class HistoryManager extends LibrarySystem {
   }
 
   public async addToHistory(serie: graphSerie): Promise<void> {
-    try {
-      const historySerie: SerieHistoryEntry = this.mountSerieHistory(serie);
-      const readEvent: ReadEvent = this.mountReadEvent(serie);
-      let history: HistoryFile = { summaries: [], events: [] };
-      history = await fse.readJSON(this.historyFile);
-
-      history.events.push(readEvent);
-
-      const index = history.summaries.findIndex(
-        (s) => s.serieId === historySerie.serieId,
-      );
-
-      if (index === -1) {
-        history.summaries.push(historySerie);
-      } else {
-        history.summaries[index] = historySerie;
-      }
-
-      history.summaries.sort(
-        (a, b) => new Date(b.lastReadAt).getTime() - new Date(a.lastReadAt).getTime(),
-      );
-
-      await this.collectionManager.updateRecentCollection(history.summaries);
-
-      await this.writer.write(this.historyFile, history);
-    } catch (error) {
-      throw error;
-    }
+    await this.appendEvents(serie, [this.mountReadEvent(serie)]);
   }
 
   private async removeFromHistory(serie: graphSerie): Promise<void> {
@@ -190,5 +163,84 @@ export default class HistoryManager extends LibrarySystem {
       readAt: serie.readingData.lastReadAt,
       serieId: serie.id,
     };
+  }
+
+  private recalcProgress(serie: graphSerie): void {
+    serie.chaptersRead = serie.chapters.filter((c) => c.isRead).length;
+
+    if (serie.chaptersRead === serie.totalChapters && serie.totalChapters > 0) {
+      serie.metadata.status = ReadingStatus.COMPLETED;
+    } else if (serie.chaptersRead > 0) {
+      serie.metadata.status = ReadingStatus.IN_PROGRESS;
+    } else {
+      serie.metadata.status = ReadingStatus.PENDING;
+    }
+  }
+
+  public async historyControlBatch(
+    serie: graphSerie,
+    chapterIds: number[],
+    isRead: boolean,
+  ): Promise<boolean> {
+    const ids = new Set(chapterIds);
+
+    const changed = serie.chapters
+      .filter((c) => ids.has(c.id) && c.isRead !== isRead)
+      .sort((a, b) => a.order - b.order);
+
+    if (changed.length === 0) return isRead;
+
+    changed.forEach((c) => {
+      c.isRead = isRead;
+    });
+    this.recalcProgress(serie);
+
+    if (isRead) {
+      const base = Date.now();
+      const events: ReadEvent[] = changed.map((c, i) => ({
+        chapterId: c.id,
+        literatureForm: serie.literatureForm,
+        chapterName: c.name,
+        isRead: true,
+        lastPageRead: c.page.lastPageRead,
+        readAt: new Date(base + i).toISOString(),
+        serieId: serie.id,
+      }));
+
+      const last = events[events.length - 1];
+      serie.readingData.lastChapterId = last.chapterId;
+      serie.readingData.lastReadAt = last.readAt;
+
+      await this.appendEvents(serie, events);
+    } else {
+      await this.removeFromHistory(serie);
+
+      const history: HistoryFile = await fse.readJSON(this.historyFile);
+      const summary = history.summaries.find((s) => s.serieId === serie.id);
+
+      serie.readingData.lastChapterId = summary?.lastChapterId ?? 0;
+      serie.readingData.lastReadAt = summary?.lastReadAt ?? '';
+    }
+
+    await this.storageManager.writeData(serie);
+    return isRead;
+  }
+
+  private async appendEvents(serie: graphSerie, events: ReadEvent[]): Promise<void> {
+    const history: HistoryFile = await fse.readJSON(this.historyFile);
+    history.events.push(...events);
+
+    const entry = this.mountSerieHistory(serie);
+    const index = history.summaries.findIndex((s) => s.serieId === entry.serieId);
+
+    if (index === -1) history.summaries.push(entry);
+    else history.summaries[index] = entry;
+
+    history.summaries.sort(
+      (a, b) => new Date(b.lastReadAt).getTime() - new Date(a.lastReadAt).getTime(),
+    );
+
+    await this.collectionManager.updateRecentCollection(history.summaries);
+    await this.writer.write(this.historyFile, history);
   }
 }

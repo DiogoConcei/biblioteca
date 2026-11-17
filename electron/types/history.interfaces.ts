@@ -1,4 +1,7 @@
 import { LiteratureForm } from '@/shared/types/series.interfaces';
+import { Literatures } from './electron-auxiliar.interfaces';
+import { TieIn } from './comic.interfaces';
+import { Collection } from '@/shared/types/collections.interfaces';
 
 export interface HistoryFile {
   summaries: SerieHistoryEntry[];
@@ -25,4 +28,14 @@ export interface ReadEvent {
   isRead: boolean;
   chapterId: number;
   readAt: string;
+}
+
+export interface MarkReadResult {
+  recents: Collection;
+  history: SerieHistoryEntry[];
+}
+
+export interface LastReadResult {
+  url: string;
+  serie: Literatures | TieIn;
 }

@@ -28,19 +28,10 @@ import { Chapter, Filter } from '../../types/chapter.interfaces';
 import { isRecent, subtitleOf, formatChapterNumber } from '../../utils/chapterUtils';
 import { MAX_NEW_BADGES, PAGE_SIZE, FILTERS } from '../../constants/chapterConstants';
 
-function DownloadIcon({ state }: { state: Chapter['isDownloaded'] }) {
-  if (state === 'downloading') {
-    return <LoaderCircle size={20} strokeWidth={1.75} className={styles.spin} />;
-  }
-  if (state === 'downloaded') {
-    return <CircleCheck size={20} strokeWidth={1.75} className={styles.downloadedIcon} />;
-  }
-  return <ArrowDownToLine size={20} strokeWidth={1.75} />;
-}
-
 export default function ListView({ literatureForm }: { literatureForm: LiteratureForm }) {
   const { downloadIndividual, ensureDownloaded } = useDownload();
-  const { openChapter, markAsRead, OpenLastChapter } = useAction();
+  const { openChapter, markAsRead, OpenLastChapter, markReadUntil, markUnreadFrom } =
+    useAction();
 
   const chapters = useSerieStore((s) => s.chapters);
   const { deleteChapter } = useChapterActions();
@@ -84,25 +75,6 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
     }
 
     setIsDeleting(false);
-  };
-
-  // Ações em lote (Imagem 2)
-  const markReadUntil = (target: Chapter) => {
-    const ordered = [...chapters].sort((a, b) => a.order - b.order);
-    for (const ch of ordered) {
-      if (ch.order <= target.order && !ch.isRead) {
-        markAsRead(new MouseEvent('click') as unknown as React.MouseEvent, ch);
-      }
-    }
-  };
-
-  const markUnreadFrom = (target: Chapter) => {
-    const ordered = [...chapters].sort((a, b) => a.order - b.order);
-    for (const ch of ordered) {
-      if (ch.order >= target.order && ch.isRead) {
-        markAsRead(new MouseEvent('click') as unknown as React.MouseEvent, ch);
-      }
-    }
   };
 
   const sorted = useMemo(
@@ -179,7 +151,10 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
   };
 
   return (
-    <section className={styles.control}>
+    <section
+      className={styles.control}
+      style={{ '--page-size': PAGE_SIZE } as React.CSSProperties}
+    >
       <div className={styles.header}>
         <h2>Capítulos</h2>
 
@@ -188,7 +163,6 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
           <ContinueButton onOpen={(e) => OpenLastChapter(e)} />
         </div>
       </div>
-
       {chapters.length > 0 && (
         <>
           <div className={styles.toolbar}>
@@ -266,7 +240,6 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
           </div>
         </>
       )}
-
       {chapters.length === 0 ? (
         <p className={styles.empty}>
           Nenhum capítulo ainda. Use o botão de envio para adicionar.
@@ -344,7 +317,21 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
                     aria-label="Baixar capítulo"
                     title={chapter.isDownloaded === 'downloaded' ? 'Baixado' : 'Baixar'}
                   >
-                    <DownloadIcon state={chapter.isDownloaded} />
+                    {chapter.isDownloaded == 'downloading' ? (
+                      <LoaderCircle
+                        size={20}
+                        strokeWidth={1.75}
+                        className={styles.spin}
+                      />
+                    ) : chapter.isDownloaded == 'downloaded' ? (
+                      <CircleCheck
+                        size={20}
+                        strokeWidth={1.75}
+                        className={styles.downloadedIcon}
+                      />
+                    ) : (
+                      <ArrowDownToLine size={20} strokeWidth={1.75} />
+                    )}
                   </button>
 
                   <ChapterMenu
@@ -386,8 +373,7 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
           })}
         </ul>
       )}
-
-      {totalPages > 1 && (
+      {totalPages > 1 ? (
         <nav className={styles.pagination} aria-label="Paginação">
           <button
             type="button"
@@ -421,8 +407,9 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
             <ChevronRight />
           </button>
         </nav>
+      ) : (
+        <div className={styles.paginationSpacer} aria-hidden="true" />
       )}
-
       {isUploadOpen && (
         <UploadPopUp
           isOpen={isUploadOpen}
@@ -430,7 +417,6 @@ export default function ListView({ literatureForm }: { literatureForm: Literatur
           literatureForm={literatureForm}
         />
       )}
-
       <ConfirmDialog
         open={chapterToDelete !== null}
         title={`Excluir ${chapterToDelete?.name ?? 'capítulo'}?`}

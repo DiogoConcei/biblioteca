@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Chapter } from '@/features/libraryBrowser/types/chapter.interfaces';
 import { TieIn, ComicTieIn } from '../../../electron/types/comic.interfaces';
 
 import { useUIStore } from '../store/useUIStore';
@@ -26,7 +27,11 @@ export default function useAction() {
   const updateSerieInCollection = useCollectionStore((s) => s.updateSerieInCollection);
   const { updateFav } = useCollection();
 
-  const ratingSerie = async (e: React.MouseEvent, serie: StoreSerie, rating: number) => {
+  const ratingSerie = async (
+    e: React.MouseEvent,
+    serie: StoreSerie,
+    rating: number,
+  ): Promise<void> => {
     e.stopPropagation();
 
     const originalRating = serie.metadata.rating;
@@ -111,7 +116,10 @@ export default function useAction() {
     }
   };
 
-  const openChapter = async (e: React.MouseEvent, selectedChapter: LiteratureChapter) => {
+  const openChapter = async (
+    e: React.MouseEvent,
+    selectedChapter: LiteratureChapter,
+  ): Promise<void> => {
     e.stopPropagation();
     const { name: serieName, id: serieId } = serie;
     const { name: chapterName, id: chapterId, page, isRead } = selectedChapter;
@@ -141,7 +149,7 @@ export default function useAction() {
   const OpenLastChapter = async (
     e: React.MouseEvent<HTMLButtonElement | SVGElement>,
     serieId: number = serie.id,
-  ) => {
+  ): Promise<void> => {
     e.preventDefault();
     setLoading(true);
 
@@ -165,7 +173,7 @@ export default function useAction() {
     }
   };
 
-  const openTieIn = async (tieIn: ComicTieIn) => {
+  const openTieIn = async (tieIn: ComicTieIn): Promise<void> => {
     setLoading(true);
 
     const response = await window.electronAPI.series.createTieIn(tieIn);
@@ -182,13 +190,97 @@ export default function useAction() {
     navigate(url!);
   };
 
-  const favoriteSerie = async (isFav: boolean) => {
+  const favoriteSerie = async (isFav: boolean): Promise<void> => {
     const newFavoriteStatus = !isFav;
     updateSerie('metadata.isFavorite', newFavoriteStatus);
     const response = await updateFav(serie, newFavoriteStatus);
 
     if (!response) {
       updateSerie('metadata.isFavorite', isFav);
+    }
+  };
+
+  const markReadUntil = async (target: Chapter) => {
+    const { serie, chapters, setChapters } = useSerieStore.getState();
+    if (!serie) return false;
+
+    const ids = new Set(
+      chapters.filter((c) => c.order <= target.order && !c.isRead).map((c) => c.id),
+    );
+    if (ids.size === 0) return true;
+
+    setChapters(chapters.map((c) => (ids.has(c.id) ? { ...c, isRead: true } : c)));
+
+    const revert = () =>
+      setChapters(
+        useSerieStore
+          .getState()
+          .chapters.map((c) => (ids.has(c.id) ? { ...c, isRead: false } : c)),
+      );
+
+    try {
+      const response = await window.electronAPI.userAction.markReadBatch(
+        serie.dataPath,
+        [...ids],
+        true,
+      );
+
+      if (!response.success) {
+        revert();
+        return false;
+      }
+
+      updateSerieInCollection(serie);
+      if (response.data) {
+        setCollection(response.data.recents);
+        setRecentHistory(response.data.history);
+      }
+      return true;
+    } catch {
+      revert();
+      return false;
+    }
+  };
+
+  const markUnreadFrom = async (target: Chapter) => {
+    const { serie, chapters, setChapters } = useSerieStore.getState();
+    if (!serie) return false;
+
+    const ids = new Set(
+      chapters.filter((c) => c.order >= target.order && c.isRead).map((c) => c.id),
+    );
+    if (ids.size === 0) return true;
+
+    setChapters(chapters.map((c) => (ids.has(c.id) ? { ...c, isRead: false } : c)));
+
+    const revert = () =>
+      setChapters(
+        useSerieStore
+          .getState()
+          .chapters.map((c) => (ids.has(c.id) ? { ...c, isRead: true } : c)),
+      );
+
+    try {
+      const response = await window.electronAPI.userAction.markReadBatch(
+        serie.dataPath,
+        [...ids],
+        false,
+      );
+
+      if (!response.success) {
+        revert();
+        return false;
+      }
+
+      updateSerieInCollection(serie);
+      if (response.data) {
+        setCollection(response.data.recents);
+        setRecentHistory(response.data.history);
+      }
+      return true;
+    } catch {
+      revert();
+      return false;
     }
   };
 
@@ -199,5 +291,7 @@ export default function useAction() {
     openTieIn,
     OpenLastChapter,
     favoriteSerie,
+    markReadUntil,
+    markUnreadFrom,
   };
 }

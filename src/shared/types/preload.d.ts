@@ -209,11 +209,16 @@ declare global {
           dataPath: string,
           chapter_id: number,
           isRead: boolean,
-        ) => Promise<APIResponse<void>>;
+        ) => Promise<APIResponse<MarkReadResult>>;
         returnPage: (
           dataPath: string,
           serieName?: string,
         ) => Promise<APIResponse<string>>;
+        markReadBatch: (
+          dataPath: string,
+          chapterIds: number[],
+          isRead: boolean,
+        ) => Promise<APIResponse<MarkReadResult>>;
       };
 
       download: {

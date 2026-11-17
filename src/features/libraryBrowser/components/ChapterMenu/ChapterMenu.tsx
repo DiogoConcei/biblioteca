@@ -1,13 +1,7 @@
 import { MoreHorizontal } from 'lucide-react';
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { ChapterMenuItem } from '../../types/chapter.interfaces';
 import styles from './ChapterMenu.module.scss';
-
-export interface ChapterMenuItem {
-  label: string;
-  icon?: ReactNode;
-  danger?: boolean;
-  onSelect: () => void;
-}
 
 export default function ChapterMenu({
   label,
@@ -24,7 +18,6 @@ export default function ChapterMenu({
   useEffect(() => {
     if (!open) return;
 
-    // ao abrir, o foco vai para o primeiro item
     rootRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
 
     const closeOnOutsideClick = (event: PointerEvent) => {

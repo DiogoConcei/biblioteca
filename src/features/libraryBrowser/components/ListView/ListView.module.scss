@@ -1,5 +1,7 @@
 @use '@/shared/styles/_variables.scss' as *;
 
+$list-height: calc(12 * #{$row-height} + 11 * #{$spacing-1});
+
 .control {
   display: flex;
   flex-direction: column;
@@ -188,6 +190,7 @@
   gap: $spacing-1;
   width: 750px;
   max-width: 100%;
+  min-height: $list-height;
 }
 
 .row {
@@ -198,7 +201,7 @@
   width: 100%;
   box-sizing: border-box;
   padding: 6px $spacing-3;
-  min-height: 40px;
+  min-height: $row-height;
   border-radius: $radius-md;
   background: $terracotta-bg;
   border: 1px solid rgba($snow, 0.08);
@@ -240,7 +243,6 @@
     box-shadow:
       0 0 0 2px rgba(#181a1b, 0.85),
       0 0 0 3.5px rgba($snow, 0.55);
-    margin: 2px 0;
   }
 }
 
@@ -361,14 +363,19 @@
 }
 
 .empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: $spacing-8;
   text-align: center;
   color: $text-muted;
   font-size: $font-sm;
   @include panel;
-  width: 100%;
+  width: 750px;
   box-sizing: border-box;
   margin: 0;
+  min-height: $list-height;
 }
 
 .pagination {
@@ -408,4 +415,21 @@
   background: rgba($snow, 0.22);
   color: $text-color;
   font-weight: 700;
+}
+
+$row-height: 44px;
+
+.listArea {
+  display: flex;
+  flex-direction: column;
+  width: 750px;
+  max-width: 100%;
+  min-height: calc(
+    var(--page-size) * #{$row-height} + (var(--page-size) - 1) * #{$spacing-1}
+  );
+}
+
+.paginationSpacer {
+  height: 32px;
+  margin-top: $spacing-2;
 }

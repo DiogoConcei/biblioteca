@@ -1,5 +1,8 @@
 @use '@/shared/styles/_variables.scss' as *;
 
+$row-height: 44px;
+$list-height: calc(12 * #{$row-height} + 11 * #{$spacing-1});
+
 .mangaPage {
   display: flex;
   flex-flow: row wrap;
@@ -49,6 +52,12 @@
       gap: 12px;
       margin-top: 12px;
     }
+  }
+
+  .mangaInfo {
+    align-self: flex-start;
+    width: 750px;
+    max-width: 100%;
   }
 
   // .mangaInfo {

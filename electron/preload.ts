@@ -1,5 +1,5 @@
 import { ipcRenderer, contextBridge, webUtils } from 'electron';
-
+import { MarkReadResult } from './types/history.interfaces.ts';
 import {
   APIResponse,
   viewData,
@@ -26,9 +26,9 @@ import {
   SerieInCollection,
   ScrapedMetadata,
 } from '../src/shared/types/collections.interfaces.ts';
+import { LastReadResult } from './types/history.interfaces.ts';
 import { ComicTieIn, TieIn } from './types/comic.interfaces.ts';
 import { SerieHistoryEntry } from './types/history.interfaces.ts';
-import { LastReadResult } from './ipc/chaptersHandlers.ts';
 import { SuggestedCover } from './ipc/uploadHandlers.ts';
 import { MediaContent } from './types/media.interfaces.ts';
 
@@ -234,13 +234,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
       dataPath: string,
       chapter_id: number,
       isRead: boolean,
-    ): Promise<APIResponse<void>> =>
+    ): Promise<APIResponse<MarkReadResult>> =>
       ipcRenderer.invoke('chapter:mark-read', dataPath, chapter_id, isRead),
     returnPage: async (
       dataPath: string,
       serieName?: string,
     ): Promise<APIResponse<string>> =>
       ipcRenderer.invoke('chapter:return-page', dataPath, serieName),
+    markReadBatch: async (
+      dataPath: string,
+      chapterIds: number[],
+      isRead: boolean,
+    ): Promise<APIResponse<MarkReadResult>> =>
+      ipcRenderer.invoke('chapter:mark-read-batch', dataPath, chapterIds, isRead),
   },
 
   download: {

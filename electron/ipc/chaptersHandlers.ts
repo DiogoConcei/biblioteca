@@ -5,6 +5,7 @@ import storageManager from '../services/StorageManager';
 import UserManager from '../services/UserManager.ts';
 import ManagerFactory from '../services/adapters/ManagerFactory.ts';
 import MediaFactory from '../services/adapters/MediaFactory.ts';
+import { MarkReadResult } from '../types/history.interfaces.ts';
 import {
   GetChapterResponse,
   graphChapter,
@@ -18,15 +19,10 @@ import {
   Collection,
   SerieInCollection,
 } from '../../src/shared/types/collections.interfaces.ts';
-import { SerieHistoryEntry } from '../types/history.interfaces.ts';
+import { LastReadResult, SerieHistoryEntry } from '../types/history.interfaces.ts';
 import ImageManager from '../services/processing/ImageManager.ts';
 import { TieIn } from '../types/comic.interfaces.ts';
 import { MediaContent } from '../types/media.interfaces.ts';
-
-export interface LastReadResult {
-  url: string;
-  serie: Literatures | TieIn;
-}
 
 export default function chaptersHandlers(ipcMain: IpcMain) {
   const fileManager = new FileManager();
@@ -35,6 +31,35 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
   const collectionManager = new CollectionManager();
   const imageManager = new ImageManager();
 
+  const buildMarkReadResult = async (): Promise<MarkReadResult> => {
+    const history = await historyManager.getHistory();
+    const rawRecents = await collectionManager.updateRecentCollection(history.summaries);
+
+    if (!rawRecents) throw new Error('Falha em receber recentes');
+
+    const resolvedSeries: SerieInCollection[] = await Promise.all(
+      rawRecents.series.map(async (r) => ({
+        ...r,
+        coverImage: await imageManager.getMediaUrl(r.coverImage),
+      })),
+    );
+
+    const recents: Collection = {
+      ...rawRecents,
+      coverImage: await imageManager.getMediaUrl(rawRecents.coverImage),
+      series: resolvedSeries,
+    };
+
+    const resolvedHistory: SerieHistoryEntry[] = await Promise.all(
+      history.summaries.map(async (entry) => ({
+        ...entry,
+        coverImage: await imageManager.getMediaUrl(entry.coverImage),
+      })),
+    );
+
+    return { recents, history: resolvedHistory };
+  };
+
   ipcMain.handle(
     'chapter:mark-read',
     async (
@@ -42,39 +67,38 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
       dataPath: string,
       chapter_id: number,
       isRead: boolean,
-    ): Promise<APIResponse<{ recents: Collection; history: SerieHistoryEntry[] }>> => {
+    ): Promise<APIResponse<MarkReadResult>> => {
       try {
         await userManager.markRead(dataPath, chapter_id, isRead);
-        const history = await historyManager.getHistory();
-        const rawRecents = await collectionManager.updateRecentCollection(
-          history.summaries,
-        );
-
-        if (!rawRecents) throw new Error('Falha em receber recentes');
-
-        const resolvedSeries: SerieInCollection[] = await Promise.all(
-          rawRecents.series.map(async (r) => ({
-            ...r,
-            coverImage: await imageManager.getMediaUrl(r.coverImage),
-          })),
-        );
-
-        const recents: Collection = {
-          ...rawRecents,
-          coverImage: await imageManager.getMediaUrl(rawRecents.coverImage),
-          series: resolvedSeries,
-        };
-
-        const resolvedHistory: SerieHistoryEntry[] = await Promise.all(
-          history.summaries.map(async (entry) => ({
-            ...entry,
-            coverImage: await imageManager.getMediaUrl(entry.coverImage),
-          })),
-        );
-
-        return { success: true, data: { recents, history: resolvedHistory } };
+        return { success: true, data: await buildMarkReadResult() };
       } catch (e) {
         console.error(`Falha em marcar como lido: ${e}`);
+        return { success: false, error: String(e) };
+      }
+    },
+  );
+
+  ipcMain.handle(
+    'chapter:mark-read-batch',
+    async (
+      _event,
+      dataPath: string,
+      chapterIds: number[],
+      isRead: boolean,
+    ): Promise<APIResponse<MarkReadResult>> => {
+      try {
+        if (!Array.isArray(chapterIds) || chapterIds.length === 0) {
+          throw new Error('Nenhum capítulo informado');
+        }
+
+        const serie = await storageManager.readSerieData<Literatures>(dataPath);
+        if (!serie) throw new Error(`Série não encontrada: ${dataPath}`);
+
+        await historyManager.historyControlBatch(serie, chapterIds, isRead);
+
+        return { success: true, data: await buildMarkReadResult() };
+      } catch (e) {
+        console.error(`Falha em marcar capítulos em lote: ${e}`);
         return { success: false, error: String(e) };
       }
     },
@@ -124,7 +148,7 @@ export default function chaptersHandlers(ipcMain: IpcMain) {
       page_number: number,
       totalPages: number,
       cfi?: string,
-    ) => {
+    ): Promise<APIResponse<LastReadResult>> => {
       try {
         const dataPath = await fileManager.getDataPath(serieName);
 
