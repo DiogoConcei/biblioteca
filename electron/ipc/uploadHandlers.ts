@@ -19,14 +19,8 @@ import MangaManager from '../services/content/MangaManager.ts';
 import FileManager from '../services/FileManager.ts';
 import ImageManager from '../services/processing/ImageManager.ts';
 import ManagerFactory from '../services/adapters/ManagerFactory.ts';
+import { SuggestedCover } from '../types/electron-auxiliar.interfaces.ts';
 
-export interface SuggestedCover {
-  chapterName: string;
-  path: string;
-  url: string;
-  page: number;
-  recommended?: boolean;
-}
 export default function uploadHandlers(ipcMain: IpcMain) {
   const comicManager = new ComicManager();
   const mangaManager = new MangaManager();

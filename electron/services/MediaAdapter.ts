@@ -49,15 +49,11 @@ export default class MediaArchiveAdapter {
 
   constructor(config?: MediaArchiveAdapterConfig) {
     this.sevenZipPath = config?.sevenZipPath ?? 'C:\\Program Files\\7-Zip\\7z';
-    this.tempRootDir =
-      config?.tempRootDir ?? path.join(os.tmpdir(), 'biblioteca');
-    this.maxCommandBufferBytes =
-      config?.maxCommandBufferBytes ?? 1024 * 1024 * 20;
+    this.tempRootDir = config?.tempRootDir ?? path.join(os.tmpdir(), 'biblioteca');
+    this.maxCommandBufferBytes = config?.maxCommandBufferBytes ?? 1024 * 1024 * 20;
   }
 
-  public async extractCover(
-    input: ExtractCoverInput,
-  ): Promise<ExtractCoverResult> {
+  public async extractCover(input: ExtractCoverInput): Promise<ExtractCoverResult> {
     const startedAt = Date.now();
     let tempDir = '';
 
@@ -79,10 +75,7 @@ export default class MediaArchiveAdapter {
       if (sourceType === 'pdf') {
         await this.extractPdfPageAsImage(input.inputPath, tempDir);
       } else {
-        const runResult = await this.extractArchiveImages(
-          input.inputPath,
-          tempDir,
-        );
+        const runResult = await this.extractArchiveImages(input.inputPath, tempDir);
         partialExtraction = runResult.partialCrcFailure;
         usedArchiveFallbackMode = runResult.usedFallbackMode;
       }
@@ -126,9 +119,7 @@ export default class MediaArchiveAdapter {
       return {
         success: false,
         error:
-          error instanceof Error
-            ? error.message
-            : 'Falha desconhecida ao extrair capa.',
+          error instanceof Error ? error.message : 'Falha desconhecida ao extrair capa.',
         metadata: {
           sourceType: 'archive',
           candidateCount: 0,
@@ -143,9 +134,7 @@ export default class MediaArchiveAdapter {
     }
   }
 
-  private async detectSourceType(
-    inputPath: string,
-  ): Promise<'pdf' | 'archive'> {
+  private async detectSourceType(inputPath: string): Promise<'pdf' | 'archive'> {
     const fd = await fse.open(inputPath, 'r');
     const sample = Buffer.alloc(8192);
 
@@ -213,10 +202,7 @@ export default class MediaArchiveAdapter {
     };
   }
 
-  private async extractPdfPageAsImage(
-    inputPath: string,
-    tempDir: string,
-  ): Promise<void> {
+  private async extractPdfPageAsImage(inputPath: string, tempDir: string): Promise<void> {
     const data = await fse.readFile(inputPath);
     const loadingTask = pdfjsLib.getDocument({
       data: new Uint8Array(data),
@@ -310,28 +296,19 @@ export default class MediaArchiveAdapter {
   }
 
   private isPathInside(parentDir: string, childPath: string): boolean {
-    const relativePath = path.relative(
-      path.resolve(parentDir),
-      path.resolve(childPath),
-    );
+    const relativePath = path.relative(path.resolve(parentDir), path.resolve(childPath));
     return (
-      !!relativePath &&
-      !relativePath.startsWith('..') &&
-      !path.isAbsolute(relativePath)
+      !!relativePath && !relativePath.startsWith('..') && !path.isAbsolute(relativePath)
     );
   }
 
   private async run7zipCommand(args: string[]): Promise<SevenZipRunResult> {
     try {
-      const { stdout, stderr } = await this.execFileAsync(
-        this.sevenZipPath,
-        args,
-        {
-          windowsHide: true,
-          maxBuffer: this.maxCommandBufferBytes,
-          encoding: 'buffer',
-        },
-      );
+      const { stdout, stderr } = await this.execFileAsync(this.sevenZipPath, args, {
+        windowsHide: true,
+        maxBuffer: this.maxCommandBufferBytes,
+        encoding: 'buffer',
+      });
 
       return {
         stdoutText: this.decodeCommandOutput(stdout),
@@ -345,8 +322,7 @@ export default class MediaArchiveAdapter {
       const output = `${stdoutText}\n${stderrText}`;
 
       const partialCrcFailure =
-        Number(commandError.code) === 2 &&
-        /CRC Failed|Data Error/i.test(output);
+        Number(commandError.code) === 2 && /CRC Failed|Data Error/i.test(output);
 
       if (partialCrcFailure) {
         return {

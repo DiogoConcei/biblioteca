@@ -1,7 +1,8 @@
 import { Manga, MangaChapter } from './manga.interfaces';
 import { Book, BookChapter } from './book.interfaces';
 import { MediaContent } from './media.interfaces';
-import { Comic, ComicEdition, TieIn } from './comic.interfaces';
+import { Comic, ComicEdition } from './comic.interfaces';
+import { TieIn } from './tieIn.interfaces';
 import {
   ReadingStatus,
   AutoBackupStatus,
@@ -241,4 +242,12 @@ export interface LanStatus {
   hostname?: string;
   token: string;
   qrCode?: string;
+}
+
+export interface SuggestedCover {
+  chapterName: string;
+  path: string;
+  url: string;
+  page: number;
+  recommended?: boolean;
 }

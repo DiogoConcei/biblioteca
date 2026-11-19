@@ -27,9 +27,9 @@ import {
   ScrapedMetadata,
 } from '../src/shared/types/collections.interfaces.ts';
 import { LastReadResult } from './types/history.interfaces.ts';
-import { ComicTieIn, TieIn } from './types/comic.interfaces.ts';
+import { ComicTieIn, TieIn } from './types/tieIn.interfaces.ts';
 import { SerieHistoryEntry } from './types/history.interfaces.ts';
-import { SuggestedCover } from './ipc/uploadHandlers.ts';
+import { SuggestedCover } from './types/electron-auxiliar.interfaces.ts';
 import { MediaContent } from './types/media.interfaces.ts';
 
 // --------- Expose some API to the Renderer process ---------
@@ -261,7 +261,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('download:delete', dataPath, chapter_id),
 
-    multipleDownload: async (dataPath: string, quantity: number): Promise<boolean> =>
+    multipleDownload: async (
+      dataPath: string,
+      quantity: number,
+    ): Promise<APIResponse<void>> =>
       ipcRenderer.invoke('donwload:multiple', dataPath, quantity),
 
     readingDownload: async (

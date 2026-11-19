@@ -120,6 +120,7 @@ export default class MangaManager extends GraphSerie<Manga, MangaChapter> {
         autoBackup: serie.autoBackup,
         viewMode: serie.viewMode,
       },
+      backgroundGallery: '',
       createdAt: serie.createdAt,
       deletedAt: serie.deletedAt,
       tags: serie.tags,

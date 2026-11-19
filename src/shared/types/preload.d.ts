@@ -231,7 +231,10 @@ declare global {
           chapter_id: number,
         ) => Promise<APIResponse<void>>;
 
-        multipleDownload: (dataPath: string, quantity: number) => Promise<boolean>;
+        multipleDownload: (
+          dataPath: string,
+          quantity: number,
+        ) => Promise<APIResponse<void>>;
 
         readingDownload: (
           serieName: string,

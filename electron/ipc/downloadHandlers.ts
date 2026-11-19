@@ -88,27 +88,21 @@ export default function downloadHandlers(ipcMain: IpcMain) {
     },
   );
 
-  // ipcMain.handle(
-  //   'donwload:multiple',
-  //   async (_event, dataPath: string, quantity: number) => {
-  //     try {
-  //       const literatureForm = fileManager.foundLiteratureForm(dataPath);
-  //       if (literatureForm === 'Mangas') {
-  //         await mangaManager.createMultipleChapters(dataPath, quantity);
-  //       } else if (literatureForm === 'Comics') {
-  //         await comicManager.createMultipleChapters(dataPath, quantity);
-  //       } else if (literatureForm === 'childSeries') {
-  //         await tieManager.createMultipleChapters(dataPath, quantity);
-  //       } else if (literatureForm === 'books' || literatureForm === 'Books') {
-  //         await bookManager.createMultipleChapters(dataPath, quantity);
-  //       }
-  //       return true;
-  //     } catch (e) {
-  //       console.error('Falha em baixar multiplos capitulos');
-  //       return false;
-  //     }
-  //   },
-  // );
+  ipcMain.handle(
+    'donwload:multiple',
+    async (_event, dataPath: string, quantity: number): Promise<APIResponse<void>> => {
+      try {
+        const literatureForm = fileManager.foundLiteratureForm(dataPath);
+        const manager = ManagerFactory.get(literatureForm);
+        await manager.createMultipleChapters(dataPath, quantity);
+
+        return { success: true };
+      } catch (e) {
+        console.error('Falha em baixar multiplos capitulos');
+        return { success: false, error: String(e) };
+      }
+    },
+  );
 
   ipcMain.handle(
     'download:check',

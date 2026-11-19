@@ -796,8 +796,11 @@ export default class MigrationManager extends LibrarySystem {
 
 // (async () => {
 //   console.log('Iniciando migração global de caminhos de capa...');
-// const migrationManager = new MigrationManager();
-// await migrationManager.fixChapterPaths(true);
-//   await migrationManager.migrateCoverPathsFromSeriesSource();
-//   console.log('Migração global finalizada!');
+//   const migrationManager = new MigrationManager();
+//   await migrationManager.fixChapterIds(
+//     'C:\\Users\\diogo\\AppData\\Roaming\\biblioteca\\storage\\data store\\json files\\Mangas\\One Piece.json',
+//   );
+//   // await migrationManager.fixChapterPaths(true);
+//   // await migrationManager.migrateCoverPathsFromSeriesSource();
+//   // console.log('Migração global finalizada!');
 // })();

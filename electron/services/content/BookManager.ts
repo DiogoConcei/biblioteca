@@ -104,6 +104,7 @@ export default class BookManager extends GraphSerie<Book, BookChapter> {
     // Monta o objeto final da série utilizando a interface Book
     const bookData: Book = {
       id: nextId,
+      backgroundGallery: '',
       name: serie.name,
       sanitizedName: serie.sanitizedName,
       archivesPath: path.join(this.userLibrary, serie.name),

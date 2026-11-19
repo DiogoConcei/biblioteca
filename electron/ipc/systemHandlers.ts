@@ -13,7 +13,7 @@ export default function systemHandlers(ipcMain: IpcMain) {
   const backupManager = new BackupManager();
   const configManager = new ConfigManager();
   const comicManager = new ComicManager();
-  const downloadManager = new DownloadManager(null); // BrowserWindow will be set if needed, but for these calls it's mostly BG
+  const downloadManager = new DownloadManager(null);
   const tieInManager = new TieInManager();
   const migrationManager = new MigrationManager();
 

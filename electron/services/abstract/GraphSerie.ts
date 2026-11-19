@@ -297,7 +297,7 @@ export default abstract class GraphSerie<
     const lastItem = Math.min(firstItem + quantity, serie.chapters.length);
 
     const chaptersToProcess = serie.chapters.filter(
-      (chapter) => chapter.id >= firstItem && chapter.id <= lastItem,
+      (chapter) => chapter.id > firstItem && chapter.id <= lastItem,
     );
 
     if (!chaptersToProcess) {
@@ -308,10 +308,10 @@ export default abstract class GraphSerie<
       chaptersToProcess.map(async (chapter) => {
         await this.generateChapter(serie.name, chapter);
         chapter.isDownloaded = 'downloaded';
-        serie.metadata.lastDownload = chapter.id;
       }),
     );
 
+    serie.metadata.lastDownload = Math.max(...chaptersToProcess.map((c) => c.id));
     await this.storageManager.writeData(serie);
   }
 

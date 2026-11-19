@@ -2,6 +2,7 @@ import { LiteratureForm, SerieForm } from '../../../src/shared/types/series.inte
 
 export interface ChapterManager {
   createChapterById(dataPath: string, chapterId: number): Promise<void>;
+  createMultipleChapters(dataPath: string, quantity: number): Promise<void>;
   deleteChapterById(dataPath: string, chapterId: number): Promise<void>;
   createSerie(serie: SerieForm): Promise<void>;
 }

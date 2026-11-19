@@ -200,13 +200,14 @@ export default function useAction() {
     }
   };
 
-  const markReadUntil = async (target: Chapter) => {
+  const markReadUntil = async (target: Chapter): Promise<boolean> => {
     const { serie, chapters, setChapters } = useSerieStore.getState();
     if (!serie) return false;
 
     const ids = new Set(
       chapters.filter((c) => c.order <= target.order && !c.isRead).map((c) => c.id),
     );
+
     if (ids.size === 0) return true;
 
     setChapters(chapters.map((c) => (ids.has(c.id) ? { ...c, isRead: true } : c)));
@@ -242,13 +243,14 @@ export default function useAction() {
     }
   };
 
-  const markUnreadFrom = async (target: Chapter) => {
+  const markUnreadFrom = async (target: Chapter): Promise<boolean> => {
     const { serie, chapters, setChapters } = useSerieStore.getState();
     if (!serie) return false;
 
     const ids = new Set(
       chapters.filter((c) => c.order >= target.order && c.isRead).map((c) => c.id),
     );
+
     if (ids.size === 0) return true;
 
     setChapters(chapters.map((c) => (ids.has(c.id) ? { ...c, isRead: false } : c)));

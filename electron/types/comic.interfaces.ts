@@ -4,6 +4,7 @@ import {
   ReadingStatus,
   AutoBackupStatus,
 } from '@/shared/types/series.interfaces';
+import { ComicTieIn } from './tieIn.interfaces';
 import { PrivacyStatus } from '@/shared/types/series.interfaces';
 
 export interface Comic extends graphSerie<ComicEdition> {
@@ -50,62 +51,6 @@ export interface Comic extends graphSerie<ComicEdition> {
   comments: string[];
 }
 
-export interface TieIn {
-  id: number;
-  name: string;
-  sanitizedName: string;
-  archivesPath: string;
-  chaptersPath: string;
-  dataPath: string;
-  serieGallery: string;
-  coverGallery: string;
-  pagesGallery: string;
-  backgroundGallery: string;
-  coverImage: string;
-  totalChapters: number;
-  chaptersRead: number;
-  literatureForm: LiteratureForm;
-  chapters: ComicEdition[];
-  readingData: {
-    lastChapterId: number;
-    lastReadAt: string;
-  };
-
-  genre: string;
-  author: string;
-  language: string;
-  metadata: {
-    status: ReadingStatus;
-    collections: string[];
-    recommendedBy?: string;
-    originalOwner?: string;
-    lastDownload: number;
-    privacy: PrivacyStatus;
-    rating?: number;
-    isFavorite: boolean;
-    autoBackup: AutoBackupStatus;
-    compiledComic: boolean;
-    isCreated: boolean;
-    viewMode: ViewMode;
-  };
-  backgroundImage: string;
-  description: string;
-  createdAt: string;
-  deletedAt: string;
-  tags: string[];
-  comments: string[];
-}
-
-export interface ComicTieIn {
-  serieName: string;
-  archivesPath: string;
-  dataPath: string;
-  compiledComic: boolean;
-  coverImage: string;
-  id: number;
-  parentId?: number;
-}
-
 export interface ComicEdition extends graphChapter {
   id: number;
   serieName: string;
@@ -139,9 +84,4 @@ export enum ComicCategory {
   NORMAL = 0,
   SPECIAL = 1,
   EXTRA = 2,
-}
-
-export interface ITieInManager {
-  processTieInData(basePath: string, childSeries: ComicTieIn[]): Promise<void>;
-  resolveCoverSourceArchive(candidatePath: string): Promise<string>;
 }

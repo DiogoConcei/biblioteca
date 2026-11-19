@@ -1,7 +1,7 @@
 import { LiteratureForm } from '@/shared/types/series.interfaces';
 import { Literatures } from './electron-auxiliar.interfaces';
-import { TieIn } from './comic.interfaces';
 import { Collection } from '@/shared/types/collections.interfaces';
+import { TieIn } from './tieIn.interfaces';
 
 export interface HistoryFile {
   summaries: SerieHistoryEntry[];
